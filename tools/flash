@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [[ $# != 1 ]]; then
-    echo "Usage: flash BINARY.elf" >&2
-    exit 1
+    echo "Usage: $(basename "$0") BINARY.elf" >&2
+    exit 2
 fi
 
 openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg \

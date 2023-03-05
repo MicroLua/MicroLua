@@ -2,17 +2,41 @@
 
 #include "pico/stdlib.h"
 
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+
 int main() {
     stdio_init_all();
 
-    const uint led = PICO_DEFAULT_LED_PIN;
-    gpio_init(led);
-    gpio_set_dir(led, GPIO_OUT);
+    printf("=== Creating Lua state\n");
+    lua_State* ls = luaL_newstate();
+    luaL_openlibs(ls);
 
-    for (int i = 0; ; ++i) {
-        gpio_put(led, !gpio_get(led));
-        printf("Hello, MicroLua! (%d)\n", i);
-        sleep_ms(500);
+    printf("=== Executing script\n");
+    char const* script =
+        "print(string.format('maxinteger: %d', math.maxinteger))\n"
+        "print(string.format('huge: %f', math.huge))\n"
+        // "local i = 0\n"
+        // "while true do\n"
+        // "  print(string.format('Hello, MicroLua! (%d)', i))\n"
+        // "  i = i + 1\n"
+        // "end\n"
+    ;
+    if (luaL_loadstring(ls, script) != LUA_OK) {
+        printf("=== loadstring: Failed to load script: %s\n", lua_tostring(ls, -1));
+        lua_pop(ls, 1);
+        return 1;
     }
+    if (lua_pcall(ls, 0, 0, 0) != LUA_OK) {
+        printf("=== pcall: Script failed: %s\n", lua_tostring(ls, -1));
+        lua_pop(ls, 1);
+        return 1;
+    }
+
+    printf("=== Closing Lua state\n");
+    lua_close(ls);
+
+    printf("=== Exiting\n");
     return 0;
 }
