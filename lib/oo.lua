@@ -1,4 +1,6 @@
--- This module provides helpers for object-oriented programming.
+-- A simple object model for object-oriented programming.
+
+_ENV = require "module"(...)
 
 -- The __call metamethod of all classes.
 local function class_call(cls, ...)
