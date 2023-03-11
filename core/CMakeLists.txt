@@ -41,13 +41,13 @@ mlua_core_target_sources(mlua_core
 )
 
 # Core Lua libraries.
-mlua_core_lib_library(base lbaselib.c)
-mlua_core_lib_library(coro lcorolib.c)
+mlua_core_lib_library(base lbaselib.c NOREGISTER)
+mlua_core_lib_library(coroutine lcorolib.c)
 mlua_core_lib_library(debug ldblib.c)
 mlua_core_lib_library(io liolib.c)
 mlua_core_lib_library(math lmathlib.c)
 mlua_core_lib_library(os loslib.c)
-mlua_core_lib_library(package loadlib.c)
+mlua_core_lib_library(package loadlib.c NOREGISTER)
 mlua_core_lib_library(string lstrlib.c)
 mlua_core_lib_library(table ltablib.c)
 mlua_core_lib_library(utf8 lutf8lib.c)
@@ -59,7 +59,7 @@ mlua_core_target_sources(mlua_core_lib_all
 )
 target_link_libraries(mlua_core_lib_all INTERFACE
     mlua_core_lib_base
-    mlua_core_lib_coro
+    mlua_core_lib_coroutine
     mlua_core_lib_debug
     mlua_core_lib_io
     mlua_core_lib_math
@@ -74,6 +74,7 @@ target_link_libraries(mlua_core_lib_all INTERFACE
 pico_add_library(mlua_main)
 target_sources(mlua_main INTERFACE
     file.c
+    lib.c
     main.c
 )
 target_include_directories(mlua_main INTERFACE
@@ -81,5 +82,6 @@ target_include_directories(mlua_main INTERFACE
 )
 target_link_libraries(mlua_main INTERFACE
     mlua_core
-    mlua_core_lib_all
+    mlua_core_lib_base
+    mlua_core_lib_package
 )

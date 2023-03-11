@@ -1,3 +1,5 @@
+#include "mlua/main.h"
+
 #include <stdio.h>
 
 #ifdef LIB_PICO_STDIO
@@ -6,10 +8,9 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "lualib.h"
 
-#include "mlua/main.h"
 #include "mlua/file.h"
+#include "mlua/lib.h"
 
 int mlua_run_file(lua_State* ls, char const* path) {
     size_t size;
@@ -29,7 +30,7 @@ int mlua_run_file(lua_State* ls, char const* path) {
 void mlua_main() {
     printf("=== Creating Lua state\n");
     lua_State* ls = luaL_newstate();
-    luaL_openlibs(ls);
+    mlua_open_libs(ls);
 
     printf("=== Executing script\n");
     if (mlua_run_file(ls, "main.lua") != LUA_OK) {

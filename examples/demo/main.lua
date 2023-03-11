@@ -1,3 +1,6 @@
+local math = require "math"
+local string = require "string"
+
 print("demo/main.lua")
 
 print(string.format("maxinteger: %d", math.maxinteger))

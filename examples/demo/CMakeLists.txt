@@ -4,6 +4,7 @@ mlua_sources(mlua_example_demo
 )
 target_link_libraries(mlua_example_demo
     pico_stdlib
+    mlua_core_lib_all
     mlua_main
 )
 

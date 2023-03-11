@@ -1,6 +1,6 @@
-#include <string.h>
-
 #include "mlua/file.h"
+
+#include <string.h>
 
 // Silence link-time warnings.
 __attribute__((weak)) int _link(char const* old, char const* new) { return -1; }

@@ -1,0 +1,9 @@
+#include "mlua/lib.h"
+
+#include "lualib.h"
+
+static mlua_lib lib = {.name = "@LIB@", .open = luaopen_@LIB@};
+
+static __attribute__((constructor)) void register_lib(void) {
+    mlua_register_lib(&lib);
+}
