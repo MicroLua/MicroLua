@@ -17,7 +17,7 @@ local package = require "package"
 
 -- Make the lookup of undefined keys in the global environment an error.
 local gmt = {}
-function gmt:__index(name) error("Undefined symbol: " .. name) end
+function gmt:__index(name) error("Undefined symbol: " .. name, 2) end
 setmetatable(_G, gmt)
 
 -- Forward key lookups in the module to the global environment.
