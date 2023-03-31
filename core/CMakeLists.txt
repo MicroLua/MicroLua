@@ -73,7 +73,6 @@ target_link_libraries(mlua_core_lib_all INTERFACE
 # The entry point of the Lua interpreter.
 pico_add_library(mlua_main)
 target_sources(mlua_main INTERFACE
-    file.c
     lib.c
     main.c
 )

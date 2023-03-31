@@ -9,22 +9,21 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-#include "mlua/file.h"
 #include "mlua/lib.h"
 
-int mlua_run_file(lua_State* ls, char const* path) {
-    size_t size;
-    char const* code = mlua_get_file(path, &size);
-    if (code == NULL) {
-        lua_pushfstring(ls, "script not found: %s", path);
-        return LUA_ERRFILE;
-    }
-    printf("== File size: %d\n", size);
-    int err = luaL_loadbufferx(ls, code, size, path, "bt");
-    if (err != LUA_OK) return err;
-    err = luaL_loadstring(ls, code);
-    if (err != LUA_OK) return err;
-    return lua_pcall(ls, 0, 0, 0);
+// TODO: Run everything within a pcall
+
+static int getfield(lua_State* ls) {
+    lua_gettable(ls, -2);
+    return 1;
+}
+
+static int try_getfield(lua_State* ls, int index, char const* k) {
+    index = lua_absindex(ls, index);
+    lua_pushcfunction(ls, getfield);
+    lua_pushvalue(ls, index);
+    lua_pushstring(ls, k);
+    return lua_pcall(ls, 2, 1, 0);
 }
 
 void mlua_main() {
@@ -32,10 +31,18 @@ void mlua_main() {
     lua_State* ls = luaL_newstate();
     mlua_open_libs(ls);
 
-    printf("=== Executing script\n");
-    if (mlua_run_file(ls, "main.lua") != LUA_OK) {
-        printf("=== Failed to run main.lua: %s\n", lua_tostring(ls, -1));
-        lua_pop(ls, 1);
+    printf("=== Loading main module\n");
+    lua_getglobal(ls, "require");
+    lua_pushliteral(ls, "main");
+    lua_call(ls, 1, 1);
+
+    if (try_getfield(ls, -1, "main") == LUA_OK) {
+        printf("=== Running main function\n");
+        lua_remove(ls, -2);  // Remove main module
+        lua_call(ls, 0, 0);
+    } else {
+        printf("=== Main not found: %s\n", lua_tostring(ls, -1));
+        lua_pop(ls, 2);
     }
 
     printf("=== Closing Lua state\n");

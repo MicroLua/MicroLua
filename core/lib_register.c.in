@@ -1,8 +1,46 @@
 #include "mlua/lib.h"
 
-#include "lualib.h"
+#include "lua.h"
 
-static mlua_lib lib = {.name = "@LIB@", .open = luaopen_@LIB@};
+#cmakedefine PATH 1
+#ifdef PATH
+
+#include "lauxlib.h"
+
+__asm__(
+    "  .section .rodata\n"
+    "  .balign 4\n"
+    "start_@SYM@:\n"
+    "  .incbin \"@PATH@\"\n"
+    "  .balign 1\n"
+    "end_@SYM@:\n"
+    // Lua seems to rely on a terminating zero byte when loading chunks in text
+    // mode, even if it isn't included in the chunk size. This is likely a bug.
+    "  .byte 0\n"
+);
+
+extern const char start_@SYM@[];
+extern const char end_@SYM@[];
+
+extern int luaopen_@SYM@(lua_State* ls) {
+    int err = luaL_loadbufferx(ls, start_@SYM@, end_@SYM@ - start_@SYM@,
+                               "@LIB@", "bt");
+    if (err != LUA_OK) {
+        return luaL_error(ls, "failed to load '@LIB@':\n\t%s",
+                          lua_tostring(ls, -1));
+    }
+    lua_pushstring(ls, "@LIB@");
+    lua_call(ls, 1, 1);
+    return 1;
+}
+
+#else
+
+extern int luaopen_@SYM@(lua_State* ls);
+
+#endif
+
+static mlua_lib lib = {.name = "@LIB@", .open = luaopen_@SYM@};
 
 static __attribute__((constructor)) void register_lib(void) {
     mlua_register_lib(&lib);

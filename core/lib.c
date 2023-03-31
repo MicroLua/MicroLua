@@ -2,10 +2,14 @@
 
 #include <string.h>
 
-#include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
+// Silence link-time warnings.
+__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
+__attribute__((weak)) int _unlink(char const* file) { return -1; }
+
+// The list of registered libraries.
 static mlua_lib* libs = NULL;
 
 void mlua_register_lib(mlua_lib* lib) {

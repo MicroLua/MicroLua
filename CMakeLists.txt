@@ -13,6 +13,7 @@ pico_sdk_init()
 
 add_subdirectory(core)
 add_subdirectory(examples)
+add_subdirectory(lib)
 
 add_compile_options(
     -Wall

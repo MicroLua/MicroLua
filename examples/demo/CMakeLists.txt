@@ -1,13 +1,15 @@
-add_executable(mlua_example_demo)
-mlua_sources(mlua_example_demo
-    ${CMAKE_CURRENT_LIST_DIR}/main.lua
-)
-target_link_libraries(mlua_example_demo
-    pico_stdlib
+mlua_add_lua_library(mlua_examples_demo_main
+    main ${CMAKE_CURRENT_LIST_DIR}/main.lua)
+
+add_executable(mlua_examples_demo)
+target_link_libraries(mlua_examples_demo
     mlua_core_lib_all
+    mlua_examples_demo_main
+    mlua_lib_module
     mlua_main
+    pico_stdlib
 )
 
-pico_add_extra_outputs(mlua_example_demo)
-pico_enable_stdio_uart(mlua_example_demo 1)
-pico_enable_stdio_usb(mlua_example_demo 0)
+pico_add_extra_outputs(mlua_examples_demo)
+pico_enable_stdio_uart(mlua_examples_demo 1)
+pico_enable_stdio_usb(mlua_examples_demo 0)
