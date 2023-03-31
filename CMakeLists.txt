@@ -11,6 +11,8 @@ if(PICO_SDK_VERSION_STRING VERSION_LESS "1.5.0")
 endif()
 pico_sdk_init()
 
+include(rules.cmake)
+
 add_subdirectory(core)
 add_subdirectory(examples)
 add_subdirectory(lib)

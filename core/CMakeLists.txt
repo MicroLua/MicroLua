@@ -1,5 +1,3 @@
-include(core.cmake)
-
 # Copy Lua headers except luaconf.h.
 mlua_core_filenames(lua_h *.h)
 list(FILTER lua_h EXCLUDE REGEX ^luaconf\\.h$)
