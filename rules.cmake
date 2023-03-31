@@ -1,5 +1,7 @@
+set(LUA_SOURCE_DIR ${CMAKE_SOURCE_DIR}/ext/lua)
+
 function(mlua_core_filenames VAR GLOB)
-    file(GLOB paths lua/${GLOB})
+    file(GLOB paths ${LUA_SOURCE_DIR}/${GLOB})
     foreach(path IN LISTS paths)
         cmake_path(GET path FILENAME name)
         list(APPEND names ${name})
@@ -9,7 +11,7 @@ endfunction()
 
 function(mlua_core_copy FILENAMES DEST)
     foreach(name IN LISTS FILENAMES)
-        configure_file(lua/${name} ${DEST}/${name} COPYONLY)
+        configure_file(${LUA_SOURCE_DIR}/${name} ${DEST}/${name} COPYONLY)
     endforeach()
 endfunction()
 
