@@ -8,17 +8,22 @@
 local io = require 'io'
 local string = require 'string'
 
-input_path, output_path = ...
+local input_path, output_path = ...
 
-if input_path ~= "-" then
-    io.input(input_path)
-end
+-- Compile the input file.
+if input_path == '-' then input_path = nil end
+local chunk = loadfile(input_path)
+local bin = string.dump(chunk)
+
+-- Output the compiled chunk as C array data.
 if output_path ~= "-" then
     io.output(output_path)
 end
+local offset = 0
 while true do
-    data = io.read(16)
-    if data == fail then break end
+    data = bin:sub(offset + 1, offset + 16)
+    offset = offset + 16
+    if data == "" then break end
     for i = 1, #data do
         io.write(string.format('0x%02x,', data:byte(i)))
     end

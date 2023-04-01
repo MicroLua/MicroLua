@@ -27,7 +27,6 @@ static int try_getfield(lua_State* ls, int index, char const* k) {
 }
 
 void mlua_main() {
-    printf("=== Creating Lua state\n");
     lua_State* ls = luaL_newstate();
     mlua_open_libs(ls);
 
@@ -45,7 +44,6 @@ void mlua_main() {
         lua_pop(ls, 2);
     }
 
-    printf("=== Closing Lua state\n");
     lua_close(ls);
 }
 
