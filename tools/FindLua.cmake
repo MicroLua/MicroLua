@@ -11,7 +11,9 @@ if (NOT Lua_FOUND)
             PREFIX lua
             SOURCE_DIR ${LUA_SOURCE_DIR}
             BINARY_DIR ${LUA_BINARY_DIR}
-            CMAKE_ARGS "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+            CMAKE_ARGS
+                "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+                "-DMLUA_PATH:PATH=${MLUA_PATH}"
             BUILD_ALWAYS 1  # Force dependency checking
             INSTALL_COMMAND ""
         )

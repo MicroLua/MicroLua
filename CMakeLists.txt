@@ -14,10 +14,6 @@ pico_sdk_init()
 if(NOT MLUA_PATH)
     set(MLUA_PATH ${CMAKE_CURRENT_LIST_DIR})
 endif()
-message("MLUA_PATH is ${MLUA_PATH}")
-set(MLUA_LUA_SOURCE_DIR ${MLUA_PATH}/ext/lua)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${MLUA_PATH}/tools)
 
 include(rules.cmake)
 

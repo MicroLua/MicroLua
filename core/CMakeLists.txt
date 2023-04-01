@@ -1,15 +1,12 @@
-# Copy Lua headers except luaconf.h.
+# Copy Lua headers and generate luaconf.h.
 mlua_core_filenames(lua_h *.h)
 list(FILTER lua_h EXCLUDE REGEX ^luaconf\\.h$)
 mlua_core_copy("${lua_h}" include)
+mlua_core_luaconf(include)
 
 # Copy Lua sources.
 mlua_core_filenames(lua_c *.c)
 mlua_core_copy("${lua_c}" src)
-
-# Generate luaconf.h.
-# TODO: Allow overriding luaconf.h settings
-mlua_core_copy(luaconf.h include)
 
 # Core Lua interpreter.
 mlua_add_core_library(mlua_core)

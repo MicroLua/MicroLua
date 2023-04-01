@@ -1,3 +1,8 @@
+set(MLUA_PATH "${MLUA_PATH}" CACHE PATH "Path to the MicroLua sources SDK")
+message("MLUA_PATH is ${MLUA_PATH}")
+set(MLUA_LUA_SOURCE_DIR ${MLUA_PATH}/ext/lua)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${MLUA_PATH}/tools)
+
 function(mlua_core_filenames VAR GLOB)
     file(GLOB paths ${MLUA_LUA_SOURCE_DIR}/${GLOB})
     foreach(path IN LISTS paths)
@@ -11,6 +16,14 @@ function(mlua_core_copy FILENAMES DEST)
     foreach(name IN LISTS FILENAMES)
         configure_file(${MLUA_LUA_SOURCE_DIR}/${name} ${DEST}/${name} COPYONLY)
     endforeach()
+endfunction()
+
+function(mlua_core_luaconf DEST)
+    file(READ ${MLUA_LUA_SOURCE_DIR}/luaconf.h LUACONF)
+    string(REGEX REPLACE
+        "\n([ \t]*#[ \t]*define[ \t]+LUA_(INT|FLOAT)_DEFAULT[ \t])"
+        "\n// \\1" LUACONF "${LUACONF}")
+    configure_file(${MLUA_PATH}/core/luaconf.in.h ${DEST}/luaconf.h)
 endfunction()
 
 function(mlua_add_core_headers_library TARGET)
