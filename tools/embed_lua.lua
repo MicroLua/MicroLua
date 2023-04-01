@@ -12,7 +12,7 @@ local input_path, output_path = ...
 
 -- Compile the input file.
 if input_path == '-' then input_path = nil end
-local chunk = loadfile(input_path)
+local chunk = assert(loadfile(input_path))
 local bin = string.dump(chunk)
 
 -- Output the compiled chunk as C array data.
@@ -21,13 +21,14 @@ if output_path ~= "-" then
 end
 local offset = 0
 while true do
-    data = bin:sub(offset + 1, offset + 16)
-    offset = offset + 16
-    if data == "" then break end
-    for i = 1, #data do
-        io.write(string.format('0x%02x,', data:byte(i)))
+    if offset >= #bin then break end
+    for i = 1, 16 do
+        local v = bin:byte(offset + i)
+        if v == nil then break end
+        assert(io.write(string.format('0x%02x,', v)))
     end
-    io.write('\n')
+    assert(io.write('\n'))
+    offset = offset + 16
 end
-io.write('0x00,\n')
-io.close()
+assert(io.write('0x00,\n'))
+assert(io.close())
