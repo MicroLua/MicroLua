@@ -2,29 +2,17 @@
 
 #include "lua.h"
 
-#cmakedefine PATH 1
-#ifdef PATH
+#cmakedefine DATA 1
+#ifdef DATA
 
 #include "lauxlib.h"
 
-__asm__(
-    "  .section .rodata\n"
-    "  .balign 4\n"
-    "start_@SYM@:\n"
-    "  .incbin \"@PATH@\"\n"
-    "  .balign 1\n"
-    "end_@SYM@:\n"
-    // Lua seems to rely on a terminating zero byte when loading chunks in text
-    // mode, even if it isn't included in the chunk size. This is likely a bug.
-    "  .byte 0\n"
-);
-
-extern const char start_@SYM@[];
-extern const char end_@SYM@[];
+static char const data[] = {
+#include "@DATA@"
+};
 
 extern int luaopen_@SYM@(lua_State* ls) {
-    int err = luaL_loadbufferx(ls, start_@SYM@, end_@SYM@ - start_@SYM@,
-                               "@LIB@", "bt");
+    int err = luaL_loadbufferx(ls, data, sizeof(data)-1, "@LIB@", "bt");
     if (err != LUA_OK) {
         return luaL_error(ls, "failed to load '@LIB@':\n\t%s",
                           lua_tostring(ls, -1));

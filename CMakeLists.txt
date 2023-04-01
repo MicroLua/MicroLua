@@ -11,11 +11,20 @@ if(PICO_SDK_VERSION_STRING VERSION_LESS "1.5.0")
 endif()
 pico_sdk_init()
 
+if(NOT MLUA_PATH)
+    set(MLUA_PATH ${CMAKE_CURRENT_LIST_DIR})
+endif()
+message("MLUA_PATH is ${MLUA_PATH}")
+set(MLUA_LUA_SOURCE_DIR ${MLUA_PATH}/ext/lua)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${MLUA_PATH}/tools)
+
 include(rules.cmake)
 
 add_subdirectory(core)
 add_subdirectory(examples)
 add_subdirectory(lib)
+add_subdirectory(tools)
 
 add_compile_options(
     -Wall

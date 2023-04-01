@@ -1,7 +1,5 @@
-set(LUA_SOURCE_DIR ${CMAKE_SOURCE_DIR}/ext/lua)
-
 function(mlua_core_filenames VAR GLOB)
-    file(GLOB paths ${LUA_SOURCE_DIR}/${GLOB})
+    file(GLOB paths ${MLUA_LUA_SOURCE_DIR}/${GLOB})
     foreach(path IN LISTS paths)
         cmake_path(GET path FILENAME name)
         list(APPEND names ${name})
@@ -11,7 +9,7 @@ endfunction()
 
 function(mlua_core_copy FILENAMES DEST)
     foreach(name IN LISTS FILENAMES)
-        configure_file(${LUA_SOURCE_DIR}/${name} ${DEST}/${name} COPYONLY)
+        configure_file(${MLUA_LUA_SOURCE_DIR}/${name} ${DEST}/${name} COPYONLY)
     endforeach()
 endfunction()
 
@@ -37,27 +35,43 @@ endfunction()
 
 function(mlua_add_core_lib_library LIB SRC)
     string(REPLACE "." "_" SYM ${LIB})
-    mlua_add_core_library(mlua_core_lib_${SYM})
-    mlua_core_target_sources(mlua_core_lib_${SYM} ${SRC})
-    target_link_libraries(mlua_core_lib_${SYM} INTERFACE mlua_core)
+    set(TARGET mlua_core_lib_${SYM})
+    mlua_add_core_library(${TARGET})
+    mlua_core_target_sources(${TARGET} ${SRC})
+    target_link_libraries(${TARGET} INTERFACE mlua_core)
     if(${ARGC} GREATER 2)
         if(NOT "${ARGV2}" STREQUAL "NOREGISTER")
             message(FATAL_ERROR "Unknown parameter ${ARGV2}")
         endif()
     else()
         set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.c)
-        configure_file(${CMAKE_SOURCE_DIR}/core/lib_register.c.in ${REG_C})
-        target_sources(mlua_core_lib_${SYM} INTERFACE ${REG_C})
+        configure_file(${MLUA_PATH}/core/lib_register.c.in ${REG_C})
+        target_sources(${TARGET} INTERFACE ${REG_C})
+    endif()
+endfunction()
+
+function(mlua_want_lua)
+    if(NOT Lua_FOUND)
+        find_package(Lua REQUIRED)
     endif()
 endfunction()
 
 function(mlua_add_lua_library TARGET LIB SRC)
     string(REPLACE "." "_" SYM ${LIB})
-    set(PATH ${SRC})
-    add_library(${TARGET} INTERFACE)
-    target_link_libraries(${TARGET} INTERFACE mlua_core)
+    # Convert the source to C array data.
+    mlua_want_lua()
+    set(DATA ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.data.h)
+    add_custom_command(
+        OUTPUT ${DATA}
+        DEPENDS ${SRC}
+        COMMAND Lua ${MLUA_PATH}/tools/embed_lua.lua ${SRC} ${DATA}
+        VERBATIM
+    )
+    # Generate the module registration code.
     set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.c)
-    configure_file(${CMAKE_SOURCE_DIR}/core/lib_register.c.in ${REG_C})
-    set_source_files_properties(${REG_C} PROPERTIES OBJECT_DEPENDS ${SRC})
-    target_sources(${TARGET} INTERFACE ${REG_C})
+    configure_file(${MLUA_PATH}/core/lib_register.c.in ${REG_C})
+    # Add the library.
+    add_library(${TARGET} INTERFACE)
+    target_sources(${TARGET} INTERFACE ${REG_C} PRIVATE ${DATA})
+    target_link_libraries(${TARGET} INTERFACE mlua_core)
 endfunction()
