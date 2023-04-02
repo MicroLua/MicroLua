@@ -1,4 +1,4 @@
-mlua_add_lua_library(mlua_examples_demo_main
+mlua_add_lua_module(mlua_examples_demo_main
     main ${CMAKE_CURRENT_LIST_DIR}/main.lua)
 
 add_executable(mlua_examples_demo)

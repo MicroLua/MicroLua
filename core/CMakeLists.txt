@@ -9,8 +9,7 @@ mlua_core_filenames(lua_c *.c)
 mlua_core_copy("${lua_c}" src)
 
 # Core Lua interpreter.
-mlua_add_core_library(mlua_core)
-mlua_core_target_sources(mlua_core
+mlua_add_core_library(mlua_core
     lapi.c
     lauxlib.c
     lcode.c
@@ -35,21 +34,20 @@ mlua_core_target_sources(mlua_core
     ltests.c
 )
 
-# Core Lua libraries.
-mlua_add_core_lib_library(base lbaselib.c NOREGISTER)
-mlua_add_core_lib_library(coroutine lcorolib.c)
-mlua_add_core_lib_library(debug ldblib.c)
-mlua_add_core_lib_library(io liolib.c)
-mlua_add_core_lib_library(math lmathlib.c)
-mlua_add_core_lib_library(os loslib.c)
-mlua_add_core_lib_library(package loadlib.c NOREGISTER)
-mlua_add_core_lib_library(string lstrlib.c)
-mlua_add_core_lib_library(table ltablib.c)
-mlua_add_core_lib_library(utf8 lutf8lib.c)
+# Core Lua modules.
+mlua_add_core_c_module_noreg(base lbaselib.c)
+mlua_add_core_c_module_noreg(package loadlib.c)
+mlua_add_core_c_module(coroutine lcorolib.c)
+mlua_add_core_c_module(debug ldblib.c)
+mlua_add_core_c_module(io liolib.c)
+mlua_add_core_c_module(math lmathlib.c)
+mlua_add_core_c_module(os loslib.c)
+mlua_add_core_c_module(string lstrlib.c)
+mlua_add_core_c_module(table ltablib.c)
+mlua_add_core_c_module(utf8 lutf8lib.c)
 
-# All core Lua libraries.
-mlua_add_core_library(mlua_core_lib_all)
-mlua_core_target_sources(mlua_core_lib_all
+# All core Lua modules.
+mlua_add_core_library(mlua_core_lib_all
     linit.c
 )
 target_link_libraries(mlua_core_lib_all INTERFACE

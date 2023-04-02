@@ -3,6 +3,12 @@ message("MLUA_PATH is ${MLUA_PATH}")
 set(MLUA_LUA_SOURCE_DIR ${MLUA_PATH}/ext/lua)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${MLUA_PATH}/tools)
 
+function(mlua_want_lua)
+    if(NOT Lua_FOUND)
+        find_package(Lua REQUIRED)
+    endif()
+endfunction()
+
 function(mlua_core_filenames VAR GLOB)
     file(GLOB paths ${MLUA_LUA_SOURCE_DIR}/${GLOB})
     foreach(path IN LISTS paths)
@@ -26,19 +32,11 @@ function(mlua_core_luaconf DEST)
     configure_file(${MLUA_PATH}/core/luaconf.in.h ${DEST}/luaconf.h)
 endfunction()
 
-function(mlua_add_core_headers_library TARGET)
-    add_library(${TARGET}_headers INTERFACE)
+function(mlua_add_core_library TARGET)
+    pico_add_library(${TARGET})
     target_include_directories(${TARGET}_headers INTERFACE
         ${CMAKE_CURRENT_BINARY_DIR}/include
     )
-endfunction()
-
-function(mlua_add_core_library TARGET)
-    mlua_add_core_headers_library(${TARGET})
-    pico_add_impl_library(${TARGET})
-endfunction()
-
-function(mlua_core_target_sources TARGET)
     foreach(name IN LISTS ARGN)
         target_sources(${TARGET} INTERFACE
             ${CMAKE_CURRENT_BINARY_DIR}/src/${name}
@@ -46,45 +44,41 @@ function(mlua_core_target_sources TARGET)
     endforeach()
 endfunction()
 
-function(mlua_add_core_lib_library LIB SRC)
-    string(REPLACE "." "_" SYM ${LIB})
-    set(TARGET mlua_core_lib_${SYM})
-    mlua_add_core_library(${TARGET})
-    mlua_core_target_sources(${TARGET} ${SRC})
-    target_link_libraries(${TARGET} INTERFACE mlua_core)
-    if(${ARGC} GREATER 2)
-        if(NOT "${ARGV2}" STREQUAL "NOREGISTER")
-            message(FATAL_ERROR "Unknown parameter ${ARGV2}")
-        endif()
-    else()
-        set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.c)
-        configure_file(${MLUA_PATH}/core/lib_register.in.c ${REG_C})
-        target_sources(${TARGET} INTERFACE ${REG_C})
+function(mlua_register_module TARGET MOD SRC)
+    if(NOT ${SRC} STREQUAL "NOSRC")
+        mlua_want_lua()
+        set(DATA ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${MOD}.data.h)
+        add_custom_command(
+            OUTPUT ${DATA}
+            DEPENDS ${SRC}
+            COMMAND Lua ${MLUA_PATH}/tools/embed_lua.lua ${SRC} ${DATA}
+            VERBATIM
+        )
     endif()
-endfunction()
-
-function(mlua_want_lua)
-    if(NOT Lua_FOUND)
-        find_package(Lua REQUIRED)
-    endif()
-endfunction()
-
-function(mlua_add_lua_library TARGET LIB SRC)
-    string(REPLACE "." "_" SYM ${LIB})
-    # Convert the source to C array data.
-    mlua_want_lua()
-    set(DATA ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.data.h)
-    add_custom_command(
-        OUTPUT ${DATA}
-        DEPENDS ${SRC}
-        COMMAND Lua ${MLUA_PATH}/tools/embed_lua.lua ${SRC} ${DATA}
-        VERBATIM
-    )
-    # Generate the module registration code.
-    set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${SYM}.c)
+    string(REPLACE "." "_" SYM ${MOD})
+    set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${MOD}.c)
     configure_file(${MLUA_PATH}/core/lib_register.in.c ${REG_C})
-    # Add the library.
-    add_library(${TARGET} INTERFACE)
     target_sources(${TARGET} INTERFACE ${REG_C} PRIVATE ${DATA})
-    target_link_libraries(${TARGET} INTERFACE mlua_core)
+    target_link_libraries(${TARGET} INTERFACE mlua_core mlua_main)
+endfunction()
+
+function(mlua_add_core_c_module_noreg MOD)
+    mlua_add_core_library(mlua_core_lib_${MOD} ${ARGN})
+    target_link_libraries(mlua_core_lib_${MOD} INTERFACE mlua_core)
+endfunction()
+
+function(mlua_add_core_c_module MOD)
+    mlua_add_core_c_module_noreg(${MOD} ${ARGN})
+    mlua_register_module(mlua_core_lib_${MOD} ${MOD} NOSRC)
+endfunction()
+
+function(mlua_add_c_module TARGET MOD)
+    add_library(${TARGET} INTERFACE)
+    target_sources(${TARGET} INTERFACE ${ARGN})
+    mlua_register_module(${TARGET} ${MOD} NOSRC)
+endfunction()
+
+function(mlua_add_lua_module TARGET MOD SRC)
+    add_library(${TARGET} INTERFACE)
+    mlua_register_module(${TARGET} ${MOD} ${SRC})
 endfunction()
