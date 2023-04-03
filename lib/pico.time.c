@@ -5,10 +5,7 @@
 
 #include "pico/time.h"
 
-static int l_sleep_ms(lua_State *ls) {
-    sleep_ms(luaL_checkinteger(ls, 1));
-    return 0;
-}
+MLUA_FUNC_0_1(, sleep_ms, integer)
 
 static mlua_reg const module_regs[] = {
 #define X(n) MLUA_REG(function, n, l_ ## n)
