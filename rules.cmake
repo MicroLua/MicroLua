@@ -47,6 +47,7 @@ endfunction()
 function(mlua_register_module TARGET MOD SRC)
     if(NOT ${SRC} STREQUAL "NOSRC")
         mlua_want_lua()
+        get_filename_component(SRC ${SRC} ABSOLUTE)
         set(DATA ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${MOD}.data.h)
         add_custom_command(
             OUTPUT ${DATA}
