@@ -1,5 +1,5 @@
-#ifndef _MLUA_LIB_H
-#define _MLUA_LIB_H
+#ifndef _MLUA_CORE_LIB_H
+#define _MLUA_CORE_LIB_H
 
 #include <stddef.h>
 

@@ -1,6 +1,8 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "mlua/util.h"
+
 #include "pico/time.h"
 
 static int l_sleep_ms(lua_State *ls) {
@@ -8,12 +10,14 @@ static int l_sleep_ms(lua_State *ls) {
     return 0;
 }
 
-static luaL_Reg const module_funcs[] = {
-    {"sleep_ms", l_sleep_ms},
-    {NULL, NULL},
+static mlua_reg const module_regs[] = {
+#define X(n) MLUA_REG(function, n, l_ ## n)
+    X(sleep_ms),
+#undef X
+    {NULL},
 };
 
 int luaopen_pico_time(lua_State* ls) {
-    luaL_newlib(ls, module_funcs);
+    mlua_newlib(ls, module_regs, 0, 0);
     return 1;
 }

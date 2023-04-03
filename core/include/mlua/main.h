@@ -1,5 +1,5 @@
-#ifndef _MLUA_MAIN_H
-#define _MLUA_MAIN_H
+#ifndef _MLUA_CORE_MAIN_H
+#define _MLUA_CORE_MAIN_H
 
 #ifdef __cplusplus
 extern "C" {

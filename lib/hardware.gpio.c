@@ -1,6 +1,8 @@
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "mlua/util.h"
+
 #include "hardware/gpio.h"
 
 static bool check_cbool(lua_State* ls, int arg) {
@@ -24,24 +26,49 @@ static int l_put(lua_State* ls) {
     return 0;
 }
 
-static luaL_Reg const module_funcs[] = {
-    {"init", l_init},
-    {"put", l_put},
-    {"set_dir", l_set_dir},
-    {"IN", NULL},
-    {"OUT", NULL},
-    {NULL, NULL},
+static mlua_reg const module_regs[] = {
+#define X(n) MLUA_REG(function, n, l_ ## n)
+    X(init),
+    X(put),
+    X(set_dir),
+#undef X
+#define X(n) MLUA_REG(integer, n, GPIO_ ## n)
+    X(IN),
+    X(OUT),
+#undef X
+#define X(n) MLUA_REG(integer, FUNC_ ## n, GPIO_FUNC_ ## n)
+    X(XIP),
+    X(SPI),
+    X(UART),
+    X(I2C),
+    X(PWM),
+    X(SIO),
+    X(PIO0),
+    X(PIO1),
+    X(GPCK),
+    X(USB),
+    X(NULL),
+#undef X
+#define X(n) MLUA_REG(integer, IRQ_ ## n, GPIO_IRQ_ ## n)
+    X(LEVEL_LOW),
+    X(LEVEL_HIGH),
+    X(EDGE_FALL),
+    X(EDGE_RISE),
+#undef X
+#define X(n) MLUA_REG(integer, SLEW_RATE_ ## n, GPIO_SLEW_RATE_ ## n)
+    X(SLOW),
+    X(FAST),
+#undef X
+#define X(n) MLUA_REG(integer, DRIVE_STRENGTH ## n, GPIO_DRIVE_STRENGTH ## n)
+    X(_2MA),
+    X(_4MA),
+    X(_8MA),
+    X(_12MA),
+#undef X
+    {NULL},
 };
 
-#define mlua_set_field(type, name, value)   \
-    do {                                    \
-        lua_push ## type(ls, value);        \
-        lua_setfield(ls, -2, #name);        \
-    } while(0);
-
 int luaopen_hardware_gpio(lua_State* ls) {
-    luaL_newlib(ls, module_funcs);
-    mlua_set_field(integer, IN, GPIO_IN);
-    mlua_set_field(integer, OUT, GPIO_OUT);
+    mlua_newlib(ls, module_regs, 0, 0);
     return 1;
 }

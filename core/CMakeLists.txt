@@ -68,6 +68,7 @@ pico_add_library(mlua_main)
 target_sources(mlua_main INTERFACE
     lib.c
     main.c
+    util.c
 )
 target_include_directories(mlua_main INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/include
