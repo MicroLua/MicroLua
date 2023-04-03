@@ -7,7 +7,9 @@
 
 static mlua_reg const module_regs[] = {
 #define X(n) MLUA_REG(integer, n, PICO_ ## n)
+#ifdef PICO_DEFAULT_LED_PIN
     X(DEFAULT_LED_PIN),
+#endif
 #undef X
     {NULL},
 };

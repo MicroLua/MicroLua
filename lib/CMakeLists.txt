@@ -1,3 +1,8 @@
+mlua_add_c_module(mlua_lib_hardware.adc hardware.adc hardware.adc.c)
+target_link_libraries(mlua_lib_hardware.adc INTERFACE
+    hardware_adc
+)
+
 mlua_add_c_module(mlua_lib_hardware.gpio hardware.gpio hardware.gpio.c)
 target_link_libraries(mlua_lib_hardware.gpio INTERFACE
     hardware_gpio

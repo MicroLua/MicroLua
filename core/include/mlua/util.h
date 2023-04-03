@@ -12,6 +12,12 @@ extern "C" {
 
 #define MLUA_STR(n) #n
 
+#define MLUA_FUNC_0_0(p, n)             \
+static int l_ ## n(lua_State* ls) {     \
+    p ## n();                           \
+    return 0;                           \
+}
+
 #define MLUA_FUNC_0_1(p, n, t1)             \
 static int l_ ## n(lua_State* ls) {         \
     p ## n(luaL_check ## t1(ls, 1));        \
@@ -27,7 +33,22 @@ static int l_ ## n(lua_State* ls) {                             \
 #define MLUA_FUNC_0_3(p, n, t1, t2, t3)                         \
 static int l_ ## n(lua_State* ls) {                             \
     p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
-            luaL_check ## t2(ls, 3));                           \
+           luaL_check ## t3(ls, 3));                            \
+    return 0;                                                   \
+}
+
+#define MLUA_FUNC_0_4(p, n, t1, t2, t3, t4)                     \
+static int l_ ## n(lua_State* ls) {                             \
+    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
+           luaL_check ## t3(ls, 3), luaL_check ## t4(ls, 4));   \
+    return 0;                                                   \
+}
+
+#define MLUA_FUNC_0_5(p, n, t1, t2, t3, t4, t5)                 \
+static int l_ ## n(lua_State* ls) {                             \
+    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
+           luaL_check ## t3(ls, 3), luaL_check ## t4(ls, 4),    \
+           luaL_check ## t5(ls, 5));                            \
     return 0;                                                   \
 }
 
