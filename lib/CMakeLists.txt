@@ -1,13 +1,21 @@
-# Lua libraries for all .lua files.
-file(GLOB modules *.lua)
-foreach(path IN LISTS modules)
-    cmake_path(GET path STEM LAST_ONLY module)
-    mlua_add_lua_module(mlua_lib_${module} ${module} ${path})
-endforeach()
+mlua_add_c_module(mlua_lib_hardware.gpio hardware.gpio hardware.gpio.c)
+target_link_libraries(mlua_lib_hardware.gpio INTERFACE
+    hardware_gpio
+)
 
-# Lua libraries for all .c files.
-file(GLOB modules *.c)
-foreach(path IN LISTS modules)
-    cmake_path(GET path STEM LAST_ONLY module)
-    mlua_add_c_module(mlua_lib_${module} ${module} ${path})
-endforeach()
+mlua_add_lua_module(mlua_lib_module module module.lua)
+target_link_libraries(mlua_lib_module INTERFACE
+    mlua_core_lib_package
+)
+
+mlua_add_lua_module(mlua_lib_oo oo oo.lua)
+target_link_libraries(mlua_lib_oo INTERFACE
+    mlua_lib_module
+)
+
+mlua_add_c_module(mlua_lib_pico pico pico.c)
+
+mlua_add_c_module(mlua_lib_pico.time pico.time pico.time.c)
+target_link_libraries(mlua_lib_pico.time INTERFACE
+    pico_time
+)
