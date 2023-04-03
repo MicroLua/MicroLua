@@ -64,16 +64,16 @@ target_link_libraries(mlua_core_lib_all INTERFACE
 )
 
 # The entry point of the Lua interpreter.
-pico_add_library(mlua_main)
-target_sources(mlua_main INTERFACE
+pico_add_library(mlua_core_main)
+target_sources(mlua_core_main INTERFACE
     lib.c
     main.c
     util.c
 )
-target_include_directories(mlua_main INTERFACE
+target_include_directories(mlua_core_main INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/include
 )
-target_link_libraries(mlua_main INTERFACE
+target_link_libraries(mlua_core_main INTERFACE
     mlua_core
     mlua_core_lib_base
     mlua_core_lib_package

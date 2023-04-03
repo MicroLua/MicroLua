@@ -10,7 +10,6 @@ target_link_libraries(mlua_examples_adc_onboard_temperature
     mlua_lib_module
     mlua_lib_pico
     mlua_lib_pico.time
-    mlua_main
     pico_stdlib
 )
 

@@ -8,7 +8,6 @@ target_link_libraries(mlua_examples_blink
     mlua_lib_module
     mlua_lib_pico
     mlua_lib_pico.time
-    mlua_main
     pico_stdlib
 )
 

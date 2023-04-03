@@ -60,7 +60,7 @@ function(mlua_register_module TARGET MOD SRC)
     set(REG_C ${CMAKE_CURRENT_BINARY_DIR}/lib_register_${MOD}.c)
     configure_file(${MLUA_PATH}/core/lib_register.in.c ${REG_C})
     target_sources(${TARGET} INTERFACE ${REG_C} PRIVATE ${DATA})
-    target_link_libraries(${TARGET} INTERFACE mlua_core mlua_main)
+    target_link_libraries(${TARGET} INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_add_core_c_module_noreg MOD)
