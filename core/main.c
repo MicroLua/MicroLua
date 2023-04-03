@@ -2,16 +2,14 @@
 
 #include <stdio.h>
 
+#include "lua.h"
+#include "lauxlib.h"
+
 #ifdef LIB_PICO_STDIO
 #include "pico/stdio.h"
 #endif
 
-#include "lua.h"
-#include "lauxlib.h"
-
 #include "mlua/lib.h"
-
-// TODO: Run everything within a pcall
 
 static int getfield(lua_State* ls) {
     lua_gettable(ls, -2);
@@ -26,24 +24,32 @@ static int try_getfield(lua_State* ls, int index, char const* k) {
     return lua_pcall(ls, 2, 1, 0);
 }
 
-void mlua_main() {
-    lua_State* ls = luaL_newstate();
+static int pmain(lua_State* ls) {
+    // Set up module loading.
     mlua_open_libs(ls);
 
-    printf("=== Loading main module\n");
+    // Require the "main" module.
     lua_getglobal(ls, "require");
     lua_pushliteral(ls, "main");
     lua_call(ls, 1, 1);
 
+    // If the "main" module has a "main" function, call it.
     if (try_getfield(ls, -1, "main") == LUA_OK) {
-        printf("=== Running main function\n");
         lua_remove(ls, -2);  // Remove main module
         lua_call(ls, 0, 0);
     } else {
-        printf("=== Main not found: %s\n", lua_tostring(ls, -1));
-        lua_pop(ls, 2);
+        lua_pop(ls, 2);  // Remove error and main module
     }
+}
 
+void mlua_main() {
+    lua_State* ls = luaL_newstate();
+    lua_pushcfunction(ls, pmain);
+    int err = lua_pcall(ls, 0, 0, 0);
+    if (err != LUA_OK) {
+        printf("ERROR: %s\n", lua_tostring(ls, -1));
+        lua_pop(ls, 1);
+    }
     lua_close(ls);
 }
 
