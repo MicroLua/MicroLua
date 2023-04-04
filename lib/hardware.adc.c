@@ -10,18 +10,18 @@ MLUA_FUNC_0_1(l_, adc_, gpio_init, luaL_checkinteger)
 MLUA_FUNC_0_1(l_, adc_, select_input, luaL_checkinteger)
 MLUA_FUNC_1_0(l_, adc_, get_selected_input, lua_pushinteger)
 MLUA_FUNC_0_1(l_, adc_, set_round_robin, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, adc_, set_temp_sensor_enabled, mlua_check_cbool)
+MLUA_FUNC_0_1(l_, adc_, set_temp_sensor_enabled, mlua_to_cbool)
 MLUA_FUNC_1_0(l_, adc_, read, lua_pushinteger)
-MLUA_FUNC_0_1(l_, adc_, run, mlua_check_cbool)
+MLUA_FUNC_0_1(l_, adc_, run, mlua_to_cbool)
 MLUA_FUNC_0_1(l_, adc_, set_clkdiv, luaL_checknumber)
-MLUA_FUNC_0_5(l_, adc_, fifo_setup, mlua_check_cbool, mlua_check_cbool,
-              luaL_checkinteger, mlua_check_cbool, mlua_check_cbool)
+MLUA_FUNC_0_5(l_, adc_, fifo_setup, mlua_to_cbool, mlua_to_cbool,
+              luaL_checkinteger, mlua_to_cbool, mlua_to_cbool)
 MLUA_FUNC_1_0(l_, adc_, fifo_is_empty, lua_pushboolean)
 MLUA_FUNC_1_0(l_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(l_, adc_, fifo_get, lua_pushinteger)
 MLUA_FUNC_1_0(l_, adc_, fifo_get_blocking, lua_pushinteger)
 MLUA_FUNC_0_0(l_, adc_, fifo_drain)
-MLUA_FUNC_0_1(l_, adc_, irq_set_enabled, mlua_check_cbool)
+MLUA_FUNC_0_1(l_, adc_, irq_set_enabled, mlua_to_cbool)
 
 static mlua_reg const module_regs[] = {
 #define X(n) MLUA_REG(function, n, l_ ## n)

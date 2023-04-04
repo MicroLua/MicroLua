@@ -1,9 +1,10 @@
 #include "mlua/util.h"
 
-bool mlua_check_cbool(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
-    if (lua_isboolean(ls, arg)) return lua_toboolean(ls, arg);
-    return luaL_argerror(ls, arg, "boolean or integer expected");
+bool mlua_to_cbool(lua_State* ls, int arg) {
+    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
+    if (lua_type(ls, arg) == LUA_TNUMBER)
+        lua_tonumber(ls, arg) != l_mathop(0.0);
+    return lua_toboolean(ls, arg);
 }
 
 void mlua_reg_push_bool(lua_State* ls, mlua_reg const* reg, int nup) {

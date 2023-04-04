@@ -46,7 +46,7 @@ static int wp ## n(lua_State* ls) { ret(ls, p ## n(args)); return 1; }
 #define MLUA_FUNC_1_1(wp, p, n, ret, a1) \
     MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_1(a1))
 
-bool mlua_check_cbool(lua_State* ls, int arg);
+bool mlua_to_cbool(lua_State* ls, int arg);
 
 typedef struct mlua_reg {
     char const* name;
