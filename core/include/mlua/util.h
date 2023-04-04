@@ -12,60 +12,41 @@ extern "C" {
 
 #define MLUA_STR(n) #n
 
-#define MLUA_FUNC_0_0(p, n)             \
-static int l_ ## n(lua_State* ls) {     \
-    p ## n();                           \
-    return 0;                           \
-}
+#define MLUA_ARGS_1(a1) \
+    a1(ls, 1)
+#define MLUA_ARGS_2(a1, a2) \
+    a1(ls, 1), a2(ls, 2)
+#define MLUA_ARGS_3(a1, a2, a3) \
+    a1(ls, 1), a2(ls, 2), a3(ls, 3)
+#define MLUA_ARGS_4(a1, a2, a3, a4) \
+    a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4)
+#define MLUA_ARGS_5(a1, a2, a3, a4, a5) \
+    a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), a5(ls, 5)
 
-#define MLUA_FUNC_0_1(p, n, t1)             \
-static int l_ ## n(lua_State* ls) {         \
-    p ## n(luaL_check ## t1(ls, 1));        \
-    return 0;                               \
-}
+#define MLUA_FUNC_0(wp, p, n, args)  \
+static int wp ## n(lua_State* ls) { p ## n(args); return 0; }
+#define MLUA_FUNC_1(wp, p, n, ret, args)  \
+static int wp ## n(lua_State* ls) { ret(ls, p ## n(args)); return 1; }
 
-#define MLUA_FUNC_0_2(p, n, t1, t2)                             \
-static int l_ ## n(lua_State* ls) {                             \
-    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2));   \
-    return 0;                                                   \
-}
+#define MLUA_FUNC_0_0(wp, p, n) \
+    MLUA_FUNC_0(wp, p, n,)
+#define MLUA_FUNC_0_1(wp, p, n, a1) \
+    MLUA_FUNC_0(wp, p, n, MLUA_ARGS_1(a1))
+#define MLUA_FUNC_0_2(wp, p, n, a1, a2) \
+    MLUA_FUNC_0(wp, p, n, MLUA_ARGS_2(a1, a2))
+#define MLUA_FUNC_0_3(wp, p, n, a1, a2, a3) \
+    MLUA_FUNC_0(wp, p, n, MLUA_ARGS_3(a1, a2, a3))
+#define MLUA_FUNC_0_4(wp, p, n, a1, a2, a3, a4) \
+    MLUA_FUNC_0(wp, p, n, MLUA_ARGS_4(a1, a2, a3, a4))
+#define MLUA_FUNC_0_5(wp, p, n, a1, a2, a3, a4, a5) \
+    MLUA_FUNC_0(wp, p, n, MLUA_ARGS_5(a1, a2, a3, a4, a5))
 
-#define MLUA_FUNC_0_3(p, n, t1, t2, t3)                         \
-static int l_ ## n(lua_State* ls) {                             \
-    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
-           luaL_check ## t3(ls, 3));                            \
-    return 0;                                                   \
-}
-
-#define MLUA_FUNC_0_4(p, n, t1, t2, t3, t4)                     \
-static int l_ ## n(lua_State* ls) {                             \
-    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
-           luaL_check ## t3(ls, 3), luaL_check ## t4(ls, 4));   \
-    return 0;                                                   \
-}
-
-#define MLUA_FUNC_0_5(p, n, t1, t2, t3, t4, t5)                 \
-static int l_ ## n(lua_State* ls) {                             \
-    p ## n(luaL_check ## t1(ls, 1), luaL_check ## t2(ls, 2),    \
-           luaL_check ## t3(ls, 3), luaL_check ## t4(ls, 4),    \
-           luaL_check ## t5(ls, 5));                            \
-    return 0;                                                   \
-}
-
-#define MLUA_FUNC_1_0(p, n, ret)        \
-static int l_ ## n(lua_State* ls) {     \
-    lua_push ## ret(ls, p ## n());      \
-    return 1;                           \
-}
-
-#define MLUA_FUNC_1_1(p, n, ret, t1)                        \
-static int l_ ## n(lua_State* ls) {                         \
-    lua_push ## ret(ls, p ## n(luaL_check ## t1(ls, 1)));   \
-    return 1;                                               \
-}
+#define MLUA_FUNC_1_0(wp, p, n, ret) \
+    MLUA_FUNC_1(wp, p, n, ret,)
+#define MLUA_FUNC_1_1(wp, p, n, ret, a1) \
+    MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_1(a1))
 
 bool mlua_check_cbool(lua_State* ls, int arg);
-#define luaL_checkcbool mlua_check_cbool
 
 typedef struct mlua_reg {
     char const* name;
