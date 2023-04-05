@@ -8,6 +8,9 @@ target_link_libraries(mlua_lib_hardware.gpio INTERFACE
     hardware_gpio
 )
 
+mlua_add_c_module(mlua_lib_int64 int64 int64.c)
+target_include_directories(mlua_lib_int64_headers INTERFACE include_int64)
+
 mlua_add_lua_module(mlua_lib_module module module.lua)
 target_link_libraries(mlua_lib_module INTERFACE
     mlua_core_lib_package
