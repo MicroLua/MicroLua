@@ -6,19 +6,30 @@
 -- work around it by appending a zero byte to the output.
 
 local io = require 'io'
+local package = require 'package'
 local string = require 'string'
 
 local input_path, output_path = ...
 
+local dirsep = package.config:sub(1, 1)
+
+function basename(path)
+    local i = path:find(string.format('%s[^%s]*$', dirsep, dirsep))
+    if i ~= nil then return path:sub(i + 1) end
+    return path
+end
+
 -- Compile the input file.
-if input_path == '-' then input_path = nil end
-local chunk = assert(loadfile(input_path))
+local name = '=<unknown>'
+if input_path ~= '-' then
+    io.input(input_path)
+    name = '@' .. basename(input_path)
+end
+local chunk = assert(load(function() return io.read(4096) end, name))
 local bin = string.dump(chunk)
 
 -- Output the compiled chunk as C array data.
-if output_path ~= "-" then
-    io.output(output_path)
-end
+if output_path ~= '-' then io.output(output_path) end
 local offset = 0
 while true do
     if offset >= #bin then break end
