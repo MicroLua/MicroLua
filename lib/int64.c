@@ -242,25 +242,7 @@ static int int64___shr(lua_State* ls) {
     return 1;
 }
 
-static int int64___eq(lua_State* ls) {
-    bool res;
-    int64_t v;
-    if (is_float(ls, 1)) {
-        lua_Number lhs = lua_tonumber(ls, 1);
-        int64_t rhs = mlua_check_int64(ls, 2);
-        res = mlua_number_to_int64_eq(lhs, &v) && v == rhs;
-    } else if (is_float(ls, 2)) {
-        int64_t lhs = mlua_check_int64(ls, 1);
-        lua_Number rhs = lua_tonumber(ls, 2);
-        res = mlua_number_to_int64_eq(rhs, &v) && lhs == v;
-    } else {
-        res = mlua_check_int64(ls, 1) == mlua_check_int64(ls, 2);
-    }
-    lua_pushboolean(ls, res);
-    return 1;
-}
-
-#define CMP_OP(n, op) \
+#define CMP_OP(n, op, lmod, lcmp, rmod, rcmp) \
 static int int64_ ## n(lua_State* ls) { \
     bool res; \
     int64_t v; \
@@ -269,20 +251,20 @@ static int int64_ ## n(lua_State* ls) { \
         int64_t rhs = mlua_check_int64(ls, 2); \
         if (mlua_int64_fits_number(rhs)) { \
             res = lhs op (lua_Number)rhs; \
-        } else if (mlua_number_to_int64_floor(lhs, &v)) { \
+        } else if (mlua_number_to_int64_ ## lmod(lhs, &v)) { \
             res = v op rhs; \
         } else { \
-            res = lhs op 0; \
+            res = lcmp op 0; \
         } \
     } else if (is_float(ls, 2)) { \
         int64_t lhs = mlua_check_int64(ls, 1); \
         lua_Number rhs = lua_tonumber(ls, 2); \
         if (mlua_int64_fits_number(lhs)) { \
             res = (lua_Number)lhs op rhs; \
-        } else if (mlua_number_to_int64_ceil(rhs, &v)) { \
+        } else if (mlua_number_to_int64_ ## rmod(rhs, &v)) { \
             res = lhs op v; \
         } else { \
-            res = 0 op rhs; \
+            res = 0 op rcmp; \
         } \
     } else { \
         res = mlua_check_int64(ls, 1) op mlua_check_int64(ls, 2); \
@@ -291,8 +273,9 @@ static int int64_ ## n(lua_State* ls) { \
     return 1; \
 }
 
-CMP_OP(__lt, <)
-CMP_OP(__le, <=)
+CMP_OP(__eq, ==, eq, 1, eq, 1)
+CMP_OP(__lt, <, floor, lhs, ceil, rhs)
+CMP_OP(__le, <=, floor, lhs, ceil, rhs)
 
 static int int64___tostring(lua_State* ls) {
     int64_t* v = luaL_checkudata(ls, 1, "int64");
