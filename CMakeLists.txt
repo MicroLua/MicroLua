@@ -16,7 +16,10 @@ if(NOT MLUA_PATH)
 endif()
 
 add_compile_definitions(PICO_STDIO_DEFAULT_CRLF=0)
-add_compile_options(-Wall -Werror -Wextra -Wsign-compare -Wno-unused-parameter)
+add_compile_options(
+    -Wall -Werror -Wextra -Wsign-compare
+    -Wno-unused-function -Wno-unused-parameter
+)
 
 include(rules.cmake)
 
