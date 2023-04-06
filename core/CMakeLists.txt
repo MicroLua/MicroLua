@@ -47,20 +47,20 @@ mlua_add_core_c_module(table ltablib.c)
 mlua_add_core_c_module(utf8 lutf8lib.c)
 
 # All core Lua modules.
-mlua_add_core_library(mlua_core_lib_all
+mlua_add_core_library(mlua_core_mod_all
     linit.c
 )
-target_link_libraries(mlua_core_lib_all INTERFACE
-    mlua_core_lib_base
-    mlua_core_lib_coroutine
-    mlua_core_lib_debug
-    mlua_core_lib_io
-    mlua_core_lib_math
-    mlua_core_lib_os
-    mlua_core_lib_package
-    mlua_core_lib_string
-    mlua_core_lib_table
-    mlua_core_lib_utf8
+target_link_libraries(mlua_core_mod_all INTERFACE
+    mlua_mod_base
+    mlua_mod_coroutine
+    mlua_mod_debug
+    mlua_mod_io
+    mlua_mod_math
+    mlua_mod_os
+    mlua_mod_package
+    mlua_mod_string
+    mlua_mod_table
+    mlua_mod_utf8
 )
 
 # The entry point of the Lua interpreter.
@@ -75,6 +75,6 @@ target_include_directories(mlua_core_main INTERFACE
 )
 target_link_libraries(mlua_core_main INTERFACE
     mlua_core
-    mlua_core_lib_base
-    mlua_core_lib_package
+    mlua_mod_base
+    mlua_mod_package
 )

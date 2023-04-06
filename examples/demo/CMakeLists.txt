@@ -1,8 +1,8 @@
 mlua_add_lua_module(mlua_examples_demo_main main main.lua)
 target_link_libraries(mlua_examples_demo_main INTERFACE
-    mlua_core_lib_all
-    mlua_lib_int64
-    mlua_lib_module
+    mlua_core_mod_all
+    mlua_mod_int64
+    mlua_mod_module
 )
 
 add_executable(mlua_examples_demo)

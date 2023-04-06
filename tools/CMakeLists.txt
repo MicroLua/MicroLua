@@ -1,7 +1,7 @@
 mlua_add_lua_module(mlua_tools_tests_main main tests_main.lua)
 target_link_libraries(mlua_tools_tests_main INTERFACE
-    mlua_lib_module
-    mlua_lib_testing
+    mlua_mod_module
+    mlua_mod_testing
 )
 
 add_executable(mlua_tools_tests)

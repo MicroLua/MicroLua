@@ -64,13 +64,13 @@ function(mlua_register_module TARGET MOD SRC)
 endfunction()
 
 function(mlua_add_core_c_module_noreg MOD)
-    mlua_add_core_library(mlua_core_lib_${MOD} ${ARGN})
-    target_link_libraries(mlua_core_lib_${MOD} INTERFACE mlua_core)
+    mlua_add_core_library(mlua_mod_${MOD} ${ARGN})
+    target_link_libraries(mlua_mod_${MOD} INTERFACE mlua_core)
 endfunction()
 
 function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg(${MOD} ${ARGN})
-    mlua_register_module(mlua_core_lib_${MOD} ${MOD} NOSRC)
+    mlua_register_module(mlua_mod_${MOD} ${MOD} NOSRC)
 endfunction()
 
 function(mlua_add_c_module TARGET MOD)
