@@ -3,7 +3,7 @@
 bool mlua_to_cbool(lua_State* ls, int arg) {
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
     if (lua_type(ls, arg) == LUA_TNUMBER)
-        lua_tonumber(ls, arg) != l_mathop(0.0);
+        return lua_tonumber(ls, arg) != l_mathop(0.0);
     return lua_toboolean(ls, arg);
 }
 

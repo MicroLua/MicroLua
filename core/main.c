@@ -40,6 +40,7 @@ static int pmain(lua_State* ls) {
     } else {
         lua_pop(ls, 2);  // Remove error and main module
     }
+    return 0;
 }
 
 void mlua_main() {

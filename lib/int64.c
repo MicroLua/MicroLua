@@ -58,7 +58,7 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
     char* end;
     *value = strtoll(s, &end, base);
     if (end == s || errno != 0) return false;
-    while (isspace(*end)) ++end;
+    while (isspace((int)*end)) ++end;
     return *end == '\0';
 }
 
@@ -91,8 +91,8 @@ static void int64_min(lua_State* ls, mlua_reg const* reg, int nup) {
 static int int64_hex(lua_State* ls) {
     int64_t value = mlua_check_int64(ls, 1);
     lua_Integer width = luaL_optinteger(ls, 2, 0);
-    luaL_argcheck(ls, 0 <= width && width <= 2 * sizeof(int64_t), 2,
-                  "width must be between 0 and 16");
+    luaL_argcheck(ls, 0 <= width && width <= (lua_Integer)(2 * sizeof(int64_t)),
+                  2, "width must be between 0 and 16");
     char s[2 * sizeof(int64_t) + 1];
     int len;
     if (width == 0) {
@@ -100,7 +100,7 @@ static int int64_hex(lua_State* ls) {
     } else {
         len = snprintf(s, sizeof(s), "%0*"PRIx64, width, value);
     }
-    lua_pushstring(ls, s);
+    lua_pushlstring(ls, s, len);
     return 1;
 }
 

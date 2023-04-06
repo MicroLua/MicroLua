@@ -17,14 +17,10 @@ endif()
 
 include(rules.cmake)
 
+add_compile_definitions(PICO_STDIO_DEFAULT_CRLF=0)
+add_compile_options(-Wall -Werror -Wextra -Wsign-compare -Wno-unused-parameter)
+
 add_subdirectory(core)
 add_subdirectory(examples)
 add_subdirectory(lib)
 add_subdirectory(tools)
-
-add_compile_options(
-    -Wall
-    -Werror
-    -Wextra
-    -Wsign-compare
-)
