@@ -13,7 +13,7 @@
 --  - Lookups of undefined symbols are forwarded to the global environment.
 --  - Lookups of undefined symbols in the global environment raise an error.
 
-local package = require "package"
+local package = require 'package'
 
 -- Make the lookup of undefined keys in the global environment an error.
 local gmt = {}

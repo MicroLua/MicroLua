@@ -1,13 +1,6 @@
 -- A simple object model for object-oriented programming.
 
-_ENV = require "module"(...)
-
--- Define a class, optionally inheriting from the given base.
-function class(base)
-    local cls = {__base = base}
-    cls.__index = cls
-    return setmetatable(cls, {__index = base, __call = class_call})
-end
+_ENV = require 'module'(...)
 
 -- The __call metamethod of all classes.
 local function class_call(cls, ...)
@@ -17,6 +10,16 @@ local function class_call(cls, ...)
         init(obj, ...)
     end
     return obj
+end
+
+-- Define a class, optionally inheriting from the given base.
+function class(name, base)
+    local cls = name
+    if type(name) == 'string' then
+        cls = {__name = name, __base = base}
+    end
+    cls.__index = cls
+    return setmetatable(cls, {__index = cls.__base, __call = class_call})
 end
 
 -- Return true iff "obj" is an instance of "cls".

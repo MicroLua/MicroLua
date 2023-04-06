@@ -83,3 +83,12 @@ function(mlua_add_lua_module TARGET MOD SRC)
     pico_add_library(${TARGET})
     mlua_register_module(${TARGET} ${MOD} ${SRC})
 endfunction()
+
+set_property(GLOBAL PROPERTY mlua_test_targets)
+
+function(mlua_add_lua_test_module TARGET MOD SRC)
+    mlua_add_lua_module(${TARGET} ${MOD} ${SRC})
+    get_property(tests GLOBAL PROPERTY mlua_test_targets)
+    list(APPEND tests ${TARGET})
+    set_property(GLOBAL PROPERTY mlua_test_targets ${tests})
+endfunction()

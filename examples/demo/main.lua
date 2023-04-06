@@ -1,8 +1,8 @@
-_ENV = require "module"(...)
+_ENV = require 'module'(...)
 
-local int64 = require "int64"
-local math = require "math"
-local string = require "string"
+local int64 = require 'int64'
+local math = require 'math'
+local string = require 'string'
 
 function main()
     print("============================\nIn main()")
@@ -35,16 +35,16 @@ function main()
     print(tostring(int64(123)))
     print(getmetatable(int64(123)))
     print(int64(123):hex())
-    print(int64(123) .. int64(456))
-    print(123 .. int64(456))
-    print(123.0 .. int64(456))
+    -- print(int64(123) .. int64(456))
+    -- print(123 .. int64(456))
+    -- print(123.0 .. int64(456))
     print(int64(123):hex())
     print(int64(123):hex(8))
     print(int64(123):tointeger())
     print(int64.max:tointeger())
     print(int64(0x12345678, 0x24681357):hex())
     print(int64(0xabcdef12, 0xfedcba21):hex())
-    print(int64("101100", 2):hex())
-    print(int64("deadbeef", 16):hex())
-    print(int64("xyz", 36):hex())
+    print(int64('101100', 2):hex())
+    print(int64('deadbeef', 16):hex())
+    print(int64('xyz', 36):hex())
 end

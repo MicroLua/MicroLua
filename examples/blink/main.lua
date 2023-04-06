@@ -1,8 +1,8 @@
-_ENV = require "module"(...)
+_ENV = require 'module'(...)
 
-local gpio = require "hardware.gpio"
-local pico = require "pico"
-local time = require "pico.time"
+local gpio = require 'hardware.gpio'
+local pico = require 'pico'
+local time = require 'pico.time'
 
 function main()
     local LED_PIN = pico.DEFAULT_LED_PIN

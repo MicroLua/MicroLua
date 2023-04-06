@@ -1,10 +1,10 @@
-_ENV = require "module"(...)
+_ENV = require 'module'(...)
 
-local adc = require "hardware.adc"
-local gpio = require "hardware.gpio"
-local pico = require "pico"
-local time = require "pico.time"
-local string = require "string"
+local adc = require 'hardware.adc'
+local gpio = require 'hardware.gpio'
+local pico = require 'pico'
+local time = require 'pico.time'
+local string = require 'string'
 
 local TEMPERATURE_UNIT = "C"
 local conv = 3.3 / (1 << 12)

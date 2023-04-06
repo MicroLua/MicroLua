@@ -1,12 +1,13 @@
-mlua_add_lua_module(mlua_examples_demo_main
-    main ${CMAKE_CURRENT_LIST_DIR}/main.lua)
+mlua_add_lua_module(mlua_examples_demo_main main main.lua)
+target_link_libraries(mlua_examples_demo_main INTERFACE
+    mlua_core_lib_all
+    mlua_lib_int64
+    mlua_lib_module
+)
 
 add_executable(mlua_examples_demo)
 target_link_libraries(mlua_examples_demo
-    mlua_core_lib_all
     mlua_examples_demo_main
-    mlua_lib_int64
-    mlua_lib_module
     pico_stdlib
 )
 

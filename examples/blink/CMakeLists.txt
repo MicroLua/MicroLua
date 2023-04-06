@@ -1,13 +1,14 @@
-mlua_add_lua_module(mlua_examples_blink_main
-    main ${CMAKE_CURRENT_LIST_DIR}/main.lua)
+mlua_add_lua_module(mlua_examples_blink_main main main.lua)
+target_link_libraries(mlua_examples_blink_main INTERFACE
+    mlua_lib_hardware_gpio
+    mlua_lib_module
+    mlua_lib_pico
+    mlua_lib_pico_time
+)
 
 add_executable(mlua_examples_blink)
 target_link_libraries(mlua_examples_blink
     mlua_examples_blink_main
-    mlua_lib_hardware.gpio
-    mlua_lib_module
-    mlua_lib_pico
-    mlua_lib_pico.time
     pico_stdlib
 )
 
