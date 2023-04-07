@@ -14,7 +14,11 @@ target_include_directories(mlua_mod_int64_headers INTERFACE include_int64)
 mlua_add_lua_test_module(mlua_mod_int64_tests int64.tests int64.tests.lua)
 target_link_libraries(mlua_mod_int64_tests INTERFACE
     mlua_mod_int64
+    mlua_mod_math
     mlua_mod_module
+    mlua_mod_string
+    mlua_mod_table
+    mlua_mod_testing
 )
 
 mlua_add_lua_module(mlua_mod_module module module.lua)

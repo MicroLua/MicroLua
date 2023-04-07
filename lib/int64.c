@@ -55,11 +55,34 @@ int mlua_int64_to_string(int64_t value, char* s, size_t size) {
 }
 
 bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
-    char* end;
-    *value = strtoll(s, &end, base);
-    if (end == s || errno != 0) return false;
-    while (isspace((int)*end)) ++end;
-    return *end == '\0';
+    while (isspace((unsigned char)*s)) ++s;
+    char c = *s++;
+    bool neg = c == '-';
+    if (neg || c == '+') c = *s++;
+    if (base == 0) {
+        if (c == '0') {
+            switch (*s) {
+            case 'x': case 'X': base = 16; break;
+            case 'o': base = 8; break;
+            case 'b': base = 2; break;
+            }
+            if (base != 0) { s++; c = *s++; }
+        }
+        if (base == 0) base = 10;
+    }
+    if (!isalnum((unsigned char)c)) return false;
+    uint64_t v = 0;
+    do {
+        int digit = isdigit((unsigned char)c) ? c - '0'
+                    : toupper((unsigned char)c) - 'A' + 10;
+        if (digit >= base) return false;
+        v = v * base + digit;
+        c = *s++;
+    } while (isalnum((unsigned char)c));
+    while (isspace((unsigned char)c)) c = *s++;
+    if (c != '\0') return false;
+    *value = (int64_t)(neg ? (uint64_t)0 - v : v);
+    return true;
 }
 
 int64_t* mlua_test_int64(lua_State* ls, int arg) {
@@ -110,7 +133,7 @@ static int int64_tointeger(lua_State* ls) {
     if ((int64_t)v == value) {
         lua_pushinteger(ls, v);
     } else {
-        lua_pushnil(ls);
+        luaL_pushfail(ls);
     }
     return 1;
 }
@@ -278,9 +301,9 @@ CMP_OP(__lt, <, floor, lhs, ceil, rhs)
 CMP_OP(__le, <=, floor, lhs, ceil, rhs)
 
 static int int64___tostring(lua_State* ls) {
-    int64_t* v = luaL_checkudata(ls, 1, "int64");
+    int64_t v = mlua_check_int64(ls, 1);
     char s[MLUA_MAX_INT64_STR_SIZE];
-    int len = mlua_int64_to_string(*v, s, sizeof(s));
+    int len = mlua_int64_to_string(v, s, sizeof(s));
     lua_pushlstring(ls, s, len);
     return 1;
 }
@@ -306,7 +329,7 @@ static int int64___concat(lua_State* ls) {
 
 static int int64_call(lua_State* ls) {
     lua_remove(ls, 1);  // Remove class
-    int64_t value;
+    int64_t value = 0;
     switch (lua_type(ls, 1)) {
     case LUA_TBOOLEAN:
         value = lua_toboolean(ls, 1) ? 1 : 0;
@@ -319,11 +342,12 @@ static int int64_call(lua_State* ls) {
                                 / sizeof(lua_Integer);
             if (top > maxargs)
                 return luaL_error(ls, "too many arguments (max: %d)", maxargs);
-            value = 0;
+            uint64_t mask = ~(uint64_t)0;
             for (int index = 1; index <= top; ++index) {
-                lua_Integer part = luaL_checkinteger(ls, index);
-                value = (int64_t)(((uint64_t)value) << (sizeof(lua_Integer) * 8)
-                                  | (lua_Unsigned)part);
+                int64_t part = (int64_t)luaL_checkinteger(ls, index)
+                               << (index - 1) * sizeof(lua_Integer) * 8;
+                value = (int64_t)(((uint64_t)value & ~mask) | (uint64_t)part);
+                mask <<= sizeof(lua_Integer) * 8;
             }
         } else if (!mlua_number_to_int64_eq(lua_tonumber(ls, 1), &value)) {
             luaL_pushfail(ls);
@@ -333,8 +357,8 @@ static int int64_call(lua_State* ls) {
 
     case LUA_TSTRING:
         lua_Integer base = luaL_optinteger(ls, 2, 0);
-        luaL_argcheck(ls, 0 <= base && base <= 36, 2,
-                      "base must be between 0 and 36");
+        luaL_argcheck(ls, base == 0 || (2 <= base && base <= 36), 2,
+                      "base must be 0 or between 2 and 36");
         if (!mlua_string_to_int64(lua_tostring(ls, 1), base, &value)) {
             luaL_pushfail(ls);
             return 1;

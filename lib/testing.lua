@@ -6,14 +6,12 @@ local package = require 'package'
 local string = require 'string'
 local table = require 'table'
 
+
 local def_mod_pat = '%.tests$'
 local def_func_pat = '^test_'
+local err_end = {}
 
-local function result(failed)
-    return failed and 'FAIL' or 'PASS'
-end
-
-local function sorted_keys(tab, filter)
+function sorted_keys(tab, filter)
     local res = {}
     for key in next, tab do
         if not filter or filter(key) then
@@ -31,18 +29,30 @@ function Test:__init(name, parent)
     self.parent = parent
     if parent then parent.children[#parent.children + 1] = self end;
     self.errors = 0
+    self.skipped = false
     self.children = {}
+end
+
+function Test:message(format, ...)
+    if format:sub(-1) ~= '\n' then format = format .. '\n' end
+    io.write(string.format(format, ...))
+    -- TODO: Include location
 end
 
 function Test:error(format, ...)
     self.errors = self.errors + 1
-    if format:sub(-1) ~= '\n' then format = format .. '\n' end
-    io.write(string.format("ERROR: " .. format, ...))
+    self:message("ERROR: " .. format, ...)
 end
 
 function Test:fatal(format, ...)
     self:error(format, ...)
-    error("test failed", 2)
+    error(err_end)
+end
+
+function Test:skip(format, ...)
+    self.skipped = true
+    self:message("SKIP: " .. format, ...)
+    error(err_end)
 end
 
 function Test:expect(cond, format, ...)
@@ -61,12 +71,23 @@ function Test:failed()
     return false
 end
 
+function Test:result()
+    return self:failed() and 'FAIL' or self.skipped and 'SKIP' or 'PASS'
+end
+
 function Test:run(name, func)
     local t = Test(name, self)
-    io.write(string.format("--- BEGIN %s ---\n", name))
-    -- TODO: pcall
-    func(t)
-    io.write(string.format("--- END %s ---\n", name))
+    -- local b = Buffer()
+    -- TODO: io.output argumnet must be an io.file
+    -- TODO: Define own io abstraction, don't use io at all, or wrap it
+    -- TODO: Override lua_write*() macros to make print() work, or maybe disable
+    --       them altogether and override print()
+    io.write(string.format("----- BEGIN %s\n", name))
+    local res, err = pcall(func, t)
+    io.write(string.format("----- END   %s\n", name))
+    if not res then
+        if err ~= err_end then t:error("%s", err) end
+    end
 end
 
 function Test:run_all(module, pat)
@@ -79,7 +100,7 @@ end
 
 function Test:print_result(indent)
     indent = indent or ''
-    io.write(string.format("%s%s: %s\n", indent, result(self:failed()),
+    io.write(string.format("%s%s: %s\n", indent, self:result(),
                            self.name))
     for _, t in ipairs(self.children) do
         t:print_result(indent .. '  ')
@@ -103,5 +124,21 @@ function run_tests_main()
     for _, c in ipairs(t.children) do
         c:print_result()
     end
-    io.write(string.format("\nResult: %s\n\n", result(t:failed())))
+    io.write(string.format("\nResult: %s\n\n", t:result()))
+end
+
+Buffer = oo.class('Buffer')
+
+function Buffer:__init()
+    self.data = {}
+end
+
+function Buffer:write(...)
+    for _, d in table.pack(...) do
+        self.data[#self.data + 1] = d
+    end
+end
+
+function Buffer:value()
+    return table.concat(self.data)
 end
