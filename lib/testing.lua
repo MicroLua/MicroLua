@@ -1,6 +1,8 @@
+-- A unit-testing library.
+
 _ENV = require 'module'(...)
 
-local io = require 'io'
+local eio = require 'eio'
 local oo = require 'oo'
 local package = require 'package'
 local string = require 'string'
@@ -9,7 +11,7 @@ local table = require 'table'
 
 local def_mod_pat = '%.tests$'
 local def_func_pat = '^test_'
-local err_end = {}
+local err_terminate = {}
 
 function sorted_keys(tab, filter)
     local res = {}
@@ -35,7 +37,7 @@ end
 
 function Test:message(format, ...)
     if format:sub(-1) ~= '\n' then format = format .. '\n' end
-    io.write(string.format(format, ...))
+    eio.write(string.format(format, ...))
     -- TODO: Include location
 end
 
@@ -46,13 +48,13 @@ end
 
 function Test:fatal(format, ...)
     self:error(format, ...)
-    error(err_end)
+    error(err_terminate)
 end
 
 function Test:skip(format, ...)
     self.skipped = true
     self:message("SKIP: " .. format, ...)
-    error(err_end)
+    error(err_terminate)
 end
 
 function Test:expect(cond, format, ...)
@@ -77,16 +79,18 @@ end
 
 function Test:run(name, func)
     local t = Test(name, self)
-    -- local b = Buffer()
-    -- TODO: io.output argumnet must be an io.file
-    -- TODO: Define own io abstraction, don't use io at all, or wrap it
-    -- TODO: Override lua_write*() macros to make print() work, or maybe disable
-    --       them altogether and override print()
-    io.write(string.format("----- BEGIN %s\n", name))
+    local b = eio.Buffer()
+    local old_out = eio.stdout
+    eio.stdout = b
     local res, err = pcall(func, t)
-    io.write(string.format("----- END   %s\n", name))
     if not res then
-        if err ~= err_end then t:error("%s", err) end
+        if err ~= err_terminate then t:error("%s", err) end
+    end
+    eio.stdout = old_out
+    if t:failed() and not b:is_empty() then
+        eio.write(string.format("----- BEGIN %s\n", name))
+        b:replay(eio.stdout)
+        eio.write(string.format("----- END   %s\n", name))
     end
 end
 
@@ -98,12 +102,14 @@ function Test:run_all(module, pat)
     end
 end
 
-function Test:print_result(indent)
+function Test:print_result(indent, all)
     indent = indent or ''
-    io.write(string.format("%s%s: %s\n", indent, self:result(),
+    eio.write(string.format("%s%s: %s\n", indent, self:result(),
                            self.name))
     for _, t in ipairs(self.children) do
-        t:print_result(indent .. '  ')
+        if all or t:failed() then
+            t:print_result(indent .. '  ', all)
+        end
     end
 end
 
@@ -118,27 +124,11 @@ function run_all_modules(t, mod_pat, func_pat)
 end
 
 function run_tests_main()
-    local t = Test("All tests")
+    local t = Test()
     run_all_modules(t)
-    io.write("\n")
+    eio.write("\n")
     for _, c in ipairs(t.children) do
         c:print_result()
     end
-    io.write(string.format("\nResult: %s\n\n", t:result()))
-end
-
-Buffer = oo.class('Buffer')
-
-function Buffer:__init()
-    self.data = {}
-end
-
-function Buffer:write(...)
-    for _, d in table.pack(...) do
-        self.data[#self.data + 1] = d
-    end
-end
-
-function Buffer:value()
-    return table.concat(self.data)
+    eio.write(string.format("\nResult: %s\n\n", t:result()))
 end

@@ -1,3 +1,11 @@
+mlua_add_lua_module(mlua_mod_eio eio eio.lua)
+target_link_libraries(mlua_mod_eio INTERFACE
+    mlua_mod_io
+    mlua_mod_module
+    mlua_mod_oo
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_hardware_adc hardware.adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware_adc INTERFACE
     hardware_adc
@@ -49,7 +57,7 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
 
 mlua_add_lua_module(mlua_mod_testing testing testing.lua)
 target_link_libraries(mlua_mod_testing INTERFACE
-    mlua_mod_io
+    mlua_mod_eio
     mlua_mod_module
     mlua_mod_oo
     mlua_mod_package
