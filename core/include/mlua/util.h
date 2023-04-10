@@ -45,6 +45,14 @@ static int wp ## n(lua_State* ls) { ret(ls, p ## n(args)); return 1; }
     MLUA_FUNC_1(wp, p, n, ret,)
 #define MLUA_FUNC_1_1(wp, p, n, ret, a1) \
     MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_1(a1))
+#define MLUA_FUNC_1_2(wp, p, n, ret, a1, a2) \
+    MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_2(a1, a2))
+#define MLUA_FUNC_1_3(wp, p, n, ret, a1, a2, a3) \
+    MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_3(a1, a2, a3))
+#define MLUA_FUNC_1_4(wp, p, n, ret, a1, a2, a3, a4) \
+    MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_4(a1, a2, a3, a4))
+#define MLUA_FUNC_1_5(wp, p, n, ret, a1, a2, a3, a4, a5) \
+    MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_5(a1, a2, a3, a4, a5))
 
 bool mlua_to_cbool(lua_State* ls, int arg);
 

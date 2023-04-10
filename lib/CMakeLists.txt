@@ -43,6 +43,7 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_time pico.time pico.time.c)
 target_link_libraries(mlua_mod_pico_time INTERFACE
+    mlua_mod_int64
     pico_time
 )
 
