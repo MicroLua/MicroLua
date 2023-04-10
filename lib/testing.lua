@@ -7,22 +7,11 @@ local oo = require 'oo'
 local package = require 'package'
 local string = require 'string'
 local table = require 'table'
-
+local util = require 'util'
 
 local def_mod_pat = '%.tests$'
 local def_func_pat = '^test_'
 local err_terminate = {}
-
-function sorted_keys(tab, filter)
-    local res = {}
-    for key in next, tab do
-        if not filter or filter(key) then
-            res[#res + 1] = key
-        end
-    end
-    table.sort(res)
-    return res
-end
 
 Test = oo.class('Test')
 
@@ -96,7 +85,8 @@ end
 
 function Test:run_all(module, pat)
     pat = pat or def_runc_pat
-    local names = sorted_keys(module, function(n) return n:find(pat) end)
+    local names = util.sort(util.keys(module,
+                                      function(n) return n:find(pat) end))
     for _, name in ipairs(names) do
         self:run(name, module[name])
     end
@@ -116,8 +106,8 @@ end
 function run_all_modules(t, mod_pat, func_pat)
     mod_pat = mod_pat or def_mod_pat
     func_pat = func_pat or def_func_pat
-    local names = sorted_keys(package.preload,
-                              function(n) return n:find(mod_pat) end)
+    local names = util.sort(util.keys(package.preload,
+                                      function(n) return n:find(mod_pat) end))
     for _, name in ipairs(names) do
         t:run(name, function(t) t:run_all(require(name), func_pat) end)
     end

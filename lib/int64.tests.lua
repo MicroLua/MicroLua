@@ -4,7 +4,7 @@ local int64 = require 'int64'
 local math = require 'math'
 local string = require 'string'
 local table = require 'table'
-local testing = require 'testing'
+local util = require 'util'
 
 local function arguments(args)
     local fmt = '('
@@ -108,7 +108,7 @@ function test_unary_ops(t)
         ['-'] = function(v) return -v end,
         ['~'] = function(v) return ~v end,
     }
-    for _, op in ipairs(testing.sorted_keys(ops)) do
+    for _, op in ipairs(util.sort(util.keys(ops))) do
         local f = ops[op]
         for _, value in ipairs(values) do
             t:run(string.format("%s(%d)", op, value), function(t)
@@ -133,11 +133,12 @@ function test_binary_int_ops(t)
         ['|'] = function(a, b) return a | b end,
         ['~'] = function(a, b) return a ~ b end,
     }
-    for _, op in ipairs(testing.sorted_keys(ops)) do
+    for _, op in ipairs(util.sort(util.keys(ops))) do
         local f = ops[op]
         for _, a in ipairs(values) do
             for _, b in ipairs(values) do
                 t:run(string.format("%d %s %d", a, op, b), function(t)
+                    -- TODO: Also try mixed arguments
                     local got, want = f(int64(a), int64(b)), int64(f(a, b))
                     t:expect(got == want, "got %s, want %s", got, want)
                 end)
@@ -154,11 +155,12 @@ function test_binary_float_ops(t)
         ['/'] = function(a, b) return a / b end,
         ['^'] = function(a, b) return a ^ b end,
     }
-    for _, op in ipairs(testing.sorted_keys(ops)) do
+    for _, op in ipairs(util.sort(util.keys(ops))) do
         local f = ops[op]
         for _, a in ipairs(values) do
             for _, b in ipairs(values) do
                 t:run(string.format("%d %s %d", a, op, b), function(t)
+                    -- TODO: Also try mixed arguments
                     local got, want = f(int64(a), int64(b)), f(a, b)
                     t:expect(got == want, "got %s, want %s", got, want)
                 end)
