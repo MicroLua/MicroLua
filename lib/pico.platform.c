@@ -17,6 +17,11 @@ static mlua_reg const module_regs[] = {
     X(busy_wait_at_least_cycles),
     X(get_core_num),
 #undef X
+#define X(n) MLUA_REG(integer, n, PICO_ ## n)
+#ifdef PICO_RP2040
+    X(RP2040),
+#endif
+#undef X
     {NULL},
 };
 

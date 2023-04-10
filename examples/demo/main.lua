@@ -2,6 +2,7 @@ _ENV = require 'module'(...)
 
 local int64 = require 'int64'
 local math = require 'math'
+local pico = require 'pico'
 local platform = require 'pico.platform'
 local string = require 'string'
 
@@ -52,4 +53,5 @@ function main()
     print(string.format("chip version: %d", platform.rp2040_chip_version()))
     print(string.format("rom version: %d", platform.rp2040_rom_version()))
     print(string.format("core: %d", platform.get_core_num()))
+    print(string.format("SDK: %s", pico.SDK_VERSION_STRING))
 end

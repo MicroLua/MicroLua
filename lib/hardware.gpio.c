@@ -5,51 +5,52 @@
 
 #include "hardware/gpio.h"
 
-MLUA_FUNC_0_2(l_, gpio_, set_function, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, get_function, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_0_3(l_, gpio_, set_pulls, luaL_checkinteger, mlua_to_cbool,
+MLUA_FUNC_0_2(mod_, gpio_, set_function, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_function, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_0_3(mod_, gpio_, set_pulls, luaL_checkinteger, mlua_to_cbool,
               mlua_to_cbool)
-MLUA_FUNC_0_1(l_, gpio_, pull_up, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, is_pulled_up, lua_pushboolean, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, pull_down, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, is_pulled_down, lua_pushboolean, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, disable_pulls, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_irqover, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_outover, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_inover, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_oeover, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_input_enabled, luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_0_2(l_, gpio_, set_input_hysteresis_enabled, luaL_checkinteger,
+MLUA_FUNC_0_1(mod_, gpio_, pull_up, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, is_pulled_up, lua_pushboolean, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, pull_down, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, is_pulled_down, lua_pushboolean, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, disable_pulls, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_irqover, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_outover, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_inover, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_oeover, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_input_enabled, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_0_2(mod_, gpio_, set_input_hysteresis_enabled, luaL_checkinteger,
               mlua_to_cbool)
-MLUA_FUNC_1_1(l_, gpio_, is_input_hysteresis_enabled, lua_pushboolean,
+MLUA_FUNC_1_1(mod_, gpio_, is_input_hysteresis_enabled, lua_pushboolean,
               luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_slew_rate, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, get_slew_rate, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_drive_strength, luaL_checkinteger,
+MLUA_FUNC_0_2(mod_, gpio_, set_slew_rate, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_slew_rate, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_drive_strength, luaL_checkinteger,
               luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, get_drive_strength, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, init, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, deinit, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, init_mask, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, get, lua_pushboolean, luaL_checkinteger)
-MLUA_FUNC_1_0(l_, gpio_, get_all, lua_pushinteger)
-MLUA_FUNC_0_1(l_, gpio_, set_mask, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, clr_mask, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, xor_mask, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, put_masked, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, put_all, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, put, luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_1_1(l_, gpio_, get_out_level, lua_pushboolean, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, set_dir_out_masked, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, set_dir_in_masked, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_dir_masked, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_1(l_, gpio_, set_dir_all_bits, luaL_checkinteger)
-MLUA_FUNC_0_2(l_, gpio_, set_dir, luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_1_1(l_, gpio_, is_dir_out, lua_pushboolean, luaL_checkinteger)
-MLUA_FUNC_1_1(l_, gpio_, get_dir, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_drive_strength, lua_pushinteger,
+              luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, init, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, deinit, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, init_mask, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get, lua_pushboolean, luaL_checkinteger)
+MLUA_FUNC_1_0(mod_, gpio_, get_all, lua_pushinteger)
+MLUA_FUNC_0_1(mod_, gpio_, set_mask, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, clr_mask, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, xor_mask, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, put_masked, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, put_all, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, put, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_1_1(mod_, gpio_, get_out_level, lua_pushboolean, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, set_dir_out_masked, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, set_dir_in_masked, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_dir_masked, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, gpio_, set_dir_all_bits, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_dir, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_1_1(mod_, gpio_, is_dir_out, lua_pushboolean, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_dir, lua_pushinteger, luaL_checkinteger)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, l_ ## n)
+#define X(n) MLUA_REG(function, n, mod_ ## n)
     X(set_function),
     X(get_function),
     X(set_pulls),
