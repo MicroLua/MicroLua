@@ -6,6 +6,9 @@ local table = require 'table'
 
 -- TODO: Refactor the functionality below as iterators
 
+-- Return all arguments.
+function ident(...) return ... end
+
 -- Return the keys of the given table, optionally filtered.
 function keys(tab, filter)
     local res = {}

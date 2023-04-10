@@ -60,10 +60,10 @@ target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_eio
     mlua_mod_module
     mlua_mod_oo
+    mlua_mod_os
     mlua_mod_package
     mlua_mod_string
     mlua_mod_table
-    mlua_mod_util
 )
 
 mlua_add_lua_module(mlua_mod_util util util.lua)

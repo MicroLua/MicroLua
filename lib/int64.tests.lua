@@ -108,7 +108,7 @@ function test_unary_ops(t)
         ['-'] = function(v) return -v end,
         ['~'] = function(v) return ~v end,
     }
-    for _, op in ipairs(util.sort(util.keys(ops))) do
+    for op, f in pairs(ops) do
         local f = ops[op]
         for _, value in ipairs(values) do
             t:run(string.format("%s(%d)", op, value), function(t)
@@ -119,6 +119,34 @@ function test_unary_ops(t)
     end
 
     -- TODO: Test a few numbers that don't fit an integer
+end
+
+local variants = {
+    ['int64(%d) %s int64(%d)'] = function(f, a, b)
+        return f(int64(a), int64(b))
+    end,
+    ['%d %s int64(%d)'] = function(f, a, b)
+        return f(a, int64(b))
+    end,
+    ['int64(%d) %s %d'] = function(f, a, b)
+        return f(int64(a), b)
+    end,
+}
+
+function run_binary_ops_tests(t, ops, as, bs, cast_want)
+    for op, f in pairs(ops) do
+        for _, a in ipairs(as) do
+            for _, b in ipairs(bs) do
+                local want = cast_want(f(a, b))
+                for fmt, v in pairs(variants) do
+                    t:run(string.format(fmt, a, op, b), function(t)
+                        local got = v(f, a, b)
+                        t:expect(got == want, "got %s, want %s", got, want)
+                    end)
+                end
+            end
+        end
+    end
 end
 
 function test_binary_int_ops(t)
@@ -133,18 +161,7 @@ function test_binary_int_ops(t)
         ['|'] = function(a, b) return a | b end,
         ['~'] = function(a, b) return a ~ b end,
     }
-    for _, op in ipairs(util.sort(util.keys(ops))) do
-        local f = ops[op]
-        for _, a in ipairs(values) do
-            for _, b in ipairs(values) do
-                t:run(string.format("%d %s %d", a, op, b), function(t)
-                    -- TODO: Also try mixed arguments
-                    local got, want = f(int64(a), int64(b)), int64(f(a, b))
-                    t:expect(got == want, "got %s, want %s", got, want)
-                end)
-            end
-        end
-    end
+    run_binary_ops_tests(t, ops, values, values, int64)
 
     -- TODO: Test a few numbers that don't fit an integer
 end
@@ -155,18 +172,9 @@ function test_binary_float_ops(t)
         ['/'] = function(a, b) return a / b end,
         ['^'] = function(a, b) return a ^ b end,
     }
-    for _, op in ipairs(util.sort(util.keys(ops))) do
-        local f = ops[op]
-        for _, a in ipairs(values) do
-            for _, b in ipairs(values) do
-                t:run(string.format("%d %s %d", a, op, b), function(t)
-                    -- TODO: Also try mixed arguments
-                    local got, want = f(int64(a), int64(b)), f(a, b)
-                    t:expect(got == want, "got %s, want %s", got, want)
-                end)
-            end
-        end
-    end
+    run_binary_ops_tests(t, ops, values, values, util.ident)
+
+    -- TODO: Test a few numbers that don't fit an integer
 end
 
 function test_shift_ops(t)
