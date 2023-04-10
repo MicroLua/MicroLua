@@ -2,6 +2,7 @@ _ENV = require 'module'(...)
 
 local int64 = require 'int64'
 local math = require 'math'
+local platform = require 'pico.platform'
 local string = require 'string'
 
 function main()
@@ -47,4 +48,8 @@ function main()
     print(int64('101100', 2):hex())
     print(int64('deadbeef', 16):hex())
     print(int64('xyz', 36):hex())
+
+    print(string.format("chip version: %d", platform.rp2040_chip_version()))
+    print(string.format("rom version: %d", platform.rp2040_rom_version()))
+    print(string.format("core: %d", platform.get_core_num()))
 end

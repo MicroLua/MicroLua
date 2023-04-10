@@ -3,6 +3,7 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_core_mod_all
     mlua_mod_int64
     mlua_mod_module
+    mlua_mod_pico_platform
 )
 
 add_executable(mlua_examples_demo)
