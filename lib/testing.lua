@@ -64,19 +64,19 @@ end
 function Test:run(name, func, keep)
     local t = Test(name)
     local b = eio.Buffer()
-    local old_out = eio.stdout
-    eio.stdout = b
+    local old_out = _G.stdout
+    _G.stdout = b
     local res, err = pcall(func, t)
     if not res then
         if err ~= err_terminate then t:error("%s", err) end
     end
-    eio.stdout = old_out
+    _G.stdout = old_out
     if keep or t.children or t:failed() then
         if not self.children then self.children = {} end
         self.children[#self.children + 1] = t
         if not b:is_empty() then
             eio.write(string.format("----- BEGIN %s\n", name))
-            b:replay(eio.stdout)
+            b:replay(stdout)
             eio.write(string.format("----- END   %s\n", name))
         end
     end

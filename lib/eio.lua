@@ -2,30 +2,14 @@
 
 _ENV = require 'module'(...)
 
-local io = require 'io'
 local oo = require 'oo'
 local string = require 'string'
-
-stdin = io.stdin
-stdout = io.stdout
-stderr = io.stderr
 
 -- Read from stdin.
 function read(...) return stdin:read(...) end
 
 -- Write to stdout.
 function write(...) return stdout:write(...) end
-
--- Replace the global print function so that it uses stdout as defined in this
--- module, instead of the C stdout.
-function _G.print(...)
-    for i = 1, select('#', ...) do
-        local s = tostring(select(i, ...))
-        if i > 1 then stdout:write('\t') end
-        stdout:write(s)
-    end
-    stdout:write('\n')
-end
 
 -- Print formatted to stdout.
 function printf(format, ...)

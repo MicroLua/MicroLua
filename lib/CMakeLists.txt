@@ -1,6 +1,5 @@
 mlua_add_lua_module(mlua_mod_eio eio eio.lua)
 target_link_libraries(mlua_mod_eio INTERFACE
-    mlua_mod_io
     mlua_mod_module
     mlua_mod_oo
     mlua_mod_string

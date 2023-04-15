@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+    echo "Usage: $(basename "$0") DEVICE" >&2
+    exit 2
+fi
+
+socat STDIO "$1,b115200,ignbrk,brkint=0,icrnl=0,imaxbel=0,opost=0,onlcr=0,isig=0,iexten=0,echo=0,echoe=0,echok=0,echoctl=0,echoke=0,iexten=0"
