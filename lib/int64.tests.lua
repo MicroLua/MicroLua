@@ -22,14 +22,15 @@ local function arguments(args)
 end
 
 function test_limits(t)
-    local got, want = int64.max, int64('0x7fffffffffffffff')
-    t:expect(got == want, "int64.max = %s, want %s", got, want)
-    got, want = int64.min, int64('0x8000000000000000')
-    t:expect(got == want, "int64.min = %s, want %s", got, want)
-    got, want = int64.max + 1, int64.min
-    t:expect(got == want, "int64.max + 1 = %s, want %s", got, want)
-    got, want = int64.min - 1, int64.max
-    t:expect(got == want, "int64.min - 1 = %s, want %s", got, want)
+    for _, test in ipairs{
+        {"int64.min", int64.min, int64('0x8000000000000000')},
+        {"int64.max", int64.max, int64('0x7fffffffffffffff')},
+        {"int64.min - 1", int64.min - 1, int64.max},
+        {"int64.max + 1", int64.max + 1, int64.min},
+    } do
+        local desc, value, want = table.unpack(test)
+        t:expect(value == want, "%s = %s, want %s", desc, value, want)
+    end
 end
 
 function test_hex(t)
@@ -203,7 +204,6 @@ function test_relational_ops(t)
 
     local large_num = int64.tonumber(int64(1) << 60)
     local large_int64 = int64(large_num)
-
     for _, vals in ipairs{
         -- Large int64
         {int64.max - 1, int64.max - 2, false, false},
@@ -233,6 +233,23 @@ function test_relational_ops(t)
             check(t, f, -a, op, -b, rwant)
             check(t, f, -b, op, -a, want)
         end
+    end
+
+    for _, vals in ipairs{
+        {int64(0), int64(0), true, false},
+        {int64(0), int64.max, false, true},
+        {int64(0), int64.max + 1, false, true},
+        {int64(0), int64(-1), false, true},
+        {int64.max, int64.max, true, false},
+        {int64.max, int64.max + 1, false, true},
+        {int64.max + 1, int64.max + 1, true, false},
+        {int64(-2), int64(-2), true, false},
+        {int64(-2), int64(-1), false, true},
+    } do
+        local a, b, eq, lt = table.unpack(vals)
+        local got = int64.ult(a, b)
+        check(t, int64.ult, a, '(ult)', b, lt)
+        check(t, int64.ult, b, '(ult)', a, not (lt or eq))
     end
 end
 

@@ -305,6 +305,12 @@ CMP_OP(__eq, ==, eq, 1, eq, 1)
 CMP_OP(__lt, <, floor, lhs, ceil, rhs)
 CMP_OP(__le, <=, floor, lhs, ceil, rhs)
 
+static int int64_ult(lua_State* ls) {
+    int64_t lhs = mlua_check_int64(ls, 1), rhs = mlua_check_int64(ls, 2);
+    lua_pushboolean(ls, (uint64_t)lhs < (uint64_t)rhs);
+    return 1;
+}
+
 static int int64___tostring(lua_State* ls) {
     int64_t v = mlua_check_int64(ls, 1);
     char s[MLUA_MAX_INT64_STR_SIZE];
@@ -388,6 +394,7 @@ static mlua_reg const int64_regs[] = {
     X(hex),
     X(tointeger),
     X(tonumber),
+    X(ult),
     X(__add),
     X(__sub),
     X(__mul),
