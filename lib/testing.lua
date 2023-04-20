@@ -75,7 +75,18 @@ function Test:run(name, func, keep)
     collectgarbage('collect')
 end
 
+function Test:_root()
+    local t = self
+    while true do
+        local p = t._parent
+        if not p then return t end
+        t = p
+    end
+end
+
 function Test:_run(func)
+    local root = self:_root()
+    root.count = (root.count or 0) + 1
     self:_capture_output()
     local res, err = pcall(func, self)
     if not res then
@@ -150,7 +161,8 @@ function main()
     local mem = collectgarbage('count') * 1024
     eio.write("\n")
     t:print_result()
-    eio.printf("\nCPU time: %.2f s\n", dt)
-    eio.printf("Memory: %d bytes\n", mem)
+    eio.printf("\nTest count: %d\n", t.count or 0)
+    eio.printf("CPU time used: %.2f s\n", dt)
+    eio.printf("Memory used: %d bytes\n", mem)
     eio.printf("Result: %s\n\n", t:result())
 end

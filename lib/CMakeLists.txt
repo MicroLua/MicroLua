@@ -66,11 +66,17 @@ target_link_libraries(mlua_mod_testing INTERFACE
 )
 
 add_executable(mlua_tests)
-get_property(tests GLOBAL PROPERTY mlua_test_targets)
+set(MLUA_TEST_TARGET_FILTER ${MLUA_TEST_TARGET_FILTER} CACHE STRING
+    "Test target filter regexp"
+)
+get_property(TESTS GLOBAL PROPERTY mlua_test_targets)
+if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
+    list(FILTER TESTS INCLUDE REGEX "${MLUA_TEST_TARGET_FILTER}")
+endif()
 target_link_libraries(mlua_tests
     mlua_mod_testing
     pico_stdlib
-    ${tests}
+    ${TESTS}
 )
 mlua_main(mlua_tests testing)
 pico_add_extra_outputs(mlua_tests)
