@@ -17,6 +17,9 @@ Test = oo.class('Test')
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
+    if not parent then
+        self.failed_cnt, self.skipped_cnt, self.passed_cnt = 0, 0, 0
+    end
 end
 
 function Test:message(format, ...)
@@ -85,8 +88,6 @@ function Test:_root()
 end
 
 function Test:_run(func)
-    local root = self:_root()
-    root.count = (root.count or 0) + 1
     self:_capture_output()
     local res, err = pcall(func, self)
     if not res then
@@ -95,6 +96,14 @@ function Test:_run(func)
     self:_restore_output()
     if not self._out then
         eio.printf("----- END   %s\n", self.name)
+    end
+    local root = self:_root()
+    if self:failed() then
+        root.failed_cnt = root.failed_cnt + 1
+    elseif self._skipped then
+        root.skipped_cnt = root.skipped_cnt + 1
+    else
+        root.passed_cnt = root.passed_cnt + 1
     end
     self._parent, self._out = nil, nil
 end
@@ -161,8 +170,9 @@ function main()
     local mem = collectgarbage('count') * 1024
     eio.write("\n")
     t:print_result()
-    eio.printf("\nTest count: %d\n", t.count or 0)
-    eio.printf("CPU time used: %.2f s\n", dt)
-    eio.printf("Memory used: %d bytes\n", mem)
+    eio.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
+               t.passed_cnt, t.skipped_cnt, t.failed_cnt,
+               t.passed_cnt + t.skipped_cnt + t.failed_cnt)
+    eio.printf("CPU time: %.2f s, memory: %d bytes\n", dt, mem)
     eio.printf("Result: %s\n\n", t:result())
 end
