@@ -383,6 +383,7 @@ static mlua_reg const int64_regs[] = {
     MLUA_REG(string, __name, "int64"),
     MLUA_REG_PUSH(max, int64_max),
     MLUA_REG_PUSH(min, int64_min),
+    MLUA_REG(function, eq, int64___eq),  // Synonym of __eq
 #define X(n) MLUA_REG(function, n, int64_ ## n)
     X(hex),
     X(tointeger),
