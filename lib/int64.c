@@ -138,6 +138,11 @@ static int int64_tointeger(lua_State* ls) {
     return 1;
 }
 
+static int int64_tonumber(lua_State* ls) {
+    lua_pushnumber(ls, (lua_Number)mlua_check_int64(ls, 1));
+    return 1;
+}
+
 static bool is_float(lua_State* ls, int index) {
     return (lua_type(ls, index) == LUA_TNUMBER && !lua_isinteger(ls, index));
 }
@@ -381,6 +386,7 @@ static mlua_reg const int64_regs[] = {
 #define X(n) MLUA_REG(function, n, int64_ ## n)
     X(hex),
     X(tointeger),
+    X(tonumber),
     X(__add),
     X(__sub),
     X(__mul),

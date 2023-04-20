@@ -9,6 +9,9 @@ local table = require 'table'
 -- Return all arguments.
 function ident(...) return ... end
 
+-- Return true iff a == b.
+function eq(a, b) return a == b end
+
 -- Return the keys of the given table, optionally filtered.
 function keys(tab, filter)
     local res = {}

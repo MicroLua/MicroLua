@@ -47,7 +47,11 @@ function test_hex(t)
 end
 
 function test_tointeger(t)
-    -- TODO
+    t:skip("TODO")
+end
+
+function test_tonumber(t)
+    t:skip("TODO")
 end
 
 function test_cast_to_int64(t)
@@ -108,12 +112,12 @@ function test_unary_ops(t)
         ['-'] = function(v) return -v end,
         ['~'] = function(v) return ~v end,
     }
+    local eq = int64.__eq
     for op, f in pairs(ops) do
-        local f = ops[op]
         for _, value in ipairs(values) do
             t:run(string.format("%s(%d)", op, value), function(t)
-                local got, want = f(int64(value)), int64(f(value))
-                t:expect(got == want, "got %s, want %s", got, want)
+                local got, want = f(int64(value)), f(value)
+                t:expect(eq(got, want), "got %s, want %s", got, want)
             end)
         end
     end
@@ -122,26 +126,28 @@ function test_unary_ops(t)
 end
 
 local variants = {
-    ['int64(%d) %s int64(%d)'] = function(f, a, b)
-        return f(int64(a), int64(b))
+    ['int64(%d) %s int64(%d)'] = function(f)
+        return function(a, b) return f(int64(a), int64(b)) end
     end,
-    ['%d %s int64(%d)'] = function(f, a, b)
-        return f(a, int64(b))
+    ['%d %s int64(%d)'] = function(f)
+        return function(a, b) return f(a, int64(b)) end
     end,
-    ['int64(%d) %s %d'] = function(f, a, b)
-        return f(int64(a), b)
+    ['int64(%d) %s %d'] = function(f)
+        return function(a, b) return f(int64(a), b) end
     end,
 }
 
-function run_binary_ops_tests(t, ops, as, bs, cast_want)
+local function run_binary_ops_tests(t, ops, as, bs, eq)
+    eq = eq or util.eq
     for op, f in pairs(ops) do
-        for _, a in ipairs(as) do
-            for _, b in ipairs(bs) do
-                local want = cast_want(f(a, b))
-                for fmt, v in pairs(variants) do
+        for fmt, v in pairs(variants) do
+            local vf = v(f)
+            for _, a in ipairs(as) do
+                for _, b in ipairs(bs) do
+                    local want = f(a, b)
                     t:run(string.format(fmt, a, op, b), function(t)
-                        local got = v(f, a, b)
-                        t:expect(got == want, "got %s, want %s", got, want)
+                        local got = vf(a, b)
+                        t:expect(eq(got, want), "got %s, want %s", got, want)
                     end)
                 end
             end
@@ -161,7 +167,7 @@ function test_binary_int_ops(t)
         ['|'] = function(a, b) return a | b end,
         ['~'] = function(a, b) return a ~ b end,
     }
-    run_binary_ops_tests(t, ops, values, values, int64)
+    run_binary_ops_tests(t, ops, values, values, int64.__eq)
 
     -- TODO: Test a few numbers that don't fit an integer
 end
@@ -172,34 +178,76 @@ function test_binary_float_ops(t)
         ['/'] = function(a, b) return a / b end,
         ['^'] = function(a, b) return a ^ b end,
     }
-    run_binary_ops_tests(t, ops, values, values, util.ident)
+    run_binary_ops_tests(t, ops, values, values)
 
     -- TODO: Test a few numbers that don't fit an integer
 end
 
 function test_shift_ops(t)
-    -- TODO
+    t:skip("TODO")
 end
 
 function test_relational_ops(t)
     local values = {0, -1, 3, -7, 13, -1234, 2468}
     local ops = {
-        ['=='] = function(a, b) return a == b end,
-        -- ['<'] = function(a, b) return a < b end,
-        -- ['<'] = function(a, b) return a < b end,
+        -- The metamethod for the equality operator is only called when the
+        -- arguments are either both tables or both full userdata. For mixed
+        -- argument types, the metamethod must be called directly.
+        ['=='] = function(a, b) return int64.__eq(a, b) end,
+        ['<'] = function(a, b) return a < b end,
+        ['<='] = function(a, b) return a <= b end,
     }
-    run_binary_ops_tests(t, ops, values, values, util.ident)
+    run_binary_ops_tests(t, ops, values, values)
 
-    -- TODO: Test a few numbers that don't fit an integer
+    local function check(t, f, a, op, b, want)
+        t:run(string.format('%s %s %s', a, op, b), function(t)
+            local got = f(a, b)
+            t:expect(got == want, "got %s, want %s", got, want)
+        end)
+    end
+
+    local large_num = int64.tonumber(int64(1) << 60)
+    local large_int64 = int64(large_num)
+
+    for _, vals_res in ipairs{
+        -- Large int64
+        {int64.max - 1, int64.max - 2, false, false},
+        {int64.max - 1, int64.max - 1, true, false},
+        {int64.max - 1, int64.max, false, true},
+        -- int64 fits number
+        {int64(3), 2.5, false, false},
+        {int64(3), 3.0, true, false},
+        {int64(3), 3.5, false, true},
+        -- Number fits int64
+        {large_int64, 0.999 * large_num, false, false},
+        {large_int64, large_num, true, false},
+        {large_int64, 1.001 * large_num, false, true},
+        -- Number doesn't fit int64
+        {int64(0), 3.5e25, false, true},
+    } do
+        local a, b, eq, lt = table.unpack(vals_res)
+        for _, ops_res in ipairs{
+            {'==', eq, eq},
+            {'<', lt, not (lt or eq)},
+            {'<=', lt or eq, not lt},
+        } do
+            local op, want, rwant = table.unpack(ops_res)
+            local f = ops[op]
+            check(t, f, a, op, b, want)
+            check(t, f, b, op, a, rwant)
+            check(t, f, -a, op, -b, rwant)
+            check(t, f, -b, op, -a, want)
+        end
+    end
 end
 
 function test_tostring(t)
-    -- TODO
+    t:skip("TODO")
 end
 
 function test_concat(t)
     if not pcall(function() return 1 .. 2 end) then
         t:skip("automatic number => string conversions disabled")
     end
-    -- TODO
+    t:skip("TODO")
 end

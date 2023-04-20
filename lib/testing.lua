@@ -164,6 +164,7 @@ end
 
 function main()
     local t = Test()
+    eio.printf("Running tests\n")
     local start = os.clock()
     t:run_all_modules()
     local dt = os.clock() - start
