@@ -1,4 +1,4 @@
-mlua_add_lua_module(mlua_mod_eio eio eio.lua)
+mlua_add_lua_modules(mlua_mod_eio eio.lua)
 target_link_libraries(mlua_mod_eio INTERFACE
     mlua_mod_module
     mlua_mod_oo
@@ -18,7 +18,7 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 mlua_add_c_module(mlua_mod_int64 int64 int64.c)
 target_include_directories(mlua_mod_int64_headers INTERFACE include_int64)
 
-mlua_add_lua_test_module(mlua_mod_int64_tests int64.tests int64.tests.lua)
+mlua_add_lua_test_modules(mlua_mod_int64_tests int64.tests.lua)
 target_link_libraries(mlua_mod_int64_tests INTERFACE
     mlua_mod_int64
     mlua_mod_math
@@ -28,12 +28,12 @@ target_link_libraries(mlua_mod_int64_tests INTERFACE
     mlua_mod_util
 )
 
-mlua_add_lua_module(mlua_mod_module module module.lua)
+mlua_add_lua_modules(mlua_mod_module module.lua)
 target_link_libraries(mlua_mod_module INTERFACE
     mlua_mod_package
 )
 
-mlua_add_lua_module(mlua_mod_oo oo oo.lua)
+mlua_add_lua_modules(mlua_mod_oo oo.lua)
 target_link_libraries(mlua_mod_oo INTERFACE
     mlua_mod_module
 )
@@ -54,7 +54,7 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
     pico_time
 )
 
-mlua_add_lua_module(mlua_mod_testing testing testing.lua)
+mlua_add_lua_modules(mlua_mod_testing testing.lua)
 target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_eio
     mlua_mod_module
@@ -81,7 +81,7 @@ target_link_libraries(mlua_tests
 mlua_main(mlua_tests testing)
 pico_add_extra_outputs(mlua_tests)
 
-mlua_add_lua_module(mlua_mod_util util util.lua)
+mlua_add_lua_modules(mlua_mod_util util.lua)
 target_link_libraries(mlua_mod_util INTERFACE
     mlua_mod_module
     mlua_mod_table

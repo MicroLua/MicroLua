@@ -1,5 +1,5 @@
-mlua_add_lua_module(mlua_examples_adc_onboard_temperature_main
-    main onboard_temperature_main.lua
+mlua_add_lua_modules(mlua_examples_adc_onboard_temperature_main
+    onboard_temperature_main.lua
 )
 target_link_libraries(mlua_examples_adc_onboard_temperature_main INTERFACE
     mlua_mod_hardware_adc
@@ -15,4 +15,5 @@ target_link_libraries(mlua_examples_adc_onboard_temperature
     mlua_examples_adc_onboard_temperature_main
     pico_stdlib
 )
+mlua_main(mlua_examples_adc_onboard_temperature onboard_temperature_main)
 pico_add_extra_outputs(mlua_examples_adc_onboard_temperature)
