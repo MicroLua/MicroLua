@@ -15,16 +15,19 @@ local err_terminate = {}
 
 Test = oo.class('Test')
 
-function Test:__init(name) self.name = name end
+function Test:__init(name, parent)
+    self.name, self._parent = name, parent
+end
 
 function Test:message(format, ...)
     if format:sub(-1) ~= '\n' then format = format .. '\n' end
-    eio.write(string.format(format, ...))
+    eio.printf(format, ...)
     -- TODO: Include location
 end
 
 function Test:error(format, ...)
-    self.errors = true
+    self._failed = true
+    self:_enable_output()
     self:message("ERROR: " .. format, ...)
 end
 
@@ -34,7 +37,7 @@ function Test:fatal(format, ...)
 end
 
 function Test:skip(format, ...)
-    self.skipped = true
+    self._skipped = true
     self:message("SKIP: " .. format, ...)
     error(err_terminate)
 end
@@ -48,7 +51,7 @@ function Test:assert(cond, format, ...)
 end
 
 function Test:failed()
-    if self.errors then return true end
+    if self._failed then return true end
     if self.children then
         for _, child in ipairs(self.children) do
             if child:failed() then return true end
@@ -58,30 +61,51 @@ function Test:failed()
 end
 
 function Test:result()
-    return self:failed() and 'FAIL' or self.skipped and 'SKIP' or 'PASS'
+    return self:failed() and 'FAIL' or self._skipped and 'SKIP' or 'PASS'
 end
 
 function Test:run(name, func, keep)
-    local t = Test(name)
-    local b = eio.Buffer()
-    local old_out = _G.stdout
-    _G.stdout = b
-    local res, err = pcall(func, t)
-    if not res then
-        if err ~= err_terminate then t:error("%s", err) end
-    end
-    _G.stdout = old_out
+    local t = Test(name, self)
+    t:_run(func)
     if keep or t.children or t:failed() then
         if not self.children then self.children = {} end
         self.children[#self.children + 1] = t
-        if not b:is_empty() then
-            eio.write(string.format("----- BEGIN %s\n", name))
-            b:replay(stdout)
-            eio.write(string.format("----- END   %s\n", name))
-        end
     end
-    t, b = nil, nil
+    t = nil
     collectgarbage('collect')
+end
+
+function Test:_run(func)
+    self:_capture_output()
+    local res, err = pcall(func, self)
+    if not res then
+        if err ~= err_terminate then self:error("%s", err) end
+    end
+    self:_restore_output()
+    if not self._out then
+        stdout:write(string.format("----- END   %s\n", self.name))
+    end
+    self._parent, self._out = nil, nil
+end
+
+function Test:_enable_output()
+    if not self._out then return end
+    local out = self._out
+    self._out = nil
+    self:_restore_output()
+    if self._parent then self._parent:_enable_output() end
+    stdout:write(string.format("----- BEGIN %s\n", self.name))
+    out:replay(stdout)
+end
+
+function Test:_capture_output()
+    self._out = eio.Buffer()
+    self._old_out, _G.stdout = _G.stdout, self._out
+end
+
+function Test:_restore_output()
+    if not self._old_out then return end
+    _G.stdout, self._old_out = self._old_out, nil
 end
 
 function Test:run_all(module, pat)
@@ -108,7 +132,7 @@ end
 function Test:print_result(indent)
     indent = indent or ''
     if self.name then
-        eio.write(string.format("%s%s: %s\n", indent, self:result(), self.name))
+        eio.printf("%s%s: %s\n", indent, self:result(), self.name)
         indent = indent .. '  '
     end
     if not self.children then return end
@@ -126,7 +150,7 @@ function run_tests_main()
     local mem = collectgarbage('count') * 1024
     eio.write("\n")
     t:print_result()
-    eio.write(string.format("\nCPU time: %.2f s\n", dt))
-    eio.write(string.format("Memory: %d bytes\n", mem))
-    eio.write(string.format("Result: %s\n\n", t:result()))
+    eio.printf("\nCPU time: %.2f s\n", dt)
+    eio.printf("Memory: %d bytes\n", mem)
+    eio.printf("Result: %s\n\n", t:result())
 end
