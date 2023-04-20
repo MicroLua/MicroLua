@@ -93,7 +93,7 @@ static int std_stream_setvbuf(lua_State* ls) {
 
 static void std_write(lua_State* ls, int index, char const* s, size_t len) {
     index = lua_absindex(ls, index);
-    lua_pushcfunction(ls, std_stream_write);
+    lua_pushvalue(ls, index + 1);
     lua_pushvalue(ls, index);
     lua_pushlstring(ls, s, len);
     lua_call(ls, 2, 0);
@@ -102,6 +102,7 @@ static void std_write(lua_State* ls, int index, char const* s, size_t len) {
 static int std_print(lua_State* ls) {
     int top = lua_gettop(ls);
     lua_getglobal(ls, "stdout");
+    lua_getfield(ls, -1, "write");
     for (int i = 1; i <= top; ++i) {
         if (i > 1) std_write(ls, top + 1, "\t", 1);
         size_t len;
