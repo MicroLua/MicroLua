@@ -22,10 +22,14 @@ local function arguments(args)
 end
 
 function test_limits(t)
-    t:expect(int64.max == int64('0x7fffffffffffffff'), "int64.max")
-    t:expect(int64.min == int64('0x8000000000000000'), "int64.min")
-    t:expect(int64.max + 1 == int64.min, "int64.max + 1")
-    t:expect(int64.min - 1 == int64.max, "int64.min - 1")
+    local got, want = int64.max, int64('0x7fffffffffffffff')
+    t:expect(got == want, "int64.max = %s, want %s", got, want)
+    got, want = int64.min, int64('0x8000000000000000')
+    t:expect(got == want, "int64.min = %s, want %s", got, want)
+    got, want = int64.max + 1, int64.min
+    t:expect(got == want, "int64.max + 1 = %s, want %s", got, want)
+    got, want = int64.min - 1, int64.max
+    t:expect(got == want, "int64.min - 1 = %s, want %s", got, want)
 end
 
 function test_hex(t)
@@ -39,10 +43,8 @@ function test_hex(t)
         {{int64(0x1234), 16}, '0000000000001234'},
     } do
         local args, want = table.unpack(test)
-        t:run(arguments(args), function(t)
-            local got = int64.hex(table.unpack(args))
-            t:expect(got == want, "got %q, want %q", got, want)
-        end)
+        local got = int64.hex(table.unpack(args))
+        t:expect(got == want, "hex%s = %q, want %q", arguments(args), got, want)
     end
 end
 
@@ -96,10 +98,9 @@ function test_cast_to_int64(t)
         {{'0xabcdef0123456789'}, int64(0x23456789, 0xabcdef01)},    -- Negative
     } do
         local args, want = table.unpack(test)
-        t:run(arguments(args), function(t)
-            local got = int64(table.unpack(args))
-            t:expect(got == want, "got %s, want %s", got, want)
-        end)
+        local got = int64(table.unpack(args))
+        t:expect(got == want,
+                 "int64%s = %s, want %s", arguments(args), got, want)
     end
 end
 
@@ -112,13 +113,11 @@ function test_unary_ops(t)
         ['-'] = function(v) return -v end,
         ['~'] = function(v) return ~v end,
     }
-    local eq = int64.__eq
+    local eq = int64.eq
     for op, f in pairs(ops) do
-        for _, value in ipairs(values) do
-            t:run(string.format("%s(%d)", op, value), function(t)
-                local got, want = f(int64(value)), f(value)
-                t:expect(eq(got, want), "got %s, want %s", got, want)
-            end)
+        for _, v in ipairs(values) do
+            local got, want = f(int64(v)), f(v)
+            t:expect(eq(got, want), "%s(%d) = %s, want %s", op, v, got,want)
         end
     end
 
@@ -144,11 +143,9 @@ local function run_binary_ops_tests(t, ops, as, bs, eq)
             local vf = v(f)
             for _, a in ipairs(as) do
                 for _, b in ipairs(bs) do
-                    local want = f(a, b)
-                    t:run(string.format(fmt, a, op, b), function(t)
-                        local got = vf(a, b)
-                        t:expect(eq(got, want), "got %s, want %s", got, want)
-                    end)
+                    local got, want = vf(a, b), f(a, b)
+                    t:expect(eq(got, want), fmt .. " = %s, want %s", a, op, b,
+                             got, want)
                 end
             end
         end
@@ -167,7 +164,7 @@ function test_binary_int_ops(t)
         ['|'] = function(a, b) return a | b end,
         ['~'] = function(a, b) return a ~ b end,
     }
-    run_binary_ops_tests(t, ops, values, values, int64.__eq)
+    run_binary_ops_tests(t, ops, values, values, int64.eq)
 
     -- TODO: Test a few numbers that don't fit an integer
 end
@@ -200,16 +197,14 @@ function test_relational_ops(t)
     run_binary_ops_tests(t, ops, values, values)
 
     local function check(t, f, a, op, b, want)
-        t:run(string.format('%s %s %s', a, op, b), function(t)
-            local got = f(a, b)
-            t:expect(got == want, "got %s, want %s", got, want)
-        end)
+        local got = f(a, b)
+        t:expect(got == want, "%s %s %s = %s, want %s", a, op, b, got, want)
     end
 
     local large_num = int64.tonumber(int64(1) << 60)
     local large_int64 = int64(large_num)
 
-    for _, vals_res in ipairs{
+    for _, vals in ipairs{
         -- Large int64
         {int64.max - 1, int64.max - 2, false, false},
         {int64.max - 1, int64.max - 1, true, false},
@@ -225,13 +220,13 @@ function test_relational_ops(t)
         -- Number doesn't fit int64
         {int64(0), 3.5e25, false, true},
     } do
-        local a, b, eq, lt = table.unpack(vals_res)
-        for _, ops_res in ipairs{
+        local a, b, eq, lt = table.unpack(vals)
+        for _, cmps in ipairs{
             {'==', eq, eq},
             {'<', lt, not (lt or eq)},
             {'<=', lt or eq, not lt},
         } do
-            local op, want, rwant = table.unpack(ops_res)
+            local op, want, rwant = table.unpack(cmps)
             local f = ops[op]
             check(t, f, a, op, b, want)
             check(t, f, b, op, a, rwant)
