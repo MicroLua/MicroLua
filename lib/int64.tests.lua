@@ -182,7 +182,15 @@ function test_shift_ops(t)
 end
 
 function test_relational_ops(t)
-    -- TODO
+    local values = {0, -1, 3, -7, 13, -1234, 2468}
+    local ops = {
+        ['=='] = function(a, b) return a == b end,
+        -- ['<'] = function(a, b) return a < b end,
+        -- ['<'] = function(a, b) return a < b end,
+    }
+    run_binary_ops_tests(t, ops, values, values, util.ident)
+
+    -- TODO: Test a few numbers that don't fit an integer
 end
 
 function test_tostring(t)

@@ -11,7 +11,4 @@ target_link_libraries(mlua_examples_blink
     mlua_examples_blink_main
     pico_stdlib
 )
-
 pico_add_extra_outputs(mlua_examples_blink)
-pico_enable_stdio_uart(mlua_examples_blink 1)
-pico_enable_stdio_usb(mlua_examples_blink 0)

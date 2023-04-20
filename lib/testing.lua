@@ -83,7 +83,7 @@ function Test:_run(func)
     end
     self:_restore_output()
     if not self._out then
-        stdout:write(string.format("----- END   %s\n", self.name))
+        eio.printf("----- END   %s\n", self.name)
     end
     self._parent, self._out = nil, nil
 end
@@ -94,7 +94,7 @@ function Test:_enable_output()
     self._out = nil
     self:_restore_output()
     if self._parent then self._parent:_enable_output() end
-    stdout:write(string.format("----- BEGIN %s\n", self.name))
+    eio.printf("----- BEGIN %s\n", self.name)
     out:replay(stdout)
 end
 
@@ -142,7 +142,7 @@ function Test:print_result(indent)
     end
 end
 
-function run_tests_main()
+function main()
     local t = Test()
     local start = os.clock()
     t:run_all_modules()

@@ -155,18 +155,18 @@ static int pmain(lua_State* ls) {
     // Set up module loading.
     mlua_open_libs(ls);
 
-#ifdef LIB_PICO_STDIO
     // Set up stdio streams.
+#ifdef LIB_PICO_STDIO
     init_stdio(ls);
 #endif
 
-    // Require the "main" module.
+    // Require the main module.
     lua_getglobal(ls, "require");
-    lua_pushliteral(ls, "main");
+    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
     lua_call(ls, 1, 1);
 
-    // If the "main" module has a "main" function, call it.
-    if (try_getfield(ls, -1, "main") == LUA_OK) {
+    // If the main module has a main function, call it.
+    if (try_getfield(ls, -1, MLUA_ESTR(MLUA_MAIN_FUNCTION)) == LUA_OK) {
         lua_remove(ls, -2);  // Remove main module
         lua_call(ls, 0, 0);
     } else {
@@ -176,6 +176,7 @@ static int pmain(lua_State* ls) {
 }
 
 void mlua_main() {
+    // TODO: Use lua_newstate and set panic and warn handlers.
     lua_State* ls = luaL_newstate();
     lua_pushcfunction(ls, pmain);
     int err = lua_pcall(ls, 0, 0, 0);

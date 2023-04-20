@@ -92,3 +92,11 @@ function(mlua_add_lua_test_module TARGET MOD SRC)
     list(APPEND tests ${TARGET})
     set_property(GLOBAL PROPERTY mlua_test_targets ${tests})
 endfunction()
+
+function(mlua_main TARGET FUNC)
+    string(REGEX MATCH "^([^:]*)(:(.*))?$" DUMMY ${FUNC})
+    set_target_properties(${TARGET} PROPERTIES
+        MLUA_TARGET_MAIN_MODULE "${CMAKE_MATCH_1}"
+        MLUA_TARGET_MAIN_FUNCTION "${CMAKE_MATCH_3}"
+    )
+endfunction()

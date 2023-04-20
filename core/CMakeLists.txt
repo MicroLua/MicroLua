@@ -70,6 +70,10 @@ target_sources(mlua_core_main INTERFACE
     main.c
     util.c
 )
+target_compile_definitions(mlua_core_main INTERFACE
+    MLUA_MAIN_MODULE=$<IF:$<STREQUAL:$<TARGET_PROPERTY:MLUA_TARGET_MAIN_MODULE>,>,main,$<TARGET_PROPERTY:MLUA_TARGET_MAIN_MODULE>>
+    MLUA_MAIN_FUNCTION=$<IF:$<STREQUAL:$<TARGET_PROPERTY:MLUA_TARGET_MAIN_FUNCTION>,>,main,$<TARGET_PROPERTY:MLUA_TARGET_MAIN_FUNCTION>>
+)
 target_include_directories(mlua_core_main INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/include
 )

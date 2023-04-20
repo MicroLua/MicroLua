@@ -65,6 +65,16 @@ target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_table
 )
 
+add_executable(mlua_tests)
+get_property(tests GLOBAL PROPERTY mlua_test_targets)
+target_link_libraries(mlua_tests
+    mlua_mod_testing
+    pico_stdlib
+    ${tests}
+)
+mlua_main(mlua_tests testing)
+pico_add_extra_outputs(mlua_tests)
+
 mlua_add_lua_module(mlua_mod_util util util.lua)
 target_link_libraries(mlua_mod_util INTERFACE
     mlua_mod_module

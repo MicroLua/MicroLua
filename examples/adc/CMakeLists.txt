@@ -15,7 +15,4 @@ target_link_libraries(mlua_examples_adc_onboard_temperature
     mlua_examples_adc_onboard_temperature_main
     pico_stdlib
 )
-
 pico_add_extra_outputs(mlua_examples_adc_onboard_temperature)
-pico_enable_stdio_uart(mlua_examples_adc_onboard_temperature 1)
-pico_enable_stdio_usb(mlua_examples_adc_onboard_temperature 0)
