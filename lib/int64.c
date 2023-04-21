@@ -10,6 +10,8 @@
 
 #include "mlua/util.h"
 
+#define IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
+
 #define MLUA_MDIG (l_floatatt(MANT_DIG))
 
 bool mlua_int64_fits_number(int64_t value) {
@@ -85,22 +87,39 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
     return true;
 }
 
-int64_t* mlua_test_int64(lua_State* ls, int arg) {
-    return luaL_testudata(ls, arg, "int64");
+bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
+#if IS64INT
+    if (!lua_isinteger(ls, arg)) return false;
+    *value = lua_tointeger(ls, arg);
+    return true;
+#else
+    int64_t* v = luaL_testudata(ls, arg, "int64");
+    if (v == NULL) return false;
+    *value = *v;
+    return true;
+#endif
 }
 
 int64_t mlua_check_int64(lua_State* ls, int arg) {
+#if IS64INT
+    return luaL_checkinteger(ls, arg);
+#else
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
-    int64_t* v = mlua_test_int64(ls, arg);
-    if (v != NULL) return *v;
+    int64_t v;
+    if (mlua_test_int64(ls, arg, &v)) return v;
     return luaL_argerror(ls, arg, "integer or int64 expected");
+#endif
 }
 
 void mlua_push_int64(lua_State* ls, int64_t value) {
+#if IS64INT
+    lua_pushinteger(ls, value);
+#else
     int64_t* v = lua_newuserdatauv(ls, sizeof(int64_t), 0);
     *v = value;
     luaL_getmetatable(ls, "int64");
     lua_setmetatable(ls, -2);
+#endif
 }
 
 static void int64_max(lua_State* ls, mlua_reg const* reg, int nup) {
@@ -110,6 +129,30 @@ static void int64_max(lua_State* ls, mlua_reg const* reg, int nup) {
 static void int64_min(lua_State* ls, mlua_reg const* reg, int nup) {
     mlua_push_int64(ls, INT64_MIN);
 }
+
+#define INT64_OP(lhs, op, rhs) ((int64_t)((uint64_t)(lhs) op (uint64_t)(rhs)))
+
+static int64_t shift_left(int64_t lhs, int64_t rhs, bool arith) {
+    if (rhs >= 64) return 0;
+    if (rhs >= 0) return INT64_OP(lhs, <<, rhs);
+    rhs = -rhs;
+    if (rhs >= 64) return arith && lhs < 0 ? -1 : 0;
+    if (arith) return lhs >> rhs;
+    return INT64_OP(lhs, >>, rhs);
+}
+
+static int int64_ashr(lua_State* ls) {
+    mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
+                                   -mlua_check_int64(ls, 2), true));
+    return 1;
+}
+
+#if IS64INT
+static int int64_eq(lua_State* ls) {
+    lua_pushboolean(ls, lua_compare(ls, 1, 2, LUA_OPEQ));
+    return 1;
+}
+#endif  // IS64INT
 
 static int int64_hex(lua_State* ls) {
     int64_t value = mlua_check_int64(ls, 1);
@@ -143,6 +186,14 @@ static int int64_tonumber(lua_State* ls) {
     return 1;
 }
 
+static int int64_ult(lua_State* ls) {
+    int64_t lhs = mlua_check_int64(ls, 1), rhs = mlua_check_int64(ls, 2);
+    lua_pushboolean(ls, (uint64_t)lhs < (uint64_t)rhs);
+    return 1;
+}
+
+#if !IS64INT
+
 static bool is_float(lua_State* ls, int index) {
     return (lua_type(ls, index) == LUA_TNUMBER && !lua_isinteger(ls, index));
 }
@@ -168,8 +219,6 @@ static bool float_arith(lua_State* ls, int op) {
     }
     return false;
 }
-
-#define INT64_OP(lhs, op, rhs) ((int64_t)((uint64_t)(lhs) op (uint64_t)(rhs)))
 
 #define ARITH_OP(n, op, aop) \
 static int int64_ ## n(lua_State* ls) { \
@@ -249,15 +298,6 @@ static int int64___bnot(lua_State* ls) {
     return 1;
 }
 
-static int64_t shift_left(int64_t lhs, int64_t rhs, bool arith) {
-    if (rhs >= 64) return 0;
-    if (rhs >= 0) return INT64_OP(lhs, <<, rhs);
-    rhs = -rhs;
-    if (rhs >= 64) return arith && lhs < 0 ? -1 : 0;
-    if (arith) return lhs >> rhs;
-    return INT64_OP(lhs, >>, rhs);
-}
-
 static int int64___shl(lua_State* ls) {
     mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
                                    mlua_check_int64(ls, 2), false));
@@ -267,12 +307,6 @@ static int int64___shl(lua_State* ls) {
 static int int64___shr(lua_State* ls) {
     mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
                                    -mlua_check_int64(ls, 2), false));
-    return 1;
-}
-
-static int int64_ashr(lua_State* ls) {
-    mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
-                                   -mlua_check_int64(ls, 2), true));
     return 1;
 }
 
@@ -307,15 +341,9 @@ static int int64_ ## n(lua_State* ls) { \
     return 1; \
 }
 
-CMP_OP(__eq, ==, eq, 1, eq, 1)
+CMP_OP(eq, ==, eq, 1, eq, 1)
 CMP_OP(__lt, <, floor, lhs, ceil, rhs)
 CMP_OP(__le, <=, floor, lhs, ceil, rhs)
-
-static int int64_ult(lua_State* ls) {
-    int64_t lhs = mlua_check_int64(ls, 1), rhs = mlua_check_int64(ls, 2);
-    lua_pushboolean(ls, (uint64_t)lhs < (uint64_t)rhs);
-    return 1;
-}
 
 static int int64___tostring(lua_State* ls) {
     int64_t v = mlua_check_int64(ls, 1);
@@ -329,10 +357,10 @@ static int int64___tostring(lua_State* ls) {
 static int int64___concat(lua_State* ls) {
     // TODO: This formats 123.0 .. 1 as "123.00001" instead of "123.01"
     for (int i = 1; i <= 2; ++i) {
-        int64_t* v = mlua_test_int64(ls, i);
-        if (v != NULL) {
+        int64_t v;
+        if (mlua_test_int64(ls, i, &v)) {
             char s[MLUA_MAX_INT64_STR_SIZE];
-            int len = mlua_int64_to_string(*v, s, sizeof(s));
+            int len = mlua_int64_to_string(v, s, sizeof(s));
             lua_pushlstring(ls, s, len);
             lua_replace(ls, i);
         } else {
@@ -342,9 +370,11 @@ static int int64___concat(lua_State* ls) {
     lua_concat(ls, 2);
     return 1;
 }
-#endif
+#endif  // LUA_NOCVTN2S
 
-static int int64_call(lua_State* ls) {
+#endif  // !IS64INT
+
+static int int64___call(lua_State* ls) {
     lua_remove(ls, 1);  // Remove class
     int64_t value = 0;
     switch (lua_type(ls, 1)) {
@@ -396,12 +426,14 @@ static mlua_reg const int64_regs[] = {
     MLUA_REG(string, __name, "int64"),
     MLUA_REG_PUSH(max, int64_max),
     MLUA_REG_PUSH(min, int64_min),
-    MLUA_REG(function, eq, int64___eq),  // Synonym of __eq
 #define X(n) MLUA_REG(function, n, int64_ ## n)
+    X(ashr),
+    X(eq),
     X(hex),
     X(tointeger),
     X(tonumber),
     X(ult),
+#if !IS64INT
     X(__add),
     X(__sub),
     X(__mul),
@@ -416,25 +448,25 @@ static mlua_reg const int64_regs[] = {
     X(__bnot),
     X(__shl),
     X(__shr),
-    X(ashr),
-    X(__eq),
+    MLUA_REG(function, __eq, int64_eq),
     X(__lt),
     X(__le),
     X(__tostring),
 #ifndef LUA_NOCVTN2S
     X(__concat),
-#endif
+#endif  // LUA_NOCVTN2S
+#endif  // !IS64INT
 #undef X
     {NULL},
 };
 
 static mlua_reg const int64_meta_regs[] = {
-    MLUA_REG(function, __call, int64_call),
+    MLUA_REG(function, __call, int64___call),
     {NULL},
 };
 
 int luaopen_int64(lua_State* ls) {
-    luaL_checkversion(ls);                                              \
+    luaL_checkversion(ls);
 
     // Create the int64 class.
     luaL_newmetatable(ls, "int64");

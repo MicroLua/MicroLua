@@ -21,7 +21,7 @@ bool mlua_number_to_int64_floor(lua_Number num, int64_t* value);
 bool mlua_number_to_int64_ceil(lua_Number num, int64_t* value);
 int mlua_int64_to_string(int64_t value, char* s, size_t size);
 bool mlua_string_to_int64(char const* s, int base, int64_t* value);
-int64_t* mlua_test_int64(lua_State* ls, int arg);
+bool mlua_test_int64(lua_State* ls, int arg, int64_t* value);
 int64_t mlua_check_int64(lua_State* ls, int arg);
 void mlua_push_int64(lua_State* ls, int64_t value);
 

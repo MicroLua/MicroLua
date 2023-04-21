@@ -29,6 +29,8 @@ function test_info(t)
     t:enable_output()
     eio.printf("integer: %d bits\n", integer_bits)
     eio.printf("number: %d bits\n", number_bits)
+    local v = int64(0)
+    eio.printf("int64 type: %s\n", math.type(v) or type(v))
 end
 
 function test_limits(t)
