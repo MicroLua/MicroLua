@@ -249,24 +249,30 @@ static int int64___bnot(lua_State* ls) {
     return 1;
 }
 
-static int64_t shift_left(int64_t lhs, int64_t rhs) {
-    if (rhs < 0) {
-        if (rhs <= -64) return 0;
-        return INT64_OP(lhs, >>, -rhs);
-    }
+static int64_t shift_left(int64_t lhs, int64_t rhs, bool arith) {
     if (rhs >= 64) return 0;
-    return INT64_OP(lhs, <<, rhs);
+    if (rhs >= 0) return INT64_OP(lhs, <<, rhs);
+    rhs = -rhs;
+    if (rhs >= 64) return arith && lhs < 0 ? -1 : 0;
+    if (arith) return lhs >> rhs;
+    return INT64_OP(lhs, >>, rhs);
 }
 
 static int int64___shl(lua_State* ls) {
     mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
-                                   mlua_check_int64(ls, 2)));
+                                   mlua_check_int64(ls, 2), false));
     return 1;
 }
 
 static int int64___shr(lua_State* ls) {
     mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
-                                   -mlua_check_int64(ls, 2)));
+                                   -mlua_check_int64(ls, 2), false));
+    return 1;
+}
+
+static int int64_ashr(lua_State* ls) {
+    mlua_push_int64(ls, shift_left(mlua_check_int64(ls, 1),
+                                   -mlua_check_int64(ls, 2), true));
     return 1;
 }
 
@@ -409,6 +415,7 @@ static mlua_reg const int64_regs[] = {
     X(__bnot),
     X(__shl),
     X(__shr),
+    X(ashr),
     X(__eq),
     X(__lt),
     X(__le),

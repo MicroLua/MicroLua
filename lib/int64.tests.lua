@@ -257,25 +257,39 @@ function test_shift_ops(t)
     }
     run_binary_ops_tests(t, ops, values, shifts, int64.eq)
 
+    ops['(ashr)'] = int64.ashr
     for _, test in ipairs{
         {int64('0x0123456789abcdef'), '<<', int64(0),
          int64('0x0123456789abcdef')},
         {int64('0x0123456789abcdef'), '<<', int64(60),
          int64('0xf000000000000000')},
-        {int64('0xfedcba9876543210'), '<<', int64(-60), int64('0xf')},
         {int64('0xffffffffffffffff'), '<<', int64(64), int64(0)},
+        {int64('0xfedcba9876543210'), '<<', int64(-60), int64('0xf')},
         {int64('0xffffffffffffffff'), '<<', int64(-64), int64(0)},
         {int64('0xfedcba9876543210'), '>>', int64(0),
          int64('0xfedcba9876543210')},
         {int64('0xfedcba9876543210'), '>>', int64(60), int64('0xf')},
+        {int64('0xffffffffffffffff'), '>>', int64(64), int64(0)},
         {int64('0x0123456789abcdef'), '>>', int64(-60),
          int64('0xf000000000000000')},
-        {int64('0xffffffffffffffff'), '>>', int64(64), int64(0)},
         {int64('0xffffffffffffffff'), '>>', int64(-64), int64(0)},
+        {int64('0x1234567890abcdef'), '(ashr)', int64(0),
+         int64('0x1234567890abcdef')},
+        {int64('0x1234567890abcdef'), '(ashr)', int64(60), int64('0x1')},
+        {int64('0xabcdef1234567890'), '(ashr)', int64(60),
+         int64('0xfffffffffffffffa')},
+        {int64('0x1234567890abcdef'), '(ashr)', int64(-60),
+         int64('0xf000000000000000')},
+        {int64('0x1234567890abcdef'), '(ashr)', int64(-64), int64(0)},
+        {int64.max, '(ashr)', int64(63), int64(0)},
+        {int64.max, '(ashr)', int64(64), int64(0)},
+        {int64.min, '(ashr)', int64(63), int64(-1)},
+        {int64.min, '(ashr)', int64(64), int64(-1)},
     } do
         local a, op, b, want = table.unpack(test)
         local got = ops[op](a, b)
-        t:expect(got == want, "%s %s %s = %s, want %s", a, op, b, got, want)
+        t:expect(got == want, "%s %s %s = %s, want %s", int64.hex(a), op, b,
+                 int64.hex(got), int64.hex(want))
     end
 end
 
@@ -285,7 +299,7 @@ function test_relational_ops(t)
         -- The metamethod for the equality operator is only called when the
         -- arguments are either both tables or both full userdata. For mixed
         -- argument types, the metamethod must be called directly.
-        ['=='] = function(a, b) return int64.eq(a, b) end,
+        ['=='] = int64.eq,
         ['<'] = function(a, b) return a < b end,
         ['<='] = function(a, b) return a <= b end,
     }
