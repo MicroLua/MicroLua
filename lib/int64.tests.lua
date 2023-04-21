@@ -50,11 +50,35 @@ function test_hex(t)
 end
 
 function test_tointeger(t)
-    t:skip("TODO")
+    for _, test in ipairs{
+        {int64(0), 0},
+        {int64(12345678), 12345678},
+        {int64(-12345678), -12345678},
+        {int64(math.maxinteger), math.maxinteger},
+        {int64(math.mininteger), math.mininteger},
+        {int64.max,
+         math.maxinteger >= int64.max and 9223372036854775807 or nil},
+        {int64.min,
+         math.mininteger <= int64.min and -9223372036854775808 or nil},
+    } do
+        local value, want = table.unpack(test)
+        local got = int64.tointeger(value)
+        t:expect(got == want, "tointeger(%s) = %s, want %s", value, got, want)
+    end
 end
 
 function test_tonumber(t)
-    t:skip("TODO")
+    for _, test in ipairs{
+        {int64(0), 0.0},
+        {int64(123456), 123456.0},
+        {int64(-123456), -123456.0},
+        {int64.max, 9223372036854775807.0},
+        {int64.min, -9223372036854775808.0},
+    } do
+        local value, want = table.unpack(test)
+        local got = int64.tonumber(value)
+        t:expect(got == want, "tonumber(%s) = %s, want %s", value, got, want)
+    end
 end
 
 function test_cast_to_int64(t)
@@ -118,21 +142,33 @@ function test_unary_ops(t)
     for op, f in pairs(ops) do
         for _, v in ipairs(values) do
             local got, want = f(int64(v)), f(v)
-            t:expect(eq(got, want), "%s(%d) = %s, want %s", op, v, got,want)
+            t:expect(eq(got, want), "%s(%s) = %s, want %s", op, v, got, want)
         end
     end
 
-    -- TODO: Test a few numbers that don't fit an integer
+    for _, test in ipairs{
+        {'-', int64('12345678901234'), int64('-12345678901234')},
+        {'-', int64('-12345678901234'), int64('12345678901234')},
+        {'-', int64.max, int64('0x8000000000000001')},
+        {'-', int64.min, int64.min},
+        {'~', int64('0x0123456789abcdef'), int64('0xfedcba9876543210')},
+        {'~', int64.max, int64.min},
+        {'~', int64.min, int64.max},
+    } do
+        local op, v, want = table.unpack(test)
+        local got = ops[op](v)
+        t:expect(got == want, "%s(%s) = %s, want %s", op, v, got, want)
+    end
 end
 
 local variants = {
-    ['int64(%d) %s int64(%d)'] = function(f)
+    ['int64(%s) %s int64(%s)'] = function(f)
         return function(a, b) return f(int64(a), int64(b)) end
     end,
-    ['%d %s int64(%d)'] = function(f)
+    ['%s %s int64(%s)'] = function(f)
         return function(a, b) return f(a, int64(b)) end
     end,
-    ['int64(%d) %s %d'] = function(f)
+    ['int64(%s) %s %s'] = function(f)
         return function(a, b) return f(int64(a), b) end
     end,
 }
@@ -167,7 +203,28 @@ function test_binary_int_ops(t)
     }
     run_binary_ops_tests(t, ops, values, values, int64.eq)
 
-    -- TODO: Test a few numbers that don't fit an integer
+    for _, test in ipairs{
+        {int64('12345678901234'), '+', int64('24680135791113'),
+         int64('37025814692347')},
+        {int64('12345678901234'), '-', int64('24680135791113'),
+         int64('-12334456889879')},
+        {int64('12345678901234'), '*', int64('1357'),
+         int64('16753086268974538')},
+        {int64('12345678901234'), '//', int64('246801357911'),
+         int64('50')},
+        {int64('12345678901234'), '%', int64('246801357911'),
+         int64('5611005684')},
+        {int64('0x0123456789abcdef'), '&', int64('0xabcdef0123456789'),
+         int64('0x0101450101014589')},
+        {int64('0x0123456789abcdef'), '|', int64('0xabcdef0123456789'),
+         int64('0xabefef67abefefef')},
+        {int64('0x0123456789abcdef'), '~', int64('0xabcdef0123456789'),
+         int64('0xaaeeaa66aaeeaa66')},
+    } do
+        local a, op, b, want = table.unpack(test)
+        local got = ops[op](a, b)
+        t:expect(got == want, "%s %s %s = %s, want %s", a, op, b, got, want)
+    end
 end
 
 function test_binary_float_ops(t)
@@ -178,11 +235,48 @@ function test_binary_float_ops(t)
     }
     run_binary_ops_tests(t, ops, values, values)
 
-    -- TODO: Test a few numbers that don't fit an integer
+    for _, test in ipairs{
+        {int64('12345678901234'), '/', int64('246801357911'),
+         int64.tonumber(int64('12345678901234'))
+         / int64.tonumber(int64('246801357911'))},
+        {int64('12345678901234'), '^', int64('5'),
+         int64.tonumber(int64('12345678901234')) ^ 5.0},
+    } do
+        local a, op, b, want = table.unpack(test)
+        local got = ops[op](a, b)
+        t:expect(got == want, "%s %s %s = %s, want %s", a, op, b, got, want)
+    end
 end
 
 function test_shift_ops(t)
-    t:skip("TODO")
+    local values = {0, 3, 7, 13, 1234, 2468}
+    local shifts = {0, 1, -1, -7, 7, -13, 13, -19, 19}
+    local ops = {
+        ['<<'] = function(a, b) return a << b end,
+        ['>>'] = function(a, b) return a >> b end,
+    }
+    run_binary_ops_tests(t, ops, values, shifts, int64.eq)
+
+    for _, test in ipairs{
+        {int64('0x0123456789abcdef'), '<<', int64(0),
+         int64('0x0123456789abcdef')},
+        {int64('0x0123456789abcdef'), '<<', int64(60),
+         int64('0xf000000000000000')},
+        {int64('0xfedcba9876543210'), '<<', int64(-60), int64('0xf')},
+        {int64('0xffffffffffffffff'), '<<', int64(64), int64(0)},
+        {int64('0xffffffffffffffff'), '<<', int64(-64), int64(0)},
+        {int64('0xfedcba9876543210'), '>>', int64(0),
+         int64('0xfedcba9876543210')},
+        {int64('0xfedcba9876543210'), '>>', int64(60), int64('0xf')},
+        {int64('0x0123456789abcdef'), '>>', int64(-60),
+         int64('0xf000000000000000')},
+        {int64('0xffffffffffffffff'), '>>', int64(64), int64(0)},
+        {int64('0xffffffffffffffff'), '>>', int64(-64), int64(0)},
+    } do
+        local a, op, b, want = table.unpack(test)
+        local got = ops[op](a, b)
+        t:expect(got == want, "%s %s %s = %s, want %s", a, op, b, got, want)
+    end
 end
 
 function test_relational_ops(t)
@@ -191,7 +285,7 @@ function test_relational_ops(t)
         -- The metamethod for the equality operator is only called when the
         -- arguments are either both tables or both full userdata. For mixed
         -- argument types, the metamethod must be called directly.
-        ['=='] = function(a, b) return int64.__eq(a, b) end,
+        ['=='] = function(a, b) return int64.eq(a, b) end,
         ['<'] = function(a, b) return a < b end,
         ['<='] = function(a, b) return a <= b end,
     }
@@ -204,7 +298,7 @@ function test_relational_ops(t)
 
     local large_num = int64.tonumber(int64(1) << 60)
     local large_int64 = int64(large_num)
-    for _, vals in ipairs{
+    for _, test in ipairs{
         -- Large int64
         {int64.max - 1, int64.max - 2, false, false},
         {int64.max - 1, int64.max - 1, true, false},
@@ -220,7 +314,7 @@ function test_relational_ops(t)
         -- Number doesn't fit int64
         {int64(0), 3.5e25, false, true},
     } do
-        local a, b, eq, lt = table.unpack(vals)
+        local a, b, eq, lt = table.unpack(test)
         for _, cmps in ipairs{
             {'==', eq, eq},
             {'<', lt, not (lt or eq)},
@@ -235,7 +329,7 @@ function test_relational_ops(t)
         end
     end
 
-    for _, vals in ipairs{
+    for _, test in ipairs{
         {int64(0), int64(0), true, false},
         {int64(0), int64.max, false, true},
         {int64(0), int64.max + 1, false, true},
@@ -246,7 +340,7 @@ function test_relational_ops(t)
         {int64(-2), int64(-2), true, false},
         {int64(-2), int64(-1), false, true},
     } do
-        local a, b, eq, lt = table.unpack(vals)
+        local a, b, eq, lt = table.unpack(test)
         local got = int64.ult(a, b)
         check(t, int64.ult, a, '(ult)', b, lt)
         check(t, int64.ult, b, '(ult)', a, not (lt or eq))
@@ -254,7 +348,17 @@ function test_relational_ops(t)
 end
 
 function test_tostring(t)
-    t:skip("TODO")
+    for _, test in ipairs{
+        {int64(0), '0'},
+        {int64(1234), '1234'},
+        {int64(-1234), '-1234'},
+        {int64.max, '9223372036854775807'},
+        {int64.min, '-9223372036854775808'},
+    } do
+        local value, want = table.unpack(test)
+        local got = tostring(value)
+        t:expect(got == want, "tostring(%s) = %s, want %s", value, got, want)
+    end
 end
 
 function test_concat(t)
