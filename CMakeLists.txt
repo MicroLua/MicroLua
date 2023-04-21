@@ -12,7 +12,7 @@ endif()
 pico_sdk_init()
 
 if(NOT MLUA_PATH)
-    set(MLUA_PATH ${CMAKE_CURRENT_LIST_DIR})
+    set(MLUA_PATH "${CMAKE_CURRENT_LIST_DIR}")
 endif()
 
 add_compile_definitions(PICO_STDIO_DEFAULT_CRLF=0)

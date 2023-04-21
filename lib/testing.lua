@@ -30,7 +30,7 @@ end
 
 function Test:error(format, ...)
     self._failed = true
-    self:_enable_output()
+    self:enable_output()
     self:message("ERROR: " .. format, ...)
 end
 
@@ -108,12 +108,12 @@ function Test:_run(func)
     self._parent, self._out = nil, nil
 end
 
-function Test:_enable_output()
+function Test:enable_output()
     if not self._out then return end
     local out = self._out
     self._out = nil
     self:_restore_output()
-    if self._parent then self._parent:_enable_output() end
+    if self._parent then self._parent:enable_output() end
     eio.printf("----- BEGIN %s\n", self.name)
     out:replay(stdout)
 end

@@ -1,10 +1,14 @@
 _ENV = require 'module'(...)
 
+local eio = require 'eio'
 local int64 = require 'int64'
 local math = require 'math'
 local string = require 'string'
 local table = require 'table'
 local util = require 'util'
+
+local integer_bits = string.packsize('j') * 8
+local number_bits = string.packsize('n') * 8
 
 local function arguments(args)
     local fmt = '('
@@ -19,6 +23,12 @@ local function arguments(args)
     end
     fmt = fmt .. ')'
     return string.format(fmt, table.unpack(args))
+end
+
+function test_info(t)
+    t:enable_output()
+    eio.printf("integer: %d bits\n", integer_bits)
+    eio.printf("number: %d bits\n", number_bits)
 end
 
 function test_limits(t)
@@ -82,14 +92,16 @@ function test_tonumber(t)
 end
 
 function test_cast_to_int64(t)
+    local skip = {}
     for _, test in ipairs{
         -- Conversion from boolean
         {{false}, int64(0)},
         {{true}, int64(1)},
         -- Conversion from integer
         {{0x12345678}, int64('0x12345678')},
-        {{0x12345678, 0x9abcdef0}, int64('0x9abcdef012345678')},
-        {{-1, 0x123}, int64('0x123ffffffff')},
+        integer_bits >= 64 and skip or
+            {{0x12345678, 0x9abcdef0}, int64('0x9abcdef012345678')},
+        integer_bits >= 64 and skip or {{-1, 0x123}, int64('0x123ffffffff')},
         -- Conversion from float
         {{12345678.0}, int64('12345678')},
         {{-12345678.0}, int64('-12345678')},
@@ -120,12 +132,16 @@ function test_cast_to_int64(t)
         {{''}, nil},                                -- No digits
         {{'   '}, nil},
         {{'1234567890x'}, nil},                     -- Non-digit suffix
-        {{'0xabcdef0123456789'}, int64(0x23456789, 0xabcdef01)},    -- Negative
+        {{'0xabcdef0123456789'},                    -- Negative
+            integer_bits < 64 and int64(0x23456789, 0xabcdef01)
+            or int64(0xabcdef0123456789)},
     } do
+        if test == skip then goto continue end
         local args, want = table.unpack(test)
         local got = int64(table.unpack(args))
         t:expect(got == want,
                  "int64%s = %s, want %s", arguments(args), got, want)
+        ::continue::
     end
 end
 
@@ -379,5 +395,10 @@ function test_concat(t)
     if not pcall(function() return 1 .. 2 end) then
         t:skip("automatic number => string conversions disabled")
     end
-    t:skip("TODO")
+
+    local values = {-1, 3, -7, 13, -1234, 2468}
+    local ops = {
+        ['..'] = function(a, b) return a .. b end,
+    }
+    run_binary_ops_tests(t, ops, values, values)
 end

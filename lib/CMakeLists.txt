@@ -20,6 +20,7 @@ target_include_directories(mlua_mod_int64_headers INTERFACE include_int64)
 
 mlua_add_lua_test_modules(mlua_mod_int64_tests int64.tests.lua)
 target_link_libraries(mlua_mod_int64_tests INTERFACE
+    mlua_mod_eio
     mlua_mod_int64
     mlua_mod_math
     mlua_mod_module
@@ -66,7 +67,7 @@ target_link_libraries(mlua_mod_testing INTERFACE
 )
 
 add_executable(mlua_tests)
-set(MLUA_TEST_TARGET_FILTER ${MLUA_TEST_TARGET_FILTER} CACHE STRING
+set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING
     "Test target filter regexp"
 )
 get_property(TESTS GLOBAL PROPERTY mlua_test_targets)

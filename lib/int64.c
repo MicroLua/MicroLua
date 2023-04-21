@@ -121,7 +121,7 @@ static int int64_hex(lua_State* ls) {
     if (width == 0) {
         len = snprintf(s, sizeof(s), "%"PRIx64, value);
     } else {
-        len = snprintf(s, sizeof(s), "%0*"PRIx64, width, value);
+        len = snprintf(s, sizeof(s), "%0*"PRIx64, (int)width, value);
     }
     lua_pushlstring(ls, s, len);
     return 1;
@@ -364,7 +364,8 @@ static int int64_call(lua_State* ls) {
                 int64_t part = (int64_t)luaL_checkinteger(ls, index)
                                << (index - 1) * sizeof(lua_Integer) * 8;
                 value = (int64_t)(((uint64_t)value & ~mask) | (uint64_t)part);
-                mask <<= sizeof(lua_Integer) * 8;
+                mask = sizeof(lua_Integer) < sizeof(int64_t) ?
+                       (mask << sizeof(lua_Integer) * 8) : 0;
             }
         } else if (!mlua_number_to_int64_eq(lua_tonumber(ls, 1), &value)) {
             luaL_pushfail(ls);

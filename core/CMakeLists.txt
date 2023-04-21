@@ -75,7 +75,7 @@ target_compile_definitions(mlua_core_main INTERFACE
     MLUA_MAIN_FUNCTION=$<IF:$<STREQUAL:$<TARGET_PROPERTY:MLUA_TARGET_MAIN_FUNCTION>,>,main,$<TARGET_PROPERTY:MLUA_TARGET_MAIN_FUNCTION>>
 )
 target_include_directories(mlua_core_main INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/include
+    "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 target_link_libraries(mlua_core_main INTERFACE
     mlua_core
