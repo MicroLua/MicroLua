@@ -2,8 +2,8 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <inttypes.h>
 #include <float.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
