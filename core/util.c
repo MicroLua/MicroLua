@@ -1,5 +1,11 @@
 #include "mlua/util.h"
 
+void mlua_require(lua_State* ls, char const* module) {
+    lua_getglobal(ls, "require");
+    lua_pushstring(ls, module);
+    lua_call(ls, 1, 0);
+}
+
 bool mlua_to_cbool(lua_State* ls, int arg) {
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
     if (lua_type(ls, arg) == LUA_TNUMBER)
