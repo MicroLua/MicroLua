@@ -17,7 +17,7 @@ endif()
 
 add_compile_definitions(PICO_STDIO_DEFAULT_CRLF=0)
 add_compile_options(
-    -Wall -Werror -Wextra -Wsign-compare
+    -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
     -Wno-unused-function -Wno-unused-parameter
 )
 
