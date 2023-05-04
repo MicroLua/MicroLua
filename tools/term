@@ -5,4 +5,4 @@ if [[ $# != 1 ]]; then
     exit 2
 fi
 
-socat STDIO "$1,b115200,ignbrk,brkint=0,icrnl=0,imaxbel=0,opost=0,onlcr=0,isig=0,iexten=0,echo=0,echoe=0,echok=0,echoctl=0,echoke=0,iexten=0"
+socat READLINE "$1,b115200,icanon=0,time=5,ignbrk,brkint=0,icrnl=0,imaxbel=0,opost=0,onlcr=0,isig=0,iexten=0,echo=0,echoe=0,echok=0,echoctl=0,echoke=0,iexten=0,hupcl=0,ixon=0"
