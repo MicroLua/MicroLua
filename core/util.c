@@ -1,9 +1,9 @@
 #include "mlua/util.h"
 
-void mlua_require(lua_State* ls, char const* module) {
+void mlua_require(lua_State* ls, char const* module, bool keep) {
     lua_getglobal(ls, "require");
     lua_pushstring(ls, module);
-    lua_call(ls, 1, 0);
+    lua_call(ls, 1, keep ? 1 : 0);
 }
 
 bool mlua_to_cbool(lua_State* ls, int arg) {

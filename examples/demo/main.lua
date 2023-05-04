@@ -21,7 +21,7 @@ local function task(id)
     eio.printf("Task: %s, done\n", id)
 end
 
-local function main_task()
+function main()
     -- Wait for the system timer to start (it takes a while).
     timer.busy_wait_us(1)
     local start = time.get_absolute_time()
@@ -55,8 +55,4 @@ local function main_task()
     for i = 1, 4 do
         thread.start(function() task(i) end)
     end
-end
-
-function main()
-    thread.main(main_task)
 end

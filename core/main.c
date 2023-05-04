@@ -12,19 +12,6 @@
 #include "mlua/lib.h"
 #include "mlua/util.h"
 
-static int getfield(lua_State* ls) {
-    lua_gettable(ls, -2);
-    return 1;
-}
-
-static int try_getfield(lua_State* ls, int index, char const* k) {
-    index = lua_absindex(ls, index);
-    lua_pushcfunction(ls, getfield);
-    lua_pushvalue(ls, index);
-    lua_pushstring(ls, k);
-    return lua_pcall(ls, 2, 1, 0);
-}
-
 #ifdef LIB_PICO_STDIO
 
 static int std_stream_read(lua_State* ls) {
@@ -152,6 +139,26 @@ static void init_stdio(lua_State* ls) {
 
 #endif
 
+static int getfield(lua_State* ls) {
+    lua_gettable(ls, -2);
+    return 1;
+}
+
+static void pgetfield(lua_State* ls, int index, char const* k) {
+    index = lua_absindex(ls, index);
+    lua_pushcfunction(ls, getfield);
+    lua_pushvalue(ls, index);
+    lua_pushstring(ls, k);
+    if (lua_pcall(ls, 2, 1, 0) == LUA_OK) return;
+    lua_pop(ls, 1);
+    lua_pushnil(ls);
+}
+
+static int require_thread(lua_State* ls) {
+    mlua_require(ls, "thread", true);
+    return 1;
+}
+
 static int pmain(lua_State* ls) {
     // Set up module loading.
     mlua_open_libs(ls);
@@ -162,16 +169,24 @@ static int pmain(lua_State* ls) {
 #endif
 
     // Require the main module.
-    lua_getglobal(ls, "require");
-    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
-    lua_call(ls, 1, 1);
+    mlua_require(ls, MLUA_ESTR(MLUA_MAIN_MODULE), true);
 
-    // If the main module has a main function, call it.
-    if (try_getfield(ls, -1, MLUA_ESTR(MLUA_MAIN_FUNCTION)) == LUA_OK) {
-        lua_remove(ls, -2);  // Remove main module
+    // Get the main module's main function.
+    pgetfield(ls, -1, MLUA_ESTR(MLUA_MAIN_FUNCTION));
+    lua_remove(ls, -2);  // Remove main module
+
+    // If the "thread" module is available, run its main function, passing
+    // the main module's main function as a task. Otherwise, run the main
+    // module's main function on its own.
+    lua_pushcfunction(ls, require_thread);
+    if (lua_pcall(ls, 0, 1, 0) == LUA_OK) {
+        lua_getfield(ls, -1, "main");
+        lua_remove(ls, -2);  // Remove thread module
+        lua_rotate(ls, 2, 1);
+        lua_call(ls, 1, 0);
+    } else if (!lua_isnil(ls, -2)) {
+        lua_pop(ls, 1);  // Remove error
         lua_call(ls, 0, 0);
-    } else {
-        lua_pop(ls, 2);  // Remove error and main module
     }
     return 0;
 }
