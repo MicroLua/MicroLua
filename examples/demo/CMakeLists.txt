@@ -1,10 +1,16 @@
 mlua_add_lua_modules(mlua_examples_demo_main main.lua)
 target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_core_mod_all
+    mlua_mod_eio
+    mlua_mod_hardware_irq
+    mlua_mod_hardware_timer
     mlua_mod_module
     mlua_mod_pico
     mlua_mod_pico_platform
     mlua_mod_pico_time
+    mlua_mod_thread
+
+    mlua_mod_hardware_irq
 )
 
 add_executable(mlua_examples_demo)

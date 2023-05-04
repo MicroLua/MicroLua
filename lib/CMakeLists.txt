@@ -15,6 +15,23 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
 )
 
+mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
+target_link_libraries(mlua_mod_hardware_irq INTERFACE
+    hardware_irq
+    hardware_sync
+    mlua_mod_signal
+    pico_platform
+)
+
+mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
+target_link_libraries(mlua_mod_hardware_timer INTERFACE
+    hardware_timer
+    hardware_sync
+    mlua_mod_int64
+    mlua_mod_signal
+    pico_platform
+)
+
 mlua_add_c_module(mlua_mod_int64 int64 int64.c)
 target_include_directories(mlua_mod_int64_headers INTERFACE include_int64)
 
@@ -55,6 +72,13 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
     pico_time
 )
 
+mlua_add_c_module(mlua_mod_signal signal signal.c)
+target_include_directories(mlua_mod_signal_headers INTERFACE include_signal)
+target_link_libraries(mlua_mod_signal INTERFACE
+    hardware_sync
+    pico_platform
+)
+
 mlua_add_lua_modules(mlua_mod_testing testing.lua)
 target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_eio
@@ -64,6 +88,14 @@ target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_package
     mlua_mod_string
     mlua_mod_table
+)
+
+mlua_add_lua_modules(mlua_mod_thread thread.lua)
+target_link_libraries(mlua_mod_thread INTERFACE
+    mlua_mod_coroutine
+    mlua_mod_module
+    mlua_mod_signal
+    mlua_mod_string
 )
 
 add_executable(mlua_tests)
