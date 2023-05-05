@@ -1,9 +1,8 @@
+#include "pico/platform.h"
+
 #include "lua.h"
 #include "lauxlib.h"
-
 #include "mlua/util.h"
-
-#include "pico/platform.h"
 
 MLUA_FUNC_1_0(mod_,, rp2040_chip_version, lua_pushinteger)
 MLUA_FUNC_1_0(mod_,, rp2040_rom_version, lua_pushinteger)

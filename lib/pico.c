@@ -1,9 +1,8 @@
+#include "pico.h"
+
 #include "lua.h"
 #include "lauxlib.h"
-
 #include "mlua/util.h"
-
-#include "pico.h"
 
 static mlua_reg const module_regs[] = {
 #define X(n) MLUA_REG(integer, n, PICO_ ## n)

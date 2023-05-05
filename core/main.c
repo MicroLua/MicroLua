@@ -4,14 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lua.h"
-#include "lauxlib.h"
-
 #include "pico/platform.h"
 #ifdef LIB_PICO_STDIO
 #include "pico/stdio.h"
 #endif
 
+#include "lua.h"
+#include "lauxlib.h"
 #include "mlua/lib.h"
 #include "mlua/util.h"
 

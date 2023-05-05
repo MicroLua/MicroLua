@@ -1,10 +1,9 @@
+#include "pico/time.h"
+
 #include "lua.h"
 #include "lauxlib.h"
-
 #include "mlua/int64.h"
 #include "mlua/util.h"
-
-#include "pico/time.h"
 
 static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
     return from_us_since_boot(mlua_check_int64(ls, arg));

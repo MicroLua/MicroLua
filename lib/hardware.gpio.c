@@ -1,9 +1,8 @@
+#include "hardware/gpio.h"
+
 #include "lua.h"
 #include "lauxlib.h"
-
 #include "mlua/util.h"
-
-#include "hardware/gpio.h"
 
 MLUA_FUNC_0_2(mod_, gpio_, set_function, luaL_checkinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_, gpio_, get_function, lua_pushinteger, luaL_checkinteger)
@@ -70,6 +69,18 @@ static mlua_reg const module_regs[] = {
     X(get_slew_rate),
     X(set_drive_strength),
     X(get_drive_strength),
+    // X(set_irq_enabled),
+    // X(set_irq_callback),
+    // X(set_irq_enabled_with_callback),
+    // X(set_dormant_irq_enabled),
+    // X(get_irq_event_mask),
+    // X(acknowledge_irq),
+    // X(add_raw_irq_handler_with_order_priority_masked),
+    // X(add_raw_irq_handler_with_order_priority),
+    // X(add_raw_irq_handler_masked),
+    // X(add_raw_irq_handler),
+    // X(remove_raw_irq_handler_masked),
+    // X(remove_raw_irq_handler),
     X(init),
     X(deinit),
     X(init_mask),

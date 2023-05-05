@@ -5,10 +5,9 @@
 
 #include "hardware/sync.h"
 #include "pico/platform.h"
+#include "pico/time.h"
 
 #include "mlua/util.h"
-
-#include "pico/time.h"
 
 #define NUM_SIGNALS 128
 #define SIGNALS_SIZE ((NUM_SIGNALS + 31) / 32)

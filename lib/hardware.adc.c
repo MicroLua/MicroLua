@@ -1,9 +1,8 @@
+#include "hardware/adc.h"
+
 #include "lua.h"
 #include "lauxlib.h"
-
 #include "mlua/util.h"
-
-#include "hardware/adc.h"
 
 MLUA_FUNC_0_0(mod_, adc_, init)
 MLUA_FUNC_0_1(mod_, adc_, gpio_init, luaL_checkinteger)
