@@ -18,6 +18,7 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
+    hardware_structs
     hardware_sync
     mlua_mod_signal
     pico_platform

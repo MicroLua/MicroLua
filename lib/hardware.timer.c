@@ -21,7 +21,7 @@ static lua_Integer check_alarm(lua_State* ls, int index) {
     return alarm;
 }
 
-static int alarm_signals[NUM_CORES][NUM_TIMERS];
+static SigNum alarm_signals[NUM_CORES][NUM_TIMERS];
 
 static void __time_critical_func(alarm_handler)(uint alarm) {
     mlua_signal_set(alarm_signals[get_core_num()][alarm], true);
@@ -29,8 +29,8 @@ static void __time_critical_func(alarm_handler)(uint alarm) {
 
 static int mod_set_callback(lua_State* ls) {
     lua_Integer alarm = check_alarm(ls, 1);
-    int* sigs = alarm_signals[get_core_num()];
-    int sig = sigs[alarm];
+    SigNum* sigs = alarm_signals[get_core_num()];
+    SigNum sig = sigs[alarm];
     if (!lua_isnoneornil(ls, 2)) {
         if (sig < 0) {
             sig = mlua_signal_claim(ls, 2);
@@ -95,7 +95,7 @@ int luaopen_hardware_timer(lua_State* ls) {
     mlua_require(ls, "signal", false);
 
     // Initialize internal state.
-    int* sigs = alarm_signals[get_core_num()];
+    SigNum* sigs = alarm_signals[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     for (int i = 0; i < (int)NUM_TIMERS; ++i) sigs[i] = -1;
     restore_interrupts(save);

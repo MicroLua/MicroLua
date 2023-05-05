@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "hardware/irq.h"
+#include "hardware/structs/adc.h"
 #include "hardware/sync.h"
 #include "pico/platform.h"
 
@@ -9,60 +10,61 @@
 #include "mlua/signal.h"
 #include "mlua/util.h"
 
-static lua_Integer check_user_irq(lua_State* ls, int index) {
+static lua_Integer check_irq(lua_State* ls, int index) {
     lua_Integer irq = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls,
-                 (lua_Integer)FIRST_USER_IRQ <= irq
-                 && irq < (lua_Integer)(FIRST_USER_IRQ + NUM_USER_IRQS),
-                 index, "unsupported IRQ number");
+    luaL_argcheck(ls, 0 <= irq && irq < (lua_Integer)NUM_IRQS, index,
+                  "unsupported IRQ number");
     return irq;
 }
 
-static int user_irq_signals[NUM_CORES][NUM_USER_IRQS];
+static SigNum irq_signals[NUM_CORES][NUM_IRQS];
 
-static void __time_critical_func(user_irq_handler)(void) {
+static void __time_critical_func(irq_handler)(void) {
     uint irq = __get_current_exception() - VTABLE_FIRST_IRQ;
-    irq_clear(irq);
-    mlua_signal_set(
-        user_irq_signals[get_core_num()][irq - FIRST_USER_IRQ], true);
+    SigNum sig = irq_signals[get_core_num()][irq];
+    switch (irq) {
+    case ADC_IRQ_FIFO:
+        adc_hw->inte = 0;
+        break;
+    default:
+        irq_clear(irq);
+        break;
+    }
+    mlua_signal_set(sig, true);
 }
 
 static int mod_set_exclusive_handler(lua_State* ls) {
-    lua_Integer irq = check_user_irq(ls, 1);
-    int* sigs = user_irq_signals[get_core_num()];
-    int sig = sigs[irq - FIRST_USER_IRQ];
+    lua_Integer irq = check_irq(ls, 1);
+    SigNum* sigs = irq_signals[get_core_num()];
+    SigNum sig = sigs[irq];
     if (sig < 0) {
         sig = mlua_signal_claim(ls, 2);
         uint32_t save = save_and_disable_interrupts();
-        sigs[irq - FIRST_USER_IRQ] = sig;
+        sigs[irq] = sig;
         restore_interrupts(save);
     } else {
         mlua_signal_set_handler(ls, sig, 2);
     }
-    irq_set_exclusive_handler(irq, &user_irq_handler);
+    irq_set_exclusive_handler(irq, &irq_handler);
     return 0;
 }
 
 static int mod_remove_handler(lua_State* ls) {
-    lua_Integer irq = check_user_irq(ls, 1);
-    irq_remove_handler(irq, &user_irq_handler);
-    int* sigs = user_irq_signals[get_core_num()];
-    int sig = sigs[irq - FIRST_USER_IRQ];
+    lua_Integer irq = check_irq(ls, 1);
+    irq_remove_handler(irq, &irq_handler);
+    SigNum* sigs = irq_signals[get_core_num()];
+    SigNum sig = sigs[irq];
     if (sig < 0) return 0;
     uint32_t save = save_and_disable_interrupts();
-    sigs[irq - FIRST_USER_IRQ] = -1;
+    sigs[irq] = -1;
     restore_interrupts(save);
     mlua_signal_unclaim(ls, sig);
     return 0;
 }
 
 static int mod_clear(lua_State* ls) {
-    lua_Integer irq = luaL_checkinteger(ls, 1);
-    if ((lua_Integer)FIRST_USER_IRQ <= irq
-            && irq < (lua_Integer)(FIRST_USER_IRQ + NUM_USER_IRQS)) {
-        mlua_signal_set(
-            user_irq_signals[get_core_num()][irq - FIRST_USER_IRQ], false);
-    }
+    lua_Integer irq = check_irq(ls, 1);
+    mlua_signal_set(irq_signals[get_core_num()][irq], false);
     irq_clear(irq);
     return 0;
 }
@@ -129,9 +131,9 @@ int luaopen_hardware_irq(lua_State* ls) {
     mlua_require(ls, "signal", false);
 
     // Initialize internal state.
-    int* sigs = user_irq_signals[get_core_num()];
+    SigNum* sigs = irq_signals[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
-    for (int i = 0; i < (int)NUM_USER_IRQS; ++i) sigs[i] = -1;
+    for (int i = 0; i < (int)NUM_IRQS; ++i) sigs[i] = -1;
     restore_interrupts(save);
 
     // Create the module.
