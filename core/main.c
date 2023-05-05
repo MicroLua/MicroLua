@@ -1,10 +1,13 @@
 #include "mlua/main.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lua.h"
 #include "lauxlib.h"
 
+#include "pico/platform.h"
 #ifdef LIB_PICO_STDIO
 #include "pico/stdio.h"
 #endif
@@ -137,7 +140,27 @@ static void init_stdio(lua_State* ls) {
     lua_setglobal(ls, "print");
 }
 
-#endif
+#endif  // LIB_PICO_STDIO
+
+void mlua_writestringerror(char const* fmt, char const* param) {
+    int i = 0;
+    for (;;) {
+        char c = fmt[i];
+        if (c == '\0') {
+            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
+            fflush(stderr);
+            return;
+        } else if (c == '%' && fmt[i + 1] == 's') {
+            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
+            int plen = strlen(param);
+            if (plen > 0) fwrite(param, sizeof(char), plen, stderr);
+            fmt += i + 2;
+            i = 0;
+        } else {
+            ++i;
+        }
+    }
+}
 
 static int getfield(lua_State* ls) {
     lua_gettable(ls, -2);
@@ -191,13 +214,57 @@ static int pmain(lua_State* ls) {
     return 0;
 }
 
+static void* allocate(void* ud, void* ptr, size_t old_size, size_t new_size) {
+    if (new_size != 0) return realloc(ptr, new_size);
+    free(ptr);
+    return NULL;
+}
+
+static int on_panic(lua_State* ls) {
+    char const* msg = lua_tostring(ls, -1);
+    if (msg == NULL) msg = "unknown error";
+    mlua_writestringerror("PANIC: %s\n", msg);
+    panic(NULL);
+}
+
+static void warn_print(char const* msg, bool first, bool last) {
+    if (first) mlua_writestringerror("WARNING: ", "");
+    mlua_writestringerror("%s", msg);
+    if (last) mlua_writestringerror("\n", "");
+}
+
+static void on_warn_cont(void* ud, char const* msg, int cont);
+static void on_warn_off(void* ud, char const* msg, int cont);
+
+static void on_warn_on(void* ud, char const* msg, int cont) {
+    if (!cont && msg[0] == '@') {
+        if (strcmp(msg, "@off") == 0)
+            lua_setwarnf((lua_State*)ud, &on_warn_off, ud);
+        return;
+    }
+    warn_print(msg, true, !cont);
+    if (cont) lua_setwarnf((lua_State*)ud, &on_warn_cont, ud);
+}
+
+static void on_warn_cont(void* ud, char const* msg, int cont) {
+    warn_print(msg, false, !cont);
+    if (!cont) lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
+}
+
+static void on_warn_off(void* ud, char const* msg, int cont) {
+    if (cont || strcmp(msg, "@on") == 0) return;
+    lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
+}
+
 void mlua_main() {
-    // TODO: Use lua_newstate and set panic and warn handlers.
-    lua_State* ls = luaL_newstate();
+    lua_State* ls = lua_newstate(allocate, NULL);
+    lua_atpanic(ls, &on_panic);
+    lua_setwarnf(ls, &on_warn_off, ls);
+
     lua_pushcfunction(ls, pmain);
     int err = lua_pcall(ls, 0, 0, 0);
     if (err != LUA_OK) {
-        printf("ERROR: %s\n", lua_tostring(ls, -1));
+        mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
         lua_pop(ls, 1);
     }
     lua_close(ls);

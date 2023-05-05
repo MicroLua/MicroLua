@@ -9,8 +9,6 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_mod_pico_platform
     mlua_mod_pico_time
     mlua_mod_thread
-
-    mlua_mod_hardware_irq
 )
 
 add_executable(mlua_examples_demo)

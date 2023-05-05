@@ -1,5 +1,6 @@
 _ENV = require 'module'(...)
 
+local debug = require 'debug'
 local eio = require 'eio'
 local irq = require 'hardware.irq'
 local timer = require 'hardware.timer'
@@ -15,6 +16,7 @@ local irq_num = irq.user_irq_claim_unused()
 local function task(id)
     for i = 1, 3 do
         eio.printf("Task: %s, i: %s\n", id, i)
+        -- debug.debug()
         irq.set_pending(irq_num)
         thread.yield()
     end
@@ -32,6 +34,14 @@ function main()
     eio.printf("rom version: %d\n", platform.rp2040_rom_version())
     eio.printf("core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
+
+    warn("Still off")
+    warn("@on")
+    warn("Now on")
+    warn("@unknown")
+    warn("After ", "@unknown", ", before ", "@off")
+    warn("@off")
+    warn("Off again")
 
     -- while true do
     --     local line = stdin:read()

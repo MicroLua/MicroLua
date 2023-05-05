@@ -23,7 +23,21 @@
 // implementation (see pico_set_printf_implementation) doesn't support %a. The
 // "compiler" implementation uses newlib, which does support %a but only if it
 // is compiled with --enable-newlib-io-c99-formats. Lua provides a fallback if
-// lua_number2strx is undefined.
+// lua_number2strx is undefined, so we use that.
 #undef lua_number2strx
+
+#ifdef PICO_BUILD
+
+// lua_writestring and lua_writeline are only used by print(), which we override
+// in main.c.
+#define lua_writestring(s, l) do { (void)s; (void)l; } while (0)
+#define lua_writeline() do {} while (0)
+
+// lua_writestringerror is used by panic(), warn() and debug.debug(). Use our
+// own simplified implementation to avoid depending on sprintf.
+#define lua_writestringerror(s, p) mlua_writestringerror(s, p)
+extern void mlua_writestringerror(char const* fmt, char const* param);
+
+#endif  // PICO_BUILD
 
 #endif
