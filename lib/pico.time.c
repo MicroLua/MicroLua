@@ -47,7 +47,13 @@ MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
 static mlua_reg const module_regs[] = {
     MLUA_REG_PUSH(at_the_end_of_time, push_at_the_end_of_time),
     MLUA_REG_PUSH(nil_time, push_nil_time),
+    // X(DEFAULT_ALARM_POOL_DISABLED),
+    // X(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
+    // X(DEFAULT_ALARM_POOL_MAX_TIMERS),
 #define X(n) MLUA_REG(function, n, mod_ ## n)
+    // X(to_us_since_boot): not useful in Lua
+    // X(update_us_since_boot): not useful in Lua
+    // X(from_us_since_boot): not useful in Lua
     X(get_absolute_time),
     X(to_ms_since_boot),
     X(delayed_by_us),
@@ -62,6 +68,27 @@ static mlua_reg const module_regs[] = {
     X(sleep_us),
     X(sleep_ms),
     X(best_effort_wfe_or_timeout),
+    // X(alarm_pool_init_default),
+    // X(alarm_pool_get_default),
+    // X(alarm_pool_create),
+    // X(alarm_pool_create_with_unused_hardware_alarm),
+    // X(alarm_pool_hardware_alarm_num),
+    // X(alarm_pool_core_num),
+    // X(alarm_pool_destroy),
+    // X(alarm_pool_add_alarm_at),
+    // X(alarm_pool_add_alarm_at_force_in_context),
+    // X(alarm_pool_add_alarm_in_us),
+    // X(alarm_pool_add_alarm_in_ms),
+    // X(alarm_pool_cancel_alarm),
+    // X(add_alarm_at),
+    // X(add_alarm_in_us),
+    // X(add_alarm_in_ms),
+    // X(cancel_alarm),
+    // X(alarm_pool_add_repeating_timer_us),
+    // X(alarm_pool_add_repeating_timer_ms),
+    // X(add_repeating_timer_us),
+    // X(add_repeating_timer_ms),
+    // X(cancel_repeating_timer),
 #undef X
     {NULL},
 };
