@@ -20,7 +20,9 @@ struct Signals {
 
 static struct Signals signals[NUM_CORES];
 
-void set_handler(lua_State* ls, struct Signals* sigs, SigNum sig, int handler) {
+static void set_handler(lua_State* ls, struct Signals* sigs, SigNum sig,
+                        int handler) {
+    handler = lua_absindex(ls, handler);
     lua_rawgetp(ls, LUA_REGISTRYINDEX, sigs);
     lua_pushinteger(ls, sig);
     lua_pushvalue(ls, handler);
