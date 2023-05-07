@@ -48,7 +48,7 @@ function main()
         -- The IRQ handler disables the IRQ because it is level-triggered. So
         -- it needs to be re-enabled explicitly here after the FIFO has been
         -- emptied.
-        adc.irq_set_enabled(true)
+        irq.set_enabled(irq.ADC_IRQ_FIFO, true)
     end)
     irq.clear(irq.ADC_IRQ_FIFO)
     irq.set_enabled(irq.ADC_IRQ_FIFO, true)

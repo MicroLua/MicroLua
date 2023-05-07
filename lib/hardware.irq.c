@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "hardware/irq.h"
-#include "hardware/structs/adc.h"
 #include "hardware/sync.h"
 #include "pico/platform.h"
 
@@ -24,7 +23,7 @@ static void __time_critical_func(irq_handler)(void) {
     SigNum sig = irq_signals[get_core_num()][irq];
     switch (irq) {
     case ADC_IRQ_FIFO:
-        adc_hw->inte = 0;
+        irq_set_enabled(irq, false);  // ADC IRQ is level-triggered
         break;
     default:
         irq_clear(irq);
@@ -87,7 +86,12 @@ static mlua_reg const module_regs[] = {
     X(is_enabled),
     X(set_mask_enabled),
     X(set_exclusive_handler),
+    // X(irq_get_exclusive_handler): not useful in Lua
+    // TODO: Combine with set_exclusive_handler as set_handler
+    // X(irq_add_shared_handler),
     X(remove_handler),
+    // X(irq_has_shared_handler),
+    // X(irq_get_vtable_handler): not useful in Lua
     X(clear),
     X(set_pending),
     X(user_irq_claim),
