@@ -32,8 +32,9 @@ static void __time_critical_func(irq_handler)(void) {
     mlua_signal_set(sig, true);
 }
 
-static int mod_set_exclusive_handler(lua_State* ls) {
+static int mod_set_handler(lua_State* ls) {
     lua_Integer irq = check_irq(ls, 1);
+    lua_Integer order_priority = luaL_optinteger(ls, 3, -1);
     SigNum* sigs = irq_signals[get_core_num()];
     SigNum sig = sigs[irq];
     if (sig < 0) {
@@ -44,7 +45,11 @@ static int mod_set_exclusive_handler(lua_State* ls) {
     } else {
         mlua_signal_set_handler(ls, sig, 2);
     }
-    irq_set_exclusive_handler(irq, &irq_handler);
+    if (order_priority < 0) {
+        irq_set_exclusive_handler(irq, &irq_handler);
+    } else {
+        irq_add_shared_handler(irq, &irq_handler, order_priority);
+    }
     return 0;
 }
 
@@ -73,6 +78,8 @@ MLUA_FUNC_1_1(mod_, irq_, get_priority, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_0_2(mod_, irq_, set_enabled, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, irq_, is_enabled, lua_pushboolean, luaL_checkinteger)
 MLUA_FUNC_0_2(mod_, irq_, set_mask_enabled, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_1_1(mod_, irq_, has_shared_handler, lua_pushboolean,
+              luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, irq_, set_pending, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_,, user_irq_claim, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
@@ -85,13 +92,13 @@ static mlua_reg const module_regs[] = {
     X(set_enabled),
     X(is_enabled),
     X(set_mask_enabled),
-    X(set_exclusive_handler),
-    // X(irq_get_exclusive_handler): not useful in Lua
-    // TODO: Combine with set_exclusive_handler as set_handler
-    // X(irq_add_shared_handler),
+    X(set_handler),
+    // irq_set_exclusive_handler: Implemented by set_handler
+    // irq_get_exclusive_handler: not useful in Lua
+    // irq_add_shared_handler: Implemented by set_handler
     X(remove_handler),
-    // X(irq_has_shared_handler),
-    // X(irq_get_vtable_handler): not useful in Lua
+    X(has_shared_handler),
+    // irq_get_vtable_handler: not useful in Lua
     X(clear),
     X(set_pending),
     X(user_irq_claim),
@@ -127,6 +134,14 @@ static mlua_reg const module_regs[] = {
     X(RTC_IRQ),
     X(FIRST_USER_IRQ),
     X(NUM_USER_IRQS),
+#undef X
+#define X(n) MLUA_REG(integer, n, PICO_ ## n)
+    X(DEFAULT_IRQ_PRIORITY),
+    X(LOWEST_IRQ_PRIORITY),
+    X(HIGHEST_IRQ_PRIORITY),
+    X(SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY),
+    X(SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY),
+    X(SHARED_IRQ_HANDLER_LOWEST_ORDER_PRIORITY),
 #undef X
     {NULL},
 };

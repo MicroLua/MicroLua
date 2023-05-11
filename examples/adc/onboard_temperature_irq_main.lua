@@ -33,7 +33,7 @@ function main()
 
     -- Set up the ADC IRQ handler.
     local cnt = 0
-    irq.set_exclusive_handler(irq.ADC_IRQ_FIFO, function()
+    irq.set_handler(irq.ADC_IRQ_FIFO, function()
         while not adc.fifo_is_empty() do
             local value = adc.fifo_get()
             cnt = cnt + 1

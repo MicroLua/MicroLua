@@ -12,6 +12,7 @@ extern "C" {
 
 #define MLUA_STR(n) #n
 #define MLUA_ESTR(n) MLUA_STR(n)
+#define MLUA_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define MLUA_ARGS_1(a1) \
     a1(ls, 1)

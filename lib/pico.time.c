@@ -51,9 +51,9 @@ static mlua_reg const module_regs[] = {
     // X(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
     // X(DEFAULT_ALARM_POOL_MAX_TIMERS),
 #define X(n) MLUA_REG(function, n, mod_ ## n)
-    // X(to_us_since_boot): not useful in Lua
-    // X(update_us_since_boot): not useful in Lua
-    // X(from_us_since_boot): not useful in Lua
+    // to_us_since_boot: not useful in Lua
+    // update_us_since_boot: not useful in Lua
+    // from_us_since_boot: not useful in Lua
     X(get_absolute_time),
     X(to_ms_since_boot),
     X(delayed_by_us),
