@@ -11,13 +11,6 @@
 #include "mlua/signal.h"
 #include "mlua/util.h"
 
-static lua_Integer check_gpio(lua_State* ls, int index) {
-    lua_Integer gpio = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= gpio && gpio < (lua_Integer)NUM_BANK0_GPIOS, index,
-                  "invalid GPIO number");
-    return gpio;
-}
-
 struct IRQState {
     uint32_t events[(NUM_BANK0_GPIOS + 7) / 8];
     uint32_t masks[(NUM_BANK0_GPIOS + 7) / 8];
@@ -59,9 +52,8 @@ void irq_callback(uint gpio, uint32_t event_mask) {
 
 int irq_callback_signal(lua_State* ls) {
     uint core = get_core_num();
-    io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
     struct IRQState* irq_state = &irq_states[core];
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &irq_state->callback_sig);
+    io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
 
     // Dispatch events to the callback.
     for (uint block = 0; block < MLUA_SIZE(irq_state->events); ++block) {
@@ -72,7 +64,7 @@ int irq_callback_signal(lua_State* ls) {
         for (uint i = 0; events8 && i < 8; ++i) {
             uint32_t events = events8 & 0xf;
             if (events) {
-                lua_pushvalue(ls, -1);
+                lua_pushvalue(ls, lua_upvalueindex(1));
                 lua_pushinteger(ls, block * 8 + i);
                 lua_pushinteger(ls, events);
                 lua_call(ls, 2, 0);
@@ -87,24 +79,24 @@ int irq_callback_signal(lua_State* ls) {
     return 0;
 }
 
+static lua_Integer check_gpio(lua_State* ls, int index) {
+    lua_Integer gpio = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, 0 <= gpio && gpio < (lua_Integer)NUM_BANK0_GPIOS, index,
+                  "invalid GPIO number");
+    return gpio;
+}
+
 int mod_set_irq_callback(lua_State* ls) {
-    struct IRQState* irq_state = &irq_states[get_core_num()];
-    bool nil_cb = lua_isnoneornil(ls, 1);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, &irq_state->callback_sig);
-    SigNum sig = irq_state->callback_sig;
-    if (sig < 0) {  // No callback is currently set
-        if (nil_cb) return 0;
-        lua_pushcfunction(ls, &irq_callback_signal);
-        sig = mlua_signal_claim(ls, -1);
-        uint32_t save = save_and_disable_interrupts();
-        irq_state->callback_sig = sig;
-        restore_interrupts(save);
+    bool has_cb = mlua_signal_wrap_handler(ls, &irq_callback_signal, 1);
+    SigNum* sig = &irq_states[get_core_num()].callback_sig;
+    if (*sig < 0) {  // No callback is currently set
+        if (!has_cb) return 0;
+        mlua_signal_claim(ls, sig, 1);
         gpio_set_irq_callback(&irq_callback);
-    } else if (nil_cb) {  // An existing callback is being unset
+    } else if (has_cb) {  // An existing callback is being updated
+        mlua_signal_set_handler(ls, *sig, 1);
+    } else {  // An existing callback is being unset
         gpio_set_irq_callback(NULL);
-        uint32_t save = save_and_disable_interrupts();
-        irq_state->callback_sig = -1;
-        restore_interrupts(save);
         mlua_signal_unclaim(ls, sig);
     }
     return 0;

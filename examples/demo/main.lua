@@ -44,7 +44,7 @@ function main()
         timer.set_target(0, next_time)
         eio.printf("# Alarm at %s, next at %s\n", now, next_time)
     end)
-    -- timer.set_target(0, next_time)
+    timer.set_target(0, next_time)
 
     irq.set_handler(irq_num, function() eio.printf("# IRQ!\n") end)
     irq.clear(irq_num)

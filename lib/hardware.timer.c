@@ -10,8 +10,10 @@
 #include "mlua/signal.h"
 #include "mlua/util.h"
 
-static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
-    return from_us_since_boot(mlua_check_int64(ls, arg));
+static SigNum alarm_signals[NUM_CORES][NUM_TIMERS];
+
+static void __time_critical_func(handle_alarm)(uint alarm) {
+    mlua_signal_set(alarm_signals[get_core_num()][alarm], true);
 }
 
 static lua_Integer check_alarm(lua_State* ls, int index) {
@@ -21,31 +23,22 @@ static lua_Integer check_alarm(lua_State* ls, int index) {
     return alarm;
 }
 
-static SigNum alarm_signals[NUM_CORES][NUM_TIMERS];
-
-static void __time_critical_func(alarm_handler)(uint alarm) {
-    mlua_signal_set(alarm_signals[get_core_num()][alarm], true);
+static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
+    return from_us_since_boot(mlua_check_int64(ls, arg));
 }
 
 static int mod_set_callback(lua_State* ls) {
     lua_Integer alarm = check_alarm(ls, 1);
-    SigNum* sigs = alarm_signals[get_core_num()];
-    SigNum sig = sigs[alarm];
-    if (!lua_isnoneornil(ls, 2)) {
-        if (sig < 0) {
-            sig = mlua_signal_claim(ls, 2);
-            uint32_t save = save_and_disable_interrupts();
-            sigs[alarm] = sig;
-            restore_interrupts(save);
-        } else {
-            mlua_signal_set_handler(ls, sig, 2);
-        }
-        hardware_alarm_set_callback(alarm, &alarm_handler);
-    } else if (sig >= 0) {
+    bool has_cb = !lua_isnoneornil(ls, 2);
+    SigNum* sig = &alarm_signals[get_core_num()][alarm];
+    if (*sig < 0) {  // No callback is currently set
+        if (!has_cb) return 0;
+        mlua_signal_claim(ls, sig, 2);
+        hardware_alarm_set_callback(alarm, &handle_alarm);
+    } else if (has_cb) {  // An existing callback is being updated
+        mlua_signal_set_handler(ls, *sig, 2);
+    } else {  // An existing callback is being unset
         hardware_alarm_set_callback(alarm, NULL);
-        uint32_t save = save_and_disable_interrupts();
-        sigs[alarm] = -1;
-        restore_interrupts(save);
         mlua_signal_unclaim(ls, sig);
     }
     return 0;

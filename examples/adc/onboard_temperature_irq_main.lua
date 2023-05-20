@@ -33,7 +33,7 @@ function main()
 
     -- Set up the ADC IRQ handler.
     local cnt = 0
-    irq.set_handler(irq.ADC_IRQ_FIFO, function()
+    adc.irq_set_handler(function()
         while not adc.fifo_is_empty() do
             local value = adc.fifo_get()
             cnt = cnt + 1
@@ -45,16 +45,11 @@ function main()
                 if LED_PIN then gpio.xor_mask(1 << LED_PIN) end
             end
         end
-        -- The IRQ handler disables the IRQ because it is level-triggered. So
-        -- it needs to be re-enabled explicitly here after the FIFO has been
-        -- emptied.
-        irq.set_enabled(irq.ADC_IRQ_FIFO, true)
     end)
-    irq.clear(irq.ADC_IRQ_FIFO)
-    irq.set_enabled(irq.ADC_IRQ_FIFO, true)
 
     -- Start the ADC in free-running mode.
     adc.fifo_drain()
     adc.irq_set_enabled(true)
+    irq.set_enabled(irq.ADC_IRQ_FIFO, true)
     adc.run(true)
 end

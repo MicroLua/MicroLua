@@ -2,7 +2,34 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/hardware.irq.h"
 #include "mlua/util.h"
+
+static bool enabled[NUM_CORES];
+
+static void __time_critical_func(handle_irq)(void) {
+    adc_irq_set_enabled(false);  // ADC IRQ is level-triggered
+    mlua_irq_set_signal(ADC_IRQ_FIFO, true);
+}
+
+static int handle_signal(lua_State* ls) {
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_call(ls, 0, 0);
+    adc_irq_set_enabled(enabled[get_core_num()]);
+    return 0;
+}
+
+static int mod_irq_set_handler(lua_State* ls) {
+    mlua_irq_set_handler(ls, ADC_IRQ_FIFO, &handle_irq, &handle_signal, 1);
+    return 0;
+}
+
+static int mod_irq_set_enabled(lua_State* ls) {
+    bool enable = mlua_to_cbool(ls, 1);
+    enabled[get_core_num()] = enable;
+    adc_irq_set_enabled(enable);
+    return 0;
+}
 
 MLUA_FUNC_0_0(mod_, adc_, init)
 MLUA_FUNC_0_1(mod_, adc_, gpio_init, luaL_checkinteger)
@@ -20,7 +47,6 @@ MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get_blocking, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
-MLUA_FUNC_0_1(mod_, adc_, irq_set_enabled, mlua_to_cbool)
 
 static mlua_reg const module_regs[] = {
 #define X(n) MLUA_REG(function, n, mod_ ## n)
@@ -40,11 +66,15 @@ static mlua_reg const module_regs[] = {
     X(fifo_get_blocking),
     X(fifo_drain),
     X(irq_set_enabled),
+    X(irq_set_handler),
 #undef X
     {NULL},
 };
 
 int luaopen_hardware_adc(lua_State* ls) {
+    mlua_require(ls, "hardware.irq", false);
+
+    // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
     return 1;
 }

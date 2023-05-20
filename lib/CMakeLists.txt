@@ -8,6 +8,7 @@ target_link_libraries(mlua_mod_eio INTERFACE
 mlua_add_c_module(mlua_mod_hardware_adc hardware.adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware_adc INTERFACE
     hardware_adc
+    mlua_mod_hardware_irq
 )
 
 mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio hardware.gpio.c)
@@ -20,6 +21,8 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
+target_include_directories(mlua_mod_hardware_irq_headers INTERFACE
+    include_hardware.irq)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
     hardware_sync

@@ -9,22 +9,37 @@
 #include "mlua/signal.h"
 #include "mlua/util.h"
 
-static lua_Integer check_irq(lua_State* ls, int index) {
-    lua_Integer irq = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= irq && irq < (lua_Integer)NUM_IRQS, index,
-                  "unsupported IRQ number");
-    return irq;
-}
-
 static SigNum irq_signals[NUM_CORES][NUM_IRQS];
 
-static void __time_critical_func(irq_handler)(void) {
+void mlua_irq_set_handler(lua_State* ls, uint irq, void (*irq_handler)(void),
+                          lua_CFunction handler_wrapper, int handler) {
+    bool has_handler = mlua_signal_wrap_handler(ls, handler_wrapper, handler);
+    SigNum* sig = &irq_signals[get_core_num()][irq];
+    if (*sig < 0) {  // No handler is currently set
+        if (!has_handler) return;
+        mlua_signal_claim(ls, sig, handler);
+        lua_Integer order_priority = luaL_optinteger(ls, handler + 1, -1);
+        if (order_priority < 0) {
+            irq_set_exclusive_handler(irq, irq_handler);
+        } else {
+            irq_add_shared_handler(irq, irq_handler, order_priority);
+        }
+    } else if (has_handler) {  // An existing handler is being updated
+        mlua_signal_set_handler(ls, *sig, handler);
+    } else {  // An existing handler is being unset
+        irq_remove_handler(irq, irq_handler);
+        mlua_signal_unclaim(ls, sig);
+    }
+}
+
+void __time_critical_func(mlua_irq_set_signal)(uint irq, bool pending) {
+    mlua_signal_set(irq_signals[get_core_num()][irq], pending);
+}
+
+static void __time_critical_func(handle_irq)(void) {
     uint irq = __get_current_exception() - VTABLE_FIRST_IRQ;
     SigNum sig = irq_signals[get_core_num()][irq];
     switch (irq) {
-    case ADC_IRQ_FIFO:
-        irq_set_enabled(irq, false);  // ADC IRQ is level-triggered
-        break;
     default:
         irq_clear(irq);
         break;
@@ -32,43 +47,27 @@ static void __time_critical_func(irq_handler)(void) {
     mlua_signal_set(sig, true);
 }
 
+static lua_Integer check_irq(lua_State* ls, int index) {
+    lua_Integer irq = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, 0 <= irq && irq < (lua_Integer)NUM_IRQS, index,
+                  "unsupported IRQ number");
+    return irq;
+}
+
 static int mod_set_handler(lua_State* ls) {
-    lua_Integer irq = check_irq(ls, 1);
-    lua_Integer order_priority = luaL_optinteger(ls, 3, -1);
-    SigNum* sigs = irq_signals[get_core_num()];
-    SigNum sig = sigs[irq];
-    if (sig < 0) {
-        sig = mlua_signal_claim(ls, 2);
-        uint32_t save = save_and_disable_interrupts();
-        sigs[irq] = sig;
-        restore_interrupts(save);
-    } else {
-        mlua_signal_set_handler(ls, sig, 2);
-    }
-    if (order_priority < 0) {
-        irq_set_exclusive_handler(irq, &irq_handler);
-    } else {
-        irq_add_shared_handler(irq, &irq_handler, order_priority);
-    }
+    mlua_irq_set_handler(ls, check_irq(ls, 1), &handle_irq, NULL, 2);
     return 0;
 }
 
 static int mod_remove_handler(lua_State* ls) {
-    lua_Integer irq = check_irq(ls, 1);
-    irq_remove_handler(irq, &irq_handler);
-    SigNum* sigs = irq_signals[get_core_num()];
-    SigNum sig = sigs[irq];
-    if (sig < 0) return 0;
-    uint32_t save = save_and_disable_interrupts();
-    sigs[irq] = -1;
-    restore_interrupts(save);
-    mlua_signal_unclaim(ls, sig);
+    lua_pushnil(ls);
+    mlua_irq_set_handler(ls, check_irq(ls, 1), &handle_irq, NULL, -1);
     return 0;
 }
 
 static int mod_clear(lua_State* ls) {
     lua_Integer irq = check_irq(ls, 1);
-    mlua_signal_set(irq_signals[get_core_num()][irq], false);
+    mlua_irq_set_signal(irq, false);
     irq_clear(irq);
     return 0;
 }

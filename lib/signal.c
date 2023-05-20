@@ -30,7 +30,7 @@ static void set_handler(lua_State* ls, struct Signals* sigs, SigNum sig,
     lua_pop(ls, 1);
 }
 
-SigNum mlua_signal_claim(lua_State* ls, int handler) {
+void mlua_signal_claim(lua_State* ls, SigNum* psig, int handler) {
     struct Signals* sigs = &signals[get_core_num()];
     for (int i = 0; i < SIGNALS_SIZE; ++i) {
         int idx = __builtin_ffs(~sigs->mask[i]);
@@ -39,14 +39,21 @@ SigNum mlua_signal_claim(lua_State* ls, int handler) {
             sigs->mask[i] |= 1u << idx;
             int sig = i * 32 + idx;
             set_handler(ls, sigs, sig, handler);
-            return sig;
+            uint32_t save = save_and_disable_interrupts();
+            *psig = sig;
+            restore_interrupts(save);
+            return;
         }
     }
-    return luaL_error(ls, "no signals available");
+    luaL_error(ls, "no signals available");
 }
 
-void mlua_signal_unclaim(lua_State* ls, SigNum sig) {
+void mlua_signal_unclaim(lua_State* ls, SigNum* psig) {
+    SigNum sig = *psig;
     if (sig < 0) return;
+    uint32_t save = save_and_disable_interrupts();
+    *psig = -1;
+    restore_interrupts(save);
     struct Signals* sigs = &signals[get_core_num()];
     lua_rawgetp(ls, LUA_REGISTRYINDEX, sigs);
     lua_pushinteger(ls, sig);
@@ -61,6 +68,15 @@ void mlua_signal_set_handler(lua_State* ls, SigNum sig, int handler) {
     struct Signals* sigs = &signals[get_core_num()];
     if ((sigs->mask[sig / 32] & (1u << (sig % 32))) == 0) return;
     set_handler(ls, sigs, sig, handler);
+}
+
+bool mlua_signal_wrap_handler(lua_State* ls, lua_CFunction wrapper,
+                              int handler) {
+    if (wrapper == NULL || lua_isnoneornil(ls, handler)) return false;
+    lua_pushvalue(ls, handler);
+    lua_pushcclosure(ls, wrapper, 1);
+    lua_replace(ls, handler);
+    return true;
 }
 
 void __time_critical_func(mlua_signal_set)(SigNum sig, bool pending) {
