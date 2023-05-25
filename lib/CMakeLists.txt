@@ -102,6 +102,11 @@ target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
 )
 
+mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
+target_link_libraries(mlua_mod_pico_multicore INTERFACE
+    pico_multicore
+)
+
 mlua_add_c_module(mlua_mod_pico_platform pico.platform pico.platform.c)
 target_link_libraries(mlua_mod_pico_platform INTERFACE
     pico_platform

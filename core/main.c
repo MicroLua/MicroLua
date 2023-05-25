@@ -182,6 +182,9 @@ static int require_mlua_thread(lua_State* ls) {
 }
 
 static int pmain(lua_State* ls) {
+    struct mlua_entry_point const* ep = lua_touserdata(ls, 1);
+    lua_remove(ls, 1);
+
     // Set up module loading.
     mlua_open_libs(ls);
 
@@ -191,10 +194,10 @@ static int pmain(lua_State* ls) {
 #endif
 
     // Require the main module.
-    mlua_require(ls, MLUA_ESTR(MLUA_MAIN_MODULE), true);
+    mlua_require(ls, ep->module, true);
 
     // Get the main module's main function.
-    pgetfield(ls, -1, MLUA_ESTR(MLUA_MAIN_FUNCTION));
+    pgetfield(ls, -1, ep->func);
     lua_remove(ls, -2);  // Remove main module
 
     // If the "thread" module is available, run its main function, passing
@@ -204,7 +207,7 @@ static int pmain(lua_State* ls) {
     if (lua_pcall(ls, 0, 1, 0) == LUA_OK) {
         lua_getfield(ls, -1, "main");
         lua_remove(ls, -2);  // Remove thread module
-        lua_rotate(ls, 2, 1);
+        lua_rotate(ls, -2, 1);
         lua_call(ls, 1, 0);
     } else if (!lua_isnil(ls, -2)) {
         lua_pop(ls, 1);  // Remove error
@@ -255,13 +258,14 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
     lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
 }
 
-void mlua_main() {
+void mlua_main(struct mlua_entry_point const* ep) {
     lua_State* ls = lua_newstate(allocate, NULL);
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
 
     lua_pushcfunction(ls, pmain);
-    int err = lua_pcall(ls, 0, 0, 0);
+    lua_pushlightuserdata(ls, (struct mlua_entry_point*)ep);
+    int err = lua_pcall(ls, 1, 0, 0);
     if (err != LUA_OK) {
         mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
         lua_pop(ls, 1);
@@ -269,10 +273,15 @@ void mlua_main() {
     lua_close(ls);
 }
 
+struct mlua_entry_point const main_entry_point = {
+    .module = MLUA_ESTR(MLUA_MAIN_MODULE),
+    .func = MLUA_ESTR(MLUA_MAIN_FUNCTION),
+};
+
 __attribute__((weak)) int main() {
 #ifdef LIB_PICO_STDIO
     stdio_init_all();
 #endif
-    mlua_main();
+    mlua_main(&main_entry_point);
     return 0;
 }

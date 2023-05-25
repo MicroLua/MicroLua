@@ -8,6 +8,7 @@ local math = require 'math'
 local eio = require 'mlua.eio'
 local thread = require 'mlua.thread'
 local pico = require 'pico'
+local multicore = require 'pico.multicore'
 local platform = require 'pico.platform'
 local time = require 'pico.time'
 local string = require 'string'
@@ -30,11 +31,13 @@ function main()
     local start = time.get_absolute_time()
 
     eio.printf("============================\n")
-    eio.printf("start time: %s\n", start)
-    eio.printf("chip version: %d\n", platform.rp2040_chip_version())
-    eio.printf("rom version: %d\n", platform.rp2040_rom_version())
-    eio.printf("core: %d\n", platform.get_core_num())
+    eio.printf("Start time: %s\n", start)
+    eio.printf("Chip version: %d\n", platform.rp2040_chip_version())
+    eio.printf("ROM version: %d\n", platform.rp2040_rom_version())
+    eio.printf("Core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
+    multicore.launch_core1('main1')
+    local core1_running = true
 
     local next_time = time.get_absolute_time() + 1500000
     next_time = next_time - (next_time % 1000000)
@@ -43,6 +46,11 @@ function main()
         next_time = next_time + 1000000
         timer.set_target(0, next_time)
         eio.printf("# Alarm at %s, next at %s\n", now, next_time)
+        if core1_running and now - start > 5000000 then
+            eio.printf("# Resetting core 1\n")
+            multicore.reset_core1()
+            core1_running = false
+        end
     end)
     timer.set_target(0, next_time)
 
