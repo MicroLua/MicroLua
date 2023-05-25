@@ -1,6 +1,6 @@
 -- A simple object model for object-oriented programming.
 
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 -- The __call metamethod of all classes.
 local function class_call(cls, ...)

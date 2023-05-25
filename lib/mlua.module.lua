@@ -2,7 +2,7 @@
 --
 -- To make a .lua file a module, add the following as its first line:
 --
---   _ENV = require "module"(...)
+--   _ENV = require 'mlua.module'(...)
 --
 -- This creates a new module, registers it with the name given to the require
 -- call, and assigns it to the block's environment. The block can then define

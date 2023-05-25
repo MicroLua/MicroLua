@@ -1,6 +1,6 @@
 -- A cooperative threading library.
 
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local coroutine = require 'coroutine'
 local signal = require 'mlua.signal'

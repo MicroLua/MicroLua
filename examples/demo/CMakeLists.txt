@@ -5,8 +5,8 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_mod_hardware_irq
     mlua_mod_hardware_timer
     mlua_mod_mlua_eio
+    mlua_mod_mlua_module
     mlua_mod_mlua_thread
-    mlua_mod_module
     mlua_mod_pico
     mlua_mod_pico_platform
     mlua_mod_pico_time

@@ -1,4 +1,4 @@
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local math = require 'math'
 local eio = require 'mlua.eio'

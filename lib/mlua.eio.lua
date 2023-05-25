@@ -1,6 +1,6 @@
 -- An enhanced io module.
 
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local oo = require 'mlua.oo'
 local string = require 'string'

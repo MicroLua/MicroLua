@@ -1,6 +1,6 @@
 -- A collection of helpers.
 
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local table = require 'table'
 

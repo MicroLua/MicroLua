@@ -34,8 +34,8 @@ target_link_libraries(mlua_mod_hardware_timer INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua_eio mlua.eio.lua)
 target_link_libraries(mlua_mod_mlua_eio INTERFACE
+    mlua_mod_mlua_module
     mlua_mod_mlua_oo
-    mlua_mod_module
     mlua_mod_string
 )
 
@@ -48,20 +48,20 @@ target_link_libraries(mlua_mod_mlua_int64_tests INTERFACE
     mlua_mod_math
     mlua_mod_mlua_eio
     mlua_mod_mlua_int64
+    mlua_mod_mlua_module
     mlua_mod_mlua_util
-    mlua_mod_module
     mlua_mod_string
     mlua_mod_table
 )
 
-mlua_add_lua_modules(mlua_mod_module module.lua)
-target_link_libraries(mlua_mod_module INTERFACE
+mlua_add_lua_modules(mlua_mod_mlua_module mlua.module.lua)
+target_link_libraries(mlua_mod_mlua_module INTERFACE
     mlua_mod_package
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_oo mlua.oo.lua)
 target_link_libraries(mlua_mod_mlua_oo INTERFACE
-    mlua_mod_module
+    mlua_mod_mlua_module
 )
 
 mlua_add_c_module(mlua_mod_mlua_signal mlua.signal mlua.signal.c)
@@ -75,7 +75,7 @@ target_link_libraries(mlua_mod_mlua_signal INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
 target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
-    mlua_mod_module
+    mlua_mod_mlua_module
     mlua_mod_mlua_signal
     mlua_mod_string
 )
@@ -83,8 +83,8 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_mlua_eio
+    mlua_mod_mlua_module
     mlua_mod_mlua_oo
-    mlua_mod_module
     mlua_mod_os
     mlua_mod_package
     mlua_mod_string
@@ -93,7 +93,7 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
 target_link_libraries(mlua_mod_mlua_util INTERFACE
-    mlua_mod_module
+    mlua_mod_mlua_module
     mlua_mod_table
 )
 

@@ -1,4 +1,4 @@
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local adc = require 'hardware.adc'
 local gpio = require 'hardware.gpio'

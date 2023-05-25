@@ -1,6 +1,6 @@
 -- A unit-testing library.
 
-_ENV = require 'module'(...)
+_ENV = require 'mlua.module'(...)
 
 local eio = require 'mlua.eio'
 local oo = require 'mlua.oo'
