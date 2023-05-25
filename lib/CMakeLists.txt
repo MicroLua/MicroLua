@@ -72,6 +72,17 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_string
 )
 
+mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
+target_link_libraries(mlua_mod_mlua_testing INTERFACE
+    mlua_mod_mlua_eio
+    mlua_mod_mlua_oo
+    mlua_mod_module
+    mlua_mod_os
+    mlua_mod_package
+    mlua_mod_string
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_pico pico pico.c)
 target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
@@ -95,17 +106,6 @@ target_link_libraries(mlua_mod_signal INTERFACE
     pico_platform
 )
 
-mlua_add_lua_modules(mlua_mod_testing testing.lua)
-target_link_libraries(mlua_mod_testing INTERFACE
-    mlua_mod_mlua_eio
-    mlua_mod_mlua_oo
-    mlua_mod_module
-    mlua_mod_os
-    mlua_mod_package
-    mlua_mod_string
-    mlua_mod_table
-)
-
 add_executable(mlua_tests)
 set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING
     "Test target filter regexp"
@@ -115,11 +115,11 @@ if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
     list(FILTER TESTS INCLUDE REGEX "${MLUA_TEST_TARGET_FILTER}")
 endif()
 target_link_libraries(mlua_tests
-    mlua_mod_testing
+    mlua_mod_mlua_testing
     pico_stdlib
     ${TESTS}
 )
-mlua_main(mlua_tests testing)
+mlua_main(mlua_tests mlua.testing)
 pico_add_extra_outputs(mlua_tests)
 
 mlua_add_lua_modules(mlua_mod_util util.lua)
