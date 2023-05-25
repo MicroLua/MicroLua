@@ -84,7 +84,7 @@ static mlua_reg const module_regs[] = {
 };
 
 int luaopen_hardware_timer(lua_State* ls) {
-    mlua_require(ls, "int64", false);
+    mlua_require(ls, "mlua.int64", false);
     mlua_require(ls, "signal", false);
 
     // Initialize internal state.

@@ -34,18 +34,19 @@ mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
 target_link_libraries(mlua_mod_hardware_timer INTERFACE
     hardware_timer
     hardware_sync
-    mlua_mod_int64
+    mlua_mod_mlua_int64
     mlua_mod_signal
     pico_platform
 )
 
-mlua_add_c_module(mlua_mod_int64 int64 int64.c)
-target_include_directories(mlua_mod_int64_headers INTERFACE include_int64)
+mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64 mlua.int64.c)
+target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
+    include_mlua.int64)
 
-mlua_add_lua_test_modules(mlua_mod_int64_tests int64.tests.lua)
-target_link_libraries(mlua_mod_int64_tests INTERFACE
+mlua_add_lua_test_modules(mlua_mod_mlua_int64_tests mlua.int64.tests.lua)
+target_link_libraries(mlua_mod_mlua_int64_tests INTERFACE
     mlua_mod_eio
-    mlua_mod_int64
+    mlua_mod_mlua_int64
     mlua_mod_math
     mlua_mod_module
     mlua_mod_string
@@ -75,7 +76,7 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_time pico.time pico.time.c)
 target_link_libraries(mlua_mod_pico_time INTERFACE
-    mlua_mod_int64
+    mlua_mod_mlua_int64
     pico_time
 )
 

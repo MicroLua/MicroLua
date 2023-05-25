@@ -464,7 +464,7 @@ static mlua_reg const int64_meta_regs[] = {
     {NULL},
 };
 
-int luaopen_int64(lua_State* ls) {
+int luaopen_mlua_int64(lua_State* ls) {
     luaL_checkversion(ls);
 
     // Create the int64 class.
