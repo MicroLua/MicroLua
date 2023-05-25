@@ -3,7 +3,7 @@
 _ENV = require 'module'(...)
 
 local coroutine = require 'coroutine'
-local signal = require 'signal'
+local signal = require 'mlua.signal'
 local string = require 'string'
 
 local active = {}

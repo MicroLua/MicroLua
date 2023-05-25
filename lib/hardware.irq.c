@@ -146,7 +146,7 @@ static mlua_reg const module_regs[] = {
 };
 
 int luaopen_hardware_irq(lua_State* ls) {
-    mlua_require(ls, "signal", false);
+    mlua_require(ls, "mlua.signal", false);
 
     // Initialize internal state.
     SigNum* sigs = irq_signals[get_core_num()];

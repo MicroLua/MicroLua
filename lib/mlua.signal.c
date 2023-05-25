@@ -149,7 +149,7 @@ static mlua_reg const module_regs[] = {
     {NULL},
 };
 
-int luaopen_signal(lua_State* ls) {
+int luaopen_mlua_signal(lua_State* ls) {
     // Initialize internal state.
     struct Signals* sigs = &signals[get_core_num()];
     uint32_t save = save_and_disable_interrupts();

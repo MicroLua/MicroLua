@@ -267,7 +267,7 @@ static mlua_reg const module_regs[] = {
 };
 
 int luaopen_hardware_gpio(lua_State* ls) {
-    mlua_require(ls, "signal", false);
+    mlua_require(ls, "mlua.signal", false);
 
     // Initialize internal state.
     struct IRQState* irq_state = &irq_states[get_core_num()];
