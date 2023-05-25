@@ -48,10 +48,10 @@ target_link_libraries(mlua_mod_mlua_int64_tests INTERFACE
     mlua_mod_math
     mlua_mod_mlua_eio
     mlua_mod_mlua_int64
+    mlua_mod_mlua_util
     mlua_mod_module
     mlua_mod_string
     mlua_mod_table
-    mlua_mod_util
 )
 
 mlua_add_lua_modules(mlua_mod_module module.lua)
@@ -80,6 +80,12 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_os
     mlua_mod_package
     mlua_mod_string
+    mlua_mod_table
+)
+
+mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
+target_link_libraries(mlua_mod_mlua_util INTERFACE
+    mlua_mod_module
     mlua_mod_table
 )
 
@@ -121,9 +127,3 @@ target_link_libraries(mlua_tests
 )
 mlua_main(mlua_tests mlua.testing)
 pico_add_extra_outputs(mlua_tests)
-
-mlua_add_lua_modules(mlua_mod_util util.lua)
-target_link_libraries(mlua_mod_util INTERFACE
-    mlua_mod_module
-    mlua_mod_table
-)

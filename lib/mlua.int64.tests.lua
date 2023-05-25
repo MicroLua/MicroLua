@@ -3,9 +3,9 @@ _ENV = require 'module'(...)
 local math = require 'math'
 local eio = require 'mlua.eio'
 local int64 = require 'mlua.int64'
+local util = require 'mlua.util'
 local string = require 'string'
 local table = require 'table'
-local util = require 'util'
 
 local integer_bits = string.packsize('j') * 8
 local number_bits = string.packsize('n') * 8
