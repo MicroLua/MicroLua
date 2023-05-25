@@ -9,8 +9,6 @@
 #include "pico/stdio.h"
 #endif
 
-#include "lua.h"
-#include "lauxlib.h"
 #include "mlua/lib.h"
 #include "mlua/util.h"
 
@@ -162,18 +160,8 @@ void mlua_writestringerror(char const* fmt, char const* param) {
 }
 
 static int getfield(lua_State* ls) {
-    lua_gettable(ls, -2);
+    lua_gettable(ls, 1);
     return 1;
-}
-
-static void pgetfield(lua_State* ls, int index, char const* k) {
-    index = lua_absindex(ls, index);
-    lua_pushcfunction(ls, getfield);
-    lua_pushvalue(ls, index);
-    lua_pushstring(ls, k);
-    if (lua_pcall(ls, 2, 1, 0) == LUA_OK) return;
-    lua_pop(ls, 1);
-    lua_pushnil(ls);
 }
 
 static int require_mlua_thread(lua_State* ls) {
@@ -182,9 +170,6 @@ static int require_mlua_thread(lua_State* ls) {
 }
 
 static int pmain(lua_State* ls) {
-    struct mlua_entry_point const* ep = lua_touserdata(ls, 1);
-    lua_remove(ls, 1);
-
     // Set up module loading.
     mlua_open_libs(ls);
 
@@ -194,11 +179,21 @@ static int pmain(lua_State* ls) {
 #endif
 
     // Require the main module.
-    mlua_require(ls, ep->module, true);
+    lua_getglobal(ls, "require");
+    lua_pushvalue(ls, 1);
+    lua_call(ls, 1, 1);
 
     // Get the main module's main function.
-    pgetfield(ls, -1, ep->func);
+    lua_pushcfunction(ls, getfield);
+    lua_pushvalue(ls, -2);
+    lua_pushvalue(ls, 2);
+    if (lua_pcall(ls, 2, 1, 0) != LUA_OK) {
+        lua_pop(ls, 1);  // Remove error
+        lua_pushnil(ls);
+    }
     lua_remove(ls, -2);  // Remove main module
+    lua_remove(ls, 1);  // Remove module name
+    lua_remove(ls, 1);  // Remove function name
 
     // If the "thread" module is available, run its main function, passing
     // the main module's main function as a task. Otherwise, run the main
@@ -258,30 +253,36 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
     lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
 }
 
-void mlua_main(struct mlua_entry_point const* ep) {
+lua_State* mlua_new_interpreter() {
     lua_State* ls = lua_newstate(allocate, NULL);
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
+    return ls;
+}
 
+void mlua_run_main(lua_State* ls) {
     lua_pushcfunction(ls, pmain);
-    lua_pushlightuserdata(ls, (struct mlua_entry_point*)ep);
-    int err = lua_pcall(ls, 1, 0, 0);
+    lua_rotate(ls, 1, 1);
+    int err = lua_pcall(ls, 2, 0, 0);
     if (err != LUA_OK) {
         mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
         lua_pop(ls, 1);
     }
-    lua_close(ls);
 }
 
-struct mlua_entry_point const main_entry_point = {
-    .module = MLUA_ESTR(MLUA_MAIN_MODULE),
-    .func = MLUA_ESTR(MLUA_MAIN_FUNCTION),
-};
+void mlua_main_core0() {
+    mlua_init_lock();
+    lua_State* ls = mlua_new_interpreter();
+    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
+    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
+    mlua_run_main(ls);
+    lua_close(ls);
+}
 
 __attribute__((weak)) int main() {
 #ifdef LIB_PICO_STDIO
     stdio_init_all();
 #endif
-    mlua_main(&main_entry_point);
+    mlua_main_core0();
     return 0;
 }

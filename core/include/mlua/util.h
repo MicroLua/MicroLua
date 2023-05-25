@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "hardware/sync.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -58,6 +60,9 @@ static int wp ## n(lua_State* ls) { ret(ls, p ## n(args)); return 1; }
 
 void mlua_require(lua_State* ls, char const* module, bool keep);
 bool mlua_to_cbool(lua_State* ls, int arg);
+
+extern spin_lock_t* mlua_lock;
+void mlua_init_lock();
 
 typedef struct mlua_reg {
     char const* name;

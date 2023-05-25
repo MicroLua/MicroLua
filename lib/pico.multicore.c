@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hardware/sync.h"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 
@@ -12,23 +13,33 @@
 // TODO: Provide a way to shut down the Lua interpreter running in core1 and
 //       correctly release all resources.
 
-static struct mlua_entry_point entry_points[NUM_CORES - 1];
+static lua_State* interpreters[NUM_CORES - 1];
 
 static void launch_core1(void) {
-    struct mlua_entry_point* ep = &entry_points[get_core_num() - 1];
-    mlua_main(ep);
-    free((char*)ep->func);
-    free((char*)ep->module);
-    ep->module = NULL;
-    ep->func = NULL;
+    lua_State* ls = interpreters[get_core_num() - 1];
+    mlua_run_main(ls);
+    uint32_t save = spin_lock_blocking(mlua_lock);
+    interpreters[get_core_num() - 1] = NULL;
+    spin_unlock(mlua_lock, save);
+    lua_close(ls);
 }
 
 static int mod_launch_core1(lua_State* ls) {
-    int core = get_core_num();
-    if (core == 1) luaL_error(ls, "cannot launch core %d from itself", core);
-    struct mlua_entry_point* ep = &entry_points[1 - 1];
-    ep->module = strdup(luaL_checkstring(ls, 1));
-    ep->func = strdup(luaL_optstring(ls, 2, "main"));
+    uint const core = 1;
+    if (get_core_num() == core)
+        luaL_error(ls, "cannot launch core 1 from itself");
+    lua_State* ls1 = mlua_new_interpreter();
+    uint32_t save = spin_lock_blocking(mlua_lock);
+    bool busy = interpreters[core - 1] != NULL;
+    if (!busy) interpreters[core - 1] = ls1;
+    spin_unlock(mlua_lock, save);
+    if (busy) {
+        lua_close(ls1);
+        luaL_error(ls, "core 1 is already running an interpreter");
+    }
+    size_t len;
+    lua_pushlstring(ls1, luaL_checklstring(ls, 1, &len), len);
+    lua_pushstring(ls1, luaL_optstring(ls, 2, "main"));
     multicore_launch_core1(&launch_core1);
     return 0;
 }

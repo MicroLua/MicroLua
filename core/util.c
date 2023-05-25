@@ -13,6 +13,12 @@ bool mlua_to_cbool(lua_State* ls, int arg) {
     return lua_toboolean(ls, arg);
 }
 
+spin_lock_t* mlua_lock;
+
+void mlua_init_lock() {
+    mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
+}
+
 void mlua_reg_push_boolean(lua_State* ls, mlua_reg const* reg, int nup) {
     lua_pushboolean(ls, reg->boolean);
 }
