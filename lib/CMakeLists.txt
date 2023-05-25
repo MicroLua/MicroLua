@@ -64,6 +64,14 @@ target_link_libraries(mlua_mod_mlua_oo INTERFACE
     mlua_mod_module
 )
 
+mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
+target_link_libraries(mlua_mod_mlua_thread INTERFACE
+    mlua_mod_coroutine
+    mlua_mod_module
+    mlua_mod_signal
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_pico pico pico.c)
 target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
@@ -96,14 +104,6 @@ target_link_libraries(mlua_mod_testing INTERFACE
     mlua_mod_package
     mlua_mod_string
     mlua_mod_table
-)
-
-mlua_add_lua_modules(mlua_mod_thread thread.lua)
-target_link_libraries(mlua_mod_thread INTERFACE
-    mlua_mod_coroutine
-    mlua_mod_module
-    mlua_mod_signal
-    mlua_mod_string
 )
 
 add_executable(mlua_tests)

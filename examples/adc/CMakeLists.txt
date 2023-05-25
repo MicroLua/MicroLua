@@ -25,10 +25,10 @@ target_link_libraries(mlua_examples_adc_onboard_temperature_irq_main INTERFACE
     mlua_mod_hardware_adc
     mlua_mod_hardware_gpio
     mlua_mod_hardware_irq
+    mlua_mod_mlua_thread
     mlua_mod_module
     mlua_mod_pico
     mlua_mod_string
-    mlua_mod_thread
 )
 
 add_executable(mlua_examples_adc_onboard_temperature_irq)

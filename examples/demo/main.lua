@@ -6,11 +6,11 @@ local irq = require 'hardware.irq'
 local timer = require 'hardware.timer'
 local math = require 'math'
 local eio = require 'mlua.eio'
+local thread = require 'mlua.thread'
 local pico = require 'pico'
 local platform = require 'pico.platform'
 local time = require 'pico.time'
 local string = require 'string'
-local thread = require 'thread'
 
 local irq_num = irq.user_irq_claim_unused()
 

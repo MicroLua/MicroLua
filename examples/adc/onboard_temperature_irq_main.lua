@@ -5,7 +5,6 @@ local gpio = require 'hardware.gpio'
 local irq = require 'hardware.irq'
 local pico = require 'pico'
 local string = require 'string'
-local thread = require 'thread'
 
 local TEMPERATURE_UNIT = "C"
 local conv = 3.3 / (1 << 12)

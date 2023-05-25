@@ -176,8 +176,8 @@ static void pgetfield(lua_State* ls, int index, char const* k) {
     lua_pushnil(ls);
 }
 
-static int require_thread(lua_State* ls) {
-    mlua_require(ls, "thread", true);
+static int require_mlua_thread(lua_State* ls) {
+    mlua_require(ls, "mlua.thread", true);
     return 1;
 }
 
@@ -200,7 +200,7 @@ static int pmain(lua_State* ls) {
     // If the "thread" module is available, run its main function, passing
     // the main module's main function as a task. Otherwise, run the main
     // module's main function on its own.
-    lua_pushcfunction(ls, require_thread);
+    lua_pushcfunction(ls, require_mlua_thread);
     if (lua_pcall(ls, 0, 1, 0) == LUA_OK) {
         lua_getfield(ls, -1, "main");
         lua_remove(ls, -2);  // Remove thread module
