@@ -2,7 +2,7 @@
 
 _ENV = require 'module'(...)
 
-local eio = require 'eio'
+local eio = require 'mlua.eio'
 local oo = require 'oo'
 local os = require 'os'
 local package = require 'package'

@@ -1,8 +1,8 @@
 _ENV = require 'module'(...)
 
-local eio = require 'eio'
-local int64 = require 'mlua.int64'
 local math = require 'math'
+local eio = require 'mlua.eio'
+local int64 = require 'mlua.int64'
 local string = require 'string'
 local table = require 'table'
 local util = require 'util'

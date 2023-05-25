@@ -1,11 +1,11 @@
 _ENV = require 'module'(...)
 
 local debug = require 'debug'
-local eio = require 'eio'
 local gpio = require 'hardware.gpio'
 local irq = require 'hardware.irq'
 local timer = require 'hardware.timer'
 local math = require 'math'
+local eio = require 'mlua.eio'
 local pico = require 'pico'
 local platform = require 'pico.platform'
 local time = require 'pico.time'
