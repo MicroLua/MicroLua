@@ -15,7 +15,7 @@ bool mlua_to_cbool(lua_State* ls, int arg) {
 
 spin_lock_t* mlua_lock;
 
-void mlua_init_lock() {
+static __attribute__((constructor)) void init_mlua_lock(void) {
     mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
 }
 

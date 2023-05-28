@@ -271,7 +271,6 @@ void mlua_run_main(lua_State* ls) {
 }
 
 void mlua_main_core0() {
-    mlua_init_lock();
     lua_State* ls = mlua_new_interpreter();
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));

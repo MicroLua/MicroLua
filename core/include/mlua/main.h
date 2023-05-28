@@ -17,6 +17,9 @@ lua_State* mlua_new_interpreter();
 // Load the main module and run its main function.
 void mlua_run_main(lua_State* ls);
 
+// Run a Lua interpreter with the configured main module and function on core 0.
+void mlua_main_core0();
+
 #ifdef __cplusplus
 }
 #endif
