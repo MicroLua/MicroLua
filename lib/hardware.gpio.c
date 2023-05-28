@@ -278,8 +278,6 @@ int luaopen_hardware_gpio(lua_State* ls) {
     }
     irq_state->callback_sig = -1;
     restore_interrupts(save);
-    lua_pushnil(ls);  // IRQ callback
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, &irq_state->callback_sig);
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);

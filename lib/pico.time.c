@@ -80,6 +80,8 @@ static mlua_reg const module_regs[] = {
     // X(alarm_pool_add_alarm_in_us),
     // X(alarm_pool_add_alarm_in_ms),
     // X(alarm_pool_cancel_alarm),
+    // TODO: The default alarm pool always executes on core 0. May need to
+    //       allocate a separate pool for core 1.
     // X(add_alarm_at),
     // X(add_alarm_in_us),
     // X(add_alarm_in_ms),
