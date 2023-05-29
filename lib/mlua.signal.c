@@ -4,9 +4,11 @@
 #include <string.h>
 
 #include "hardware/sync.h"
+#include "hardware/timer.h"
 #include "pico/platform.h"
 #include "pico/time.h"
 
+#include "mlua/int64.h"
 #include "mlua/util.h"
 
 #define NUM_SIGNALS 128
@@ -72,7 +74,8 @@ void mlua_signal_set_handler(lua_State* ls, SigNum sig, int handler) {
 
 bool mlua_signal_wrap_handler(lua_State* ls, lua_CFunction wrapper,
                               int handler) {
-    if (wrapper == NULL || lua_isnoneornil(ls, handler)) return false;
+    if (lua_isnoneornil(ls, handler)) return false;
+    if (wrapper == NULL) return true;
     lua_pushvalue(ls, handler);
     lua_pushcclosure(ls, wrapper, 1);
     lua_replace(ls, handler);
@@ -93,44 +96,68 @@ void __time_critical_func(mlua_signal_set)(SigNum sig, bool pending) {
     restore_interrupts(save);
 }
 
+static int64_t __time_critical_func(handle_deadline_alarm)(alarm_id_t id,
+                                                           void* ud) {
+    return 0;
+}
+
 static int mod_dispatch(lua_State* ls) {
     struct Signals* sigs = &signals[get_core_num()];
-    sigs->wake = !lua_toboolean(ls, 1);
+    uint64_t deadline = mlua_check_int64(ls, 1);
     lua_rawgetp(ls, LUA_REGISTRYINDEX, sigs);
     uint32_t active[SIGNALS_SIZE];
     for (;;) {
-        // Check for active signals.
+        // Check for active signals and call their handlers.
         int found = SIGNALS_SIZE;
-        for (;;) {
-            uint32_t save = save_and_disable_interrupts();
-            for (int i = SIGNALS_SIZE - 1; i >= 0; --i) {
-                uint32_t a = sigs->pending[i] & sigs->mask[i];
-                active[i] = a;
-                if (a != 0) found = i;
-                sigs->pending[i] = 0;
-            }
-            if (sigs->wake || found < SIGNALS_SIZE) {
-                restore_interrupts(save);
-                break;
-            }
-            __wfi();  // TODO: Use WFE with SEVONPEND?
+        sigs->wake = false;
+        uint32_t save = save_and_disable_interrupts();
+        for (int i = SIGNALS_SIZE - 1; i >= 0; --i) {
+            uint32_t a = sigs->pending[i] & sigs->mask[i];
+            active[i] = a;
+            if (a != 0) found = i;
+            sigs->pending[i] = 0;
+        }
+        if (found < SIGNALS_SIZE) {
             restore_interrupts(save);
+            for (int i = found; i < SIGNALS_SIZE; ++i) {
+                uint32_t a = active[i];
+                for (;;) {
+                    int idx = __builtin_ffs(a);
+                    if (idx == 0) break;
+                    --idx;
+                    a &= ~(1u << idx);
+                    lua_pushinteger(ls, i * 32 + idx);
+                    lua_gettable(ls, -2);
+                    lua_call(ls, 0, 0);
+                }
+            }
+            save = save_and_disable_interrupts();
         }
 
-        // Call handlers for active signals.
-        for (int i = found; i < SIGNALS_SIZE; ++i) {
-            uint32_t a = active[i];
-            for (;;) {
-                int idx = __builtin_ffs(a);
-                if (idx == 0) break;
-                --idx;
-                a &= ~(1u << idx);
-                lua_pushinteger(ls, i * 32 + idx);
-                lua_gettable(ls, -2);
-                lua_call(ls, 0, 0);
-            }
+        // Return if at least one task is active or the deadline has elapsed.
+        if (sigs->wake || deadline == 0
+                || time_reached(from_us_since_boot(deadline))) {
+            restore_interrupts(save);
+            break;
         }
-        if (sigs->wake) break;
+
+        // Wait for events, up to the deadline.
+        if (deadline != (uint64_t)-1) {
+            // TODO: Use separate alarm pool for core 1, or use wfe
+            alarm_id_t id = add_alarm_at(from_us_since_boot(deadline),
+                                         &handle_deadline_alarm, NULL, false);
+            if (id <= 0) {
+                tight_loop_contents();
+            } else {
+                __wfi();
+                // __wfe();
+                cancel_alarm(id);
+            }
+        } else {
+            __wfi();  // TODO: Use WFE with SEVONPEND?
+            // __wfe();
+        }
+        restore_interrupts(save);
     }
     return 0;
 }
@@ -150,6 +177,8 @@ static mlua_reg const module_regs[] = {
 };
 
 int luaopen_mlua_signal(lua_State* ls) {
+    mlua_require(ls, "mlua.int64", false);
+
     // Initialize internal state.
     struct Signals* sigs = &signals[get_core_num()];
     uint32_t save = save_and_disable_interrupts();

@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include "hardware/timer.h"
 #include "hardware/sync.h"
+#include "hardware/timer.h"
 #include "pico/platform.h"
 
 #include "lua.h"

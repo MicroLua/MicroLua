@@ -15,12 +15,14 @@ local string = require 'string'
 
 local irq_num = irq.user_irq_claim_unused()
 
-local function task(id)
-    for i = 1, 3 do
-        eio.printf("Task: %s, i: %s\n", id, i)
+local function task(id, start)
+    thread.yield(start)
+    for i = 0, 2 do
+        eio.printf("Task: %s (%s), i: %s, t: %s\n", id, thread.running(), i,
+                   thread.now())
         -- debug.debug()
         irq.set_pending(irq_num)
-        thread.yield()
+        thread.yield(start + (i + 1) * 1000000)
     end
     eio.printf("Task: %s, done\n", id)
 end
@@ -36,7 +38,7 @@ function main()
     eio.printf("ROM version: %d\n", platform.rp2040_rom_version())
     eio.printf("Core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
-    multicore.launch_core1('main1')
+    -- multicore.launch_core1('main1')
     local core1_running = true
 
     local next_time = time.get_absolute_time() + 1500000
@@ -52,15 +54,17 @@ function main()
             core1_running = false
         end
     end)
-    timer.set_target(0, next_time)
+    -- timer.set_target(0, next_time)
 
     irq.set_handler(irq_num, function() eio.printf("# IRQ!\n") end)
     irq.clear(irq_num)
-    irq.set_enabled(irq_num, true)
+    -- irq.set_enabled(irq_num, true)
 
-    -- for i = 1, 4 do
-    --     thread.start(function() task(i) end)
-    -- end
+    local base = thread.now() + 1500000
+    base = base - (base % 1000000)
+    for i = 0, 3 do
+        thread.start(function() task(i, base + i * 250000) end)
+    end
 
     local led = 21
     gpio.init(led)
@@ -74,10 +78,4 @@ function main()
     gpio.set_irq_enabled(button, gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE, true)
     -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
     irq.set_enabled(irq.IO_IRQ_BANK0, true)
-
-    -- while true do
-    --     local b = gpio.get(button)
-    --     gpio.put(led, b)
-    --     thread.yield()
-    -- end
 end
