@@ -99,31 +99,22 @@ static int mod_dispatch(lua_State* ls) {
     struct Signals* sigs = &signals[get_core_num()];
     absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 1));
     lua_rawgetp(ls, LUA_REGISTRYINDEX, sigs);
-    uint32_t active[SIGNALS_SIZE];
     for (;;) {
         // Check for active signals and call their handlers.
-        int found = SIGNALS_SIZE;
         sigs->wake = false;
-        uint32_t save = save_and_disable_interrupts();
         for (int i = SIGNALS_SIZE - 1; i >= 0; --i) {
-            uint32_t a = sigs->pending[i] & sigs->mask[i];
-            active[i] = a;
-            if (a != 0) found = i;
+            uint32_t save = save_and_disable_interrupts();
+            uint32_t active = sigs->pending[i] & sigs->mask[i];
             sigs->pending[i] = 0;
-        }
-        restore_interrupts(save);
-        if (found < SIGNALS_SIZE) {
-            for (int i = found; i < SIGNALS_SIZE; ++i) {
-                uint32_t a = active[i];
-                for (;;) {
-                    int idx = __builtin_ffs(a);
-                    if (idx == 0) break;
-                    --idx;
-                    a &= ~(1u << idx);
-                    lua_pushinteger(ls, i * 32 + idx);
-                    lua_gettable(ls, -2);
-                    lua_call(ls, 0, 0);
-                }
+            restore_interrupts(save);
+            for (;;) {
+                int idx = __builtin_ffs(active);
+                if (idx == 0) break;
+                --idx;
+                active &= ~(1u << idx);
+                lua_pushinteger(ls, i * 32 + idx);
+                lua_gettable(ls, -2);
+                lua_call(ls, 0, 0);
             }
         }
 
