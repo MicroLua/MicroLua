@@ -3,8 +3,8 @@
 _ENV = require 'mlua.module'(...)
 
 local coroutine = require 'coroutine'
-local timer = require 'hardware.timer'
 local signal = require 'mlua.signal'
+local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
@@ -72,7 +72,7 @@ running = coroutine.running
 yield = coroutine.yield
 
 -- Return the current time.
-now = timer.time_us_64
+now = time.get_absolute_time
 
 -- Move the given task from the wait list to the active queue.
 function resume(task)
@@ -107,7 +107,8 @@ function main(fn)
     if fn then start(fn) end
     while true do
         -- Dispatch signals and wait for at least one active task.
-        signal.dispatch(head ~= tail and 0 or waiting[timers[1]] or -1)
+        signal.dispatch(head ~= tail and time.nil_time or waiting[timers[1]]
+                        or time.at_the_end_of_time)
 
         -- Resume tasks whose deadline has elapsed.
         resume_deadlined()

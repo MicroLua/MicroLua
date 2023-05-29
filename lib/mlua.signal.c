@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "hardware/sync.h"
-#include "hardware/timer.h"
 #include "pico/platform.h"
 #include "pico/time.h"
 
@@ -96,14 +95,9 @@ void __time_critical_func(mlua_signal_set)(SigNum sig, bool pending) {
     restore_interrupts(save);
 }
 
-static int64_t __time_critical_func(handle_deadline_alarm)(alarm_id_t id,
-                                                           void* ud) {
-    return 0;
-}
-
 static int mod_dispatch(lua_State* ls) {
     struct Signals* sigs = &signals[get_core_num()];
-    uint64_t deadline = mlua_check_int64(ls, 1);
+    absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 1));
     lua_rawgetp(ls, LUA_REGISTRYINDEX, sigs);
     uint32_t active[SIGNALS_SIZE];
     for (;;) {
@@ -117,8 +111,8 @@ static int mod_dispatch(lua_State* ls) {
             if (a != 0) found = i;
             sigs->pending[i] = 0;
         }
+        restore_interrupts(save);
         if (found < SIGNALS_SIZE) {
-            restore_interrupts(save);
             for (int i = found; i < SIGNALS_SIZE; ++i) {
                 uint32_t a = active[i];
                 for (;;) {
@@ -131,33 +125,19 @@ static int mod_dispatch(lua_State* ls) {
                     lua_call(ls, 0, 0);
                 }
             }
-            save = save_and_disable_interrupts();
         }
 
         // Return if at least one task is active or the deadline has elapsed.
-        if (sigs->wake || deadline == 0
-                || time_reached(from_us_since_boot(deadline))) {
-            restore_interrupts(save);
+        if (sigs->wake || is_nil_time(deadline) || time_reached(deadline)) {
             break;
         }
 
         // Wait for events, up to the deadline.
-        if (deadline != (uint64_t)-1) {
-            // TODO: Use separate alarm pool for core 1, or use wfe
-            alarm_id_t id = add_alarm_at(from_us_since_boot(deadline),
-                                         &handle_deadline_alarm, NULL, false);
-            if (id <= 0) {
-                tight_loop_contents();
-            } else {
-                __wfi();
-                // __wfe();
-                cancel_alarm(id);
-            }
+        if (!is_at_the_end_of_time(deadline)) {
+            best_effort_wfe_or_timeout(deadline);
         } else {
-            __wfi();  // TODO: Use WFE with SEVONPEND?
-            // __wfe();
+            __wfe();
         }
-        restore_interrupts(save);
     }
     return 0;
 }

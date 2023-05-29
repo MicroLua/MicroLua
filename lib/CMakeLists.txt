@@ -78,9 +78,9 @@ target_link_libraries(mlua_mod_mlua_signal INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
 target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
-    mlua_mod_hardware_timer
     mlua_mod_mlua_module
     mlua_mod_mlua_signal
+    mlua_mod_pico_time
     mlua_mod_string
     mlua_mod_table
 )
