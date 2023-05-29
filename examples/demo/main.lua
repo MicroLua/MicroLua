@@ -10,6 +10,7 @@ local thread = require 'mlua.thread'
 local pico = require 'pico'
 local multicore = require 'pico.multicore'
 local platform = require 'pico.platform'
+local unique_id = require 'pico.unique_id'
 local time = require 'pico.time'
 local string = require 'string'
 
@@ -36,6 +37,10 @@ function main()
     eio.printf("Start time: %s\n", start)
     eio.printf("Chip version: %d\n", platform.rp2040_chip_version())
     eio.printf("ROM version: %d\n", platform.rp2040_rom_version())
+    local id = unique_id.get_unique_board_id()
+    eio.printf("Board ID: %s (%s)\n",
+        id:gsub('(.)', function(c) return string.format('%02x', c:byte(1)) end),
+        unique_id.get_unique_board_id_string())
     eio.printf("Core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
     -- multicore.launch_core1('main1')

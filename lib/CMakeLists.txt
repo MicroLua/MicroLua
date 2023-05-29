@@ -123,6 +123,11 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
     pico_time
 )
 
+mlua_add_c_module(mlua_mod_pico_unique_id pico.unique_id pico.unique_id.c)
+target_link_libraries(mlua_mod_pico_unique_id INTERFACE
+    pico_unique_id
+)
+
 add_executable(mlua_tests)
 set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING
     "Test target filter regexp"
