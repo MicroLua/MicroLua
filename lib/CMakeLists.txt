@@ -124,6 +124,7 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
 target_link_libraries(mlua_mod_pico_stdio INTERFACE
+    mlua_mod_mlua_signal
     pico_stdio
 )
 

@@ -40,8 +40,9 @@ function main()
     -- Wait for the system timer to start (it takes a while).
     timer.busy_wait_us(1)
     local start = time.get_absolute_time()
+    eio.printf(string.rep("=", 79) .. "\n")
 
-    eio.printf("============================\n")
+    -- Print system information.
     eio.printf("Start time: %s\n", start)
     eio.printf("Chip version: %d\n", platform.rp2040_chip_version())
     eio.printf("ROM version: %d\n", platform.rp2040_rom_version())
@@ -52,6 +53,7 @@ function main()
     eio.printf("Core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
 
+    -- Measure clocks.
     eio.printf("pll_sys : %6d kHz\n", clocks.frequency_count_khz(
         clocks.FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY))
     eio.printf("pll_usb : %6d kHz\n", clocks.frequency_count_khz(
@@ -69,9 +71,11 @@ function main()
     eio.printf("clk_rtc : %6d kHz\n", clocks.frequency_count_khz(
         clocks.FC0_SRC_VALUE_CLK_RTC))
 
+    -- Launch core 1.
     -- multicore.launch_core1('main1')
     local core1_running = true
 
+    -- Exercise timers.
     local next_time = time.get_absolute_time() + 1500000
     next_time = next_time - (next_time % 1000000)
     timer.set_callback(0, function(alarm)
@@ -87,16 +91,19 @@ function main()
     end)
     -- timer.set_target(0, next_time)
 
+    -- Set a user IRQ handler.
     irq.set_handler(irq_num, function() eio.printf("# IRQ!\n") end)
     irq.clear(irq_num)
     -- irq.set_enabled(irq_num, true)
 
+    -- Start a few threads.
     local base = thread.now() + 1500000
     base = base - (base % 1000000)
     for i = 0, 3 do
         -- thread.start(function() task(i, base + i * 250000) end)
     end
 
+    -- Exercise GPIOs.
     local led = 21
     gpio.init(led)
     gpio.set_dir(led, gpio.OUT)
@@ -109,4 +116,16 @@ function main()
     gpio.set_irq_enabled(button, gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE, true)
     -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
     irq.set_enabled(irq.IO_IRQ_BANK0, true)
+
+    -- Exercise IRQ-driven stdin reception.
+    local line = ''
+    stdio.set_chars_available_callback(function()
+        line = line .. stdin:read(32)  -- UART Rx FIFO is 32 bytes
+        while true do
+            local i = line:find('\n', 1, true)
+            if not i then break end
+            eio.printf("IN: %s", line:sub(1, i))
+            line = line:sub(i + 1)
+        end
+    end)
 end

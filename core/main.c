@@ -1,81 +1,45 @@
 #include "mlua/main.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "pico/platform.h"
-#ifdef LIB_PICO_STDIO
-#include "pico/stdio.h"
-#endif
 
 #include "mlua/lib.h"
 #include "mlua/util.h"
 
 #ifdef LIB_PICO_STDIO
 
+#include <unistd.h>
+#include "pico/stdio.h"
+
 static int StdStream_read(lua_State* ls) {
-    FILE** f = luaL_checkudata(ls, 1, "StdStream");
+    int fd = *((int*)luaL_checkudata(ls, 1, "StdStream"));
     lua_Integer len = luaL_optinteger(ls, 2, -1);
-    if (*f != stdin) return luaL_error(ls, "read from non-input stream");
-    luaL_Buffer buf;
-    if (len >= 0) {  // Read at least one and at most len bytes
-        char* p = luaL_buffinitsize(ls, &buf, len);
-        int i = 0, c;
-        while (i < len) {
-            // There is no fgetc_timeout_us, but since there's only one input
-            // stream, we can use getchar_timeout_us.
-            c = i == 0 ? fgetc(*f) : getchar_timeout_us(10000);
-            if (c == EOF || c == PICO_ERROR_TIMEOUT) break;
-            p[i++] = c;
-        }
-        luaL_pushresultsize(&buf, i);
-    } else {  // Read a line.
-        luaL_buffinit(ls, &buf);
-        int c;
-        do {
-            char* p = luaL_prepbuffer(&buf);
-            int i = 0;
-            do {
-                c = fgetc(*f);
-                if (c == EOF) break;
-                p[i++] = c;
-            } while (i < LUAL_BUFFERSIZE && c != '\n');
-            luaL_addsize(&buf, i);
-        } while (c != EOF && c != '\n');
-        luaL_pushresult(&buf);
+    if (fd != STDIN_FILENO) return luaL_error(ls, "read from non-input stream");
+    if (len <= 0) {
+        lua_pushlstring(ls, "", 0);
+        return 1;
     }
-    if (ferror(*f)) return luaL_fileresult(ls, 0, NULL);
+    luaL_Buffer buf;
+    char* p = luaL_buffinitsize(ls, &buf, len);
+    int cnt = read(fd, p, len);
+    if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
+    luaL_pushresultsize(&buf, cnt);
     return 1;
 }
 
 static int StdStream_write(lua_State* ls) {
-    FILE** f = luaL_checkudata(ls, 1, "StdStream");
-    if (*f != stdout && *f != stderr)
+    int fd = *((int*)luaL_checkudata(ls, 1, "StdStream"));
+    if (fd != STDOUT_FILENO && fd != STDERR_FILENO) {
         return luaL_error(ls, "write to non-output stream");
-    int top = lua_gettop(ls);
-    for (int i = 2; i <= top; ++i) {
-        size_t len;
-        char const* s = luaL_checklstring(ls, i, &len);
-        if (fwrite(s, sizeof(char), len, *f) != len)
-            return luaL_fileresult(ls, 0, NULL);
     }
-    lua_pushvalue(ls, 1);
+    size_t len;
+    char const* s = luaL_checklstring(ls, 2, &len);
+    int cnt = write(fd, s, len);
+    if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
+    lua_pushinteger(ls, cnt);
     return 1;
-}
-
-static int StdStream_flush(lua_State* ls) {
-    FILE** f = luaL_checkudata(ls, 1, "StdStream");
-    return luaL_fileresult(ls, fflush(*f) == 0, NULL);
-}
-
-static int StdStream_setvbuf(lua_State* ls) {
-    FILE** f = luaL_checkudata(ls, 1, "StdStream");
-    static char const* const mode_strs[] = {"no", "full", "line", NULL};
-    int op = luaL_checkoption(ls, 2, NULL, mode_strs);
-    lua_Integer size = luaL_optinteger(ls, 3, LUAL_BUFFERSIZE);
-    static int const modes[] = {_IONBF, _IOFBF, _IOLBF};
-    return luaL_fileresult(ls, setvbuf(*f, NULL, modes[op], size) == 0, NULL);
 }
 
 static void std_write(lua_State* ls, int index, char const* s, size_t len) {
@@ -108,14 +72,12 @@ static mlua_reg const StdStream_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, StdStream_ ## n)
     MLUA_SYM(read),
     MLUA_SYM(write),
-    MLUA_SYM(flush),
-    MLUA_SYM(setvbuf),
 #undef MLUA_SYM
     {NULL},
 };
 
-static void create_stream(lua_State* ls, char const* name, FILE* stream) {
-    FILE** v = lua_newuserdatauv(ls, sizeof(FILE*), 0);
+static void create_stream(lua_State* ls, char const* name, int stream) {
+    int* v = lua_newuserdatauv(ls, sizeof(int), 0);
     *v = stream;
     luaL_getmetatable(ls, "StdStream");
     lua_setmetatable(ls, -2);
@@ -130,9 +92,9 @@ static void init_stdio(lua_State* ls) {
     lua_setfield(ls, -2, "__index");
 
     // Create global objects for stdin, stdout and stderr.
-    create_stream(ls, "stdin", stdin);
-    create_stream(ls, "stdout", stdout);
-    create_stream(ls, "stderr", stderr);
+    create_stream(ls, "stdin", STDIN_FILENO);
+    create_stream(ls, "stdout", STDOUT_FILENO);
+    create_stream(ls, "stderr", STDERR_FILENO);
 
     // Override the print function.
     lua_pushcfunction(ls, std_print);
