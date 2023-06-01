@@ -97,6 +97,8 @@ static mlua_reg const module_regs[] = {
 
 int luaopen_pico_time(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
+
+    // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
     return 1;
 }

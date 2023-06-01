@@ -1,6 +1,7 @@
 _ENV = require 'mlua.module'(...)
 
 local debug = require 'debug'
+local clocks = require 'hardware.clocks'
 local gpio = require 'hardware.gpio'
 local irq = require 'hardware.irq'
 local timer = require 'hardware.timer'
@@ -10,8 +11,10 @@ local thread = require 'mlua.thread'
 local pico = require 'pico'
 local multicore = require 'pico.multicore'
 local platform = require 'pico.platform'
-local unique_id = require 'pico.unique_id'
+local stdio = require 'pico.stdio'
+local stdlib = require 'pico.stdlib'
 local time = require 'pico.time'
+local unique_id = require 'pico.unique_id'
 local string = require 'string'
 
 local irq_num = irq.user_irq_claim_unused()
@@ -29,6 +32,11 @@ local function task(id, start)
 end
 
 function main()
+    -- Switch the system clock.
+    stdlib.set_sys_clock_khz(200000, true)
+    -- stdlib.set_sys_clock_48mhz()
+    stdlib.setup_default_uart()
+
     -- Wait for the system timer to start (it takes a while).
     timer.busy_wait_us(1)
     local start = time.get_absolute_time()
@@ -43,6 +51,24 @@ function main()
         unique_id.get_unique_board_id_string())
     eio.printf("Core: %d\n", platform.get_core_num())
     eio.printf("SDK: %s\n", pico.SDK_VERSION_STRING)
+
+    eio.printf("pll_sys : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY))
+    eio.printf("pll_usb : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY))
+    eio.printf("rosc    : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_ROSC_CLKSRC))
+    eio.printf("clk_sys : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_CLK_SYS))
+    eio.printf("clk_peri: %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_CLK_PERI))
+    eio.printf("clk_usb : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_CLK_USB))
+    eio.printf("clk_adc : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_CLK_ADC))
+    eio.printf("clk_rtc : %6d kHz\n", clocks.frequency_count_khz(
+        clocks.FC0_SRC_VALUE_CLK_RTC))
+
     -- multicore.launch_core1('main1')
     local core1_running = true
 
@@ -68,7 +94,7 @@ function main()
     local base = thread.now() + 1500000
     base = base - (base % 1000000)
     for i = 0, 3 do
-        thread.start(function() task(i, base + i * 250000) end)
+        -- thread.start(function() task(i, base + i * 250000) end)
     end
 
     local led = 21

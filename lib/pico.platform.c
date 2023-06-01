@@ -45,6 +45,7 @@ static mlua_reg const module_regs[] = {
 };
 
 int luaopen_pico_platform(lua_State* ls) {
+    // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
     return 1;
 }

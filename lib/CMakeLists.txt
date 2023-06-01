@@ -4,6 +4,11 @@ target_link_libraries(mlua_mod_hardware_adc INTERFACE
     mlua_mod_hardware_irq
 )
 
+mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks hardware.clocks.c)
+target_link_libraries(mlua_mod_hardware_clocks INTERFACE
+    hardware_clocks
+)
+
 mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio hardware.gpio.c)
 target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
@@ -115,6 +120,16 @@ target_link_libraries(mlua_mod_pico_multicore INTERFACE
 mlua_add_c_module(mlua_mod_pico_platform pico.platform pico.platform.c)
 target_link_libraries(mlua_mod_pico_platform INTERFACE
     pico_platform
+)
+
+mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
+target_link_libraries(mlua_mod_pico_stdio INTERFACE
+    pico_stdio
+)
+
+mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib pico.stdlib.c)
+target_link_libraries(mlua_mod_pico_stdlib INTERFACE
+    pico_stdlib
 )
 
 mlua_add_c_module(mlua_mod_pico_time pico.time pico.time.c)

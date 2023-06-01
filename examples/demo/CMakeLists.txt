@@ -2,6 +2,7 @@ mlua_add_lua_modules(mlua_examples_demo_main main.lua)
 target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_core_mod_all
     mlua_examples_demo_main1
+    mlua_mod_hardware_clocks
     mlua_mod_hardware_gpio
     mlua_mod_hardware_irq
     mlua_mod_hardware_timer
@@ -11,6 +12,8 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_mod_pico
     mlua_mod_pico_multicore
     mlua_mod_pico_platform
+    mlua_mod_pico_stdio
+    mlua_mod_pico_stdlib
     mlua_mod_pico_time
     mlua_mod_pico_unique_id
 )
