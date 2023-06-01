@@ -45,53 +45,59 @@ MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
 
 static mlua_reg const module_regs[] = {
-    MLUA_REG_PUSH(at_the_end_of_time, push_at_the_end_of_time),
-    MLUA_REG_PUSH(nil_time, push_nil_time),
-    // X(DEFAULT_ALARM_POOL_DISABLED),
-    // X(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
-    // X(DEFAULT_ALARM_POOL_MAX_TIMERS),
-#define X(n) MLUA_REG(function, n, mod_ ## n)
+#define MLUA_SYM(n) MLUA_REG_PUSH(n, push_ ## n)
+    MLUA_SYM(at_the_end_of_time),
+    MLUA_SYM(nil_time),
+#undef MLUA_SYM
+#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_boolean, .boolean=n}
+    //! MLUA_SYM(DEFAULT_ALARM_POOL_DISABLED),
+#undef MLUA_SYM
+#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
+    //! MLUA_SYM(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
+    //! MLUA_SYM(DEFAULT_ALARM_POOL_MAX_TIMERS),
+#undef MLUA_SYM
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     // to_us_since_boot: not useful in Lua
     // update_us_since_boot: not useful in Lua
     // from_us_since_boot: not useful in Lua
-    X(get_absolute_time),
-    X(to_ms_since_boot),
-    X(delayed_by_us),
-    X(delayed_by_ms),
-    X(make_timeout_time_us),
-    X(make_timeout_time_ms),
-    X(absolute_time_diff_us),
-    X(absolute_time_min),
-    X(is_at_the_end_of_time),
-    X(is_nil_time),
-    X(sleep_until),
-    X(sleep_us),
-    X(sleep_ms),
-    X(best_effort_wfe_or_timeout),
-    // X(alarm_pool_init_default),
-    // X(alarm_pool_get_default),
-    // X(alarm_pool_create),
-    // X(alarm_pool_create_with_unused_hardware_alarm),
-    // X(alarm_pool_hardware_alarm_num),
-    // X(alarm_pool_core_num),
-    // X(alarm_pool_destroy),
-    // X(alarm_pool_add_alarm_at),
-    // X(alarm_pool_add_alarm_at_force_in_context),
-    // X(alarm_pool_add_alarm_in_us),
-    // X(alarm_pool_add_alarm_in_ms),
-    // X(alarm_pool_cancel_alarm),
+    MLUA_SYM(get_absolute_time),
+    MLUA_SYM(to_ms_since_boot),
+    MLUA_SYM(delayed_by_us),
+    MLUA_SYM(delayed_by_ms),
+    MLUA_SYM(make_timeout_time_us),
+    MLUA_SYM(make_timeout_time_ms),
+    MLUA_SYM(absolute_time_diff_us),
+    MLUA_SYM(absolute_time_min),
+    MLUA_SYM(is_at_the_end_of_time),
+    MLUA_SYM(is_nil_time),
+    MLUA_SYM(sleep_until),
+    MLUA_SYM(sleep_us),
+    MLUA_SYM(sleep_ms),
+    MLUA_SYM(best_effort_wfe_or_timeout),
+    // MLUA_SYM(alarm_pool_init_default),
+    // MLUA_SYM(alarm_pool_get_default),
+    // MLUA_SYM(alarm_pool_create),
+    // MLUA_SYM(alarm_pool_create_with_unused_hardware_alarm),
+    // MLUA_SYM(alarm_pool_hardware_alarm_num),
+    // MLUA_SYM(alarm_pool_core_num),
+    // MLUA_SYM(alarm_pool_destroy),
+    // MLUA_SYM(alarm_pool_add_alarm_at),
+    // MLUA_SYM(alarm_pool_add_alarm_at_force_in_context),
+    // MLUA_SYM(alarm_pool_add_alarm_in_us),
+    // MLUA_SYM(alarm_pool_add_alarm_in_ms),
+    // MLUA_SYM(alarm_pool_cancel_alarm),
     // TODO: The default alarm pool always executes on core 0. May need to
     //       allocate a separate pool for core 1.
-    // X(add_alarm_at),
-    // X(add_alarm_in_us),
-    // X(add_alarm_in_ms),
-    // X(cancel_alarm),
-    // X(alarm_pool_add_repeating_timer_us),
-    // X(alarm_pool_add_repeating_timer_ms),
-    // X(add_repeating_timer_us),
-    // X(add_repeating_timer_ms),
-    // X(cancel_repeating_timer),
-#undef X
+    // MLUA_SYM(add_alarm_at),
+    // MLUA_SYM(add_alarm_in_us),
+    // MLUA_SYM(add_alarm_in_ms),
+    // MLUA_SYM(cancel_alarm),
+    // MLUA_SYM(alarm_pool_add_repeating_timer_us),
+    // MLUA_SYM(alarm_pool_add_repeating_timer_ms),
+    // MLUA_SYM(add_repeating_timer_us),
+    // MLUA_SYM(add_repeating_timer_ms),
+    // MLUA_SYM(cancel_repeating_timer),
+#undef MLUA_SYM
     {NULL},
 };
 

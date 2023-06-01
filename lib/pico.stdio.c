@@ -11,17 +11,17 @@ MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(init_all),
-    X(flush),
-    X(getchar_timeout_us),
-    // X(set_driver_enabled),
-    // X(filter_driver),
-    // X(set_translate_crlf),
-    X(putchar_raw),
-    X(puts_raw),
-    // X(set_chars_available_callback),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(init_all),
+    MLUA_SYM(flush),
+    MLUA_SYM(getchar_timeout_us),
+    // MLUA_SYM(set_driver_enabled),
+    // MLUA_SYM(filter_driver),
+    // MLUA_SYM(set_translate_crlf),
+    MLUA_SYM(putchar_raw),
+    MLUA_SYM(puts_raw),
+    // MLUA_SYM(set_chars_available_callback),
+#undef MLUA_SYM
     {NULL},
 };
 

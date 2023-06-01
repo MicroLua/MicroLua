@@ -49,25 +49,25 @@ MLUA_FUNC_1_0(mod_, adc_, fifo_get_blocking, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(init),
-    X(gpio_init),
-    X(select_input),
-    X(get_selected_input),
-    X(set_round_robin),
-    X(set_temp_sensor_enabled),
-    X(read),
-    X(run),
-    X(set_clkdiv),
-    X(fifo_setup),
-    X(fifo_is_empty),
-    X(fifo_get_level),
-    X(fifo_get),
-    X(fifo_get_blocking),
-    X(fifo_drain),
-    X(irq_set_enabled),
-    X(irq_set_handler),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(init),
+    MLUA_SYM(gpio_init),
+    MLUA_SYM(select_input),
+    MLUA_SYM(get_selected_input),
+    MLUA_SYM(set_round_robin),
+    MLUA_SYM(set_temp_sensor_enabled),
+    MLUA_SYM(read),
+    MLUA_SYM(run),
+    MLUA_SYM(set_clkdiv),
+    MLUA_SYM(fifo_setup),
+    MLUA_SYM(fifo_is_empty),
+    MLUA_SYM(fifo_get_level),
+    MLUA_SYM(fifo_get),
+    MLUA_SYM(fifo_get_blocking),
+    MLUA_SYM(fifo_drain),
+    MLUA_SYM(irq_set_enabled),
+    MLUA_SYM(irq_set_handler),
+#undef MLUA_SYM
     {NULL},
 };
 

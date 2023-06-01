@@ -14,7 +14,7 @@
 
 #ifdef LIB_PICO_STDIO
 
-static int std_stream_read(lua_State* ls) {
+static int StdStream_read(lua_State* ls) {
     FILE** f = luaL_checkudata(ls, 1, "StdStream");
     lua_Integer len = luaL_optinteger(ls, 2, -1);
     if (*f != stdin) return luaL_error(ls, "read from non-input stream");
@@ -49,7 +49,7 @@ static int std_stream_read(lua_State* ls) {
     return 1;
 }
 
-static int std_stream_write(lua_State* ls) {
+static int StdStream_write(lua_State* ls) {
     FILE** f = luaL_checkudata(ls, 1, "StdStream");
     if (*f != stdout && *f != stderr)
         return luaL_error(ls, "write to non-output stream");
@@ -64,12 +64,12 @@ static int std_stream_write(lua_State* ls) {
     return 1;
 }
 
-static int std_stream_flush(lua_State* ls) {
+static int StdStream_flush(lua_State* ls) {
     FILE** f = luaL_checkudata(ls, 1, "StdStream");
     return luaL_fileresult(ls, fflush(*f) == 0, NULL);
 }
 
-static int std_stream_setvbuf(lua_State* ls) {
+static int StdStream_setvbuf(lua_State* ls) {
     FILE** f = luaL_checkudata(ls, 1, "StdStream");
     static char const* const mode_strs[] = {"no", "full", "line", NULL};
     int op = luaL_checkoption(ls, 2, NULL, mode_strs);
@@ -101,14 +101,16 @@ static int std_print(lua_State* ls) {
     return 0;
 }
 
-static mlua_reg const std_stream_regs[] = {
-    MLUA_REG(string, __name, "StdStream"),
-#define X(n) MLUA_REG(function, n, std_stream_ ## n)
-    X(read),
-    X(write),
-    X(flush),
-    X(setvbuf),
-#undef X
+static mlua_reg const StdStream_regs[] = {
+#define MLUA_SYM(n, v) MLUA_REG(string, n, v)
+    MLUA_SYM(__name, "StdStream"),
+#undef MLUA_SYM
+#define MLUA_SYM(n) MLUA_REG(function, n, StdStream_ ## n)
+    MLUA_SYM(read),
+    MLUA_SYM(write),
+    MLUA_SYM(flush),
+    MLUA_SYM(setvbuf),
+#undef MLUA_SYM
     {NULL},
 };
 
@@ -123,7 +125,7 @@ static void create_stream(lua_State* ls, char const* name, FILE* stream) {
 static void init_stdio(lua_State* ls) {
     // Create the StdStream class.
     luaL_newmetatable(ls, "StdStream");
-    mlua_set_fields(ls, std_stream_regs, 0);
+    mlua_set_fields(ls, StdStream_regs, 0);
     lua_pushvalue(ls, -1);
     lua_setfield(ls, -2, "__index");
 

@@ -63,23 +63,23 @@ MLUA_FUNC_0_1(mod_, hardware_alarm_, cancel, check_alarm)
 MLUA_FUNC_0_1(mod_, hardware_alarm_, force_irq, check_alarm)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(time_us_32),
-    X(time_us_64),
-    X(busy_wait_us_32),
-    X(busy_wait_us),
-    X(busy_wait_ms),
-    X(busy_wait_until),
-    X(time_reached),
-    X(claim),
-    X(claim_unused),
-    X(unclaim),
-    X(is_claimed),
-    X(set_callback),
-    X(set_target),
-    X(cancel),
-    X(force_irq),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(time_us_32),
+    MLUA_SYM(time_us_64),
+    MLUA_SYM(busy_wait_us_32),
+    MLUA_SYM(busy_wait_us),
+    MLUA_SYM(busy_wait_ms),
+    MLUA_SYM(busy_wait_until),
+    MLUA_SYM(time_reached),
+    MLUA_SYM(claim),
+    MLUA_SYM(claim_unused),
+    MLUA_SYM(unclaim),
+    MLUA_SYM(is_claimed),
+    MLUA_SYM(set_callback),
+    MLUA_SYM(set_target),
+    MLUA_SYM(cancel),
+    MLUA_SYM(force_irq),
+#undef MLUA_SYM
     {NULL},
 };
 

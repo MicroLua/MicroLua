@@ -19,10 +19,10 @@ static int mod_get_unique_board_id_string(lua_State* ls) {
 }
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(get_unique_board_id),
-    X(get_unique_board_id_string),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(get_unique_board_id),
+    MLUA_SYM(get_unique_board_id_string),
+#undef MLUA_SYM
     {NULL},
 };
 

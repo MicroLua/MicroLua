@@ -21,12 +21,12 @@ MLUA_FUNC_0_3(mod_,, set_sys_clock_pll, luaL_checkinteger, luaL_checkinteger,
 MLUA_FUNC_0_2(mod_,, set_sys_clock_khz, luaL_checkinteger, mlua_to_cbool)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(setup_default_uart),
-    X(set_sys_clock_48mhz),
-    X(set_sys_clock_pll),
-    X(set_sys_clock_khz),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(setup_default_uart),
+    MLUA_SYM(set_sys_clock_48mhz),
+    MLUA_SYM(set_sys_clock_pll),
+    MLUA_SYM(set_sys_clock_khz),
+#undef MLUA_SYM
     {NULL},
 };
 

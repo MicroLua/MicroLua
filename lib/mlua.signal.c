@@ -140,10 +140,10 @@ static int mod_wake(lua_State* ls) {
 }
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(dispatch),
-    X(wake),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(dispatch),
+    MLUA_SYM(wake),
+#undef MLUA_SYM
     {NULL},
 };
 

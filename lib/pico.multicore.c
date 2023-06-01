@@ -47,10 +47,10 @@ static int mod_launch_core1(lua_State* ls) {
 MLUA_FUNC_0_0(mod_, multicore_, reset_core1)
 
 static mlua_reg const module_regs[] = {
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(reset_core1),
-    X(launch_core1),
-#undef X
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(reset_core1),
+    MLUA_SYM(launch_core1),
+#undef MLUA_SYM
     {NULL},
 };
 

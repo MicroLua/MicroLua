@@ -21,39 +21,39 @@ MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
 static mlua_reg const module_regs[] = {
-#define X(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
-    X(clk_gpout0),
-    X(clk_gpout1),
-    X(clk_gpout2),
-    X(clk_gpout3),
-    X(clk_ref),
-    X(clk_sys),
-    X(clk_peri),
-    X(clk_usb),
-    X(clk_adc),
-    X(clk_rtc),
-    X(CLK_COUNT),
-#undef X
-#define X(n) MLUA_REG(integer, FC0_SRC_VALUE_ ## n, CLOCKS_FC0_SRC_VALUE_ ## n)
-    X(PLL_SYS_CLKSRC_PRIMARY),
-    X(PLL_USB_CLKSRC_PRIMARY),
-    X(ROSC_CLKSRC),
-    X(CLK_SYS),
-    X(CLK_PERI),
-    X(CLK_USB),
-    X(CLK_ADC),
-    X(CLK_RTC),
-#undef X
-#define X(n) MLUA_REG(function, n, mod_ ## n)
-    X(configure),
-    X(stop),
-    X(get_hz),
-    X(frequency_count_khz),
-    X(set_reported_hz),
-    X(gpio_init_int_frac),
-    X(gpio_init),
-    X(configure_gpin),
-#undef X
+#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
+    MLUA_SYM(clk_gpout0),
+    MLUA_SYM(clk_gpout1),
+    MLUA_SYM(clk_gpout2),
+    MLUA_SYM(clk_gpout3),
+    MLUA_SYM(clk_ref),
+    MLUA_SYM(clk_sys),
+    MLUA_SYM(clk_peri),
+    MLUA_SYM(clk_usb),
+    MLUA_SYM(clk_adc),
+    MLUA_SYM(clk_rtc),
+    MLUA_SYM(CLK_COUNT),
+#undef MLUA_SYM
+#define MLUA_SYM(n) MLUA_REG(integer, n, CLOCKS_ ## n)
+    MLUA_SYM(FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY),
+    MLUA_SYM(FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY),
+    MLUA_SYM(FC0_SRC_VALUE_ROSC_CLKSRC),
+    MLUA_SYM(FC0_SRC_VALUE_CLK_SYS),
+    MLUA_SYM(FC0_SRC_VALUE_CLK_PERI),
+    MLUA_SYM(FC0_SRC_VALUE_CLK_USB),
+    MLUA_SYM(FC0_SRC_VALUE_CLK_ADC),
+    MLUA_SYM(FC0_SRC_VALUE_CLK_RTC),
+#undef MLUA_SYM
+#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+    MLUA_SYM(configure),
+    MLUA_SYM(stop),
+    MLUA_SYM(get_hz),
+    MLUA_SYM(frequency_count_khz),
+    MLUA_SYM(set_reported_hz),
+    MLUA_SYM(gpio_init_int_frac),
+    MLUA_SYM(gpio_init),
+    MLUA_SYM(configure_gpin),
+#undef MLUA_SYM
     {NULL},
 };
 

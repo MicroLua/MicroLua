@@ -423,39 +423,41 @@ static int int64___call(lua_State* ls) {
 }
 
 static mlua_reg const int64_regs[] = {
-    MLUA_REG_PUSH(max, int64_max),
-    MLUA_REG_PUSH(min, int64_min),
-#define X(n) MLUA_REG(function, n, int64_ ## n)
-    X(ashr),
-    X(eq),
-    X(hex),
-    X(tointeger),
-    X(tonumber),
-    X(ult),
+#define MLUA_SYM(n) MLUA_REG_PUSH(n, int64_ ## n)
+    MLUA_SYM(max),
+    MLUA_SYM(min),
+#undef MLUA_SYM
+#define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
+    MLUA_SYM(ashr),
+    MLUA_SYM(eq),
+    MLUA_SYM(hex),
+    MLUA_SYM(tointeger),
+    MLUA_SYM(tonumber),
+    MLUA_SYM(ult),
 #if !IS64INT
-    X(__add),
-    X(__sub),
-    X(__mul),
-    X(__idiv),
-    X(__mod),
-    X(__unm),
-    X(__div),
-    X(__pow),
-    X(__band),
-    X(__bor),
-    X(__bxor),
-    X(__bnot),
-    X(__shl),
-    X(__shr),
+    MLUA_SYM(__add),
+    MLUA_SYM(__sub),
+    MLUA_SYM(__mul),
+    MLUA_SYM(__idiv),
+    MLUA_SYM(__mod),
+    MLUA_SYM(__unm),
+    MLUA_SYM(__div),
+    MLUA_SYM(__pow),
+    MLUA_SYM(__band),
+    MLUA_SYM(__bor),
+    MLUA_SYM(__bxor),
+    MLUA_SYM(__bnot),
+    MLUA_SYM(__shl),
+    MLUA_SYM(__shr),
     MLUA_REG(function, __eq, int64_eq),
-    X(__lt),
-    X(__le),
-    X(__tostring),
+    MLUA_SYM(__lt),
+    MLUA_SYM(__le),
+    MLUA_SYM(__tostring),
 #ifndef LUA_NOCVTN2S
-    X(__concat),
+    MLUA_SYM(__concat),
 #endif  // LUA_NOCVTN2S
 #endif  // !IS64INT
-#undef X
+#undef MLUA_SYM
     {NULL},
 };
 
