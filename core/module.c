@@ -1,4 +1,4 @@
-#include "mlua/lib.h"
+#include "mlua/module.h"
 
 #include <string.h>
 
@@ -9,7 +9,7 @@
 __attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
 __attribute__((weak)) int _unlink(char const* file) { return -1; }
 
-void mlua_open_libs(lua_State* ls) {
+void mlua_register_modules(lua_State* ls) {
     // Require library "base".
     luaL_requiref(ls, "_G", luaopen_base, 1);
     lua_pop(ls, 1);
@@ -20,10 +20,10 @@ void mlua_open_libs(lua_State* ls) {
     lua_remove(ls, -2);  // Remove package
 
     // Register compiled-in modules with package.preload.
-    extern struct mlua_lib const __start_mlua_modules;
-    extern struct mlua_lib const __stop_mlua_modules;
-    for (mlua_lib const* m = &__start_mlua_modules;
-            m < &__stop_mlua_modules; ++m) {
+    extern struct mlua_module const __start_mlua_module_registry;
+    extern struct mlua_module const __stop_mlua_module_registry;
+    for (struct mlua_module const* m = &__start_mlua_module_registry;
+            m < &__stop_mlua_module_registry; ++m) {
         lua_pushcfunction(ls, m->open);
         lua_setfield(ls, -2, m->name);
     }

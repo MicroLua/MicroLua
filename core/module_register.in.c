@@ -1,4 +1,4 @@
-#include "mlua/lib.h"
+#include "mlua/module.h"
 
 #include "lua.h"
 
@@ -28,6 +28,6 @@ extern int luaopen_@SYM@(lua_State* ls);
 
 #endif
 
-static mlua_lib const module
-    __attribute__((__section__("mlua_modules"), __used__))
+static struct mlua_module const module
+    __attribute__((__section__("mlua_module_registry"), __used__))
     = {.name = "@MOD@", .open = luaopen_@SYM@};

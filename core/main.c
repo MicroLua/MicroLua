@@ -5,7 +5,7 @@
 
 #include "pico/platform.h"
 
-#include "mlua/lib.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 #ifdef LIB_PICO_STDIO
@@ -134,8 +134,8 @@ static int require_mlua_thread(lua_State* ls) {
 }
 
 static int pmain(lua_State* ls) {
-    // Set up module loading.
-    mlua_open_libs(ls);
+    // Register compiled-in modules.
+    mlua_register_modules(ls);
 
     // Set up stdio streams.
 #ifdef LIB_PICO_STDIO
