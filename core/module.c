@@ -5,10 +5,6 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-// Silence link-time warnings.
-__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
-__attribute__((weak)) int _unlink(char const* file) { return -1; }
-
 void mlua_register_modules(lua_State* ls) {
     // Require library "base".
     luaL_requiref(ls, "_G", luaopen_base, 1);

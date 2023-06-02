@@ -8,6 +8,10 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// Silence link-time warnings.
+__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
+__attribute__((weak)) int _unlink(char const* file) { return -1; }
+
 #ifdef LIB_PICO_STDIO
 
 #include <unistd.h>
