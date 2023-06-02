@@ -56,10 +56,10 @@ local function demo_core1()
 end
 
 local function demo_hardware_timer()
-    local next_time = time.get_absolute_time() + 1500000
+    local next_time = thread.now() + 1500000
     next_time = next_time - (next_time % 1000000)
     timer.set_callback(0, function(alarm)
-        local now = time.get_absolute_time()
+        local now = thread.now()
         next_time = next_time + 1000000
         timer.set_target(0, next_time)
         eio.printf("# Alarm at %s, next at %s\n", now, next_time)
@@ -130,16 +130,15 @@ local function demo_stdin()
 end
 
 function main()
+    local start = thread.now()
+
     -- Set the system clock.
     stdlib.set_sys_clock_khz(200000, true)
     -- stdlib.set_sys_clock_48mhz()
     stdlib.setup_default_uart()
 
-    -- Wait for the system timer to start (it takes a while).
-    timer.busy_wait_us(1)
-    local start = time.get_absolute_time()
     eio.printf(string.rep("=", 79) .. "\n")
-    eio.printf("Start time: %s\n", start)
+    eio.printf("Startup time: %s us\n", start)
 
     demo_sysinfo()
     demo_clocks()

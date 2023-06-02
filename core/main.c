@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hardware/timer.h"
 #include "pico/platform.h"
 
 #include "mlua/module.h"
@@ -132,11 +133,6 @@ static int getfield(lua_State* ls) {
     return 1;
 }
 
-static int require_mlua_thread(lua_State* ls) {
-    mlua_require(ls, "mlua.thread", true);
-    return 1;
-}
-
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
     mlua_register_modules(ls);
@@ -163,19 +159,19 @@ static int pmain(lua_State* ls) {
     lua_remove(ls, 1);  // Remove module name
     lua_remove(ls, 1);  // Remove function name
 
-    // If the "thread" module is available, run its main function, passing
-    // the main module's main function as a task. Otherwise, run the main
-    // module's main function on its own.
-    lua_pushcfunction(ls, require_mlua_thread);
-    if (lua_pcall(ls, 0, 1, 0) == LUA_OK) {
-        lua_getfield(ls, -1, "main");
-        lua_remove(ls, -2);  // Remove thread module
-        lua_rotate(ls, -2, 1);
-        lua_call(ls, 1, 0);
-    } else if (!lua_isnil(ls, -2)) {
-        lua_pop(ls, 1);  // Remove error
-        lua_call(ls, 0, 0);
-    }
+#if LIB_MLUA_MOD_MLUA_THREAD
+    // The mlua.thread module is available. Run its main function, passing the
+    // main module's main function as a task.
+    mlua_require(ls, "mlua.thread", true);
+    lua_getfield(ls, -1, "main");
+    lua_remove(ls, -2);  // Remove thread module
+    lua_rotate(ls, -2, 1);
+    lua_call(ls, 1, 0);
+#else
+    // The mlua.thread module isn't available. Call the main module's main
+    // function directly.
+    lua_call(ls, 0, 0);
+#endif
     return 0;
 }
 
@@ -239,6 +235,11 @@ void mlua_run_main(lua_State* ls) {
 }
 
 void mlua_main_core0() {
+    // Ensure that the system timer is ticking. This seems to take some time
+    // after a reset.
+    busy_wait_us(1);
+
+    // Run the Lua interpreter.
     lua_State* ls = mlua_new_interpreter();
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
