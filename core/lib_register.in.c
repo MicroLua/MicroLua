@@ -28,8 +28,6 @@ extern int luaopen_@SYM@(lua_State* ls);
 
 #endif
 
-static mlua_lib lib = {.name = "@MOD@", .open = luaopen_@SYM@};
-
-static __attribute__((constructor)) void register_lib(void) {
-    mlua_register_lib(&lib);
-}
+static mlua_lib const module
+    __attribute__((__section__("mlua_modules"), __used__))
+    = {.name = "@MOD@", .open = luaopen_@SYM@};

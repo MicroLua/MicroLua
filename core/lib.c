@@ -9,14 +9,6 @@
 __attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
 __attribute__((weak)) int _unlink(char const* file) { return -1; }
 
-// The list of registered libraries.
-static mlua_lib* libs = NULL;
-
-void mlua_register_lib(mlua_lib* lib) {
-    lib->next = libs;
-    libs = lib;
-}
-
 void mlua_open_libs(lua_State* ls) {
     // Require library "base".
     luaL_requiref(ls, "_G", luaopen_base, 1);
@@ -27,12 +19,13 @@ void mlua_open_libs(lua_State* ls) {
     lua_getfield(ls, -1, "preload");
     lua_remove(ls, -2);  // Remove package
 
-    mlua_lib* lib = libs;
-    while (lib != NULL) {
-        lua_pushcfunction(ls, lib->open);
-        lua_setfield(ls, -2, lib->name);
-        lib = lib->next;
+    // Register compiled-in modules with package.preload.
+    extern struct mlua_lib const __start_mlua_modules;
+    extern struct mlua_lib const __stop_mlua_modules;
+    for (mlua_lib const* m = &__start_mlua_modules;
+            m < &__stop_mlua_modules; ++m) {
+        lua_pushcfunction(ls, m->open);
+        lua_setfield(ls, -2, m->name);
     }
-
     lua_pop(ls, 1);  // Remove preload
 }
