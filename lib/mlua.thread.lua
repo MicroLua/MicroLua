@@ -62,6 +62,9 @@ function start(fn)
     return task
 end
 
+-- Return the current absolute time.
+now = time.get_absolute_time
+
 -- Return the currently-running task.
 running = coroutine.running
 
@@ -71,8 +74,15 @@ running = coroutine.running
 -- earlier).
 yield = coroutine.yield
 
--- Return the current time.
-now = time.get_absolute_time
+-- Make the current task sleep until the given absolute time or until it is
+-- explicitly resumed.
+sleep_until = coroutine.yield
+
+-- Make the current task sleep for the given duration (in microseconds) or until
+-- it is explicitly resumed.
+function sleep_for(duration)
+    return sleep_until(now() + duration)
+end
 
 -- Move the given task from the wait list to the active queue.
 function resume(task)
@@ -119,8 +129,8 @@ function main(fn)
         head = head + 1
         local _, deadline = coroutine.resume(task)
 
-        -- Close the task if it's dead, park it if it is suspended, or move it
-        -- to the end of the active queue.
+        -- Close the task if it's dead, move it to the wait list if it is
+        -- suspended, or move it to the end of the active queue.
         if coroutine.status(task) == 'dead' then
             local ok, err = coroutine.close(task)
             if not ok then

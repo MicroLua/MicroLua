@@ -50,7 +50,7 @@ end
 local function demo_core1()
     multicore.launch_core1('main1')
     thread.start(function()
-        thread.yield(thread.now() + 5000000)
+        thread.sleep_for(5000000)
         eio.printf("# Resetting core 1\n")
         multicore.reset_core1()
     end)
@@ -74,22 +74,22 @@ local function demo_user_irq()
     irq.clear(irq_num)
     irq.set_enabled(irq_num, true)
     thread.start(function()
-        thread.yield(thread.now() + 500000)
+        thread.sleep_for(500000)
         for i = 0, 2 do
             irq.set_pending(irq_num)
-            thread.yield(thread.now() + 500000)
+            thread.sleep_for(500000)
         end
     end)
 end
 
 
 local function task(id, start)
-    thread.yield(start)
+    thread.sleep_until(start)
     for i = 0, 2 do
         eio.printf("Task: %s (%s), i: %s, t: %s\n", id, thread.running(), i,
                    thread.now())
         -- debug.debug()
-        thread.yield(start + (i + 1) * 1000000)
+        thread.sleep_until(start + (i + 1) * 1000000)
     end
     eio.printf("Task: %s, done\n", id)
 end
@@ -147,7 +147,7 @@ function main()
     -- demo_core1()
     -- demo_hardware_timer()
     -- demo_user_irq()
-    -- demo_threads()
+    demo_threads()
     demo_gpio()
     demo_stdin()
 end
