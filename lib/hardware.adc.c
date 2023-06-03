@@ -74,6 +74,11 @@ static mlua_reg const module_regs[] = {
 int luaopen_hardware_adc(lua_State* ls) {
     mlua_require(ls, "hardware.irq", false);
 
+    // Initialize internal state.
+    uint32_t save = save_and_disable_interrupts();
+    enabled[get_core_num()] = false;
+    restore_interrupts(save);
+
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
     return 1;
