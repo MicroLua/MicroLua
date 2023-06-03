@@ -24,14 +24,19 @@ end
 -- A writer that collects all writes and can replay them.
 Buffer = oo.class('Buffer')
 
+function Buffer:__init() self[0] = 0 end
+
 -- Return true iff the buffer is empty.
-function Buffer:is_empty() return #self == 0 end
+function Buffer:is_empty() return self[0] == 0 end
 
 -- Write data to the writer.
 function Buffer:write(...)
+    local len = self[0]
     for i = 1, select('#', ...) do
-        self[#self + 1] = select(i, ...)
+        len = len + 1
+        self[len] = select(i, ...)
     end
+    self[0] = len
 end
 
 -- Replay the written data to the given writer.

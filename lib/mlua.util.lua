@@ -14,10 +14,11 @@ function eq(a, b) return a == b end
 
 -- Return the keys of the given table, optionally filtered.
 function keys(tab, filter)
-    local res = {}
+    local res, i = {}, 1
     for key, value in pairs(tab) do
         if not filter or filter(key, value) then
-            res[#res + 1] = key
+            res[i] = key
+            i = i + 1
         end
     end
     return res
@@ -25,10 +26,11 @@ end
 
 -- Return the values of the given table, optionally filtered.
 function values(tab, filter)
-    local res = {}
+    local res, i = {}, 1
     for key, value in pairs(tab) do
         if not filter or filter(key, value) then
-            res[#res + 1] = value
+            res[i] = value
+            i = i + 1
         end
     end
     return res

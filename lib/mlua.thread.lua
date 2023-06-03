@@ -11,45 +11,41 @@ local table = require 'table'
 local active = {}
 local head, tail = 0, 0
 local waiting = {}
-local timers = {}
+local timers = {[0] = 0}
 
 -- Add a waiting task to the timer list.
 local function add_timer(task, deadline)
-    local l, r = 1, #timers + 1
+    local len = timers[0]
+    local l, r = 1, len + 1
     while l < r do
         local m = (l + r) // 2
         if waiting[timers[m]] > deadline then r = m else l = m + 1 end
     end
     table.insert(timers, r, task)
+    timers[0] = len + 1
 end
 
 -- Remove a waiting task from the timer list.
 local function remove_timer(task)
+    local len = timers[0]
     local deadline = waiting[task]
-    local l, r = 1, #timers + 1
+    local l, r = 1, len + 1
     while l < r do
         local m = (l + r) // 2
         local t = timers[m]
         if t == task then
             table.remove(timers, l)
+            timers[0] = len - 1
             return
         end
         if waiting[t] < deadline then l = m + 1 else r = m end
     end
-    for i = l, #timers do
+    for i = l, len do
         if timers[i] == task then
             table.remove(timers, i)
+            timers[0] = len - 1
             return
         end
-    end
-end
-
--- Remove the first cnt entries from the timer list.
-local function remove_timers(cnt)
-    local len = #timers
-    table.move(timers, cnt + 1, len, 1)
-    for i = len - cnt + 1, len do
-        timers[i] = nil
     end
 end
 
@@ -98,7 +94,7 @@ end
 
 -- Resume the tasks whose deadline has elapsed.
 local function resume_deadlined()
-    local len = #timers
+    local len = timers[0]
     if len == 0 then return end
     local i, t = 1, now()
     while i <= len do
@@ -109,7 +105,13 @@ local function resume_deadlined()
         tail = tail + 1
         i = i + 1
     end
-    if i > 1 then remove_timers(i - 1) end
+    if i > 1 then
+        table.move(timers, i, len, 1)
+        for i = len - i + 2, len do
+            timers[i] = nil
+        end
+        timers[0] = len - i + 1
+    end
 end
 
 -- Run the task dispatch loop.

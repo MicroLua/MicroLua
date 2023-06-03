@@ -71,8 +71,10 @@ function Test:run(name, func, keep)
     local t = Test(name, self)
     t:_run(func)
     if keep or t.children or t:failed() then
-        if not self.children then self.children = {} end
-        self.children[#self.children + 1] = t
+        if not self.children then self.children = {[0] = 0} end
+        local len = self.children[0] + 1
+        self.children[len] = t
+        self.children[0] = len
     end
     t = nil
     collectgarbage('collect')
