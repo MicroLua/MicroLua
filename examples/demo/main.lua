@@ -18,9 +18,10 @@ local unique_id = require 'pico.unique_id'
 local string = require 'string'
 
 local function demo_sysinfo()
-    eio.printf("Chip: %d, ROM: %d, core: %d, SDK: %s\n",
+    eio.printf("Chip: %d, ROM: %d, core: %d, SDK: %s, Lua: %s\n",
         platform.rp2040_chip_version(), platform.rp2040_rom_version(),
-        platform.get_core_num(), pico.SDK_VERSION_STRING)
+        platform.get_core_num(), pico.SDK_VERSION_STRING,
+        _RELEASE:gsub('[^ ]+ (.*)', '%1'))
     local id = unique_id.get_unique_board_id()
     eio.printf("Board ID: %s (%s)\n",
         id:gsub('(.)', function(c) return string.format('%02x', c:byte(1)) end),

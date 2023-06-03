@@ -136,6 +136,8 @@ static int getfield(lua_State* ls) {
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
     mlua_register_modules(ls);
+    lua_pushstring(ls, LUA_RELEASE);
+    lua_setglobal(ls, "_RELEASE");
 
     // Set up stdio streams.
 #ifdef LIB_PICO_STDIO
