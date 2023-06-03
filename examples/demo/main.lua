@@ -26,6 +26,8 @@ local function demo_sysinfo()
     eio.printf("Board ID: %s (%s)\n",
         id:gsub('(.)', function(c) return string.format('%02x', c:byte(1)) end),
         unique_id.get_unique_board_id_string())
+    eio.printf("Flash: %08x, binary: %08x - %08x\n", pico.FLASH_SIZE_BYTES,
+               pico.flash_binary_start, pico.flash_binary_end)
 end
 
 local function demo_clocks()

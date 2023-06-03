@@ -4,7 +4,14 @@
 #include "lauxlib.h"
 #include "mlua/util.h"
 
+char const __flash_binary_start;
+char const __flash_binary_end;
+
 static mlua_reg const module_regs[] = {
+#define MLUA_SYM(n, v) MLUA_REG(integer, n, v)
+    MLUA_SYM(flash_binary_start, (lua_Integer)&__flash_binary_start),
+    MLUA_SYM(flash_binary_end, (lua_Integer)&__flash_binary_end),
+#undef MLUA_SYM
 #define MLUA_SYM(n) MLUA_REG(integer, n, PICO_ ## n)
     MLUA_SYM(OK),
     MLUA_SYM(ERROR_NONE),
