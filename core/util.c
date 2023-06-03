@@ -40,11 +40,18 @@ void mlua_reg_push_function(lua_State* ls, mlua_reg const* reg, int nup) {
     lua_pushcclosure(ls, reg->function, nup);
 }
 
-void mlua_set_fields(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_set_fields(lua_State* ls, mlua_reg const* fields, int nup) {
     luaL_checkstack(ls, nup, "too many upvalues");
-    for (; reg->name != NULL; ++reg) {
-        reg->push(ls, reg, nup);
-        lua_setfield(ls, -(nup + 2), reg->name);
+    for (; fields->name != NULL; ++fields) {
+        fields->push(ls, fields, nup);
+        lua_setfield(ls, -(nup + 2), fields->name);
     }
     lua_pop(ls, nup);  // Remove upvalues
+}
+
+void mlua_new_class(lua_State* ls, char const* name, mlua_reg const* fields) {
+    luaL_newmetatable(ls, name);
+    mlua_set_fields(ls, fields, 0);
+    lua_pushvalue(ls, -1);
+    lua_setfield(ls, -2, "__index");
 }

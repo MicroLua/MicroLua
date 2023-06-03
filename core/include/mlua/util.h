@@ -84,7 +84,8 @@ void mlua_reg_push_number(lua_State* ls, mlua_reg const* reg, int nup);
 void mlua_reg_push_string(lua_State* ls, mlua_reg const* reg, int nup);
 void mlua_reg_push_function(lua_State* ls, mlua_reg const* reg, int nup);
 
-void mlua_set_fields(lua_State* ls, mlua_reg const* funcs, int nup);
+void mlua_set_fields(lua_State* ls, mlua_reg const* fields, int nup);
+void mlua_new_class(lua_State* ls, char const* name, mlua_reg const* fields);
 
 #define mlua_newtable(ls, fields, extra, nup) \
     do { \

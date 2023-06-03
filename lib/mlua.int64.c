@@ -10,6 +10,8 @@
 
 #include "mlua/util.h"
 
+char const* const int64_name = "int64";
+
 #define IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
 #define MLUA_MDIG (l_floatatt(MANT_DIG))
@@ -93,7 +95,7 @@ bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
     *value = lua_tointeger(ls, arg);
     return true;
 #else
-    int64_t* v = luaL_testudata(ls, arg, "int64");
+    int64_t* v = luaL_testudata(ls, arg, int64_name);
     if (v == NULL) return false;
     *value = *v;
     return true;
@@ -117,7 +119,7 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
 #else
     int64_t* v = lua_newuserdatauv(ls, sizeof(int64_t), 0);
     *v = value;
-    luaL_getmetatable(ls, "int64");
+    luaL_getmetatable(ls, int64_name);
     lua_setmetatable(ls, -2);
 #endif
 }
@@ -148,7 +150,7 @@ static int int64_ashr(lua_State* ls) {
 }
 
 #if IS64INT
-static int int64_eq(lua_State* ls) {
+static int int64___eq(lua_State* ls) {
     lua_pushboolean(ls, lua_compare(ls, 1, 2, LUA_OPEQ));
     return 1;
 }
@@ -341,7 +343,7 @@ static int int64_ ## n(lua_State* ls) { \
     return 1; \
 }
 
-CMP_OP(eq, ==, eq, 1, eq, 1)
+CMP_OP(__eq, ==, eq, 1, eq, 1)
 CMP_OP(__lt, <, floor, lhs, ceil, rhs)
 CMP_OP(__le, <=, floor, lhs, ceil, rhs)
 
@@ -422,6 +424,8 @@ static int int64___call(lua_State* ls) {
     return 1;
 }
 
+#define int64_eq int64___eq
+
 static mlua_reg const int64_regs[] = {
 #define MLUA_SYM(n) MLUA_REG_PUSH(n, int64_ ## n)
     MLUA_SYM(max),
@@ -449,7 +453,7 @@ static mlua_reg const int64_regs[] = {
     MLUA_SYM(__bnot),
     MLUA_SYM(__shl),
     MLUA_SYM(__shr),
-    MLUA_REG(function, __eq, int64_eq),
+    MLUA_SYM(__eq),
     MLUA_SYM(__lt),
     MLUA_SYM(__le),
     MLUA_SYM(__tostring),
@@ -462,20 +466,17 @@ static mlua_reg const int64_regs[] = {
 };
 
 static mlua_reg const int64_meta_regs[] = {
-    MLUA_REG(function, __call, int64___call),
+#define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
+    MLUA_SYM(__call),
+#undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_mlua_int64(lua_State* ls) {
     luaL_checkversion(ls);
 
-    // Create the int64 class.
-    luaL_newmetatable(ls, "int64");
-    mlua_set_fields(ls, int64_regs, 0);
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, -2, "__index");
-
-    // Make the int64 class callable.
+    // Create the int64 class and make it callable.
+    mlua_new_class(ls, int64_name, int64_regs);
     mlua_newtable(ls, int64_meta_regs, 0, 0);
     lua_setmetatable(ls, -2);
     return 1;
