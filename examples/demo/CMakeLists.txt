@@ -6,6 +6,7 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_mod_hardware_gpio
     mlua_mod_hardware_irq
     mlua_mod_hardware_timer
+    mlua_mod_hardware_uart
     mlua_mod_mlua_eio
     mlua_mod_mlua_module
     mlua_mod_mlua_thread

@@ -37,6 +37,12 @@ target_link_libraries(mlua_mod_hardware_timer INTERFACE
     pico_platform
 )
 
+mlua_add_c_module(mlua_mod_hardware_uart hardware.uart hardware.uart.c)
+target_link_libraries(mlua_mod_hardware_uart INTERFACE
+    hardware_uart
+    pico_platform
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_eio mlua.eio.lua)
 target_link_libraries(mlua_mod_mlua_eio INTERFACE
     mlua_mod_mlua_module

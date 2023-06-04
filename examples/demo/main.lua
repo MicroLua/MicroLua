@@ -5,6 +5,7 @@ local clocks = require 'hardware.clocks'
 local gpio = require 'hardware.gpio'
 local irq = require 'hardware.irq'
 local timer = require 'hardware.timer'
+local uart = require 'hardware.uart'
 local math = require 'math'
 local eio = require 'mlua.eio'
 local thread = require 'mlua.thread'
@@ -132,6 +133,14 @@ local function demo_stdin()
     end)
 end
 
+local function demo_uart()
+    for i = 0, platform.NUM_UARTS - 1 do
+        local u = uart.uart[i]
+        eio.printf("UART%d: %s\n", u:get_index(),
+                   u:is_enabled() and "enabled" or "disabled")
+    end
+end
+
 function main()
     local start = thread.now()
 
@@ -148,7 +157,8 @@ function main()
     -- demo_core1()
     -- demo_hardware_timer()
     -- demo_user_irq()
-    demo_threads()
+    -- demo_threads()
     demo_gpio()
     demo_stdin()
+    demo_uart()
 end
