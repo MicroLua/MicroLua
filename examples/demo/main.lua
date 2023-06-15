@@ -53,7 +53,7 @@ end
 
 local function demo_core1()
     multicore.launch_core1('main1')
-    thread.start(function()
+    thread.start("Core 1 resetter", function()
         thread.sleep_for(5000000)
         eio.printf("Resetting core 1\n")
         multicore.reset_core1()
@@ -64,7 +64,7 @@ local function demo_hardware_timer()
     local next_time = thread.now() + 1500000
     next_time = next_time - (next_time % 1000000)
     timer.set_target(0, next_time)
-    thread.start(function()
+    thread.start("Timer 0 handler", function()
         timer.enable_alarm(0)
         while true do
             timer.wait_alarm(0)
@@ -78,14 +78,14 @@ end
 
 local function demo_user_irq()
     local irq_num = irq.user_irq_claim_unused()
-    thread.start(function()
+    thread.start(string.format("User IRQ %d handler", irq_num), function()
         irq.enable_user_irq(irq_num)
         while true do
             irq.wait_user_irq(irq_num)
             eio.printf("User IRQ %d\n", irq_num)
         end
     end)
-    thread.start(function()
+    thread.start("User IRQ generator", function()
         thread.sleep_for(500000)
         for i = 0, 2 do
             eio.printf("Marking user IRQ %d pending\n", irq_num)
@@ -96,22 +96,23 @@ local function demo_user_irq()
 end
 
 
-local function task(id, start)
+local function task(start)
+    local name = thread.name(thread.running())
     thread.sleep_until(start)
     for i = 0, 2 do
-        eio.printf("Task: %s (%s), i: %s, t: %s\n", id, thread.running(), i,
-                   thread.now())
+        eio.printf("%s, i: %s, t: %s\n", name, i, thread.now())
         -- debug.debug()
         thread.sleep_until(start + (i + 1) * 1000000)
     end
-    eio.printf("Task: %s, done\n", id)
+    eio.printf("%s, done\n", name)
 end
 
 local function demo_threads()
     local base = thread.now() + 1500000
     base = base - (base % 1000000)
     for i = 0, 3 do
-        thread.start(function() task(i, base + i * 250000) end)
+        thread.start(string.format("Task %d", i),
+                     function() task(base + i * 250000) end)
     end
 end
 
@@ -129,7 +130,7 @@ local function demo_gpio()
                              true)
         -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
     end
-    thread.start(function()
+    thread.start("GPIO event handler", function()
         gpio.enable_irq()
         while true do
             local evs = {gpio.wait_events(table.unpack(buttons))}
@@ -144,7 +145,7 @@ local function demo_gpio()
 end
 
 local function demo_stdin()
-    thread.start(function()
+    thread.start("stdin handler", function()
         stdio.enable_chars_available()
         local line = ''
         while true do
@@ -177,7 +178,8 @@ function main()
     stdlib.setup_default_uart()
 
     eio.printf(string.rep("=", 79) .. "\n")
-    eio.printf("Startup time: %s us\n", start)
+    eio.printf("Main thread [%s], startup time: %s us\n",
+               thread.name(thread.running()), start)
 
     demo_sysinfo()
     demo_clocks()

@@ -8,12 +8,12 @@ local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
--- TODO: Allow giving threads names, and use them when reporting errors
-
 local active = {}
 local head, tail = 0, 0
 local waiting = {}
 local timers = {[0] = 0}
+local names = {}
+setmetatable(names, {__mode = 'k'})
 
 -- Add a waiting thread to the timer list.
 local function add_timer(thread, deadline)
@@ -52,11 +52,18 @@ local function remove_timer(thread)
 end
 
 -- Start a new thread calling the given function.
-function start(fn)
+function start(name, fn)
+    if fn == nil then fn, name = name, nil end
     local thread = coroutine.create(fn)
+    names[thread] = name
     active[tail] = thread
     tail = tail + 1
     return thread
+end
+
+-- Return the name of the given thread.
+function name(thread)
+    return names[thread] or string.sub(tostring(thread), 9)
 end
 
 -- Return the current absolute time.
@@ -110,8 +117,8 @@ local function resume_deadlined()
 end
 
 -- Run the thread dispatch loop.
-function main(fn)
-    if fn then start(fn) end
+function main(fn, thread_name)
+    if fn then start(thread_name, fn) end
     while true do
         -- Dispatch events and wait for at least one active thread.
         event.dispatch(resume,
@@ -132,7 +139,8 @@ function main(fn)
         if coroutine.status(thread) == 'dead' then
             local ok, err = coroutine.close(thread)
             if not ok then
-                stderr:write(string.format("Task failed: %s\n", err))
+                stderr:write(string.format(
+                    "Thread [%s] failed: %s\n", name(thread), err))
             end
         elseif deadline then
             waiting[thread] = deadline
