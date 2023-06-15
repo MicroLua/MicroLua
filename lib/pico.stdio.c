@@ -2,28 +2,64 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/signal.h"
+#include "mlua/event.h"
 #include "mlua/util.h"
 
-static SigNum chars_available_signals[NUM_CORES];
+struct AvailableState {
+    Event event;
+    bool pending;
+};
+
+static struct AvailableState chars_available_state[NUM_CORES];
 
 static void __time_critical_func(chars_available)(void* ud) {
-    mlua_signal_set(*((SigNum*)ud), true);
+    struct AvailableState* state = (struct AvailableState*)ud;
+    state->pending = true;
+    mlua_event_set(state->event, true);
 }
 
-static int mod_set_chars_available_callback(lua_State* ls) {
-    bool has_cb = !lua_isnoneornil(ls, 1);
-    SigNum* sig = &chars_available_signals[get_core_num()];
-    if (*sig < 0) {  // No callback is currently set
-        if (!has_cb) return 0;
-        mlua_signal_claim(ls, sig, 1);
-        stdio_set_chars_available_callback(&chars_available, sig);
-    } else if (has_cb) {  // An existing callback is being updated
-        mlua_signal_set_handler(ls, *sig, 2);
-    } else {  // An existing callback is being unset
+static int mod_enable_chars_available(lua_State* ls) {
+    struct AvailableState* state = &chars_available_state[get_core_num()];
+    if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
         stdio_set_chars_available_callback(NULL, NULL);
-        mlua_signal_unclaim(ls, sig);
+        mlua_event_unclaim(ls, &state->event);
+        return 0;
     }
+    mlua_event_claim(ls, &state->event);
+    uint32_t save = save_and_disable_interrupts();
+    state->pending = false;
+    restore_interrupts(save);
+    stdio_set_chars_available_callback(&chars_available, state);
+    return 0;
+}
+
+static bool get_pending(struct AvailableState* state) {
+    uint32_t save = save_and_disable_interrupts();
+    bool pending = state->pending;
+    state->pending = false;
+    restore_interrupts(save);
+    return pending;
+}
+
+static int mod_wait_chars_available_1(lua_State* ls);
+static int mod_wait_chars_available_2(lua_State* ls, int status,
+                                      lua_KContext ctx);
+
+static int mod_wait_chars_available(lua_State* ls) {
+    struct AvailableState* state = &chars_available_state[get_core_num()];
+    if (get_pending(state)) return 0;
+    mlua_event_watch(ls, state->event);
+    return mod_wait_chars_available_1(ls);
+}
+
+static int mod_wait_chars_available_1(lua_State* ls) {
+    return mlua_event_suspend(ls, &mod_wait_chars_available_2);
+}
+
+static int mod_wait_chars_available_2(lua_State* ls, int status, lua_KContext ctx) {
+    struct AvailableState* state = &chars_available_state[get_core_num()];
+    if (!get_pending(state)) return mod_wait_chars_available_1(ls);
+    mlua_event_unwatch(ls, state->event);
     return 0;
 }
 
@@ -47,18 +83,21 @@ static mlua_reg const module_regs[] = {
     // MLUA_SYM(set_translate_crlf),
     MLUA_SYM(putchar_raw),
     MLUA_SYM(puts_raw),
-    MLUA_SYM(set_chars_available_callback),
+    // set_chars_available_callback: See enable_chars_available, wait_chars_available
+    MLUA_SYM(enable_chars_available),
+    MLUA_SYM(wait_chars_available),
 #undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_pico_stdio(lua_State* ls) {
-    mlua_require(ls, "mlua.signal", false);
+    mlua_require(ls, "mlua.event", false);
 
     // Initialize internal state.
-    SigNum* sig = &chars_available_signals[get_core_num()];
+    struct AvailableState* state = &chars_available_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
-    *sig = -1;
+    state->event = -1;
+    state->pending = false;
     restore_interrupts(save);
 
     // Create the module.

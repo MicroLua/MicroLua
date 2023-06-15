@@ -17,6 +17,7 @@ local stdlib = require 'pico.stdlib'
 local time = require 'pico.time'
 local unique_id = require 'pico.unique_id'
 local string = require 'string'
+local table = require 'table'
 
 local function demo_sysinfo()
     eio.printf("Chip: %d, ROM: %d, core: %d, SDK: %s, Lua: %s\n",
@@ -54,7 +55,7 @@ local function demo_core1()
     multicore.launch_core1('main1')
     thread.start(function()
         thread.sleep_for(5000000)
-        eio.printf("# Resetting core 1\n")
+        eio.printf("Resetting core 1\n")
         multicore.reset_core1()
     end)
 end
@@ -62,23 +63,32 @@ end
 local function demo_hardware_timer()
     local next_time = thread.now() + 1500000
     next_time = next_time - (next_time % 1000000)
-    timer.set_callback(0, function(alarm)
-        local now = thread.now()
-        next_time = next_time + 1000000
-        timer.set_target(0, next_time)
-        eio.printf("# Alarm at %s, next at %s\n", now, next_time)
-    end)
     timer.set_target(0, next_time)
+    thread.start(function()
+        timer.enable_alarm(0)
+        while true do
+            timer.wait_alarm(0)
+            local now = thread.now()
+            next_time = next_time + 1000000
+            timer.set_target(0, next_time)
+            eio.printf("Alarm at %s\n", now)
+        end
+    end)
 end
 
 local function demo_user_irq()
     local irq_num = irq.user_irq_claim_unused()
-    irq.set_handler(irq_num, function() eio.printf("# User IRQ\n") end)
-    irq.clear(irq_num)
-    irq.set_enabled(irq_num, true)
+    thread.start(function()
+        irq.enable_user_irq(irq_num)
+        while true do
+            irq.wait_user_irq(irq_num)
+            eio.printf("User IRQ %d\n", irq_num)
+        end
+    end)
     thread.start(function()
         thread.sleep_for(500000)
         for i = 0, 2 do
+            eio.printf("Marking user IRQ %d pending\n", irq_num)
             irq.set_pending(irq_num)
             thread.sleep_for(500000)
         end
@@ -106,29 +116,46 @@ local function demo_threads()
 end
 
 local function demo_gpio()
-    local led = 21
-    gpio.init(led)
-    gpio.set_dir(led, gpio.OUT)
-    local button = 17
-    gpio.init(button)
-    gpio.set_irq_callback(function(num, events)
-        eio.printf("GPIO %s, events: %x\n", num, events)
-        gpio.put(led, gpio.get(num))
+    local leds = {21, 20, 19, 18}
+    for _, led in ipairs(leds) do
+        gpio.init(led)
+        gpio.set_dir(led, gpio.OUT)
+    end
+    local buttons = {17, 16, 15, 14}
+    for _, button in ipairs(buttons) do
+        gpio.init(button)
+        gpio.set_dir(button, gpio.IN)
+        gpio.set_irq_enabled(button, gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE,
+                             true)
+        -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
+    end
+    thread.start(function()
+        gpio.enable_irq()
+        while true do
+            local evs = {gpio.wait_events(table.unpack(buttons))}
+            for i, ev in ipairs(evs) do
+                gpio.put(leds[i], gpio.get(buttons[i]))
+                if ev ~= 0 then
+                    eio.printf("GPIO %s, events: %x\n", buttons[i], ev)
+                end
+            end
+        end
     end)
-    gpio.set_irq_enabled(button, gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE, true)
-    -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
-    irq.set_enabled(irq.IO_IRQ_BANK0, true)
 end
 
 local function demo_stdin()
-    local line = ''
-    stdio.set_chars_available_callback(function()
-        line = line .. stdin:read(32)  -- UART Rx FIFO is 32 bytes
+    thread.start(function()
+        stdio.enable_chars_available()
+        local line = ''
         while true do
-            local i = line:find('\n', 1, true)
-            if not i then break end
-            eio.printf("IN: %s", line:sub(1, i))
-            line = line:sub(i + 1)
+            stdio.wait_chars_available()
+            line = line .. stdin:read(32)  -- UART Rx FIFO is 32 bytes
+            while true do
+                local i = line:find('\n', 1, true)
+                if not i then break end
+                eio.printf("IN: %s", line:sub(1, i))
+                line = line:sub(i + 1)
+            end
         end
     end)
 end
@@ -145,7 +172,7 @@ function main()
     local start = thread.now()
 
     -- Set the system clock.
-    stdlib.set_sys_clock_khz(200000, true)
+    stdlib.set_sys_clock_khz(250000, true)
     -- stdlib.set_sys_clock_48mhz()
     stdlib.setup_default_uart()
 
@@ -154,10 +181,10 @@ function main()
 
     demo_sysinfo()
     demo_clocks()
-    -- demo_core1()
-    -- demo_hardware_timer()
-    -- demo_user_irq()
-    -- demo_threads()
+    demo_core1()
+    demo_hardware_timer()
+    demo_user_irq()
+    demo_threads()
     demo_gpio()
     demo_stdin()
     demo_uart()

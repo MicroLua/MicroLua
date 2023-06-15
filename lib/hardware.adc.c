@@ -1,34 +1,54 @@
 #include "hardware/adc.h"
+#include "hardware/irq.h"
+#include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/hardware.irq.h"
+#include "mlua/event.h"
 #include "mlua/util.h"
 
-static bool enabled[NUM_CORES];
+static Event events[NUM_CORES];
 
 static void __time_critical_func(handle_irq)(void) {
-    adc_irq_set_enabled(false);  // ADC IRQ is level-triggered
-    mlua_irq_set_signal(ADC_IRQ_FIFO, true);
+    adc_irq_set_enabled(false);
+    mlua_event_set(events[get_core_num()], true);
 }
 
-static int handle_signal(lua_State* ls) {
-    lua_pushvalue(ls, lua_upvalueindex(1));
-    lua_call(ls, 0, 0);
-    adc_irq_set_enabled(enabled[get_core_num()]);
+static int mod_fifo_enable_irq(lua_State* ls) {
+    mlua_event_enable_irq(ls, &events[get_core_num()], ADC_IRQ_FIFO,
+                          &handle_irq, 1, -1);
     return 0;
 }
 
-static int mod_irq_set_handler(lua_State* ls) {
-    mlua_irq_set_handler(ls, ADC_IRQ_FIFO, &handle_irq, &handle_signal, 1);
-    return 0;
+static int mod_fifo_get_blocking_1(lua_State* ls);
+static int mod_fifo_get_blocking_2(lua_State* ls, int status, lua_KContext ctx);
+
+static int mod_fifo_get_blocking(lua_State* ls) {
+    if (!adc_fifo_is_empty()) {
+        lua_pushinteger(ls, adc_fifo_get());
+        return 1;
+    }
+#if MLUA_BLOCK_WHEN_NON_YIELDABLE
+    if (!lua_isyieldable(ls)) {
+        lua_pushinteger(ls, adc_fifo_get_blocking());
+        return 1;
+    }
+#endif
+    mlua_event_watch(ls, events[get_core_num()]);
+    return mod_fifo_get_blocking_1(ls);
 }
 
-static int mod_irq_set_enabled(lua_State* ls) {
-    bool enable = mlua_to_cbool(ls, 1);
-    enabled[get_core_num()] = enable;
-    adc_irq_set_enabled(enable);
-    return 0;
+static int mod_fifo_get_blocking_1(lua_State* ls) {
+    adc_irq_set_enabled(true);
+    return mlua_event_suspend(ls, &mod_fifo_get_blocking_2);
+}
+
+static int mod_fifo_get_blocking_2(lua_State* ls, int status,
+                                   lua_KContext ctx) {
+    if (adc_fifo_is_empty()) return mod_fifo_get_blocking_1(ls);
+    mlua_event_unwatch(ls, events[get_core_num()]);
+    lua_pushinteger(ls, adc_fifo_get());
+    return 1;
 }
 
 MLUA_FUNC_0_0(mod_, adc_, init)
@@ -45,7 +65,6 @@ MLUA_FUNC_0_5(mod_, adc_, fifo_setup, mlua_to_cbool, mlua_to_cbool,
 MLUA_FUNC_1_0(mod_, adc_, fifo_is_empty, lua_pushboolean)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
-MLUA_FUNC_1_0(mod_, adc_, fifo_get_blocking, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
 
 static mlua_reg const module_regs[] = {
@@ -65,18 +84,17 @@ static mlua_reg const module_regs[] = {
     MLUA_SYM(fifo_get),
     MLUA_SYM(fifo_get_blocking),
     MLUA_SYM(fifo_drain),
-    MLUA_SYM(irq_set_enabled),
-    MLUA_SYM(irq_set_handler),
+    MLUA_SYM(fifo_enable_irq),
 #undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_hardware_adc(lua_State* ls) {
-    mlua_require(ls, "hardware.irq", false);
+    mlua_require(ls, "mlua.event", false);
 
     // Initialize internal state.
     uint32_t save = save_and_disable_interrupts();
-    enabled[get_core_num()] = false;
+    events[get_core_num()] = -1;
     restore_interrupts(save);
 
     // Create the module.

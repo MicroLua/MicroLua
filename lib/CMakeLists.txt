@@ -1,7 +1,9 @@
 mlua_add_c_module(mlua_mod_hardware_adc hardware.adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware_adc INTERFACE
     hardware_adc
-    mlua_mod_hardware_irq
+    hardware_irq
+    mlua_mod_mlua_event
+    pico_platform
 )
 
 mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks hardware.clocks.c)
@@ -14,17 +16,15 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
     hardware_structs
     hardware_sync
-    mlua_mod_mlua_signal
+    mlua_mod_mlua_event
     pico_platform
 )
 
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
-target_include_directories(mlua_mod_hardware_irq_headers INTERFACE
-    include_hardware.irq)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
     hardware_sync
-    mlua_mod_mlua_signal
+    mlua_mod_mlua_event
     pico_platform
 )
 
@@ -33,7 +33,7 @@ target_link_libraries(mlua_mod_hardware_timer INTERFACE
     hardware_sync
     hardware_timer
     mlua_mod_mlua_int64
-    mlua_mod_mlua_signal
+    mlua_mod_mlua_event
     pico_platform
 )
 
@@ -48,6 +48,17 @@ target_link_libraries(mlua_mod_mlua_eio INTERFACE
     mlua_mod_mlua_module
     mlua_mod_mlua_oo
     mlua_mod_string
+)
+
+mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
+target_include_directories(mlua_mod_mlua_event_headers INTERFACE
+    include_mlua.event)
+target_link_libraries(mlua_mod_mlua_event INTERFACE
+    hardware_irq
+    hardware_sync
+    mlua_mod_mlua_int64
+    pico_platform
+    pico_time
 )
 
 mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64 mlua.int64.c)
@@ -75,22 +86,11 @@ target_link_libraries(mlua_mod_mlua_oo INTERFACE
     mlua_mod_mlua_module
 )
 
-mlua_add_c_module(mlua_mod_mlua_signal mlua.signal mlua.signal.c)
-target_include_directories(mlua_mod_mlua_signal_headers INTERFACE
-    include_mlua.signal)
-target_link_libraries(mlua_mod_mlua_signal INTERFACE
-    hardware_sync
-    hardware_timer
-    mlua_mod_mlua_int64
-    pico_platform
-    pico_time
-)
-
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
 target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
     mlua_mod_mlua_module
-    mlua_mod_mlua_signal
+    mlua_mod_mlua_event
     mlua_mod_pico_time
     mlua_mod_string
     mlua_mod_table
@@ -130,7 +130,7 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
 target_link_libraries(mlua_mod_pico_stdio INTERFACE
-    mlua_mod_mlua_signal
+    mlua_mod_mlua_event
     pico_stdio
 )
 
