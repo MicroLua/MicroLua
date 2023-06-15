@@ -1,7 +1,9 @@
+#include "hardware/timer.h"
 #include "pico/time.h"
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/util.h"
 
@@ -22,6 +24,34 @@ static void push_nil_time(lua_State* ls, MLuaReg const* reg, int nup) {
     push_absolute_time(ls, nil_time);
 }
 
+static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
+
+static int mod_sleep_until(lua_State* ls) {
+    absolute_time_t t = check_absolute_time(ls, 1);
+#if !LIB_MLUA_MOD_MLUA_THREAD
+    sleep_until(t);
+#else
+    if (time_reached(t)) return 0;
+    return mlua_event_suspend(ls, &mod_sleep_until_1, 1);
+#endif
+}
+
+static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
+    return mod_sleep_until(ls);
+}
+
+static int mod_sleep_us(lua_State* ls) {
+    push_absolute_time(ls, make_timeout_time_us(mlua_check_int64(ls, 1)));
+    lua_replace(ls, 1);
+    return mod_sleep_until(ls);
+}
+
+static int mod_sleep_ms(lua_State* ls) {
+    push_absolute_time(ls, make_timeout_time_ms(luaL_checkinteger(ls, 1)));
+    lua_replace(ls, 1);
+    return mod_sleep_until(ls);
+}
+
 MLUA_FUNC_1_0(mod_,, get_absolute_time, push_absolute_time)
 MLUA_FUNC_1_1(mod_,, to_ms_since_boot, lua_pushinteger, check_absolute_time)
 MLUA_FUNC_1_2(mod_,, delayed_by_us, push_absolute_time, check_absolute_time,
@@ -38,9 +68,6 @@ MLUA_FUNC_1_2(mod_,, absolute_time_min, push_absolute_time,
 MLUA_FUNC_1_1(mod_,, is_at_the_end_of_time, lua_pushboolean,
               check_absolute_time)
 MLUA_FUNC_1_1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
-MLUA_FUNC_0_1(mod_,, sleep_until, check_absolute_time)
-MLUA_FUNC_0_1(mod_,, sleep_us, mlua_check_int64)
-MLUA_FUNC_0_1(mod_,, sleep_ms, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
 
@@ -102,6 +129,7 @@ static MLuaReg const module_regs[] = {
 };
 
 int luaopen_pico_time(lua_State* ls) {
+    mlua_require(ls, "mlua.event", false);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

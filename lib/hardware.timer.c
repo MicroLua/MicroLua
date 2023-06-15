@@ -70,7 +70,7 @@ static int mod_wait_alarm(lua_State* ls) {
 }
 
 static int mod_wait_alarm_1(lua_State* ls) {
-    return mlua_event_suspend(ls, &mod_wait_alarm_2);
+    return mlua_event_suspend(ls, &mod_wait_alarm_2, 0);
 }
 
 static int mod_wait_alarm_2(lua_State* ls, int status, lua_KContext ctx) {

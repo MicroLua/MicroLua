@@ -45,8 +45,10 @@ void mlua_event_watch(lua_State* ls, MLuaEvent ev);
 // Unregister the current thread from notifications for an event.
 void mlua_event_unwatch(lua_State* ls, MLuaEvent ev);
 
-// Suspend the running thread, by yielding true.
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont);
+// Suspend the running thread. If the given index is non-zero, yield the value
+// at that index, which must be a deadline in microseconds. Otherwise, yield
+// false to suspend indefinitely.
+int mlua_event_suspend(lua_State* ls, lua_KFunction cont, int index);
 
 #ifdef __cplusplus
 }

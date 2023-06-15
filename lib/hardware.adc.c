@@ -40,7 +40,7 @@ static int mod_fifo_get_blocking(lua_State* ls) {
 
 static int mod_fifo_get_blocking_1(lua_State* ls) {
     adc_irq_set_enabled(true);
-    return mlua_event_suspend(ls, &mod_fifo_get_blocking_2);
+    return mlua_event_suspend(ls, &mod_fifo_get_blocking_2, 0);
 }
 
 static int mod_fifo_get_blocking_2(lua_State* ls, int status,

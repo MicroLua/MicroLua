@@ -65,21 +65,16 @@ now = time.get_absolute_time
 -- Return the currently-running thread.
 running = coroutine.running
 
--- Make the currently-running thread yield. If the argument is true, the thread
--- is moved from the active queue to the wait list. If the argument is an
--- absolute time, the thread is resumed at that time (unless it's resumed
--- explicitly earlier).
+-- Make the running thread yield. If the argument is true, the thread is moved
+-- from the active queue to the wait list. If the argument is an absolute time,
+-- the thread is resumed at that time (unless it's resumed explicitly earlier).
 yield = coroutine.yield
 
--- Make the current thread sleep until the given absolute time or until it is
--- explicitly resumed.
-sleep_until = coroutine.yield
+-- Suspend the running thread until the given absolute time.
+sleep_until = time.sleep_until
 
--- Make the current thread sleep for the given duration (in microseconds) or
--- until it is explicitly resumed.
-function sleep_for(duration)
-    return sleep_until(now() + duration)
-end
+-- Suspend the running thread for the given duration (in microseconds).
+sleep_for = time.sleep_us
 
 -- Move the given thread from the wait list to the active queue.
 function resume(thread)

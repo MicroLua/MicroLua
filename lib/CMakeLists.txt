@@ -141,6 +141,8 @@ target_link_libraries(mlua_mod_pico_stdlib INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_time pico.time pico.time.c)
 target_link_libraries(mlua_mod_pico_time INTERFACE
+    hardware_timer
+    mlua_mod_mlua_event
     mlua_mod_mlua_int64
     pico_time
 )

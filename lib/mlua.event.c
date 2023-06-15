@@ -169,8 +169,12 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     }
 }
 
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont) {
-    lua_pushboolean(ls, true);
+int mlua_event_suspend(lua_State* ls, lua_KFunction cont, int index) {
+    if (index != 0) {
+        lua_pushvalue(ls, index);
+    } else {
+        lua_pushboolean(ls, true);
+    }
     lua_yieldk(ls, 1, 0, cont);
     return luaL_error(ls, "unable to yield");
 }
