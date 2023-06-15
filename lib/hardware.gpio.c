@@ -14,13 +14,13 @@
 
 #define EVENTS_SIZE ((NUM_BANK0_GPIOS + 7) / 8)
 
-struct IRQState {
+typedef struct IRQState {
     uint32_t pending[EVENTS_SIZE];
     uint32_t mask[EVENTS_SIZE];
-    Event irq_event;
-};
+    MLuaEvent irq_event;
+} IRQState;
 
-static struct IRQState irq_state[NUM_CORES];
+static IRQState irq_state[NUM_CORES];
 
 #define LEVEL_EVENTS_MASK ( \
       ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 0) \
@@ -39,7 +39,7 @@ io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
 
 static void __time_critical_func(handle_irq)(void) {
     uint core = get_core_num();
-    struct IRQState* state = &irq_state[core];
+    IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
     bool notify = false;
     for (uint block = 0; block < MLUA_SIZE(state->pending); ++block) {
@@ -69,7 +69,7 @@ static uint check_gpio(lua_State* ls, int index) {
     return gpio;
 }
 
-static bool push_events(lua_State* ls, struct IRQState* state, int cnt) {
+static bool push_events(lua_State* ls, IRQState* state, int cnt) {
     bool active = false;
     for (int i = 1; i <= cnt; ++i) {
         uint gpio = lua_tointeger(ls, i);  // Arguments were checked before
@@ -95,7 +95,7 @@ static int mod_wait_events(lua_State* ls) {
     int cnt = lua_gettop(ls);
     if (cnt == 0) return 0;
     uint core = get_core_num();
-    struct IRQState* state = &irq_state[core];
+    IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
 
     // Enable level-triggered events once, to propagate their state.
@@ -122,7 +122,7 @@ static int mod_wait_events_1(lua_State* ls) {
 
 static int mod_wait_events_2(lua_State* ls, int status, lua_KContext ctx) {
     int cnt = lua_gettop(ls);
-    struct IRQState* state = &irq_state[get_core_num()];
+    IRQState* state = &irq_state[get_core_num()];
     if (!push_events(ls, state, cnt)) return mod_wait_events_1(ls);
     mlua_event_unwatch(ls, state->irq_event);
     return cnt;
@@ -132,7 +132,7 @@ int mod_set_irq_enabled(lua_State* ls) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enable = mlua_to_cbool(ls, 3);
-    struct IRQState* state = &irq_state[get_core_num()];
+    IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
     uint32_t save = save_and_disable_interrupts();
@@ -198,7 +198,7 @@ MLUA_FUNC_0_2(mod_, gpio_, set_dir, check_gpio, mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, gpio_, is_dir_out, lua_pushboolean, check_gpio)
 MLUA_FUNC_1_1(mod_, gpio_, get_dir, lua_pushinteger, check_gpio)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(integer, n, GPIO_ ## n)
     MLUA_SYM(FUNC_XIP),
     MLUA_SYM(FUNC_SPI),
@@ -290,7 +290,7 @@ int luaopen_hardware_gpio(lua_State* ls) {
     mlua_require(ls, "mlua.event", false);
 
     // Initialize internal state.
-    struct IRQState* state = &irq_state[get_core_num()];
+    IRQState* state = &irq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     memset(state->pending, 0, sizeof(state->pending));
     memset(state->mask, 0, sizeof(state->mask));

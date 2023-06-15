@@ -19,28 +19,28 @@ static __attribute__((constructor)) void init_mlua_lock(void) {
     mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
 }
 
-void mlua_reg_push_boolean(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_reg_push_boolean(lua_State* ls, MLuaReg const* reg, int nup) {
     lua_pushboolean(ls, reg->boolean);
 }
 
-void mlua_reg_push_integer(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_reg_push_integer(lua_State* ls, MLuaReg const* reg, int nup) {
     lua_pushinteger(ls, reg->integer);
 }
 
-void mlua_reg_push_number(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_reg_push_number(lua_State* ls, MLuaReg const* reg, int nup) {
     lua_pushnumber(ls, reg->number);
 }
 
-void mlua_reg_push_string(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_reg_push_string(lua_State* ls, MLuaReg const* reg, int nup) {
     lua_pushstring(ls, reg->string);
 }
 
-void mlua_reg_push_function(lua_State* ls, mlua_reg const* reg, int nup) {
+void mlua_reg_push_function(lua_State* ls, MLuaReg const* reg, int nup) {
     for (int i = 0; i < nup; ++i) lua_pushvalue(ls, -nup);
     lua_pushcclosure(ls, reg->function, nup);
 }
 
-void mlua_set_fields(lua_State* ls, mlua_reg const* fields, int nup) {
+void mlua_set_fields(lua_State* ls, MLuaReg const* fields, int nup) {
     luaL_checkstack(ls, nup, "too many upvalues");
     for (; fields->name != NULL; ++fields) {
         fields->push(ls, fields, nup);
@@ -49,7 +49,7 @@ void mlua_set_fields(lua_State* ls, mlua_reg const* fields, int nup) {
     lua_pop(ls, nup);  // Remove upvalues
 }
 
-void mlua_new_class(lua_State* ls, char const* name, mlua_reg const* fields) {
+void mlua_new_class(lua_State* ls, char const* name, MLuaReg const* fields) {
     luaL_newmetatable(ls, name);
     mlua_set_fields(ls, fields, 0);
     lua_pushvalue(ls, -1);

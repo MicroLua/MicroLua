@@ -70,7 +70,7 @@ static int std_print(lua_State* ls) {
     return 0;
 }
 
-static mlua_reg const StdStream_regs[] = {
+static MLuaReg const StdStream_regs[] = {
 #define MLUA_SYM(n, v) MLUA_REG(string, n, v)
     MLUA_SYM(__name, "StdStream"),
 #undef MLUA_SYM

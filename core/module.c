@@ -16,9 +16,9 @@ void mlua_register_modules(lua_State* ls) {
     lua_remove(ls, -2);  // Remove package
 
     // Register compiled-in modules with package.preload.
-    extern struct mlua_module const __start_mlua_module_registry;
-    extern struct mlua_module const __stop_mlua_module_registry;
-    for (struct mlua_module const* m = &__start_mlua_module_registry;
+    extern MLuaModule const __start_mlua_module_registry;
+    extern MLuaModule const __stop_mlua_module_registry;
+    for (MLuaModule const* m = &__start_mlua_module_registry;
             m < &__stop_mlua_module_registry; ++m) {
         lua_pushcfunction(ls, m->open);
         lua_setfield(ls, -2, m->name);

@@ -5,21 +5,21 @@
 #include "mlua/event.h"
 #include "mlua/util.h"
 
-struct AvailableState {
-    Event event;
+typedef struct AvailableState {
+    MLuaEvent event;
     bool pending;
-};
+} AvailableState;
 
-static struct AvailableState chars_available_state[NUM_CORES];
+static AvailableState chars_available_state[NUM_CORES];
 
 static void __time_critical_func(chars_available)(void* ud) {
-    struct AvailableState* state = (struct AvailableState*)ud;
+    AvailableState* state = (AvailableState*)ud;
     state->pending = true;
     mlua_event_set(state->event, true);
 }
 
 static int mod_enable_chars_available(lua_State* ls) {
-    struct AvailableState* state = &chars_available_state[get_core_num()];
+    AvailableState* state = &chars_available_state[get_core_num()];
     if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
         stdio_set_chars_available_callback(NULL, NULL);
         mlua_event_unclaim(ls, &state->event);
@@ -33,7 +33,7 @@ static int mod_enable_chars_available(lua_State* ls) {
     return 0;
 }
 
-static bool get_pending(struct AvailableState* state) {
+static bool get_pending(AvailableState* state) {
     uint32_t save = save_and_disable_interrupts();
     bool pending = state->pending;
     state->pending = false;
@@ -46,7 +46,7 @@ static int mod_wait_chars_available_2(lua_State* ls, int status,
                                       lua_KContext ctx);
 
 static int mod_wait_chars_available(lua_State* ls) {
-    struct AvailableState* state = &chars_available_state[get_core_num()];
+    AvailableState* state = &chars_available_state[get_core_num()];
     if (get_pending(state)) return 0;
     mlua_event_watch(ls, state->event);
     return mod_wait_chars_available_1(ls);
@@ -57,7 +57,7 @@ static int mod_wait_chars_available_1(lua_State* ls) {
 }
 
 static int mod_wait_chars_available_2(lua_State* ls, int status, lua_KContext ctx) {
-    struct AvailableState* state = &chars_available_state[get_core_num()];
+    AvailableState* state = &chars_available_state[get_core_num()];
     if (!get_pending(state)) return mod_wait_chars_available_1(ls);
     mlua_event_unwatch(ls, state->event);
     return 0;
@@ -69,7 +69,7 @@ MLUA_FUNC_1_1(mod_,, getchar_timeout_us, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(boolean, n, PICO_STDIO_ ## n)
     //! MLUA_SYM(ENABLE_CRLF_SUPPORT),
     //! MLUA_SYM(DEFAULT_CRLF),
@@ -94,7 +94,7 @@ int luaopen_pico_stdio(lua_State* ls) {
     mlua_require(ls, "mlua.event", false);
 
     // Initialize internal state.
-    struct AvailableState* state = &chars_available_state[get_core_num()];
+    AvailableState* state = &chars_available_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     state->event = -1;
     state->pending = false;

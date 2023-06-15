@@ -7,7 +7,7 @@
 #include "mlua/event.h"
 #include "mlua/util.h"
 
-static Event events[NUM_CORES];
+static MLuaEvent events[NUM_CORES];
 
 static void __time_critical_func(handle_irq)(void) {
     adc_irq_set_enabled(false);
@@ -67,7 +67,7 @@ MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(init),
     MLUA_SYM(gpio_init),

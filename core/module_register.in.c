@@ -28,6 +28,6 @@ extern int luaopen_@SYM@(lua_State* ls);
 
 #endif
 
-static struct mlua_module const module
+static MLuaModule const module
     __attribute__((__section__("mlua_module_registry"), __used__))
     = {.name = "@MOD@", .open = luaopen_@SYM@};

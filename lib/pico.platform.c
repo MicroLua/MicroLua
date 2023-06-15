@@ -9,7 +9,7 @@ MLUA_FUNC_1_0(mod_,, rp2040_rom_version, lua_pushinteger)
 MLUA_FUNC_0_1(mod_,, busy_wait_at_least_cycles, luaL_checkinteger)
 MLUA_FUNC_1_0(mod_,, get_core_num, lua_pushinteger)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(rp2040_chip_version),
     MLUA_SYM(rp2040_rom_version),

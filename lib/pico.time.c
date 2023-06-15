@@ -13,12 +13,12 @@ static void push_absolute_time(lua_State* ls, absolute_time_t t) {
     mlua_push_int64(ls, to_us_since_boot(t));
 }
 
-static void push_at_the_end_of_time(lua_State* ls, mlua_reg const* reg,
+static void push_at_the_end_of_time(lua_State* ls, MLuaReg const* reg,
                                     int nup) {
     push_absolute_time(ls, at_the_end_of_time);
 }
 
-static void push_nil_time(lua_State* ls, mlua_reg const* reg, int nup) {
+static void push_nil_time(lua_State* ls, MLuaReg const* reg, int nup) {
     push_absolute_time(ls, nil_time);
 }
 
@@ -44,7 +44,7 @@ MLUA_FUNC_0_1(mod_,, sleep_ms, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG_PUSH(n, push_ ## n)
     MLUA_SYM(at_the_end_of_time),
     MLUA_SYM(nil_time),

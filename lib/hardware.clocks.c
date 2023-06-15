@@ -20,7 +20,7 @@ MLUA_FUNC_0_3(mod_, clock_, gpio_init, luaL_checkinteger,
 MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
     MLUA_SYM(clk_gpout0),
     MLUA_SYM(clk_gpout1),

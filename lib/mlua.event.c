@@ -13,16 +13,16 @@
 #define NUM_EVENTS 128
 #define EVENTS_SIZE ((NUM_EVENTS + 31) / 32)
 
-struct Events {
+typedef struct Events {
     uint32_t pending[EVENTS_SIZE];
     uint32_t mask[EVENTS_SIZE];
-};
+} Events;
 
-static struct Events events[NUM_CORES];
+static Events events[NUM_CORES];
 
-void mlua_event_claim(lua_State* ls, Event* ev) {
+void mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
     if (*ev < NUM_EVENTS) return;
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     for (int i = 0; i < EVENTS_SIZE; ++i) {
         int idx = __builtin_ffs(~evs->mask[i]);
         if (idx > 0) {
@@ -38,13 +38,13 @@ void mlua_event_claim(lua_State* ls, Event* ev) {
     luaL_error(ls, "no events available");
 }
 
-void mlua_event_unclaim(lua_State* ls, Event* ev) {
-    Event e = *ev;
+void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
+    MLuaEvent e = *ev;
     if (e >= NUM_EVENTS) return;
     uint32_t save = save_and_disable_interrupts();
     *ev = -1;
     restore_interrupts(save);
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     lua_rawgetp(ls, LUA_REGISTRYINDEX, evs);
     lua_pushinteger(ls, e);
     lua_pushnil(ls);
@@ -53,7 +53,7 @@ void mlua_event_unclaim(lua_State* ls, Event* ev) {
     evs->mask[e / 32] &= ~(1u << (e % 32));
 }
 
-void mlua_event_enable_irq(lua_State* ls, Event* ev, uint irq,
+void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
                            void (*handler)(void), int index,
                            lua_Integer priority) {
     int type = lua_type(ls, index);
@@ -82,9 +82,9 @@ void mlua_event_enable_irq(lua_State* ls, Event* ev, uint irq,
     irq_set_enabled(irq, true);
 }
 
-void __time_critical_func(mlua_event_set)(Event ev, bool pending) {
+void __time_critical_func(mlua_event_set)(MLuaEvent ev, bool pending) {
     if (ev >= NUM_EVENTS) return;
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     int index = ev / 32;
     uint32_t mask = 1u << (ev % 32);
     uint32_t save = save_and_disable_interrupts();
@@ -96,7 +96,7 @@ void __time_critical_func(mlua_event_set)(Event ev, bool pending) {
     restore_interrupts(save);
 }
 
-void mlua_event_watch(lua_State* ls, Event ev) {
+void mlua_event_watch(lua_State* ls, MLuaEvent ev) {
     if (ev >= NUM_EVENTS) {
         luaL_error(ls, "watching disabled event");
         return;
@@ -105,7 +105,7 @@ void mlua_event_watch(lua_State* ls, Event ev) {
         luaL_error(ls, "watching event in unyieldable thread");
         return;
     }
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     lua_rawgetp(ls, LUA_REGISTRYINDEX, evs);
     switch (lua_rawgeti(ls, -1, ev)) {
     case LUA_TNIL:  // No watchers
@@ -141,9 +141,9 @@ void mlua_event_watch(lua_State* ls, Event ev) {
     }
 }
 
-void mlua_event_unwatch(lua_State* ls, Event ev) {
+void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     if (ev >= NUM_EVENTS) return;
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     lua_rawgetp(ls, LUA_REGISTRYINDEX, evs);
     switch (lua_rawgeti(ls, -1, ev)) {
     case LUA_TTHREAD:  // A single watcher
@@ -176,7 +176,7 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont) {
 }
 
 static int mod_dispatch(lua_State* ls) {
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 2));
     lua_rawgetp(ls, LUA_REGISTRYINDEX, evs);
     for (;;) {
@@ -234,7 +234,7 @@ static int mod_dispatch(lua_State* ls) {
     return 0;
 }
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(dispatch),
 #undef MLUA_SYM
@@ -245,7 +245,7 @@ int luaopen_mlua_event(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     // Initialize internal state.
-    struct Events* evs = &events[get_core_num()];
+    Events* evs = &events[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     memset(evs, 0, sizeof(*evs));
     restore_interrupts(save);

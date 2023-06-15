@@ -70,7 +70,7 @@ MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, check_Uart,
 
 MLUA_FUNC_0_0(mod_, uart_, default_tx_wait_blocking)
 
-static mlua_reg const Uart_regs[] = {
+static MLuaReg const Uart_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(integer, n, UART_ ## n)
     MLUA_SYM(PARITY_NONE),
     MLUA_SYM(PARITY_EVEN),
@@ -104,7 +104,7 @@ static mlua_reg const Uart_regs[] = {
     {NULL},
 };
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(default_tx_wait_blocking),
 #undef MLUA_SYM

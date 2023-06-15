@@ -124,11 +124,11 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
 #endif
 }
 
-static void int64_max(lua_State* ls, mlua_reg const* reg, int nup) {
+static void int64_max(lua_State* ls, MLuaReg const* reg, int nup) {
     mlua_push_int64(ls, INT64_MAX);
 }
 
-static void int64_min(lua_State* ls, mlua_reg const* reg, int nup) {
+static void int64_min(lua_State* ls, MLuaReg const* reg, int nup) {
     mlua_push_int64(ls, INT64_MIN);
 }
 
@@ -426,7 +426,7 @@ static int int64___call(lua_State* ls) {
 
 #define int64_eq int64___eq
 
-static mlua_reg const int64_regs[] = {
+static MLuaReg const int64_regs[] = {
 #define MLUA_SYM(n) MLUA_REG_PUSH(n, int64_ ## n)
     MLUA_SYM(max),
     MLUA_SYM(min),
@@ -465,7 +465,7 @@ static mlua_reg const int64_regs[] = {
     {NULL},
 };
 
-static mlua_reg const int64_meta_regs[] = {
+static MLuaReg const int64_meta_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
     MLUA_SYM(__call),
 #undef MLUA_SYM

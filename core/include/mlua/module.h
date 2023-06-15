@@ -8,10 +8,10 @@ extern "C" {
 #endif
 
 // A module registry entry.
-struct mlua_module {
+typedef struct MLuaModule {
     char const* name;
     lua_CFunction open;
-};
+} MLuaModule;
 
 // Populate package.preload with all comiled-in modules.
 void mlua_register_modules(lua_State* ls);

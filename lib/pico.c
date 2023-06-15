@@ -7,7 +7,7 @@
 char const __flash_binary_start;
 char const __flash_binary_end;
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n, v) MLUA_REG(integer, n, v)
     MLUA_SYM(flash_binary_start, (lua_Integer)&__flash_binary_start),
     MLUA_SYM(flash_binary_end, (lua_Integer)&__flash_binary_end),

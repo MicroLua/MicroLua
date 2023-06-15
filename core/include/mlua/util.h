@@ -63,9 +63,9 @@ bool mlua_to_cbool(lua_State* ls, int arg);
 
 extern spin_lock_t* mlua_lock;
 
-typedef struct mlua_reg {
+typedef struct MLuaReg {
     char const* name;
-    void (*push)(lua_State*, struct mlua_reg const*, int);
+    void (*push)(lua_State*, struct MLuaReg const*, int);
     union {
         bool boolean;
         lua_Integer integer;
@@ -73,19 +73,19 @@ typedef struct mlua_reg {
         char const* string;
         lua_CFunction function;
     };
-} mlua_reg;
+} MLuaReg;
 
 #define MLUA_REG(t, n, v) {.name=MLUA_STR(n), .push=mlua_reg_push_ ## t, .t=(v)}
 #define MLUA_REG_PUSH(n, p) {.name=MLUA_STR(n), .push=p}
 
-void mlua_reg_push_boolean(lua_State* ls, mlua_reg const* reg, int nup);
-void mlua_reg_push_integer(lua_State* ls, mlua_reg const* reg, int nup);
-void mlua_reg_push_number(lua_State* ls, mlua_reg const* reg, int nup);
-void mlua_reg_push_string(lua_State* ls, mlua_reg const* reg, int nup);
-void mlua_reg_push_function(lua_State* ls, mlua_reg const* reg, int nup);
+void mlua_reg_push_boolean(lua_State* ls, MLuaReg const* reg, int nup);
+void mlua_reg_push_integer(lua_State* ls, MLuaReg const* reg, int nup);
+void mlua_reg_push_number(lua_State* ls, MLuaReg const* reg, int nup);
+void mlua_reg_push_string(lua_State* ls, MLuaReg const* reg, int nup);
+void mlua_reg_push_function(lua_State* ls, MLuaReg const* reg, int nup);
 
-void mlua_set_fields(lua_State* ls, mlua_reg const* fields, int nup);
-void mlua_new_class(lua_State* ls, char const* name, mlua_reg const* fields);
+void mlua_set_fields(lua_State* ls, MLuaReg const* fields, int nup);
+void mlua_new_class(lua_State* ls, char const* name, MLuaReg const* fields);
 
 #define mlua_newtable(ls, fields, extra, nup) \
     do { \

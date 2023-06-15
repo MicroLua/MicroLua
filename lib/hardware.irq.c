@@ -26,19 +26,19 @@ static uint check_user_irq(lua_State* ls, int index) {
     return irq;
 }
 
-struct IRQState {
-    Event events[NUM_USER_IRQS];
+typedef struct IRQState {
+    MLuaEvent events[NUM_USER_IRQS];
     uint8_t pending;
-};
+} IRQState;
 
 static_assert(NUM_USER_IRQS <= 8 * sizeof(uint8_t),
               "pending bitmask too small");
 
-static struct IRQState uirq_state[NUM_CORES];
+static IRQState uirq_state[NUM_CORES];
 
 static void __time_critical_func(handle_user_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - FIRST_USER_IRQ;
-    struct IRQState* state = &uirq_state[get_core_num()];
+    IRQState* state = &uirq_state[get_core_num()];
     state->pending |= 1u << num;
     mlua_event_set(state->events[num], true);
 }
@@ -51,7 +51,7 @@ static int mod_enable_user_irq(lua_State* ls) {
     return 0;
 }
 
-static bool get_pending(struct IRQState* state, uint num) {
+static bool get_pending(IRQState* state, uint num) {
     uint8_t mask = 1u << num;
     uint32_t save = save_and_disable_interrupts();
     uint8_t pending = state->pending;
@@ -65,7 +65,7 @@ static int mod_wait_user_irq_2(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_wait_user_irq(lua_State* ls) {
     uint num = check_user_irq(ls, 1) - FIRST_USER_IRQ;
-    struct IRQState* state = &uirq_state[get_core_num()];
+    IRQState* state = &uirq_state[get_core_num()];
     if (get_pending(state, num)) return 0;
     mlua_event_watch(ls, state->events[num]);
     return mod_wait_user_irq_1(ls);
@@ -77,7 +77,7 @@ static int mod_wait_user_irq_1(lua_State* ls) {
 
 static int mod_wait_user_irq_2(lua_State* ls, int status, lua_KContext ctx) {
     uint num = check_user_irq(ls, 1) - FIRST_USER_IRQ;
-    struct IRQState* state = &uirq_state[get_core_num()];
+    IRQState* state = &uirq_state[get_core_num()];
     if (!get_pending(state, num)) return mod_wait_user_irq_1(ls);
     mlua_event_unwatch(ls, state->events[num]);
     return 0;
@@ -85,7 +85,7 @@ static int mod_wait_user_irq_2(lua_State* ls, int status, lua_KContext ctx) {
 
 static int mod_clear(lua_State* ls) {
     uint irq = check_user_irq(ls, 1);
-    struct IRQState* state = &uirq_state[get_core_num()];
+    IRQState* state = &uirq_state[get_core_num()];
     uint num = irq - FIRST_USER_IRQ;
     uint32_t save = save_and_disable_interrupts();
     irq_clear(irq);
@@ -114,7 +114,7 @@ MLUA_FUNC_0_1(mod_,, user_irq_claim, check_user_irq)
 MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
 MLUA_FUNC_0_1(mod_,, user_irq_unclaim, check_user_irq)
 
-static mlua_reg const module_regs[] = {
+static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
     MLUA_SYM(TIMER_IRQ_0),
     MLUA_SYM(TIMER_IRQ_1),
@@ -180,7 +180,7 @@ int luaopen_hardware_irq(lua_State* ls) {
     mlua_require(ls, "mlua.event", false);
 
     // Initialize internal state.
-    struct IRQState* state = &uirq_state[get_core_num()];
+    IRQState* state = &uirq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     for (uint i = 0; i < NUM_USER_IRQS; ++i) state->events[i] = -1;
     state->pending = 0;
