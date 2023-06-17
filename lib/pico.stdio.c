@@ -33,34 +33,18 @@ static int mod_enable_chars_available(lua_State* ls) {
     return 0;
 }
 
-static bool get_pending(AvailableState* state) {
+static int try_pending(lua_State* ls) {
+    AvailableState* state = &chars_available_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     bool pending = state->pending;
     state->pending = false;
     restore_interrupts(save);
-    return pending;
+    return pending ? 0 : -1;
 }
-
-static int mod_wait_chars_available_1(lua_State* ls);
-static int mod_wait_chars_available_2(lua_State* ls, int status,
-                                      lua_KContext ctx);
 
 static int mod_wait_chars_available(lua_State* ls) {
-    AvailableState* state = &chars_available_state[get_core_num()];
-    if (get_pending(state)) return 0;
-    mlua_event_watch(ls, state->event);
-    return mod_wait_chars_available_1(ls);
-}
-
-static int mod_wait_chars_available_1(lua_State* ls) {
-    return mlua_event_suspend(ls, &mod_wait_chars_available_2, 0);
-}
-
-static int mod_wait_chars_available_2(lua_State* ls, int status, lua_KContext ctx) {
-    AvailableState* state = &chars_available_state[get_core_num()];
-    if (!get_pending(state)) return mod_wait_chars_available_1(ls);
-    mlua_event_unwatch(ls, state->event);
-    return 0;
+    return mlua_event_wait(ls, chars_available_state[get_core_num()].event,
+                           &try_pending, 0);
 }
 
 MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)

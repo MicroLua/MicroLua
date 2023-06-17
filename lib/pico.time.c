@@ -28,11 +28,12 @@ static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_sleep_until(lua_State* ls) {
     absolute_time_t t = check_absolute_time(ls, 1);
-#if !LIB_MLUA_MOD_MLUA_THREAD
-    sleep_until(t);
-#else
+#if LIB_MLUA_MOD_MLUA_THREAD
     if (time_reached(t)) return 0;
-    return mlua_event_suspend(ls, &mod_sleep_until_1, 1);
+    return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+#else
+    sleep_until(t);
+    return 0;
 #endif
 }
 

@@ -169,7 +169,8 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     }
 }
 
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont, int index) {
+int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
+                       int index) {
     if (index != 0) {
         lua_pushvalue(ls, index);
     } else {
@@ -177,6 +178,35 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, int index) {
     }
     lua_yieldk(ls, 1, 0, cont);
     return luaL_error(ls, "unable to yield");
+}
+
+static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
+                             lua_CFunction try_get, int index);
+static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx);
+
+int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
+                    int index) {
+    int res = try_get(ls);
+    if (res >= 0) return res;
+    mlua_event_watch(ls, event);
+    return mlua_event_wait_1(ls, event, try_get, index);
+}
+
+static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
+                             lua_CFunction try_get, int index) {
+    lua_pushcfunction(ls, try_get);
+    lua_pushinteger(ls, index);
+    return mlua_event_suspend(ls, &mlua_event_wait_2, event, index);
+}
+
+static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
+    lua_CFunction try_get = lua_tocfunction(ls, -2);
+    int index = lua_tointeger(ls, -1);
+    lua_pop(ls, 2);  // Restore the stack for try_get
+    int res = try_get(ls);
+    if (res < 0) return mlua_event_wait_1(ls, (MLuaEvent)ctx, try_get, index);
+    mlua_event_unwatch(ls, (MLuaEvent)ctx);
+    return res;
 }
 
 static int mod_dispatch(lua_State* ls) {

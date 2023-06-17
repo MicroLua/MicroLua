@@ -20,35 +20,17 @@ static int mod_fifo_enable_irq(lua_State* ls) {
     return 0;
 }
 
-static int mod_fifo_get_blocking_1(lua_State* ls);
-static int mod_fifo_get_blocking_2(lua_State* ls, int status, lua_KContext ctx);
-
-static int mod_fifo_get_blocking(lua_State* ls) {
+static int try_fifo_get(lua_State* ls) {
     if (!adc_fifo_is_empty()) {
         lua_pushinteger(ls, adc_fifo_get());
         return 1;
     }
-#if MLUA_BLOCK_WHEN_NON_YIELDABLE
-    if (!lua_isyieldable(ls)) {
-        lua_pushinteger(ls, adc_fifo_get_blocking());
-        return 1;
-    }
-#endif
-    mlua_event_watch(ls, events[get_core_num()]);
-    return mod_fifo_get_blocking_1(ls);
-}
-
-static int mod_fifo_get_blocking_1(lua_State* ls) {
     adc_irq_set_enabled(true);
-    return mlua_event_suspend(ls, &mod_fifo_get_blocking_2, 0);
+    return -1;
 }
 
-static int mod_fifo_get_blocking_2(lua_State* ls, int status,
-                                   lua_KContext ctx) {
-    if (adc_fifo_is_empty()) return mod_fifo_get_blocking_1(ls);
-    mlua_event_unwatch(ls, events[get_core_num()]);
-    lua_pushinteger(ls, adc_fifo_get());
-    return 1;
+static int mod_fifo_get_blocking(lua_State* ls) {
+    return mlua_event_wait(ls, events[get_core_num()], &try_fifo_get, 0);
 }
 
 MLUA_FUNC_0_0(mod_, adc_, init)

@@ -49,36 +49,20 @@ static int mod_enable_alarm(lua_State* ls) {
     return 0;
 }
 
-static bool get_pending(AlarmState* state, uint alarm) {
-    uint8_t mask = 1u << alarm;
+static int try_pending(lua_State* ls) {
+    AlarmState* state = &alarm_state[get_core_num()];
+    uint8_t mask = 1u << lua_tointeger(ls, 1);
     uint32_t save = save_and_disable_interrupts();
     uint8_t pending = state->pending;
     state->pending &= ~mask;
     restore_interrupts(save);
-    return (pending & mask) != 0;
+    return (pending & mask) != 0 ? 0 : -1;
 }
-
-static int mod_wait_alarm_1(lua_State* ls);
-static int mod_wait_alarm_2(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_wait_alarm(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
-    AlarmState* state = &alarm_state[get_core_num()];
-    if (get_pending(state, alarm)) return 0;
-    mlua_event_watch(ls, state->events[alarm]);
-    return mod_wait_alarm_1(ls);
-}
-
-static int mod_wait_alarm_1(lua_State* ls) {
-    return mlua_event_suspend(ls, &mod_wait_alarm_2, 0);
-}
-
-static int mod_wait_alarm_2(lua_State* ls, int status, lua_KContext ctx) {
-    uint alarm = check_alarm(ls, 1);
-    AlarmState* state = &alarm_state[get_core_num()];
-    if (!get_pending(state, alarm)) return mod_wait_alarm_1(ls);
-    mlua_event_unwatch(ls, state->events[alarm]);
-    return 0;
+    return mlua_event_wait(ls, alarm_state[get_core_num()].events[alarm],
+                           &try_pending, 0);
 }
 
 static void cancel_alarm(uint alarm) {

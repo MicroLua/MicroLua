@@ -51,36 +51,20 @@ static int mod_enable_user_irq(lua_State* ls) {
     return 0;
 }
 
-static bool get_pending(IRQState* state, uint num) {
-    uint8_t mask = 1u << num;
+static int try_pending(lua_State* ls) {
+    IRQState* state = &uirq_state[get_core_num()];
+    uint8_t mask = 1u << (lua_tointeger(ls, 1) - FIRST_USER_IRQ);
     uint32_t save = save_and_disable_interrupts();
     uint8_t pending = state->pending;
     state->pending &= ~mask;
     restore_interrupts(save);
-    return (pending & mask) != 0;
+    return (pending & mask) != 0 ? 0 : -1;
 }
-
-static int mod_wait_user_irq_1(lua_State* ls);
-static int mod_wait_user_irq_2(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_wait_user_irq(lua_State* ls) {
     uint num = check_user_irq(ls, 1) - FIRST_USER_IRQ;
-    IRQState* state = &uirq_state[get_core_num()];
-    if (get_pending(state, num)) return 0;
-    mlua_event_watch(ls, state->events[num]);
-    return mod_wait_user_irq_1(ls);
-}
-
-static int mod_wait_user_irq_1(lua_State* ls) {
-    return mlua_event_suspend(ls, &mod_wait_user_irq_2, 0);
-}
-
-static int mod_wait_user_irq_2(lua_State* ls, int status, lua_KContext ctx) {
-    uint num = check_user_irq(ls, 1) - FIRST_USER_IRQ;
-    IRQState* state = &uirq_state[get_core_num()];
-    if (!get_pending(state, num)) return mod_wait_user_irq_1(ls);
-    mlua_event_unwatch(ls, state->events[num]);
-    return 0;
+    return mlua_event_wait(ls, uirq_state[get_core_num()].events[num],
+                           &try_pending, 0);
 }
 
 static int mod_clear(lua_State* ls) {

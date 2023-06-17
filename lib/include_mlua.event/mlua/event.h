@@ -48,7 +48,13 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev);
 // Suspend the running thread. If the given index is non-zero, yield the value
 // at that index, which must be a deadline in microseconds. Otherwise, yield
 // false to suspend indefinitely.
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont, int index);
+int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
+                       int index);
+
+// Wait for an event, suspending as long as try_get returns a negative value.
+// The index is passed to mlua_event_suspend as a deadline index.
+int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
+                    int index);
 
 #ifdef __cplusplus
 }

@@ -69,7 +69,9 @@ static uint check_gpio(lua_State* ls, int index) {
     return gpio;
 }
 
-static bool push_events(lua_State* ls, IRQState* state, int cnt) {
+static int try_events(lua_State* ls) {
+    IRQState* state = &irq_state[get_core_num()];
+    int cnt = lua_gettop(ls);
     bool active = false;
     for (int i = 1; i <= cnt; ++i) {
         uint gpio = lua_tointeger(ls, i);  // Arguments were checked before
@@ -84,21 +86,19 @@ static bool push_events(lua_State* ls, IRQState* state, int cnt) {
         active = active || (e != 0);
         lua_pushinteger(ls, e);
     }
-    if (!active) lua_pop(ls, cnt);
-    return active;
+    if (active) return cnt;
+    lua_pop(ls, cnt);
+    return -1;
 }
-
-static int mod_wait_events_1(lua_State* ls);
-static int mod_wait_events_2(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_wait_events(lua_State* ls) {
     int cnt = lua_gettop(ls);
     if (cnt == 0) return 0;
+
+    // Enable level-triggered events once, to propagate their current state.
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
-
-    // Enable level-triggered events once, to propagate their state.
     for (int i = 1; i <= cnt; ++i) {
         uint gpio = check_gpio(ls, i);
         uint block = gpio / 8;
@@ -108,24 +108,8 @@ static int mod_wait_events(lua_State* ls) {
         hw_set_bits(&irq_ctrl_base->inte[block], mask);
     }
 
-    // Check if any events are already active, and if so, return immediately.
-    if (push_events(ls, state, cnt)) return cnt;
-
-    // No active events. Start watching and suspend.
-    mlua_event_watch(ls, state->irq_event);
-    return mod_wait_events_1(ls);
-}
-
-static int mod_wait_events_1(lua_State* ls) {
-    return mlua_event_suspend(ls, &mod_wait_events_2, 0);
-}
-
-static int mod_wait_events_2(lua_State* ls, int status, lua_KContext ctx) {
-    int cnt = lua_gettop(ls);
-    IRQState* state = &irq_state[get_core_num()];
-    if (!push_events(ls, state, cnt)) return mod_wait_events_1(ls);
-    mlua_event_unwatch(ls, state->irq_event);
-    return cnt;
+    return mlua_event_wait(ls, irq_state[get_core_num()].irq_event,
+                           &try_events, 0);
 }
 
 int mod_set_irq_enabled(lua_State* ls) {
