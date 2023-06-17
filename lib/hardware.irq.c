@@ -26,6 +26,8 @@ static uint check_user_irq(lua_State* ls, int index) {
     return irq;
 }
 
+#if LIB_MLUA_MOD_MLUA_EVENT
+
 typedef struct IRQState {
     MLuaEvent events[NUM_USER_IRQS];
     uint8_t pending;
@@ -67,23 +69,37 @@ static int mod_wait_user_irq(lua_State* ls) {
                            &try_pending, 0);
 }
 
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 static int mod_clear(lua_State* ls) {
-    uint irq = check_user_irq(ls, 1);
-    IRQState* state = &uirq_state[get_core_num()];
-    uint num = irq - FIRST_USER_IRQ;
-    uint32_t save = save_and_disable_interrupts();
-    irq_clear(irq);
-    state->pending &= ~(1u << num);
-    mlua_event_set(state->events[num], false);
-    restore_interrupts(save);
+    uint irq = check_irq(ls, 1);
+#if LIB_MLUA_MOD_MLUA_EVENT
+    if (is_user_irq(irq)) {
+        IRQState* state = &uirq_state[get_core_num()];
+        uint num = irq - FIRST_USER_IRQ;
+        uint32_t save = save_and_disable_interrupts();
+        irq_clear(irq);
+        state->pending &= ~(1u << num);
+        mlua_event_set(state->events[num], false);
+        restore_interrupts(save);
+    } else {
+#endif
+        irq_clear(irq);
+#if LIB_MLUA_MOD_MLUA_EVENT
+    }
+#endif
     return 0;
 }
 
 static int mod_set_enabled(lua_State* ls) {
     uint irq = check_user_irq(ls, 1);
     bool enabled = mlua_to_cbool(ls, 2);
-    // Clear pending state before enabling. irq_set_enabled does the same.
-    if (enabled) mod_clear(ls);
+#if LIB_MLUA_MOD_MLUA_EVENT
+    if (enabled && is_user_irq(irq)) {
+        // Clear pending state before enabling. irq_set_enabled does the same.
+        mod_clear(ls);
+    }
+#endif
     irq_set_enabled(irq, enabled);
     return 0;
 }
@@ -93,7 +109,7 @@ MLUA_FUNC_1_1(mod_, irq_, get_priority, lua_pushinteger, check_irq)
 MLUA_FUNC_1_1(mod_, irq_, is_enabled, lua_pushboolean, check_irq)
 MLUA_FUNC_0_2(mod_, irq_, set_mask_enabled, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, irq_, has_shared_handler, lua_pushboolean, check_irq)
-MLUA_FUNC_0_1(mod_, irq_, set_pending, check_user_irq)
+MLUA_FUNC_0_1(mod_, irq_, set_pending, check_irq)
 MLUA_FUNC_0_1(mod_,, user_irq_claim, check_user_irq)
 MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
 MLUA_FUNC_0_1(mod_,, user_irq_unclaim, check_user_irq)
@@ -154,21 +170,24 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(user_irq_claim),
     MLUA_SYM(user_irq_claim_unused),
     MLUA_SYM(user_irq_unclaim),
+#if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM(enable_user_irq),
     MLUA_SYM(wait_user_irq),
+#endif
 #undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_hardware_irq(lua_State* ls) {
+#if LIB_MLUA_MOD_MLUA_EVENT
+    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-
-    // Initialize internal state.
     IRQState* state = &uirq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     for (uint i = 0; i < NUM_USER_IRQS; ++i) state->events[i] = -1;
     state->pending = 0;
     restore_interrupts(save);
+#endif
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);

@@ -5,6 +5,8 @@
 #include "mlua/event.h"
 #include "mlua/util.h"
 
+#if LIB_MLUA_MOD_MLUA_EVENT
+
 typedef struct AvailableState {
     MLuaEvent event;
     bool pending;
@@ -47,6 +49,8 @@ static int mod_wait_chars_available(lua_State* ls) {
                            &try_pending, 0);
 }
 
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)
 MLUA_FUNC_0_0(mod_, stdio_, flush)
 MLUA_FUNC_1_1(mod_,, getchar_timeout_us, lua_pushinteger, luaL_checkinteger)
@@ -68,21 +72,24 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(putchar_raw),
     MLUA_SYM(puts_raw),
     // set_chars_available_callback: See enable_chars_available, wait_chars_available
+#if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM(enable_chars_available),
     MLUA_SYM(wait_chars_available),
+#endif
 #undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_pico_stdio(lua_State* ls) {
+#if LIB_MLUA_MOD_MLUA_EVENT
+    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-
-    // Initialize internal state.
     AvailableState* state = &chars_available_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     state->event = -1;
     state->pending = false;
     restore_interrupts(save);
+#endif
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);

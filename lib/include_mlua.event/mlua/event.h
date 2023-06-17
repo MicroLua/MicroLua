@@ -13,10 +13,6 @@
 extern "C" {
 #endif
 
-#ifndef MLUA_BLOCK_WHEN_NON_YIELDABLE
-#define MLUA_BLOCK_WHEN_NON_YIELDABLE 0
-#endif
-
 // An event identifier.
 typedef uint8_t MLuaEvent;
 

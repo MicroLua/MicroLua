@@ -12,6 +12,15 @@
 #include "mlua/event.h"
 #include "mlua/util.h"
 
+static uint check_gpio(lua_State* ls, int index) {
+    lua_Integer gpio = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, 0 <= gpio && gpio < (lua_Integer)NUM_BANK0_GPIOS, index,
+                  "invalid GPIO number");
+    return gpio;
+}
+
+#if LIB_MLUA_MOD_MLUA_EVENT
+
 #define EVENTS_SIZE ((NUM_BANK0_GPIOS + 7) / 8)
 
 typedef struct IRQState {
@@ -62,13 +71,6 @@ static int mod_enable_irq(lua_State* ls) {
     return 0;
 }
 
-static uint check_gpio(lua_State* ls, int index) {
-    lua_Integer gpio = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= gpio && gpio < (lua_Integer)NUM_BANK0_GPIOS, index,
-                  "invalid GPIO number");
-    return gpio;
-}
-
 static int try_events(lua_State* ls) {
     IRQState* state = &irq_state[get_core_num()];
     int cnt = lua_gettop(ls);
@@ -112,10 +114,13 @@ static int mod_wait_events(lua_State* ls) {
                            &try_events, 0);
 }
 
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 int mod_set_irq_enabled(lua_State* ls) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enable = mlua_to_cbool(ls, 3);
+#if LIB_MLUA_MOD_MLUA_EVENT
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
@@ -126,6 +131,7 @@ int mod_set_irq_enabled(lua_State* ls) {
         state->mask[block] &= ~mask;
     }
     restore_interrupts(save);
+#endif
     gpio_set_irq_enabled(gpio, event_mask, enable);
     return 0;
 }
@@ -264,22 +270,25 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(set_dir),
     MLUA_SYM(is_dir_out),
     MLUA_SYM(get_dir),
+#if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM(enable_irq),
     MLUA_SYM(wait_events),
+#endif
 #undef MLUA_SYM
     {NULL},
 };
 
 int luaopen_hardware_gpio(lua_State* ls) {
+#if LIB_MLUA_MOD_MLUA_EVENT
+    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-
-    // Initialize internal state.
     IRQState* state = &irq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     memset(state->pending, 0, sizeof(state->pending));
     memset(state->mask, 0, sizeof(state->mask));
     state->irq_event = -1;
     restore_interrupts(save);
+#endif
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
