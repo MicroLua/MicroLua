@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "hardware/sync.h"
 #include "hardware/timer.h"
 #include "pico/platform.h"
 
@@ -54,10 +53,10 @@ static int mod_enable_alarm(lua_State* ls) {
 static int try_pending(lua_State* ls) {
     AlarmState* state = &alarm_state[get_core_num()];
     uint8_t mask = 1u << lua_tointeger(ls, 1);
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     uint8_t pending = state->pending;
     state->pending &= ~mask;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
     return (pending & mask) != 0 ? 0 : -1;
 }
 
@@ -73,9 +72,9 @@ static void cancel_alarm(uint alarm) {
     hardware_alarm_cancel(alarm);
 #if LIB_MLUA_MOD_MLUA_EVENT
     AlarmState* state = &alarm_state[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     state->pending &= ~(1u << alarm);
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
 }
 
@@ -143,10 +142,10 @@ int luaopen_hardware_timer(lua_State* ls) {
     // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
     AlarmState* state = &alarm_state[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     for (uint i = 0; i < NUM_TIMERS; ++i) state->events[i] = -1;
     state->pending = 0;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
 
     // Create the module.

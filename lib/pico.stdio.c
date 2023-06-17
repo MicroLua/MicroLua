@@ -28,19 +28,19 @@ static int mod_enable_chars_available(lua_State* ls) {
         return 0;
     }
     mlua_event_claim(ls, &state->event);
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     state->pending = false;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
     stdio_set_chars_available_callback(&chars_available, state);
     return 0;
 }
 
 static int try_pending(lua_State* ls) {
     AvailableState* state = &chars_available_state[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     bool pending = state->pending;
     state->pending = false;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
     return pending ? 0 : -1;
 }
 
@@ -85,10 +85,10 @@ int luaopen_pico_stdio(lua_State* ls) {
     // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
     AvailableState* state = &chars_available_state[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     state->event = -1;
     state->pending = false;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
 
     // Create the module.

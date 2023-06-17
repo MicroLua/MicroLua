@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "hardware/irq.h"
-#include "hardware/sync.h"
 #include "pico/platform.h"
 #include "pico/time.h"
 
@@ -28,9 +27,9 @@ void mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
         if (idx > 0) {
             --idx;
             int e = i * 32 + idx;
-            uint32_t save = save_and_disable_interrupts();
+            uint32_t save = mlua_event_lock();
             *ev = e;
-            restore_interrupts(save);
+            mlua_event_unlock(save);
             evs->mask[i] |= 1u << idx;
             return;
         }
@@ -41,9 +40,9 @@ void mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     MLuaEvent e = *ev;
     if (e >= NUM_EVENTS) return;
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     *ev = -1;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
     Events* evs = &events[get_core_num()];
     lua_rawgetp(ls, LUA_REGISTRYINDEX, evs);
     lua_pushinteger(ls, e);
@@ -87,13 +86,13 @@ void __time_critical_func(mlua_event_set)(MLuaEvent ev, bool pending) {
     Events* evs = &events[get_core_num()];
     int index = ev / 32;
     uint32_t mask = 1u << (ev % 32);
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     if (pending) {
         evs->pending[index] |= mask;
     } else {
         evs->pending[index] &= ~mask;
     }
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 }
 
 void mlua_event_watch(lua_State* ls, MLuaEvent ev) {
@@ -217,10 +216,10 @@ static int mod_dispatch(lua_State* ls) {
         // Check for active events and resume the watcher tasks.
         bool wake = false;
         for (int i = 0; i < EVENTS_SIZE; ++i) {
-            uint32_t save = save_and_disable_interrupts();
+            uint32_t save = mlua_event_lock();
             uint32_t active = evs->pending[i] & evs->mask[i];
             evs->pending[i] = 0;
-            restore_interrupts(save);
+            mlua_event_unlock(save);
             for (;;) {
                 int idx = __builtin_ffs(active);
                 if (idx == 0) break;
@@ -280,9 +279,9 @@ int luaopen_mlua_event(lua_State* ls) {
 
     // Initialize internal state.
     Events* evs = &events[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     memset(evs, 0, sizeof(*evs));
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 
     lua_newtable(ls);  // Watcher tasks table
     lua_rawsetp(ls, LUA_REGISTRYINDEX, evs);

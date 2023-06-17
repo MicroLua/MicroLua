@@ -86,9 +86,9 @@ int luaopen_hardware_adc(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
     // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     events[get_core_num()] = -1;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
 
     // Create the module.

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hardware/sync.h"
 #include "pico/types.h"
 
 #include "lua.h"
@@ -21,6 +22,12 @@ void mlua_event_claim(lua_State* ls, MLuaEvent* pev);
 
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* pev);
+
+// Lock event handling. This disables interrupts.
+inline uint32_t mlua_event_lock(void) { return save_and_disable_interrupts(); }
+
+// Unlock event handling.
+inline void mlua_event_unlock(uint32_t save) { restore_interrupts(save); }
 
 // Enable or disable IRQ handling. The argument at the given index determines
 // what is done:

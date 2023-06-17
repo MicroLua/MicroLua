@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "hardware/structs/iobank0.h"
-#include "hardware/sync.h"
 #include "pico/platform.h"
 
 #include "lua.h"
@@ -80,10 +79,10 @@ static int try_events(lua_State* ls) {
         uint block = gpio / 8;
         int shift = 4 * (gpio % 8);
         uint32_t mask = 0xfu << shift;
-        uint32_t save = save_and_disable_interrupts();
+        uint32_t save = mlua_event_lock();
         uint32_t pending = state->pending[block];
         state->pending[block] &= ~mask;
-        restore_interrupts(save);
+        mlua_event_unlock(save);
         lua_Integer e = (pending & mask) >> shift;
         active = active || (e != 0);
         lua_pushinteger(ls, e);
@@ -124,13 +123,13 @@ int mod_set_irq_enabled(lua_State* ls) {
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     if (enable) {
         state->mask[block] |= mask;
     } else {
         state->mask[block] &= ~mask;
     }
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
     gpio_set_irq_enabled(gpio, event_mask, enable);
     return 0;
@@ -283,11 +282,11 @@ int luaopen_hardware_gpio(lua_State* ls) {
     // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
     IRQState* state = &irq_state[get_core_num()];
-    uint32_t save = save_and_disable_interrupts();
+    uint32_t save = mlua_event_lock();
     memset(state->pending, 0, sizeof(state->pending));
     memset(state->mask, 0, sizeof(state->mask));
     state->irq_event = -1;
-    restore_interrupts(save);
+    mlua_event_unlock(save);
 #endif
 
     // Create the module.
