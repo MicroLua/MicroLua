@@ -158,16 +158,16 @@ static int pmain(lua_State* ls) {
         lua_pushnil(ls);
     }
     lua_remove(ls, -2);  // Remove main module
+
+#if LIB_MLUA_MOD_MLUA_THREAD
+    // The mlua.thread module is available. Run its main function, passing the
+    // main module's main function as a thread.
     lua_pushvalue(ls, 1);  // Compute the main function name
     lua_pushliteral(ls, ".");
     lua_pushvalue(ls, 2);
     lua_concat(ls, 3);
     lua_remove(ls, 1);  // Remove module name
     lua_remove(ls, 1);  // Remove function name
-
-#if LIB_MLUA_MOD_MLUA_THREAD
-    // The mlua.thread module is available. Run its main function, passing the
-    // main module's main function as a thread.
     mlua_require(ls, "mlua.thread", true);
     lua_getfield(ls, -1, "main");
     lua_remove(ls, -2);  // Remove thread module
@@ -176,7 +176,11 @@ static int pmain(lua_State* ls) {
 #else
     // The mlua.thread module isn't available. Call the main module's main
     // function directly.
-    lua_call(ls, 1, 0);
+    if (!lua_isnil(ls, -1)) {
+        lua_remove(ls, 1);  // Remove module name
+        lua_remove(ls, 1);  // Remove function name
+        lua_call(ls, 0, 0);
+    }
 #endif
     return 0;
 }
