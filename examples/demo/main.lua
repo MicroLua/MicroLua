@@ -163,10 +163,25 @@ end
 
 local function demo_uart()
     for i = 0, platform.NUM_UARTS - 1 do
-        local u = uart.uart[i]
+        local u = uart[i]
         eio.printf("UART%d: %s\n", u:get_index(),
                    u:is_enabled() and "enabled" or "disabled")
     end
+    local u = uart[1]
+    u:init(1200)
+    u:enable_loopback(true)
+    u:enable_irq()
+    local data = "The quick brown fox jumps over the lazy dog"
+    thread.start("UART Tx", function()
+        eio.printf("UART: Tx: start\n")
+        u:write_blocking(data)
+        u:tx_wait_blocking()
+        eio.printf("UART: Tx: done\n")
+    end)
+    thread.start("UART Rx", function()
+        local d = u:read_blocking(#data)
+        eio.printf("UART: Rx: %s\n", d)
+    end)
 end
 
 function main()

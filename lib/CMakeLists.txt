@@ -36,7 +36,10 @@ target_link_libraries(mlua_mod_hardware_timer INTERFACE
 
 mlua_add_c_module(mlua_mod_hardware_uart hardware.uart hardware.uart.c)
 target_link_libraries(mlua_mod_hardware_uart INTERFACE
+    hardware_irq
+    hardware_regs
     hardware_uart
+    mlua_mod_mlua_event_headers
     pico_platform
 )
 

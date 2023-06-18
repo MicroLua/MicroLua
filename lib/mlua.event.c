@@ -2,7 +2,6 @@
 
 #include <string.h>
 
-#include "hardware/irq.h"
 #include "pico/platform.h"
 #include "pico/time.h"
 
@@ -52,33 +51,48 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     evs->mask[e / 32] &= ~(1u << (e % 32));
 }
 
-void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                           void (*handler)(void), int index,
-                           lua_Integer priority) {
+bool mlua_event_enable_irq_arg(lua_State* ls, int index,
+                               lua_Integer* priority) {
     int type = lua_type(ls, index);
     switch (type) {
     case LUA_TBOOLEAN:
-        if (!lua_toboolean(ls, index)) {  // false => disable
-            irq_set_enabled(irq, false);
-            irq_remove_handler(irq, handler);
-            mlua_event_unclaim(ls, ev);
-            return;
-        }
+        if (!lua_toboolean(ls, index)) return false;
         break;
     case LUA_TNONE:
     case LUA_TNIL:
         break;
     default:
-        priority = luaL_checkinteger(ls, index);
+        *priority = luaL_checkinteger(ls, index);
         break;
     }
-    mlua_event_claim(ls, ev);
+    return true;
+}
+
+void mlua_event_set_irq_handler(uint irq, void (*handler)(void),
+                                lua_Integer priority) {
     if (priority < 0) {
         irq_set_exclusive_handler(irq, handler);
     } else {
         irq_add_shared_handler(irq, handler, priority);
     }
     irq_set_enabled(irq, true);
+}
+
+void mlua_event_remove_irq_handler(uint irq, void (*handler)(void)) {
+    irq_set_enabled(irq, false);
+    irq_remove_handler(irq, handler);
+}
+
+void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                           void (*handler)(void), int index,
+                           lua_Integer priority) {
+    if (!mlua_event_enable_irq_arg(ls, index, &priority)) {  // Disable IRQ
+        mlua_event_remove_irq_handler(irq, handler);
+        mlua_event_unclaim(ls, ev);
+        return;
+    }
+    mlua_event_claim(ls, ev);
+    mlua_event_set_irq_handler(irq, handler, priority);
 }
 
 void __time_critical_func(mlua_event_set)(MLuaEvent ev, bool pending) {
@@ -168,6 +182,12 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     }
 }
 
+int mlua_event_yield(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
+                     int nresults) {
+    lua_yieldk(ls, nresults, ctx, cont);
+    return luaL_error(ls, "unable to yield");
+}
+
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
                        int index) {
     if (index != 0) {
@@ -175,8 +195,7 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     } else {
         lua_pushboolean(ls, true);
     }
-    lua_yieldk(ls, 1, 0, cont);
-    return luaL_error(ls, "unable to yield");
+    return mlua_event_yield(ls, cont, ctx, 1);
 }
 
 static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
@@ -185,6 +204,7 @@ static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx);
 
 int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
                     int index) {
+    if (event >= NUM_EVENTS) return luaL_error(ls, "wait for unclaimed event");
     int res = try_get(ls);
     if (res >= 0) return res;
     mlua_event_watch(ls, event);
