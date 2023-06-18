@@ -16,9 +16,6 @@
 
 @LUACONF@
 
-#undef LUAI_MAXSTACK
-#define LUAI_MAXSTACK @MLUA_MAXSTACK@
-
 // Lua uses the C99 %a printf specifier in lua_number2strx. The "pico" printf
 // implementation (see pico_set_printf_implementation) doesn't support %a. The
 // "compiler" implementation uses newlib, which does support %a but only if it
@@ -27,6 +24,16 @@
 #undef lua_number2strx
 
 #ifdef PICO_BUILD
+
+#if @MLUA_MAXSTACK@ > 0
+#undef LUAI_MAXSTACK
+#define LUAI_MAXSTACK @MLUA_MAXSTACK@
+#endif
+
+#if @MLUA_BUFFERSIZE@ > 0
+#undef LUAL_BUFFERSIZE
+#define LUAL_BUFFERSIZE @MLUA_BUFFERSIZE@
+#endif
 
 // lua_writestring and lua_writeline are only used by print(), which we override
 // in main.c.

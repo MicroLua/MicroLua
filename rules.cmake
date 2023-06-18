@@ -39,6 +39,7 @@ mlua_set(MLUA_FLOAT FLOAT CACHE STRING
     "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
 set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
 mlua_set(MLUA_MAXSTACK 1000 CACHE STRING "The maximum size of the Lua stack")
+mlua_set(MLUA_BUFFERSIZE 32 CACHE STRING "The initial size of buffers")
 mlua_set(MLUA_NUM_TO_STR_CONV 0 CACHE STRING
     "When true, enable automatic number-to-string coercion")
 mlua_set(MLUA_STR_TO_NUM_CONV 0 CACHE STRING
