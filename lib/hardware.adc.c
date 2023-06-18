@@ -9,16 +9,15 @@
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-static MLuaEvent events[NUM_CORES];
+static MLuaEvent event = MLUA_EVENT_UNSET;
 
 static void __time_critical_func(handle_irq)(void) {
     adc_irq_set_enabled(false);
-    mlua_event_set(events[get_core_num()], true);
+    mlua_event_set(event, true);
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
-    mlua_event_enable_irq(ls, &events[get_core_num()], ADC_IRQ_FIFO,
-                          &handle_irq, 1, -1);
+    mlua_event_enable_irq(ls, &event, ADC_IRQ_FIFO, &handle_irq, 1, -1);
     return 0;
 }
 
@@ -35,7 +34,7 @@ static int try_fifo_get(lua_State* ls) {
 
 static int mod_fifo_get_blocking(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    return mlua_event_wait(ls, events[get_core_num()], &try_fifo_get, 0);
+    return mlua_event_wait(ls, event, &try_fifo_get, 0);
 #else
     lua_pushinteger(ls, adc_fifo_get());
     return 1;
@@ -84,11 +83,7 @@ static MLuaReg const module_regs[] = {
 
 int luaopen_hardware_adc(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-    uint32_t save = mlua_event_lock();
-    events[get_core_num()] = -1;
-    mlua_event_unlock(save);
 #endif
 
     // Create the module.

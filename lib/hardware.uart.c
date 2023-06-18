@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdio.h>
 
 #include "hardware/address_mapped.h"
 #include "hardware/irq.h"
@@ -278,17 +277,21 @@ static MLuaReg const module_regs[] = {
     {NULL},
 };
 
-int luaopen_hardware_uart(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
-    mlua_require(ls, "mlua.event", false);
-    uint32_t save = mlua_event_lock();
+
+static __attribute__((constructor)) void init(void) {
     for (uint i = 0; i < NUM_UARTS; ++i) {
         UartState* state = &uart_state[i];
-        state->rx_event = -1;
-        state->tx_event = -1;
+        state->rx_event = MLUA_EVENT_UNSET;
+        state->tx_event = MLUA_EVENT_UNSET;
     }
-    mlua_event_unlock(save);
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
+int luaopen_hardware_uart(lua_State* ls) {
+#if LIB_MLUA_MOD_MLUA_EVENT
+    mlua_require(ls, "mlua.event", false);
 #endif
 
     // Create the module.

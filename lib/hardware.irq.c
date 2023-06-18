@@ -1,6 +1,7 @@
-#include <string.h>
+#include <stdbool.h>
 
 #include "hardware/irq.h"
+#include "hardware/sync.h"
 #include "pico/platform.h"
 
 #include "lua.h"
@@ -40,7 +41,9 @@ static IRQState uirq_state[NUM_CORES];
 static void __time_critical_func(handle_user_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - FIRST_USER_IRQ;
     IRQState* state = &uirq_state[get_core_num()];
+    uint32_t save = save_and_disable_interrupts();
     state->pending |= 1u << num;
+    restore_interrupts(save);
     mlua_event_set(state->events[num], true);
 }
 
@@ -55,10 +58,10 @@ static int mod_enable_user_irq(lua_State* ls) {
 static int try_pending(lua_State* ls) {
     IRQState* state = &uirq_state[get_core_num()];
     uint8_t mask = 1u << (lua_tointeger(ls, 1) - FIRST_USER_IRQ);
-    uint32_t save = mlua_event_lock();
+    uint32_t save = save_and_disable_interrupts();
     uint8_t pending = state->pending;
     state->pending &= ~mask;
-    mlua_event_unlock(save);
+    restore_interrupts(save);
     return (pending & mask) != 0 ? 0 : -1;
 }
 
@@ -76,11 +79,11 @@ static int mod_clear(lua_State* ls) {
     if (is_user_irq(irq)) {
         IRQState* state = &uirq_state[get_core_num()];
         uint num = irq - FIRST_USER_IRQ;
-        uint32_t save = mlua_event_lock();
+        uint32_t save = save_and_disable_interrupts();
         irq_clear(irq);
         state->pending &= ~(1u << num);
         mlua_event_set(state->events[num], false);
-        mlua_event_unlock(save);
+        restore_interrupts(save);
     } else {
 #endif
         irq_clear(irq);
@@ -177,15 +180,22 @@ static MLuaReg const module_regs[] = {
     {NULL},
 };
 
+#if LIB_MLUA_MOD_MLUA_EVENT
+
+static __attribute__((constructor)) void init(void) {
+    for (uint core = 0; core < NUM_CORES; ++core) {
+        IRQState* state = &uirq_state[get_core_num()];
+        for (uint i = 0; i < NUM_USER_IRQS; ++i) {
+            state->events[i] = MLUA_EVENT_UNSET;
+        }
+    }
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 int luaopen_hardware_irq(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-    IRQState* state = &uirq_state[get_core_num()];
-    uint32_t save = mlua_event_lock();
-    for (uint i = 0; i < NUM_USER_IRQS; ++i) state->events[i] = -1;
-    state->pending = 0;
-    mlua_event_unlock(save);
 #endif
 
     // Create the module.

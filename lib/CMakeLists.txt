@@ -15,6 +15,7 @@ mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio hardware.gpio.c)
 target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
     hardware_structs
+    hardware_sync
     mlua_mod_mlua_event_headers
     pico_platform
 )
@@ -22,6 +23,7 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
+    hardware_sync
     mlua_mod_mlua_event_headers
     pico_platform
 )

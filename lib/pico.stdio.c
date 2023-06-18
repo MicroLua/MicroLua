@@ -12,41 +12,39 @@ typedef struct AvailableState {
     bool pending;
 } AvailableState;
 
-static AvailableState chars_available_state[NUM_CORES];
+static AvailableState chars_available_state = {.event = MLUA_EVENT_UNSET};
 
 static void __time_critical_func(chars_available)(void* ud) {
-    AvailableState* state = (AvailableState*)ud;
-    state->pending = true;
-    mlua_event_set(state->event, true);
+    uint32_t save = mlua_event_lock();
+    chars_available_state.pending = true;
+    mlua_event_unlock(save);
+    mlua_event_set(chars_available_state.event, true);
 }
 
 static int mod_enable_chars_available(lua_State* ls) {
-    AvailableState* state = &chars_available_state[get_core_num()];
     if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
         stdio_set_chars_available_callback(NULL, NULL);
-        mlua_event_unclaim(ls, &state->event);
+        mlua_event_unclaim(ls, &chars_available_state.event);
         return 0;
     }
-    mlua_event_claim(ls, &state->event);
+    mlua_event_claim(ls, &chars_available_state.event);
     uint32_t save = mlua_event_lock();
-    state->pending = false;
+    chars_available_state.pending = false;
     mlua_event_unlock(save);
-    stdio_set_chars_available_callback(&chars_available, state);
+    stdio_set_chars_available_callback(&chars_available, NULL);
     return 0;
 }
 
 static int try_pending(lua_State* ls) {
-    AvailableState* state = &chars_available_state[get_core_num()];
     uint32_t save = mlua_event_lock();
-    bool pending = state->pending;
-    state->pending = false;
+    bool pending = chars_available_state.pending;
+    chars_available_state.pending = false;
     mlua_event_unlock(save);
     return pending ? 0 : -1;
 }
 
 static int mod_wait_chars_available(lua_State* ls) {
-    return mlua_event_wait(ls, chars_available_state[get_core_num()].event,
-                           &try_pending, 0);
+    return mlua_event_wait(ls, chars_available_state.event, &try_pending, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -82,13 +80,7 @@ static MLuaReg const module_regs[] = {
 
 int luaopen_pico_stdio(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-    AvailableState* state = &chars_available_state[get_core_num()];
-    uint32_t save = mlua_event_lock();
-    state->event = -1;
-    state->pending = false;
-    mlua_event_unlock(save);
 #endif
 
     // Create the module.

@@ -18,20 +18,24 @@ extern "C" {
 // An event identifier.
 typedef uint8_t MLuaEvent;
 
+#define MLUA_EVENT_UNSET ((MLuaEvent)-1)
+
 // Claim an event.
 void mlua_event_claim(lua_State* ls, MLuaEvent* pev);
 
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* pev);
 
+extern spin_lock_t* mlua_event_spinlock;
+
 // Lock event handling. This disables interrupts.
 __force_inline static uint32_t mlua_event_lock(void) {
-    return save_and_disable_interrupts();
+    return spin_lock_blocking(mlua_event_spinlock);
 }
 
 // Unlock event handling.
 __force_inline static void mlua_event_unlock(uint32_t save) {
-    restore_interrupts(save);
+    spin_unlock(mlua_event_spinlock, save);
 }
 
 // Parse the enable_irq argument.

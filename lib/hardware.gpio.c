@@ -1,8 +1,7 @@
-#include "hardware/gpio.h"
-
 #include <stdbool.h>
-#include <string.h>
 
+#include "hardware/gpio.h"
+#include "hardware/sync.h"
 #include "hardware/structs/iobank0.h"
 #include "pico/platform.h"
 
@@ -79,10 +78,10 @@ static int try_events(lua_State* ls) {
         uint block = gpio / 8;
         int shift = 4 * (gpio % 8);
         uint32_t mask = 0xfu << shift;
-        uint32_t save = mlua_event_lock();
+        uint32_t save = save_and_disable_interrupts();
         uint32_t pending = state->pending[block];
         state->pending[block] &= ~mask;
-        mlua_event_unlock(save);
+        restore_interrupts(save);
         lua_Integer e = (pending & mask) >> shift;
         active = active || (e != 0);
         lua_pushinteger(ls, e);
@@ -123,13 +122,13 @@ int mod_set_irq_enabled(lua_State* ls) {
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
-    uint32_t save = mlua_event_lock();
+    uint32_t save = save_and_disable_interrupts();
     if (enable) {
         state->mask[block] |= mask;
     } else {
         state->mask[block] &= ~mask;
     }
-    mlua_event_unlock(save);
+    restore_interrupts(save);
 #endif
     gpio_set_irq_enabled(gpio, event_mask, enable);
     return 0;
@@ -244,12 +243,12 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(set_dormant_irq_enabled),
     MLUA_SYM(get_irq_event_mask),
     MLUA_SYM(acknowledge_irq),
-    // MLUA_SYM(add_raw_irq_handler_with_order_priority_masked),
-    // MLUA_SYM(add_raw_irq_handler_with_order_priority),
-    // MLUA_SYM(add_raw_irq_handler_masked),
-    // MLUA_SYM(add_raw_irq_handler),
-    // MLUA_SYM(remove_raw_irq_handler_masked),
-    // MLUA_SYM(remove_raw_irq_handler),
+    // gpio_add_raw_irq_handler_with_order_priority_masked: See enable_irq, wait_events
+    // gpio_add_raw_irq_handler_with_order_priority: See enable_irq, wait_events
+    // gpio_add_raw_irq_handler_masked: See enable_irq, wait_events
+    // gpio_add_raw_irq_handler: See enable_irq, wait_events
+    // gpio_remove_raw_irq_handler_masked: See enable_irq, wait_events
+    // gpio_remove_raw_irq_handler: See enable_irq, wait_events
     MLUA_SYM(init),
     MLUA_SYM(deinit),
     MLUA_SYM(init_mask),
@@ -277,16 +276,19 @@ static MLuaReg const module_regs[] = {
     {NULL},
 };
 
+#if LIB_MLUA_MOD_MLUA_EVENT
+
+static __attribute__((constructor)) void init(void) {
+    for (uint core = 0; core < NUM_CORES; ++core) {
+        irq_state[core].irq_event = MLUA_EVENT_UNSET;
+    }
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 int luaopen_hardware_gpio(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
-    IRQState* state = &irq_state[get_core_num()];
-    uint32_t save = mlua_event_lock();
-    memset(state->pending, 0, sizeof(state->pending));
-    memset(state->mask, 0, sizeof(state->mask));
-    state->irq_event = -1;
-    mlua_event_unlock(save);
 #endif
 
     // Create the module.

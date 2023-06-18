@@ -114,8 +114,6 @@ static MLuaReg const module_regs[] = {
     // MLUA_SYM(alarm_pool_add_alarm_in_us),
     // MLUA_SYM(alarm_pool_add_alarm_in_ms),
     // MLUA_SYM(alarm_pool_cancel_alarm),
-    // TODO: The default alarm pool always executes on core 0. May need to
-    //       allocate a separate pool for core 1.
     // MLUA_SYM(add_alarm_at),
     // MLUA_SYM(add_alarm_in_us),
     // MLUA_SYM(add_alarm_in_ms),
@@ -130,12 +128,10 @@ static MLuaReg const module_regs[] = {
 };
 
 int luaopen_pico_time(lua_State* ls) {
-    mlua_require(ls, "mlua.int64", false);
-
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
     mlua_require(ls, "mlua.event", false);
 #endif
+    mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);

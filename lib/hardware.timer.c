@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "hardware/timer.h"
 #include "pico/platform.h"
 
@@ -29,17 +27,18 @@ typedef struct AlarmState {
 
 static_assert(NUM_TIMERS <= 8 * sizeof(uint8_t), "pending bitmask too small");
 
-static AlarmState alarm_state[NUM_CORES];
+static AlarmState alarm_state;
 
 static void __time_critical_func(handle_alarm)(uint alarm) {
-    AlarmState* state = &alarm_state[get_core_num()];
-    state->pending |= 1u << alarm;
-    mlua_event_set(state->events[alarm], true);
+    uint32_t save = mlua_event_lock();
+    alarm_state.pending |= 1u << alarm;
+    mlua_event_unlock(save);
+    mlua_event_set(alarm_state.events[alarm], true);
 }
 
 static int mod_enable_alarm(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
-    MLuaEvent* ev = &alarm_state[get_core_num()].events[alarm];
+    MLuaEvent* ev = &alarm_state.events[alarm];
     if (lua_type(ls, 2) == LUA_TBOOLEAN && !lua_toboolean(ls, 2)) {
         hardware_alarm_set_callback(alarm, NULL);
         mlua_event_unclaim(ls, ev);
@@ -51,19 +50,17 @@ static int mod_enable_alarm(lua_State* ls) {
 }
 
 static int try_pending(lua_State* ls) {
-    AlarmState* state = &alarm_state[get_core_num()];
     uint8_t mask = 1u << lua_tointeger(ls, 1);
     uint32_t save = mlua_event_lock();
-    uint8_t pending = state->pending;
-    state->pending &= ~mask;
+    uint8_t pending = alarm_state.pending;
+    alarm_state.pending &= ~mask;
     mlua_event_unlock(save);
     return (pending & mask) != 0 ? 0 : -1;
 }
 
 static int mod_wait_alarm(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
-    return mlua_event_wait(ls, alarm_state[get_core_num()].events[alarm],
-                           &try_pending, 0);
+    return mlua_event_wait(ls, alarm_state.events[alarm], &try_pending, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -71,9 +68,8 @@ static int mod_wait_alarm(lua_State* ls) {
 static void cancel_alarm(uint alarm) {
     hardware_alarm_cancel(alarm);
 #if LIB_MLUA_MOD_MLUA_EVENT
-    AlarmState* state = &alarm_state[get_core_num()];
     uint32_t save = mlua_event_lock();
-    state->pending &= ~(1u << alarm);
+    alarm_state.pending &= ~(1u << alarm);
     mlua_event_unlock(save);
 #endif
 }
@@ -135,18 +131,21 @@ static MLuaReg const module_regs[] = {
     {NULL},
 };
 
-int luaopen_hardware_timer(lua_State* ls) {
-    mlua_require(ls, "mlua.int64", false);
-
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // Initialize event handling.
+
+static __attribute__((constructor)) void init(void) {
+    for (uint i = 0; i < NUM_TIMERS; ++i) {
+        alarm_state.events[i] = MLUA_EVENT_UNSET;
+    }
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
+int luaopen_hardware_timer(lua_State* ls) {
+#if LIB_MLUA_MOD_MLUA_EVENT
     mlua_require(ls, "mlua.event", false);
-    AlarmState* state = &alarm_state[get_core_num()];
-    uint32_t save = mlua_event_lock();
-    for (uint i = 0; i < NUM_TIMERS; ++i) state->events[i] = -1;
-    state->pending = 0;
-    mlua_event_unlock(save);
 #endif
+    mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
     mlua_newlib(ls, module_regs, 0, 0);
