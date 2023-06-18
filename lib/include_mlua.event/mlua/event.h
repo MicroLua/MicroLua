@@ -20,8 +20,8 @@ typedef uint8_t MLuaEvent;
 
 #define MLUA_EVENT_UNSET ((MLuaEvent)-1)
 
-// Claim an event.
-void mlua_event_claim(lua_State* ls, MLuaEvent* pev);
+// Claim an event. Returns NULL on success, or a message describing the error.
+char const* mlua_event_claim(MLuaEvent* pev);
 
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* pev);
@@ -54,9 +54,10 @@ void mlua_event_remove_irq_handler(uint irq, irq_handler_t handler);
 //    the IRQ. If the argument is a non-negative integer, add a shared handler
 //    with the given priority. Otherwise, set an exclusive handler.
 //  - false: Disable the IRQ, remove the IRQ handler and unclaim the event.
-void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                           irq_handler_t handler, int index,
-                           lua_Integer priority);
+// Returns NULL on success, or a message describing the error.
+char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                                  irq_handler_t handler, int index,
+                                  lua_Integer priority);
 
 // Set an event pending.
 void mlua_event_set(MLuaEvent ev);

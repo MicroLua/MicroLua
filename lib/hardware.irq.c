@@ -49,9 +49,10 @@ static void __time_critical_func(handle_user_irq)(void) {
 
 static int mod_enable_user_irq(lua_State* ls) {
     uint irq = check_user_irq(ls, 1);
-    mlua_event_enable_irq(
+    char const* err = mlua_event_enable_irq(
         ls, &uirq_state[get_core_num()].events[irq - FIRST_USER_IRQ], irq,
         &handle_user_irq, 2, -1);
+    if (err != NULL) return luaL_error(ls, "IRQ%d: %s", irq, err);
     return 0;
 }
 

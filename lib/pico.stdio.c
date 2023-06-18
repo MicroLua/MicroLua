@@ -27,7 +27,8 @@ static int mod_enable_chars_available(lua_State* ls) {
         mlua_event_unclaim(ls, &chars_available_state.event);
         return 0;
     }
-    mlua_event_claim(ls, &chars_available_state.event);
+    char const* err = mlua_event_claim(&chars_available_state.event);
+    if (err != NULL) return luaL_error(ls, "stdio: %s", err);
     uint32_t save = mlua_event_lock();
     chars_available_state.pending = false;
     mlua_event_unlock(save);

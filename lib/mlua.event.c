@@ -6,6 +6,8 @@
 #include "mlua/int64.h"
 #include "mlua/util.h"
 
+// TODO: Add "performance" counters: dispatch cycles, sleeps
+
 spin_lock_t* mlua_event_spinlock;
 
 #define NUM_EVENTS 128
@@ -18,14 +20,12 @@ typedef struct EventState {
 
 static EventState event_state;
 
-void mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
-    // TODO: Return error message or NULL => luaL_error at the caller
+char const* mlua_event_claim(MLuaEvent* ev) {
     uint32_t save = mlua_event_lock();
     MLuaEvent e = *ev;
     if (e < NUM_EVENTS) {
         mlua_event_unlock(save);
-        luaL_error(ls, "event double-claim");
-        return;
+        return "event already claimed";
     }
     uint core = get_core_num();
     for (uint block = 0; block < EVENTS_SIZE; ++block) {
@@ -39,11 +39,11 @@ void mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
             *ev = block * 32 + idx;
             event_state.mask[core][block] |= 1u << idx;
             mlua_event_unlock(save);
-            return;
+            return NULL;
         }
     }
     mlua_event_unlock(save);
-    luaL_error(ls, "no events available");
+    return "no events available";
 }
 
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
@@ -101,16 +101,18 @@ void mlua_event_remove_irq_handler(uint irq, void (*handler)(void)) {
     irq_remove_handler(irq, handler);
 }
 
-void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                           void (*handler)(void), int index,
-                           lua_Integer priority) {
+char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                                  void (*handler)(void), int index,
+                                  lua_Integer priority) {
     if (!mlua_event_enable_irq_arg(ls, index, &priority)) {  // Disable IRQ
         mlua_event_remove_irq_handler(irq, handler);
         mlua_event_unclaim(ls, ev);
-        return;
+        return NULL;
     }
-    mlua_event_claim(ls, ev);
+    char const* err = mlua_event_claim(ev);
+    if (err != NULL) return err;
     mlua_event_set_irq_handler(irq, handler, priority);
+    return NULL;
 }
 
 void __time_critical_func(mlua_event_set)(MLuaEvent ev) {

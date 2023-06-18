@@ -44,7 +44,8 @@ static int mod_enable_alarm(lua_State* ls) {
         mlua_event_unclaim(ls, ev);
         return 0;
     }
-    mlua_event_claim(ls, ev);
+    char const* err = mlua_event_claim(ev);
+    if (err != NULL) return luaL_error(ls, "TIMER%d: %s", alarm, err);
     hardware_alarm_set_callback(alarm, &handle_alarm);
     return 0;
 }

@@ -89,8 +89,13 @@ static int Uart_enable_irq(lua_State* ls) {
         mlua_event_unclaim(ls, &state->tx_event);
         return 0;
     }
-    mlua_event_claim(ls, &state->rx_event);
-    mlua_event_claim(ls, &state->tx_event);
+    char const* err = mlua_event_claim(&state->rx_event);
+    if (err != NULL) return luaL_error(ls, "UART%d Rx: %s", num, err);
+    err = mlua_event_claim(&state->tx_event);
+    if (err != NULL) {
+        mlua_event_unclaim(ls, &state->rx_event);
+        return luaL_error(ls, "UART%d Tx: %s", num, err);
+    }
     hw_write_masked(&uart_get_hw(u)->ifls,  // Thresholds to 1/2 FIFO capacity
                     (2 << UART_UARTIFLS_RXIFLSEL_LSB)
                     | (2 << UART_UARTIFLS_TXIFLSEL_LSB),

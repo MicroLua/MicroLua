@@ -63,9 +63,10 @@ static void __time_critical_func(handle_irq)(void) {
 }
 
 static int mod_enable_irq(lua_State* ls) {
-    mlua_event_enable_irq(ls, &irq_state[get_core_num()].irq_event,
-                          IO_IRQ_BANK0, &handle_irq, 1,
-                          GPIO_RAW_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    char const* err = mlua_event_enable_irq(
+        ls, &irq_state[get_core_num()].irq_event, IO_IRQ_BANK0, &handle_irq, 1,
+        GPIO_RAW_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    if (err != NULL) return luaL_error(ls, "GPIO: %s", err);
     return 0;
 }
 
