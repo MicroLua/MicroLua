@@ -70,10 +70,10 @@ static void __time_critical_func(handle_irq)(void) {
         | UART_UARTMIS_TXMIS_BITS));
     UartState* state = &uart_state[num];
     if (mis & (UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS)) {
-        mlua_event_set(state->rx_event, true);
+        mlua_event_set(state->rx_event);
     }
     if (mis & UART_UARTMIS_TXMIS_BITS) {
-        mlua_event_set(state->tx_event, true);
+        mlua_event_set(state->tx_event);
     }
 }
 

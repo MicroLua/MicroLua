@@ -18,7 +18,7 @@ static void __time_critical_func(chars_available)(void* ud) {
     uint32_t save = mlua_event_lock();
     chars_available_state.pending = true;
     mlua_event_unlock(save);
-    mlua_event_set(chars_available_state.event, true);
+    mlua_event_set(chars_available_state.event);
 }
 
 static int mod_enable_chars_available(lua_State* ls) {

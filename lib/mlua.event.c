@@ -113,17 +113,18 @@ void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
     mlua_event_set_irq_handler(irq, handler, priority);
 }
 
-void __time_critical_func(mlua_event_set)(MLuaEvent ev, bool pending) {
+void __time_critical_func(mlua_event_set)(MLuaEvent ev) {
     if (ev >= NUM_EVENTS) return;
-    uint block = ev / 32;
-    uint32_t mask = 1u << (ev % 32);
     uint32_t save = mlua_event_lock();
-    if (pending) {
-        event_state.pending[block] |= mask;
-        __sev();
-    } else {
-        event_state.pending[block] &= ~mask;
-    }
+    event_state.pending[ev / 32] |= 1u << (ev % 32);
+    mlua_event_unlock(save);
+    __sev();
+}
+
+void mlua_event_clear(MLuaEvent ev) {
+    if (ev >= NUM_EVENTS) return;
+    uint32_t save = mlua_event_lock();
+    event_state.pending[ev / 32] &= ~(1u << (ev % 32));
     mlua_event_unlock(save);
 }
 

@@ -58,8 +58,11 @@ void mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
                            irq_handler_t handler, int index,
                            lua_Integer priority);
 
-// Set the pending state of an event.
-void mlua_event_set(MLuaEvent ev, bool pending);
+// Set an event pending.
+void mlua_event_set(MLuaEvent ev);
+
+// Clear the pending state of an event.
+void mlua_event_clear(MLuaEvent ev);
 
 // Register the current thread to be notified when an event triggers.
 void mlua_event_watch(lua_State* ls, MLuaEvent ev);

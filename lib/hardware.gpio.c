@@ -59,7 +59,7 @@ static void __time_critical_func(handle_irq)(void) {
         pending &= LEVEL_EVENTS_MASK;
         hw_clear_bits(&irq_ctrl_base->inte[block], pending);
      }
-     if (notify) mlua_event_set(state->irq_event, true);
+     if (notify) mlua_event_set(state->irq_event);
 }
 
 static int mod_enable_irq(lua_State* ls) {
