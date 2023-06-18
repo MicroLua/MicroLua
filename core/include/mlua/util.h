@@ -59,7 +59,7 @@ static int wp ## n(lua_State* ls) { ret(ls, p ## n(args)); return 1; }
     MLUA_FUNC_1(wp, p, n, ret, MLUA_ARGS_5(a1, a2, a3, a4, a5))
 
 void mlua_require(lua_State* ls, char const* module, bool keep);
-bool mlua_to_cbool(lua_State* ls, int arg);
+bool mlua_to_cbool(lua_State* ls, int index);
 
 extern spin_lock_t* mlua_lock;
 

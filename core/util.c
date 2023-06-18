@@ -6,11 +6,11 @@ void mlua_require(lua_State* ls, char const* module, bool keep) {
     lua_call(ls, 1, keep ? 1 : 0);
 }
 
-bool mlua_to_cbool(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
-    if (lua_type(ls, arg) == LUA_TNUMBER)
-        return lua_tonumber(ls, arg) != l_mathop(0.0);
-    return lua_toboolean(ls, arg);
+bool mlua_to_cbool(lua_State* ls, int index) {
+    if (lua_isinteger(ls, index)) return lua_tointeger(ls, index) != 0;
+    if (lua_type(ls, index) == LUA_TNUMBER)
+        return lua_tonumber(ls, index) != l_mathop(0.0);
+    return lua_toboolean(ls, index);
 }
 
 spin_lock_t* mlua_lock;
