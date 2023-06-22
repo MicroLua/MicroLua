@@ -13,7 +13,7 @@ static MLuaEvent event = MLUA_EVENT_UNSET;
 
 static void __time_critical_func(handle_irq)(void) {
     adc_irq_set_enabled(false);
-    mlua_event_set(event, true);
+    mlua_event_set(event);
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
