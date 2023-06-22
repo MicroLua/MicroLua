@@ -96,9 +96,6 @@ function Thread:resume()
     return true
 end
 
--- Return the current absolute time.
-now = time.get_absolute_time
-
 -- Return the currently-running thread.
 running = coroutine.running
 
@@ -106,6 +103,9 @@ running = coroutine.running
 -- from the active queue to the wait list. If the argument is an absolute time,
 -- the thread is resumed at that time (unless it's resumed explicitly earlier).
 yield = coroutine.yield
+
+-- Return the current absolute time.
+now = time.get_absolute_time
 
 -- Suspend the running thread until the given absolute time.
 sleep_until = time.sleep_until

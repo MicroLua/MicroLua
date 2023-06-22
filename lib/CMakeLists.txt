@@ -10,6 +10,7 @@ mlua_add_lua_test_modules(mlua_mod_hardware_adc_test hardware.adc.test.lua)
 target_link_libraries(mlua_mod_hardware_adc_test INTERFACE
     mlua_mod_hardware_adc
     mlua_mod_mlua_module
+    mlua_mod_pico_time
 )
 
 mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks hardware.clocks.c)
@@ -258,7 +259,6 @@ target_link_libraries(mlua_mod_pico_unique_id_test INTERFACE
     mlua_mod_pico_unique_id
 )
 
-add_executable(mlua_tests)
 set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING
     "Test target filter regexp"
 )
@@ -266,8 +266,11 @@ get_property(TESTS GLOBAL PROPERTY mlua_test_targets)
 if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
     list(FILTER TESTS INCLUDE REGEX "${MLUA_TEST_TARGET_FILTER}")
 endif()
+
+add_executable(mlua_tests)
 target_link_libraries(mlua_tests
     mlua_mod_mlua_testing
+    mlua_mod_mlua_thread
     pico_stdlib
     ${TESTS}
 )
