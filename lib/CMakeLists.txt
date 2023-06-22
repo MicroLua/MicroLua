@@ -110,6 +110,7 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_mlua_eio
     mlua_mod_mlua_module
     mlua_mod_mlua_oo
+    mlua_mod_mlua_util
     mlua_mod_os
     mlua_mod_package
     mlua_mod_string

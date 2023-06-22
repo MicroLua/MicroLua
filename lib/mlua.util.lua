@@ -12,6 +12,18 @@ function ident(...) return ... end
 -- Return true iff a == b.
 function eq(a, b) return a == b end
 
+-- Return the length of a list.
+function len(list) return not list and 0 or list[0] or #list end
+
+-- Append an element to a list, and return the updated list.
+function append(list, el)
+    if not list then list = {[0] = 0} end
+    local len = (list[0] or #list) + 1
+    list[len] = el
+    list[0] = len
+    return list
+end
+
 -- Return the keys of the given table, optionally filtered.
 function keys(tab, filter)
     local res, i = {}, 1

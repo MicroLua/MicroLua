@@ -4,6 +4,7 @@ _ENV = require 'mlua.module'(...)
 
 local eio = require 'mlua.eio'
 local oo = require 'mlua.oo'
+local util = require 'mlua.util'
 local os = require 'os'
 local package = require 'package'
 local string = require 'string'
@@ -21,6 +22,8 @@ function Test:__init(name, parent)
         self.failed_cnt, self.skipped_cnt, self.passed_cnt = 0, 0, 0
     end
 end
+
+function Test:cleanup(fn) self._cleanups = util.append(self._cleanups, fn) end
 
 function Test:message(format, ...)
     if format:sub(-1) ~= '\n' then format = format .. '\n' end
@@ -67,14 +70,11 @@ function Test:result()
     return self:failed() and 'FAIL' or self._skipped and 'SKIP' or 'PASS'
 end
 
-function Test:run(name, func, keep)
+function Test:run(name, fn, keep)
     local t = Test(name, self)
-    t:_run(func)
+    t:_run(fn)
     if keep or t.children or t:failed() then
-        if not self.children then self.children = {[0] = 0} end
-        local len = self.children[0] + 1
-        self.children[len] = t
-        self.children[0] = len
+        self.children = util.append(self.children, t)
     end
     t = nil
     collectgarbage('collect')
@@ -89,12 +89,13 @@ function Test:_root()
     end
 end
 
-function Test:_run(func)
+function Test:_run(fn)
     self:_capture_output()
-    local res, err = pcall(func, self)
-    if not res then
-        if err ~= err_terminate then self:error("%s", err) end
+    self:_pcall(fn, self)
+    for i = util.len(self._cleanups), 1, -1 do
+        self:_pcall(self._cleanups[i])
     end
+    self._cleanups = nil
     self:_restore_output()
     if not self._out then
         eio.printf("----- END   %s\n", self.name)
@@ -108,6 +109,11 @@ function Test:_run(func)
         root.passed_cnt = root.passed_cnt + 1
     end
     self._parent, self._out = nil, nil
+end
+
+function Test:_pcall(fn, ...)
+    local res, err = pcall(fn, ...)
+    if not res and err ~= err_terminate then self:error("%s", err) end
 end
 
 function Test:enable_output()
@@ -130,12 +136,13 @@ function Test:_restore_output()
     _G.stdout, self._old_out = self._old_out, nil
 end
 
-function Test:run_all(module, pat)
+function Test:run_module(name, pat)
     pat = pat or def_func_pat
-    for name, func in pairs(module) do
-        if name:find(pat) then
-            self:run(name, func)
-        end
+    local module = require(name)
+    local res, fn = pcall(function() return module.set_up end)
+    if res and fn then fn(self) end
+    for name, fn in pairs(module) do
+        if name:find(pat) then self:run(name, fn) end
     end
 end
 
@@ -144,9 +151,7 @@ function Test:run_all_modules(mod_pat, func_pat)
     func_pat = func_pat or def_func_pat
     for name in pairs(package.preload) do
         if name:find(mod_pat) then
-            self:run(name, function(t)
-                t:run_all(require(name), func_pat)
-            end, true)
+            self:run(name, function(t) t:run_module(name, func_pat) end, true)
         end
     end
 end
