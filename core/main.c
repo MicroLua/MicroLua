@@ -1,5 +1,6 @@
 #include "mlua/main.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -144,43 +145,35 @@ static int pmain(lua_State* ls) {
     init_stdio(ls);
 #endif
 
-    // Require the main module.
-    lua_getglobal(ls, "require");
-    lua_pushvalue(ls, 1);
-    lua_call(ls, 1, 1);
-
-    // Get the main module's main function.
+    // Import the main module and get its main function.
     lua_pushcfunction(ls, getfield);
-    lua_pushvalue(ls, -2);
-    lua_pushvalue(ls, 2);
-    if (lua_pcall(ls, 2, 1, 0) != LUA_OK) {
-        lua_pop(ls, 1);  // Remove error
-        lua_pushnil(ls);
-    }
-    lua_remove(ls, -2);  // Remove main module
+    lua_getglobal(ls, "require");
+    lua_rotate(ls, 1, -1);
+    lua_call(ls, 1, 1);
+    lua_rotate(ls, 1, -1);
+    bool has_main = lua_pcall(ls, 2, 1, 0) == LUA_OK;
+    if (!has_main) lua_pop(ls, 1);  // Remove error
 
 #if LIB_MLUA_MOD_MLUA_THREAD
-    // The mlua.thread module is available. Run its main function, passing the
-    // main module's main function as a thread.
-    lua_pushvalue(ls, 1);  // Compute the main function name
-    lua_pushliteral(ls, ".");
-    lua_pushvalue(ls, 2);
-    lua_concat(ls, 3);
-    lua_remove(ls, 1);  // Remove module name
-    lua_remove(ls, 1);  // Remove function name
+    // The mlua.thread module is available. Start a thread for the main module's
+    // main function, then call mlua.thread.main.
     mlua_require(ls, "mlua.thread", true);
-    lua_getfield(ls, -1, "main");
+    if (has_main) {
+        lua_getfield(ls, -1, "start");  // Start the thread
+        lua_rotate(ls, -3, -1);
+        lua_call(ls, 1, 1);
+        luaL_getmetafield(ls, -1, "set_name");  // Set the thread name
+        lua_rotate(ls, -2, 1);
+        lua_pushliteral(ls, "main");
+        lua_call(ls, 2, 0);
+    }
+    lua_getfield(ls, -1, "main");  // Run thread.main
     lua_remove(ls, -2);  // Remove thread module
-    lua_rotate(ls, -3, 1);
-    lua_call(ls, 2, 0);
+    lua_call(ls, 0, 0);
 #else
     // The mlua.thread module isn't available. Call the main module's main
     // function directly.
-    if (!lua_isnil(ls, -1)) {
-        lua_remove(ls, 1);  // Remove module name
-        lua_remove(ls, 1);  // Remove function name
-        lua_call(ls, 0, 0);
-    }
+    if (has_main) lua_call(ls, 0, 0);
 #endif
     return 0;
 }

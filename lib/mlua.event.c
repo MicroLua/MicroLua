@@ -307,9 +307,17 @@ static int mod_dispatch(lua_State* ls) {
     return 0;
 }
 
+int mod_set_thread_metatable(lua_State* ls) {
+    lua_pushthread(ls);
+    lua_pushvalue(ls, 1);
+    lua_setmetatable(ls, -2);
+    return 0;
+}
+
 static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(dispatch),
+    MLUA_SYM(set_thread_metatable),
 #undef MLUA_SYM
     {NULL},
 };

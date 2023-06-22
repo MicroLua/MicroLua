@@ -35,7 +35,7 @@ static int mod_launch_core1(lua_State* ls) {
     spin_unlock(mlua_lock, save);
     if (busy) {
         lua_close(ls1);
-        luaL_error(ls, "core 1 is already running an interpreter");
+        return luaL_error(ls, "core 1 is already running an interpreter");
     }
     size_t len;
     lua_pushlstring(ls1, luaL_checklstring(ls, 1, &len), len);

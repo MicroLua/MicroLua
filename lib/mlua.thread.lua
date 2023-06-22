@@ -8,12 +8,15 @@ local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
+-- TODO: Thread:join
+
+local co_resume, co_status = coroutine.resume, coroutine.status
+local co_close = coroutine.close
+
 local active = {}
 local head, tail = 0, 0
 local waiting = {}
 local timers = {[0] = 0}
-local names = {}
-setmetatable(names, {__mode = 'k'})
 
 -- Add a waiting thread to the timer list.
 local function add_timer(thread, deadline)
@@ -51,19 +54,46 @@ local function remove_timer(thread)
     end
 end
 
+-- Allow adding methods to threads.
+local Thread = {__name = 'Thread'}
+Thread.__index = Thread
+event.set_thread_metatable(Thread)
+
 -- Start a new thread calling the given function.
-function start(name, fn)
-    if fn == nil then fn, name = name, nil end
+function start(fn)
     local thread = coroutine.create(fn)
-    names[thread] = name
     active[tail] = thread
     tail = tail + 1
     return thread
 end
 
--- Return the name of the given thread.
-function name(thread)
-    return names[thread] or string.sub(tostring(thread), 9)
+local names = {}
+setmetatable(names, {__mode = 'k'})
+
+-- Return the name of the thread.
+function Thread:name() return names[self] or string.sub(tostring(self), 9) end
+
+-- Set the name of the thread.
+function Thread:set_name(name)
+    names[self] = name
+    return self
+end
+
+-- Return true iff the thread is alive.
+function Thread:is_alive() return co_status(self) ~= 'dead' end
+
+-- Return true iff the thread is on the wait list.
+function Thread:is_waiting() return waiting[self] ~= nil end
+
+-- Move the thread from the wait list to the active queue.
+function Thread:resume()
+    local deadline = waiting[self]
+    if not deadline then return false end
+    if deadline ~= true then remove_timer(self) end
+    waiting[self] = nil
+    active[tail] = self
+    tail = tail + 1
+    return true
 end
 
 -- Return the current absolute time.
@@ -82,17 +112,6 @@ sleep_until = time.sleep_until
 
 -- Suspend the running thread for the given duration (in microseconds).
 sleep_for = time.sleep_us
-
--- Move the given thread from the wait list to the active queue.
-function resume(thread)
-    local deadline = waiting[thread]
-    if not deadline then return false end
-    if deadline ~= true then remove_timer(thread) end
-    waiting[thread] = nil
-    active[tail] = thread
-    tail = tail + 1
-    return true
-end
 
 -- Resume the threads whose deadline has elapsed.
 local function resume_deadlined()
@@ -117,13 +136,14 @@ local function resume_deadlined()
 end
 
 -- Run the thread dispatch loop.
-function main(fn, thread_name)
-    if fn then start(thread_name, fn) end
+function main()
+    local resume = Thread.resume
+    local nil_time, at_the_end_of_time = time.nil_time, time.at_the_end_of_time
     while true do
         -- Dispatch events and wait for at least one active thread.
         event.dispatch(resume,
-                       head ~= tail and time.nil_time or waiting[timers[1]]
-                       or time.at_the_end_of_time)
+                       head ~= tail and nil_time or waiting[timers[1]]
+                       or at_the_end_of_time)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
@@ -132,15 +152,15 @@ function main(fn, thread_name)
         local thread = active[head]
         active[head] = nil
         head = head + 1
-        local _, deadline = coroutine.resume(thread)
+        local _, deadline = co_resume(thread)
 
         -- Close the thread if it's dead, move it to the wait list if it is
         -- suspended, or move it to the end of the active queue.
-        if coroutine.status(thread) == 'dead' then
-            local ok, err = coroutine.close(thread)
+        if co_status(thread) == 'dead' then
+            local ok, err = co_close(thread)
             if not ok then
                 stderr:write(string.format(
-                    "Thread [%s] failed: %s\n", name(thread), err))
+                    "Thread [%s] failed: %s\n", thread:name(), err))
             end
         elseif deadline then
             waiting[thread] = deadline

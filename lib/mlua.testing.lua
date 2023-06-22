@@ -9,7 +9,7 @@ local package = require 'package'
 local string = require 'string'
 local table = require 'table'
 
-local def_mod_pat = '%.tests$'
+local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
 local err_terminate = {}
 

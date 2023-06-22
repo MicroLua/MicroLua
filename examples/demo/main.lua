@@ -53,18 +53,18 @@ end
 
 local function demo_core1()
     multicore.launch_core1('main1')
-    thread.start("Core 1 resetter", function()
+    thread.start(function()
         thread.sleep_for(5000000)
         eio.printf("Resetting core 1\n")
         multicore.reset_core1()
-    end)
+    end):set_name("Core 1 resetter")
 end
 
 local function demo_hardware_timer()
     local next_time = thread.now() + 1500000
     next_time = next_time - (next_time % 1000000)
     timer.set_target(0, next_time)
-    thread.start("Timer 0 handler", function()
+    thread.start(function()
         timer.enable_alarm(0)
         while true do
             timer.wait_alarm(0)
@@ -73,31 +73,31 @@ local function demo_hardware_timer()
             timer.set_target(0, next_time)
             eio.printf("Alarm at %s\n", now)
         end
-    end)
+    end):set_name("Timer 0 handler")
 end
 
 local function demo_user_irq()
     local irq_num = irq.user_irq_claim_unused()
-    thread.start(string.format("User IRQ %d handler", irq_num), function()
+    thread.start(function()
         irq.enable_user_irq(irq_num)
         while true do
             irq.wait_user_irq(irq_num)
             eio.printf("User IRQ %d\n", irq_num)
         end
-    end)
-    thread.start("User IRQ generator", function()
+    end):set_name(string.format("User IRQ %d handler", irq_num))
+    thread.start(function()
         thread.sleep_for(500000)
         for i = 0, 2 do
             eio.printf("Marking user IRQ %d pending\n", irq_num)
             irq.set_pending(irq_num)
             thread.sleep_for(500000)
         end
-    end)
+    end):set_name("User IRQ generator")
 end
 
 
 local function task(start)
-    local name = thread.name(thread.running())
+    local name = thread.running():name()
     thread.sleep_until(start)
     for i = 0, 2 do
         eio.printf("%s, i: %s, t: %s\n", name, i, thread.now())
@@ -111,8 +111,8 @@ local function demo_threads()
     local base = thread.now() + 1500000
     base = base - (base % 1000000)
     for i = 0, 3 do
-        thread.start(string.format("Task %d", i),
-                     function() task(base + i * 250000) end)
+        thread.start(function() task(base + i * 250000) end)
+            :set_name(string.format("Task %d", i))
     end
 end
 
@@ -130,7 +130,7 @@ local function demo_gpio()
                              true)
         -- gpio.set_irq_enabled(button, gpio.IRQ_LEVEL_HIGH, true)
     end
-    thread.start("GPIO event handler", function()
+    thread.start(function()
         gpio.enable_irq()
         while true do
             local evs = {gpio.wait_events(table.unpack(buttons))}
@@ -141,11 +141,11 @@ local function demo_gpio()
                 end
             end
         end
-    end)
+    end):set_name("GPIO event handler")
 end
 
 local function demo_stdin()
-    thread.start("stdin handler", function()
+    thread.start(function()
         stdio.enable_chars_available()
         local line = ''
         while true do
@@ -158,7 +158,7 @@ local function demo_stdin()
                 line = line:sub(i + 1)
             end
         end
-    end)
+    end):set_name("stdin handler")
 end
 
 local function demo_uart()
@@ -172,16 +172,16 @@ local function demo_uart()
     u:enable_loopback(true)
     u:enable_irq()
     local data = "The quick brown fox jumps over the lazy dog"
-    thread.start("UART Tx", function()
+    thread.start(function()
         eio.printf("UART: Tx: start\n")
         u:write_blocking(data)
         u:tx_wait_blocking()
         eio.printf("UART: Tx: done\n")
-    end)
-    thread.start("UART Rx", function()
+    end):set_name("UART Tx")
+    thread.start(function()
         local d = u:read_blocking(#data)
         eio.printf("UART: Rx: %s\n", d)
-    end)
+    end):set_name("UART Rx")
 end
 
 function main()
@@ -194,7 +194,7 @@ function main()
 
     eio.printf(string.rep("=", 79) .. "\n")
     eio.printf("Main thread [%s], startup time: %s us\n",
-               thread.name(thread.running()), start)
+               thread.running():name(), start)
 
     demo_sysinfo()
     demo_clocks()
