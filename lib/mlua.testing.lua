@@ -25,6 +25,12 @@ end
 
 function Test:cleanup(fn) self._cleanups = util.append(self._cleanups, fn) end
 
+function Test:patch(tab, name, value)
+    local old = rawget(tab, name)
+    self:cleanup(function() rawset(tab, name, old) end)
+    rawset(tab, name, value)
+end
+
 function Test:message(format, ...)
     if format:sub(-1) ~= '\n' then format = format .. '\n' end
     eio.printf(format, ...)
@@ -112,8 +118,8 @@ function Test:_run(fn)
 end
 
 function Test:_pcall(fn, ...)
-    local res, err = pcall(fn, ...)
-    if not res and err ~= err_terminate then self:error("%s", err) end
+    local ok, err = pcall(fn, ...)
+    if not ok and err ~= err_terminate then self:error("%s", err) end
 end
 
 function Test:enable_output()
@@ -140,8 +146,8 @@ function Test:run_module(name, pat)
     pat = pat or def_func_pat
     local module = require(name)
     self:cleanup(function() package.loaded[name] = nil end)
-    local res, fn = pcall(function() return module.set_up end)
-    if res and fn then fn(self) end
+    local ok, fn = pcall(function() return module.set_up end)
+    if ok and fn then fn(self) end
     for name, fn in pairs(module) do
         if name:find(pat) then self:run(name, fn) end
     end
