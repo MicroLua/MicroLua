@@ -52,3 +52,9 @@ function test_fifo(t)
                  "Temperature outside of [%.1f, %.1f]: %.1f", minT, maxT, temp)
     end
 end
+
+function test_fifo_noyield(t)
+    local save = yield_enabled(false)
+    t:cleanup(function() yield_enabled(save) end)
+    test_fifo(t)
+end
