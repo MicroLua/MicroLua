@@ -22,7 +22,7 @@ local function arguments(args)
         end
     end
     fmt = fmt .. ')'
-    return string.format(fmt, table.unpack(args))
+    return fmt:format(table.unpack(args))
 end
 
 function test_info(t)

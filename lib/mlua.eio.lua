@@ -14,12 +14,12 @@ function write(...) return stdout:write(...) end
 
 -- Print formatted to stdout.
 function printf(format, ...)
-    stdout:write(string.format(format, ...))
+    stdout:write(format:format(...))
 end
 
 -- Print formatted to an output stream.
 function fprintf(out, format, ...)
-    out:write(string.format(format, ...))
+    out:write(format:format(...))
 end
 
 -- A writer that collects all writes and can replay them.
