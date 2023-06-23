@@ -81,6 +81,7 @@ mlua_add_lua_test_modules(mlua_mod_hardware_uart_test hardware.uart.test.lua)
 target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_hardware_uart
     mlua_mod_mlua_module
+    mlua_mod_mlua_thread
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_eio mlua.eio.lua)
