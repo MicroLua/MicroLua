@@ -18,7 +18,7 @@ function test_Thread_name(t)
              "Unexpected custom thread name: got %q, want %q", got, want)
 end
 
-function test_suspend_resume(t)
+function test_Thread_suspend_resume(t)
     local started = false
     local th
     th = thread.start(function()
@@ -39,13 +39,33 @@ function test_suspend_resume(t)
     t:expect(not th:is_alive(), "Terminated thread is alive")
 end
 
+function test_Thread_join(t)
+    local th = thread.start(function() thread.yield() end)
+    thread.yield()
+    t:expect(th:is_alive(), "Thread isn't alive")
+    th:join()
+    t:expect(not th:is_alive(), "Thread is alive")
+
+    do
+        local closing<close> = thread.start(function() thread.yield() end)
+        th = closing
+        t:expect(th:is_alive(), "Thread isn't alive")
+    end
+    t:expect(not th:is_alive(), "Thread is alive")
+
+    local th = thread.start(function() error("boom", 0) end)
+    local ok, err = pcall(function() th:join() end)
+    t:assert(not ok, "join didn't throw an error")
+    t:expect(err == 'boom', "Unexpected error: got %q, want \"boom\"", err)
+end
+
 function test_yield(t)
     local log = ''
     local done = 0
     for t = 1, 5 do
         thread.start(function()
             for i = 1, 3 do
-                log = log .. string.format('(%s, %s) ', t, i)
+                log = log .. ('(%s, %s) '):format(t, i)
                 thread.yield()
             end
             done = done + 1

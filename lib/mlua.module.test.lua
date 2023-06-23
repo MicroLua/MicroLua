@@ -1,8 +1,8 @@
 _ENV = require 'mlua.module'(...)
 
 local function has(tab, name)
-    local res, value = pcall(function() return tab[name] end)
-    return res and value ~= nil
+    local ok, value = pcall(function() return tab[name] end)
+    return ok and value ~= nil
 end
 
 local private_var = 'private'
@@ -22,8 +22,8 @@ function test_variable_access(t)
 end
 
 function test_strict_mode(t)
-    local res, err = pcall(function() return unknown_symbol end)
-    t:assert(not res, "Unknown symbol lookup succeeded")
+    local ok, err = pcall(function() return unknown_symbol end)
+    t:assert(not ok, "Unknown symbol lookup succeeded")
     t:expect(err:find("Undefined symbol: unknown_symbol$"),
              "Unexpected error: %q", err)
 end

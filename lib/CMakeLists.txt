@@ -160,8 +160,8 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
 target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
-    mlua_mod_mlua_module
     mlua_mod_mlua_event
+    mlua_mod_mlua_module
     mlua_mod_pico_time
     mlua_mod_string
     mlua_mod_table
@@ -169,8 +169,8 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_thread_test mlua.thread.test.lua)
 target_link_libraries(mlua_mod_mlua_thread_test INTERFACE
-    mlua_mod_mlua_thread
     mlua_mod_mlua_module
+    mlua_mod_mlua_thread
     mlua_mod_string
 )
 

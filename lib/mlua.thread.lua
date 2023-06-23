@@ -8,10 +8,18 @@ local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
--- TODO: Thread:join
+-- Return the currently-running thread.
+running = coroutine.running
+
+-- Make the running thread yield. If the argument is true, the thread is moved
+-- from the active queue to the wait list. If the argument is an absolute time,
+-- the thread is resumed at that time (unless it's resumed explicitly earlier).
+yield = coroutine.yield
 
 local co_resume, co_status = coroutine.resume, coroutine.status
 local co_close = coroutine.close
+
+local weak_keys = {__mode = 'k'}
 
 local active = {}
 local head, tail = 0, 0
@@ -67,11 +75,10 @@ function start(fn)
     return thread
 end
 
-local names = {}
-setmetatable(names, {__mode = 'k'})
+local names = setmetatable({}, weak_keys)
 
 -- Return the name of the thread.
-function Thread:name() return names[self] or string.sub(tostring(self), 9) end
+function Thread:name() return names[self] or tostring(self):sub(9) end
 
 -- Set the name of the thread.
 function Thread:set_name(name)
@@ -96,13 +103,28 @@ function Thread:resume()
     return true
 end
 
--- Return the currently-running thread.
-running = coroutine.running
+local terms = setmetatable({}, weak_keys)
+local joiners = setmetatable({}, weak_keys)
 
--- Make the running thread yield. If the argument is true, the thread is moved
--- from the active queue to the wait list. If the argument is an absolute time,
--- the thread is resumed at that time (unless it's resumed explicitly earlier).
-yield = coroutine.yield
+-- Block until the thread has terminated.
+function Thread:join()
+    if co_status(self) ~= 'dead' then
+        local j = running()
+        local js = joiners[self]
+        if not js then
+            joiners[self] = j
+        elseif type(js) ~= 'table' then
+            joiners[self] = {[js] = true, [j] = true}
+        else
+            js[j] = true
+        end
+        repeat yield() until co_status(self) == 'dead'
+    end
+    local term = terms[self]
+    if term then error(term, 0) end
+end
+
+Thread.__close = Thread.join
 
 -- Return the current absolute time.
 now = time.get_absolute_time
@@ -158,9 +180,12 @@ function main()
         -- suspended, or move it to the end of the active queue.
         if co_status(thread) == 'dead' then
             local ok, err = co_close(thread)
-            if not ok then
-                stderr:write(string.format(
-                    "Thread [%s] failed: %s\n", thread:name(), err))
+            if not ok then terms[thread] = err end
+            local js = joiners[thread]
+            if js then
+                joiners[thread] = nil
+                if type(js) ~= 'table' then js:resume()
+                else for _, j in ipairs(js) do j:resume() end end
             end
         elseif deadline then
             waiting[thread] = deadline
