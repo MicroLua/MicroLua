@@ -23,6 +23,8 @@ static int mod_fifo_enable_irq(lua_State* ls) {
     return 0;
 }
 
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
 static int try_fifo_get(lua_State* ls) {
     if (!adc_fifo_is_empty()) {
         lua_pushinteger(ls, adc_fifo_get());
@@ -32,15 +34,12 @@ static int try_fifo_get(lua_State* ls) {
     return -1;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 static int mod_fifo_get_blocking(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    return mlua_event_wait(ls, event, &try_fifo_get, 0);
-#else
-    lua_pushinteger(ls, adc_fifo_get());
+    if (mlua_yield_enabled()) {
+        return mlua_event_wait(ls, event, &try_fifo_get, 0);
+    }
+    lua_pushinteger(ls, adc_fifo_get_blocking());
     return 1;
-#endif
 }
 
 MLUA_FUNC_0_0(mod_, adc_, init)

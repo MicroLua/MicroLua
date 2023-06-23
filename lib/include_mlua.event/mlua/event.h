@@ -18,6 +18,7 @@ extern "C" {
 // An event identifier.
 typedef uint8_t MLuaEvent;
 
+// A marker for "no event assigned".
 #define MLUA_EVENT_UNSET ((MLuaEvent)-1)
 
 // Claim an event. Returns NULL on success, or a message describing the error.
@@ -85,6 +86,10 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 // The index is passed to mlua_event_suspend as a deadline index.
 int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
                     int index);
+
+#if !LIB_MLUA_MOD_MLUA_EVENT
+#define mlua_event_wait(ls, event, try_get, index) ((int)0)
+#endif
 
 #ifdef __cplusplus
 }
