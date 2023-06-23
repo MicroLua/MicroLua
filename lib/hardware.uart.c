@@ -11,7 +11,7 @@
 #include "mlua/event.h"
 #include "mlua/util.h"
 
-char const* const Uart_name = "hardware.uart.Uart";
+char const Uart_name[] = "hardware.uart.Uart";
 
 static uart_inst_t** new_Uart(lua_State* ls) {
     uart_inst_t** v = lua_newuserdatauv(ls, sizeof(uart_inst_t*), 0);

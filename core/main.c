@@ -19,10 +19,12 @@ __attribute__((weak)) int _unlink(char const* file) { return -1; }
 #include <unistd.h>
 #include "pico/stdio.h"
 
-static int StdStream_read(lua_State* ls) {
-    int fd = *((int*)luaL_checkudata(ls, 1, "StdStream"));
+char const StdInStream_name[] = "StdInStream";
+char const StdOutStream_name[] = "StdOutStream";
+
+static int StdInStream_read(lua_State* ls) {
+    int fd = *((int*)luaL_checkudata(ls, 1, StdInStream_name));
     lua_Integer len = luaL_optinteger(ls, 2, -1);
-    if (fd != STDIN_FILENO) return luaL_error(ls, "read from non-input stream");
     if (len <= 0) {
         lua_pushlstring(ls, "", 0);
         return 1;
@@ -35,11 +37,8 @@ static int StdStream_read(lua_State* ls) {
     return 1;
 }
 
-static int StdStream_write(lua_State* ls) {
-    int fd = *((int*)luaL_checkudata(ls, 1, "StdStream"));
-    if (fd != STDOUT_FILENO && fd != STDERR_FILENO) {
-        return luaL_error(ls, "write to non-output stream");
-    }
+static int StdOutStream_write(lua_State* ls) {
+    int fd = *((int*)luaL_checkudata(ls, 1, StdOutStream_name));
     size_t len;
     char const* s = luaL_checklstring(ls, 2, &len);
     int cnt = write(fd, s, len);
@@ -71,35 +70,36 @@ static int std_print(lua_State* ls) {
     return 0;
 }
 
-static MLuaReg const StdStream_regs[] = {
-#define MLUA_SYM(n, v) MLUA_REG(string, n, v)
-    MLUA_SYM(__name, "StdStream"),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, StdStream_ ## n)
+static MLuaReg const StdInStream_regs[] = {
+#define MLUA_SYM(n) MLUA_REG(function, n, StdInStream_ ## n)
     MLUA_SYM(read),
+#undef MLUA_SYM
+};
+
+static MLuaReg const StdOutStream_regs[] = {
+#define MLUA_SYM(n) MLUA_REG(function, n, StdOutStream_ ## n)
     MLUA_SYM(write),
 #undef MLUA_SYM
 };
 
-static void create_stream(lua_State* ls, char const* name, int stream) {
+static void create_stream(lua_State* ls, char const* name, char const* cls,
+                          int stream) {
     int* v = lua_newuserdatauv(ls, sizeof(int), 0);
     *v = stream;
-    luaL_getmetatable(ls, "StdStream");
+    luaL_getmetatable(ls, cls);
     lua_setmetatable(ls, -2);
     lua_setglobal(ls, name);
 }
 
 static void init_stdio(lua_State* ls) {
-    // Create the StdStream class.
-    luaL_newmetatable(ls, "StdStream");
-    mlua_set_fields(ls, StdStream_regs);
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, -2, "__index");
+    // Create the StdInStream and StdOutStream classes.
+    mlua_new_class(ls, StdInStream_name, StdInStream_regs);
+    mlua_new_class(ls, StdOutStream_name, StdOutStream_regs);
 
     // Create global objects for stdin, stdout and stderr.
-    create_stream(ls, "stdin", STDIN_FILENO);
-    create_stream(ls, "stdout", STDOUT_FILENO);
-    create_stream(ls, "stderr", STDERR_FILENO);
+    create_stream(ls, "stdin", StdInStream_name, STDIN_FILENO);
+    create_stream(ls, "stdout", StdOutStream_name, STDOUT_FILENO);
+    create_stream(ls, "stderr", StdOutStream_name, STDERR_FILENO);
 
     // Override the print function.
     lua_pushcfunction(ls, std_print);

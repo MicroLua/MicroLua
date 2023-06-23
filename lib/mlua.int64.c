@@ -10,7 +10,7 @@
 
 #include "mlua/util.h"
 
-char const* const int64_name = "int64";
+char const int64_name[] = "int64";
 
 #define IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
