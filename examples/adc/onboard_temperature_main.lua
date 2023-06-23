@@ -32,8 +32,8 @@ function main()
     -- Perform conversions.
     while true do
         local temp = read_onboard_temperature(TEMPERATURE_UNIT)
-        print(string.format("Onboard temperature = %.2f %s", temp,
-                            TEMPERATURE_UNIT))
+        print(("Onboard temperature = %.2f %s"):format(
+            temp, TEMPERATURE_UNIT))
         if LED_PIN then
             gpio.put(LED_PIN, 1)
             time.sleep_ms(10)

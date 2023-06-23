@@ -26,7 +26,7 @@ local function demo_sysinfo()
         _RELEASE:gsub('[^ ]+ (.*)', '%1'))
     local id = unique_id.get_unique_board_id()
     eio.printf("Board ID: %s (%s)\n",
-        id:gsub('(.)', function(c) return string.format('%02x', c:byte(1)) end),
+        id:gsub('(.)', function(c) return ('%02x'):format(c:byte(1)) end),
         unique_id.get_unique_board_id_string())
     eio.printf("Flash: %08x, binary: %08x - %08x\n", pico.FLASH_SIZE_BYTES,
                pico.flash_binary_start, pico.flash_binary_end)
@@ -84,7 +84,7 @@ local function demo_user_irq()
             irq.wait_user_irq(irq_num)
             eio.printf("User IRQ %d\n", irq_num)
         end
-    end):set_name(string.format("User IRQ %d handler", irq_num))
+    end):set_name(("User IRQ %d handler"):format(irq_num))
     thread.start(function()
         thread.sleep_for(500000)
         for i = 0, 2 do
@@ -94,7 +94,6 @@ local function demo_user_irq()
         end
     end):set_name("User IRQ generator")
 end
-
 
 local function task(start)
     local name = thread.running():name()
@@ -112,7 +111,7 @@ local function demo_threads()
     base = base - (base % 1000000)
     for i = 0, 3 do
         thread.start(function() task(base + i * 250000) end)
-            :set_name(string.format("Task %d", i))
+            :set_name(("Task %d"):format(i))
     end
 end
 

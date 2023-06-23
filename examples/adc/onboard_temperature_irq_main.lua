@@ -41,8 +41,8 @@ function main()
         if cnt == 1000 then
             cnt = 0
             local temp = onboard_temperature(value, TEMPERATURE_UNIT)
-            print(string.format("Onboard temperature = %.2f %s", temp,
-                                TEMPERATURE_UNIT))
+            print(("Onboard temperature = %.2f %s"):format(
+                temp, TEMPERATURE_UNIT))
             if LED_PIN then gpio.xor_mask(1 << LED_PIN) end
         end
     end
