@@ -142,9 +142,7 @@ static __attribute__((constructor)) void init(void) {
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 int luaopen_hardware_timer(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    mlua_require(ls, "mlua.event", false);
-#endif
+    mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

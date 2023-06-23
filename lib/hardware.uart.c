@@ -295,9 +295,7 @@ static __attribute__((constructor)) void init(void) {
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 int luaopen_hardware_uart(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    mlua_require(ls, "mlua.event", false);
-#endif
+    mlua_event_require(ls);
 
     // Create the module.
     lua_createtable(ls, 2, MLUA_SIZE(module_regs) + 1);

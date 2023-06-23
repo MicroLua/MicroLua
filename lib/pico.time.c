@@ -126,9 +126,7 @@ static MLuaReg const module_regs[] = {
 };
 
 int luaopen_pico_time(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    mlua_require(ls, "mlua.event", false);
-#endif
+    mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

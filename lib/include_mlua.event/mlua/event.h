@@ -15,6 +15,9 @@
 extern "C" {
 #endif
 
+// Require the mlua.event module.
+void mlua_event_require(lua_State* ls);
+
 // An event identifier.
 typedef uint8_t MLuaEvent;
 
@@ -88,6 +91,7 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
                     int index);
 
 #if !LIB_MLUA_MOD_MLUA_EVENT
+#define mlua_event_require(ls) do {} while(0)
 #define mlua_event_wait(ls, event, try_get, index) ((int)0)
 #endif
 

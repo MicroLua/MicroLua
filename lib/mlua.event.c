@@ -8,6 +8,10 @@
 
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
+void mlua_event_require(lua_State* ls) {
+    mlua_require(ls, "mlua.event", false);
+}
+
 spin_lock_t* mlua_event_spinlock;
 
 #define NUM_EVENTS 128
