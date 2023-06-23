@@ -139,6 +139,7 @@ static int pmain(lua_State* ls) {
     mlua_register_modules(ls);
     lua_pushstring(ls, LUA_RELEASE);
     lua_setglobal(ls, "_RELEASE");
+    mlua_util_init(ls);
 
     // Set up stdio streams.
 #ifdef LIB_PICO_STDIO
