@@ -89,6 +89,7 @@ target_link_libraries(mlua_mod_mlua_eio INTERFACE
     mlua_mod_mlua_module
     mlua_mod_mlua_oo
     mlua_mod_string
+    mlua_mod_table
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_eio_test mlua.eio.test.lua)

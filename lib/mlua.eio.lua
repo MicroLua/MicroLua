@@ -4,6 +4,7 @@ _ENV = require 'mlua.module'(...)
 
 local oo = require 'mlua.oo'
 local string = require 'string'
+local table = require 'table'
 
 -- Read from stdin.
 function read(...) return stdin:read(...) end
@@ -45,3 +46,6 @@ function Buffer:replay(w)
         w:write(data)
     end
 end
+
+-- Return the content of the buffer as a string.
+function Buffer:__tostring() return table.concat(self) end
