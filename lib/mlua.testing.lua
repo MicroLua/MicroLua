@@ -139,6 +139,7 @@ end
 function Test:run_module(name, pat)
     pat = pat or def_func_pat
     local module = require(name)
+    self:cleanup(function() package.loaded[name] = nil end)
     local res, fn = pcall(function() return module.set_up end)
     if res and fn then fn(self) end
     for name, fn in pairs(module) do
