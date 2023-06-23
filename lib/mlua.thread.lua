@@ -4,6 +4,7 @@ _ENV = require 'mlua.module'(...)
 
 local coroutine = require 'coroutine'
 local event = require 'mlua.event'
+local oo = require 'mlua.oo'
 local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
@@ -62,7 +63,7 @@ local function remove_timer(thread)
     end
 end
 
--- Allow adding methods to threads.
+-- Make threads a class.
 local Thread = {__name = 'Thread'}
 Thread.__index = Thread
 event.set_thread_metatable(Thread)
@@ -124,7 +125,27 @@ function Thread:join()
     if term then error(term, 0) end
 end
 
+-- Join the thread on closure.
 Thread.__close = Thread.join
+
+-- A group of threads managed together.
+Group = oo.class('Group')
+Group.__mode = 'k'
+
+-- Start a new thread and track it in the group.
+function Group:start(fn)
+    local thread = start(fn)
+    self[thread] = true
+    return thread
+end
+
+-- Join all threads in the group.
+function Group:join()
+    for thread in pairs(self) do thread:join() end
+end
+
+-- Join the threads in the group on closure.
+Group.__close = Group.join
 
 -- Return the current absolute time.
 now = time.get_absolute_time

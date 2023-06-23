@@ -42,7 +42,7 @@ function test_threaded_write_read(t)
     u:enable_loopback(true)
     u:enable_irq()
     local cnt, data = 100, "0123456"
-    thread.start(function()
+    local writer<close> = thread.start(function()
         for i = 1, cnt do u:write_blocking(data) end
     end)
     for i = 1, cnt do

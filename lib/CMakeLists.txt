@@ -162,6 +162,7 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
     mlua_mod_mlua_event
     mlua_mod_mlua_module
+    mlua_mod_mlua_oo
     mlua_mod_pico_time
     mlua_mod_string
     mlua_mod_table
