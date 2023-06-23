@@ -319,7 +319,6 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(dispatch),
     MLUA_SYM(set_thread_metatable),
 #undef MLUA_SYM
-    {NULL},
 };
 
 static __attribute__((constructor)) void init(void) {
@@ -333,6 +332,6 @@ int luaopen_mlua_event(lua_State* ls) {
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
 
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

@@ -23,11 +23,10 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(get_unique_board_id),
     MLUA_SYM(get_unique_board_id_string),
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_pico_unique_id(lua_State* ls) {
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

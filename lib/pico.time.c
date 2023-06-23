@@ -15,12 +15,11 @@ static void push_absolute_time(lua_State* ls, absolute_time_t t) {
     mlua_push_int64(ls, to_us_since_boot(t));
 }
 
-static void push_at_the_end_of_time(lua_State* ls, MLuaReg const* reg,
-                                    int nup) {
+static void push_at_the_end_of_time(lua_State* ls, MLuaReg const* reg) {
     push_absolute_time(ls, at_the_end_of_time);
 }
 
-static void push_nil_time(lua_State* ls, MLuaReg const* reg, int nup) {
+static void push_nil_time(lua_State* ls, MLuaReg const* reg) {
     push_absolute_time(ls, nil_time);
 }
 
@@ -124,7 +123,6 @@ static MLuaReg const module_regs[] = {
     // MLUA_SYM(add_repeating_timer_ms),
     // MLUA_SYM(cancel_repeating_timer),
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_pico_time(lua_State* ls) {
@@ -134,6 +132,6 @@ int luaopen_pico_time(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

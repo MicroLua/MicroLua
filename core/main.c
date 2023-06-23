@@ -79,7 +79,6 @@ static MLuaReg const StdStream_regs[] = {
     MLUA_SYM(read),
     MLUA_SYM(write),
 #undef MLUA_SYM
-    {NULL},
 };
 
 static void create_stream(lua_State* ls, char const* name, int stream) {
@@ -93,7 +92,7 @@ static void create_stream(lua_State* ls, char const* name, int stream) {
 static void init_stdio(lua_State* ls) {
     // Create the StdStream class.
     luaL_newmetatable(ls, "StdStream");
-    mlua_set_fields(ls, StdStream_regs, 0);
+    mlua_set_fields(ls, StdStream_regs);
     lua_pushvalue(ls, -1);
     lua_setfield(ls, -2, "__index");
 

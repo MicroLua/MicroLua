@@ -71,7 +71,7 @@ extern spin_lock_t* mlua_lock;
 
 typedef struct MLuaReg {
     char const* name;
-    void (*push)(lua_State*, struct MLuaReg const*, int);
+    void (*push)(lua_State*, struct MLuaReg const*);
     union {
         bool boolean;
         lua_Integer integer;
@@ -84,28 +84,27 @@ typedef struct MLuaReg {
 #define MLUA_REG(t, n, v) {.name=MLUA_STR(n), .push=mlua_reg_push_ ## t, .t=(v)}
 #define MLUA_REG_PUSH(n, p) {.name=MLUA_STR(n), .push=p}
 
-void mlua_reg_push_boolean(lua_State* ls, MLuaReg const* reg, int nup);
-void mlua_reg_push_integer(lua_State* ls, MLuaReg const* reg, int nup);
-void mlua_reg_push_number(lua_State* ls, MLuaReg const* reg, int nup);
-void mlua_reg_push_string(lua_State* ls, MLuaReg const* reg, int nup);
-void mlua_reg_push_function(lua_State* ls, MLuaReg const* reg, int nup);
+void mlua_reg_push_boolean(lua_State* ls, MLuaReg const* reg);
+void mlua_reg_push_integer(lua_State* ls, MLuaReg const* reg);
+void mlua_reg_push_number(lua_State* ls, MLuaReg const* reg);
+void mlua_reg_push_string(lua_State* ls, MLuaReg const* reg);
+void mlua_reg_push_function(lua_State* ls, MLuaReg const* reg);
 
-void mlua_set_fields(lua_State* ls, MLuaReg const* fields, int nup);
-void mlua_new_class(lua_State* ls, char const* name, MLuaReg const* fields);
+#define mlua_set_fields(ls, fields) \
+    mlua_set_fields_((ls), (fields), MLUA_SIZE(fields))
+void mlua_set_fields_(lua_State* ls, MLuaReg const* fields, int cnt);
 
-#define mlua_newtable(ls, fields, extra, nup) \
+#define mlua_new_table(ls, fields) \
     do { \
-        lua_createtable( \
-            ls, 0, sizeof(fields) / sizeof((fields)[0]) - 1 + (extra)); \
-        mlua_set_fields(ls, (fields), (nup)); \
+        lua_createtable((ls), 0, MLUA_SIZE(fields)); \
+        mlua_set_fields((ls), (fields)); \
     } while(0)
 
 
-#define mlua_newlib(ls, fields, extra, nup) \
-    do { \
-        luaL_checkversion(ls); \
-        mlua_newtable(ls, fields, extra, nup); \
-    } while(0)
+#define mlua_new_class(ls, name, fields) \
+    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields))
+void mlua_new_class_(lua_State* ls, char const* name, MLuaReg const* fields,
+                     int cnt);
 
 #ifdef __cplusplus
 }

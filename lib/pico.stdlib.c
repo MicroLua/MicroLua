@@ -27,11 +27,10 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(set_sys_clock_pll),
     MLUA_SYM(set_sys_clock_khz),
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_pico_stdlib(lua_State* ls) {
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

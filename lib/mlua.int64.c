@@ -124,11 +124,11 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
 #endif
 }
 
-static void int64_max(lua_State* ls, MLuaReg const* reg, int nup) {
+static void int64_max(lua_State* ls, MLuaReg const* reg) {
     mlua_push_int64(ls, INT64_MAX);
 }
 
-static void int64_min(lua_State* ls, MLuaReg const* reg, int nup) {
+static void int64_min(lua_State* ls, MLuaReg const* reg) {
     mlua_push_int64(ls, INT64_MIN);
 }
 
@@ -462,22 +462,18 @@ static MLuaReg const int64_regs[] = {
 #endif  // LUA_NOCVTN2S
 #endif  // !IS64INT
 #undef MLUA_SYM
-    {NULL},
 };
 
 static MLuaReg const int64_meta_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
     MLUA_SYM(__call),
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_mlua_int64(lua_State* ls) {
-    luaL_checkversion(ls);
-
     // Create the int64 class and make it callable.
     mlua_new_class(ls, int64_name, int64_regs);
-    mlua_newtable(ls, int64_meta_regs, 0, 0);
+    mlua_new_table(ls, int64_meta_regs);
     lua_setmetatable(ls, -2);
     return 1;
 }

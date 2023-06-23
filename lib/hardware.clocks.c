@@ -54,11 +54,10 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(gpio_init),
     MLUA_SYM(configure_gpin),
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_hardware_clocks(lua_State* ls) {
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

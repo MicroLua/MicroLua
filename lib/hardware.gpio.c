@@ -274,7 +274,6 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(wait_events),
 #endif
 #undef MLUA_SYM
-    {NULL},
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -293,6 +292,6 @@ int luaopen_hardware_gpio(lua_State* ls) {
 #endif
 
     // Create the module.
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

@@ -80,10 +80,9 @@ static MLuaReg const module_regs[] = {
     MLUA_SYM(CYW43_WL_GPIO_LED_PIN),
 #endif
 #undef MLUA_SYM
-    {NULL},
 };
 
 int luaopen_pico(lua_State* ls) {
-    mlua_newlib(ls, module_regs, 0, 0);
+    mlua_new_table(ls, module_regs);
     return 1;
 }

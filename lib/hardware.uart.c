@@ -269,7 +269,6 @@ static MLuaReg const Uart_regs[] = {
     MLUA_SYM(enable_irq),
 #endif
 #undef MLUA_SYM
-    {NULL},
 };
 
 static MLuaReg const module_regs[] = {
@@ -281,7 +280,6 @@ static MLuaReg const module_regs[] = {
 #define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
     MLUA_SYM(default_tx_wait_blocking),
 #undef MLUA_SYM
-    {NULL},
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -302,7 +300,8 @@ int luaopen_hardware_uart(lua_State* ls) {
 #endif
 
     // Create the module.
-    mlua_newlib(ls, module_regs, 2 + NUM_UARTS, 0);
+    lua_createtable(ls, 2, MLUA_SIZE(module_regs) + 1);
+    mlua_set_fields(ls, module_regs);
     int mod_index = lua_gettop(ls);
 
     // Create the Uart class.
