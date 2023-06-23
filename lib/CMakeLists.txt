@@ -23,6 +23,7 @@ mlua_add_lua_test_modules(mlua_mod_hardware_clocks_test
 target_link_libraries(mlua_mod_hardware_clocks_test INTERFACE
     mlua_mod_hardware_clocks
     mlua_mod_mlua_module
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio hardware.gpio.c)
