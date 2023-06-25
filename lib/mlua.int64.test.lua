@@ -1,7 +1,6 @@
 _ENV = mlua.Module(...)
 
 local math = require 'math'
-local eio = require 'mlua.eio'
 local int64 = require 'mlua.int64'
 local util = require 'mlua.util'
 local string = require 'string'
@@ -27,10 +26,10 @@ end
 
 function test_info(t)
     t:enable_output()
-    eio.printf("integer: %d bits\n", integer_bits)
-    eio.printf("number: %d bits\n", number_bits)
+    t:message("integer: %d bits", integer_bits)
+    t:message("number: %d bits", number_bits)
     local v = int64(0)
-    eio.printf("int64 type: %s\n", math.type(v) or type(v))
+    t:message("int64 type: %s", math.type(v) or type(v))
 end
 
 function test_limits(t)

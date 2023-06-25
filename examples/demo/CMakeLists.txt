@@ -7,7 +7,7 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
     mlua_mod_hardware_irq
     mlua_mod_hardware_timer
     mlua_mod_hardware_uart
-    mlua_mod_mlua_eio
+    mlua_mod_mlua_io
     mlua_mod_mlua_module
     mlua_mod_mlua_thread
     mlua_mod_pico
@@ -21,7 +21,7 @@ target_link_libraries(mlua_examples_demo_main INTERFACE
 
 mlua_add_lua_modules(mlua_examples_demo_main1 main1.lua)
 target_link_libraries(mlua_examples_demo_main1 INTERFACE
-    mlua_mod_mlua_eio
+    mlua_mod_mlua_io
     mlua_mod_mlua_module
     mlua_mod_pico_time
 )

@@ -2,7 +2,7 @@
 
 _ENV = mlua.Module(...)
 
-local eio = require 'mlua.eio'
+local io = require 'mlua.io'
 local oo = require 'mlua.oo'
 local util = require 'mlua.util'
 local os = require 'os'
@@ -33,7 +33,7 @@ end
 
 function Test:message(format, ...)
     if format:sub(-1) ~= '\n' then format = format .. '\n' end
-    eio.printf(format, ...)
+    io.printf(format, ...)
     -- TODO: Include location
 end
 
@@ -103,7 +103,7 @@ function Test:_run(fn)
     end
     self._cleanups = nil
     self:_restore_output()
-    if not self._out then eio.printf("----- END   %s\n", self.name) end
+    if not self._out then io.printf("----- END   %s\n", self.name) end
     local root = self:_root()
     if self:failed() then root.failed_cnt = root.failed_cnt + 1
     elseif self._skipped then root.skipped_cnt = root.skipped_cnt + 1
@@ -122,12 +122,12 @@ function Test:enable_output()
     self._out = nil
     self:_restore_output()
     if self._parent then self._parent:enable_output() end
-    eio.printf("----- BEGIN %s\n", self.name)
+    io.printf("----- BEGIN %s\n", self.name)
     out:replay(stdout)
 end
 
 function Test:_capture_output()
-    self._out = eio.Buffer()
+    self._out = io.Buffer()
     self._old_out, _G.stdout = _G.stdout, self._out
 end
 
@@ -160,7 +160,7 @@ end
 function Test:print_result(indent)
     indent = indent or ''
     if self.name then
-        eio.printf("%s%s: %s\n", indent, self:result(), self.name)
+        io.printf("%s%s: %s\n", indent, self:result(), self.name)
         indent = indent .. '  '
     end
     if not self.children then return end
@@ -170,16 +170,16 @@ end
 
 function main()
     local t = Test()
-    eio.printf("Running tests\n")
+    io.printf("Running tests\n")
     local start = os.clock()
     t:run_all_modules()
     local dt = os.clock() - start
     local mem = collectgarbage('count') * 1024
-    eio.write("\n")
+    io.write("\n")
     t:print_result()
-    eio.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
+    io.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
                t.passed_cnt, t.skipped_cnt, t.failed_cnt,
                t.passed_cnt + t.skipped_cnt + t.failed_cnt)
-    eio.printf("CPU time: %.2f s, memory: %d bytes\n", dt, mem)
-    eio.printf("Result: %s\n\n", t:result())
+    io.printf("CPU time: %.2f s, memory: %d bytes\n", dt, mem)
+    io.printf("Result: %s\n\n", t:result())
 end

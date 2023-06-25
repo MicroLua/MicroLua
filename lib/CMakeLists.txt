@@ -86,18 +86,6 @@ target_link_libraries(mlua_mod_mlua INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_test mlua.test.lua)
 
-mlua_add_lua_modules(mlua_mod_mlua_eio mlua.eio.lua)
-target_link_libraries(mlua_mod_mlua_eio INTERFACE
-    mlua_mod_mlua_oo
-    mlua_mod_string
-    mlua_mod_table
-)
-
-mlua_add_lua_test_modules(mlua_mod_mlua_eio_test mlua.eio.test.lua)
-target_link_libraries(mlua_mod_mlua_eio_test INTERFACE
-    mlua_mod_mlua_eio
-)
-
 mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
@@ -116,11 +104,22 @@ target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
 mlua_add_lua_test_modules(mlua_mod_mlua_int64_test mlua.int64.test.lua)
 target_link_libraries(mlua_mod_mlua_int64_test INTERFACE
     mlua_mod_math
-    mlua_mod_mlua_eio
     mlua_mod_mlua_int64
     mlua_mod_mlua_util
     mlua_mod_string
     mlua_mod_table
+)
+
+mlua_add_lua_modules(mlua_mod_mlua_io mlua.io.lua)
+target_link_libraries(mlua_mod_mlua_io INTERFACE
+    mlua_mod_mlua_oo
+    mlua_mod_string
+    mlua_mod_table
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_io_test mlua.io.test.lua)
+target_link_libraries(mlua_mod_mlua_io_test INTERFACE
+    mlua_mod_mlua_io
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_oo mlua.oo.lua)
@@ -132,7 +131,7 @@ target_link_libraries(mlua_mod_mlua_oo_test INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
-    mlua_mod_mlua_eio
+    mlua_mod_mlua_io
     mlua_mod_mlua_oo
     mlua_mod_mlua_util
     mlua_mod_os
