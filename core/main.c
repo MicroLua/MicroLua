@@ -19,8 +19,8 @@ __attribute__((weak)) int _unlink(char const* file) { return -1; }
 #include <unistd.h>
 #include "pico/stdio.h"
 
-char const StdInStream_name[] = "StdInStream";
-char const StdOutStream_name[] = "StdOutStream";
+static char const StdInStream_name[] = "mlua.StdInStream";
+static char const StdOutStream_name[] = "mlua.StdOutStream";
 
 static int StdInStream_read(lua_State* ls) {
     int fd = *((int*)luaL_checkudata(ls, 1, StdInStream_name));

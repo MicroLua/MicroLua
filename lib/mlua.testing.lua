@@ -1,6 +1,6 @@
 -- A unit-testing library.
 
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local eio = require 'mlua.eio'
 local oo = require 'mlua.oo'
@@ -103,17 +103,11 @@ function Test:_run(fn)
     end
     self._cleanups = nil
     self:_restore_output()
-    if not self._out then
-        eio.printf("----- END   %s\n", self.name)
-    end
+    if not self._out then eio.printf("----- END   %s\n", self.name) end
     local root = self:_root()
-    if self:failed() then
-        root.failed_cnt = root.failed_cnt + 1
-    elseif self._skipped then
-        root.skipped_cnt = root.skipped_cnt + 1
-    else
-        root.passed_cnt = root.passed_cnt + 1
-    end
+    if self:failed() then root.failed_cnt = root.failed_cnt + 1
+    elseif self._skipped then root.skipped_cnt = root.skipped_cnt + 1
+    else root.passed_cnt = root.passed_cnt + 1 end
     self._parent, self._out = nil, nil
 end
 
@@ -171,9 +165,7 @@ function Test:print_result(indent)
     end
     if not self.children then return end
     table.sort(self.children, function(a, b) return a.name < b.name end)
-    for _, t in ipairs(self.children) do
-        t:print_result(indent)
-    end
+    for _, t in ipairs(self.children) do t:print_result(indent) end
 end
 
 function main()

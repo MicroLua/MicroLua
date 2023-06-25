@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 function test_something(t)
 end

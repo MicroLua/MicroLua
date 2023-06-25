@@ -9,7 +9,6 @@ target_link_libraries(mlua_mod_hardware_adc INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_adc_test hardware.adc.test.lua)
 target_link_libraries(mlua_mod_hardware_adc_test INTERFACE
     mlua_mod_hardware_adc
-    mlua_mod_mlua_module
     mlua_mod_pico_time
 )
 
@@ -22,7 +21,6 @@ mlua_add_lua_test_modules(mlua_mod_hardware_clocks_test
     hardware.clocks.test.lua)
 target_link_libraries(mlua_mod_hardware_clocks_test INTERFACE
     mlua_mod_hardware_clocks
-    mlua_mod_mlua_module
     mlua_mod_table
 )
 
@@ -38,7 +36,6 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_gpio_test hardware.gpio.test.lua)
 target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
     mlua_mod_hardware_gpio
-    mlua_mod_mlua_module
 )
 
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
@@ -52,7 +49,6 @@ target_link_libraries(mlua_mod_hardware_irq INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_irq_test hardware.irq.test.lua)
 target_link_libraries(mlua_mod_hardware_irq_test INTERFACE
     mlua_mod_hardware_irq
-    mlua_mod_mlua_module
 )
 
 mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
@@ -66,7 +62,6 @@ target_link_libraries(mlua_mod_hardware_timer INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_timer_test hardware.timer.test.lua)
 target_link_libraries(mlua_mod_hardware_timer_test INTERFACE
     mlua_mod_hardware_timer
-    mlua_mod_mlua_module
 )
 
 mlua_add_c_module(mlua_mod_hardware_uart hardware.uart hardware.uart.c)
@@ -81,13 +76,18 @@ target_link_libraries(mlua_mod_hardware_uart INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_uart_test hardware.uart.test.lua)
 target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_hardware_uart
-    mlua_mod_mlua_module
     mlua_mod_mlua_thread
 )
 
+mlua_add_lua_modules(mlua_mod_mlua mlua.lua)
+target_link_libraries(mlua_mod_mlua INTERFACE
+    mlua_mod_package
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_test mlua.test.lua)
+
 mlua_add_lua_modules(mlua_mod_mlua_eio mlua.eio.lua)
 target_link_libraries(mlua_mod_mlua_eio INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_mlua_oo
     mlua_mod_string
     mlua_mod_table
@@ -96,7 +96,6 @@ target_link_libraries(mlua_mod_mlua_eio INTERFACE
 mlua_add_lua_test_modules(mlua_mod_mlua_eio_test mlua.eio.test.lua)
 target_link_libraries(mlua_mod_mlua_eio_test INTERFACE
     mlua_mod_mlua_eio
-    mlua_mod_mlua_module
 )
 
 mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
@@ -119,37 +118,21 @@ target_link_libraries(mlua_mod_mlua_int64_test INTERFACE
     mlua_mod_math
     mlua_mod_mlua_eio
     mlua_mod_mlua_int64
-    mlua_mod_mlua_module
     mlua_mod_mlua_util
     mlua_mod_string
     mlua_mod_table
 )
 
-mlua_add_lua_modules(mlua_mod_mlua_module mlua.module.lua)
-target_link_libraries(mlua_mod_mlua_module INTERFACE
-    mlua_mod_package
-)
-
-mlua_add_lua_test_modules(mlua_mod_mlua_module_test mlua.module.test.lua)
-target_link_libraries(mlua_mod_mlua_module_test INTERFACE
-    mlua_mod_mlua_module
-)
-
 mlua_add_lua_modules(mlua_mod_mlua_oo mlua.oo.lua)
-target_link_libraries(mlua_mod_mlua_oo INTERFACE
-    mlua_mod_mlua_module
-)
 
 mlua_add_lua_test_modules(mlua_mod_mlua_oo_test mlua.oo.test.lua)
 target_link_libraries(mlua_mod_mlua_oo_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_mlua_oo
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_mlua_eio
-    mlua_mod_mlua_module
     mlua_mod_mlua_oo
     mlua_mod_mlua_util
     mlua_mod_os
@@ -162,7 +145,6 @@ mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
 target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_coroutine
     mlua_mod_mlua_event
-    mlua_mod_mlua_module
     mlua_mod_mlua_oo
     mlua_mod_pico_time
     mlua_mod_string
@@ -171,20 +153,17 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_thread_test mlua.thread.test.lua)
 target_link_libraries(mlua_mod_mlua_thread_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_mlua_thread
     mlua_mod_string
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
 target_link_libraries(mlua_mod_mlua_util INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_table
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_util_test mlua.util.test.lua)
 target_link_libraries(mlua_mod_mlua_util_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_mlua_util
 )
 
@@ -200,7 +179,6 @@ target_link_libraries(mlua_mod_pico_multicore INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_multicore_test pico.multicore.test.lua)
 target_link_libraries(mlua_mod_pico_multicore_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_multicore
 )
 
@@ -211,7 +189,6 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_platform_test pico.platform.test.lua)
 target_link_libraries(mlua_mod_pico_platform_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_platform
 )
 
@@ -223,7 +200,6 @@ target_link_libraries(mlua_mod_pico_stdio INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_stdio_test pico.stdio.test.lua)
 target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_stdio
 )
 
@@ -234,7 +210,6 @@ target_link_libraries(mlua_mod_pico_stdlib INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_stdlib_test pico.stdlib.test.lua)
 target_link_libraries(mlua_mod_pico_stdlib_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_stdlib
 )
 
@@ -248,7 +223,6 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_time_test pico.time.test.lua)
 target_link_libraries(mlua_mod_pico_time_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_time
 )
 
@@ -259,7 +233,6 @@ target_link_libraries(mlua_mod_pico_unique_id INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_unique_id_test pico.unique_id.test.lua)
 target_link_libraries(mlua_mod_pico_unique_id_test INTERFACE
-    mlua_mod_mlua_module
     mlua_mod_pico_unique_id
 )
 

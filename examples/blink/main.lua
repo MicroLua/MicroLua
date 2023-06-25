@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local gpio = require 'hardware.gpio'
 local pico = require 'pico'

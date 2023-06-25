@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local uart = require 'hardware.uart'
 local thread = require 'mlua.thread'

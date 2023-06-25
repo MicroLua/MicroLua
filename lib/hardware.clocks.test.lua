@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local clocks = require 'hardware.clocks'
 local table = require 'table'

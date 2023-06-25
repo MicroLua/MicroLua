@@ -82,6 +82,7 @@ target_link_libraries(mlua_core_main INTERFACE
     hardware_timer
     mlua_core
     mlua_mod_base
+    mlua_mod_mlua
     mlua_mod_package
     pico_platform
 )

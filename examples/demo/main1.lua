@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local timer = require 'hardware.timer'
 local eio = require 'mlua.eio'

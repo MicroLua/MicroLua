@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local thread = require 'mlua.thread'
 local string = require 'string'
@@ -56,7 +56,7 @@ function test_Thread_join(t)
 
     local th3 = thread.start(function() error("boom", 0) end)
     local ok, err = pcall(function() th3:join() end)
-    t:assert(not ok, "join didn't throw an error")
+    t:assert(not ok, "join didn't raise an error")
     t:expect(err == 'boom', "Unexpected error: got %q, want \"boom\"", err)
 end
 

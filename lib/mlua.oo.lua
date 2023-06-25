@@ -1,23 +1,19 @@
 -- A simple object model for object-oriented programming.
 
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 -- The __call metamethod of all classes.
 local function class_call(cls, ...)
     local obj = setmetatable({}, cls)
     local init = cls.__init
-    if init then
-        init(obj, ...)
-    end
+    if init then init(obj, ...) end
     return obj
 end
 
 -- Define a class, optionally inheriting from the given base.
 function class(name, base)
     local cls = name
-    if type(name) == 'string' then
-        cls = {__name = name, __base = base}
-    end
+    if type(name) == 'string' then cls = {__name = name, __base = base} end
     cls.__index = cls
     return setmetatable(cls, {__index = cls.__base, __call = class_call})
 end

@@ -1,4 +1,4 @@
-_ENV = require 'mlua.module'(...)
+_ENV = mlua.Module(...)
 
 local adc = require 'hardware.adc'
 local time = require 'pico.time'
