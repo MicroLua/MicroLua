@@ -256,7 +256,8 @@ static int mod_dispatch(lua_State* ls) {
     lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
     uint32_t* masks = event_state.mask[get_core_num()];
     for (;;) {
-        // Check for pending events and resume the corresponding watcher tasks.
+        // Check for pending events and resume the corresponding watcher
+        // threads.
         bool wake = false;
         for (uint block = 0; block < EVENTS_SIZE; ++block) {
             uint32_t* pending = &event_state.pending[block];
@@ -332,7 +333,7 @@ static __attribute__((constructor)) void init(void) {
 int luaopen_mlua_event(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
-    lua_newtable(ls);  // Watcher tasks table
+    lua_newtable(ls);  // Watcher thread table
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
 
     // Create the module.

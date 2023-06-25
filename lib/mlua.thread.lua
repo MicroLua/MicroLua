@@ -182,23 +182,33 @@ end
 function main()
     local resume = Thread.resume
     local nil_time, at_the_end_of_time = time.nil_time, time.at_the_end_of_time
+    local thread
     while true do
         -- Dispatch events and wait for at least one active thread.
         event.dispatch(resume,
-                       head ~= tail and nil_time or waiting[timers[1]]
-                       or at_the_end_of_time)
+                       (thread ~= nil or head ~= tail) and nil_time
+                       or waiting[timers[1]] or at_the_end_of_time)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
 
-        -- Resume the thread at the head of the active queue.
-        local thread = active[head]
-        active[head] = nil
-        head = head + 1
-        local _, deadline = co_resume(thread)
+        -- Get the thread at the head of the active queue. If it is still
+        -- active, move the previous running thread to the end of the active
+        -- queue, after threads resumed by events.
+        if head ~= tail then
+            if thread ~= nil then
+                active[tail] = thread
+                tail = tail + 1
+            end
+            thread = active[head]
+            active[head] = nil
+            head = head + 1
+        end
 
-        -- Close the thread if it's dead, move it to the wait list if it is
-        -- suspended, or move it to the end of the active queue.
+
+        -- Resume the next thread, then close it if it's dead, or move it to the
+        -- wait list if it's suspended.
+        local _, deadline = co_resume(thread)
         if co_status(thread) == 'dead' then
             local ok, err = co_close(thread)
             if not ok then terms[thread] = err end
@@ -208,12 +218,11 @@ function main()
                 if type(js) ~= 'table' then js:resume()
                 else for _, j in ipairs(js) do j:resume() end end
             end
+            thread = nil
         elseif deadline then
             waiting[thread] = deadline
             if deadline ~= true then add_timer(thread, deadline) end;
-        else
-            active[tail] = thread
-            tail = tail + 1
+            thread = nil
         end
     end
 end
