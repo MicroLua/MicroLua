@@ -49,6 +49,9 @@ target_link_libraries(mlua_mod_hardware_irq INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_irq_test hardware.irq.test.lua)
 target_link_libraries(mlua_mod_hardware_irq_test INTERFACE
     mlua_mod_hardware_irq
+    mlua_mod_mlua_thread
+    mlua_mod_mlua_util
+    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
