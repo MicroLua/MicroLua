@@ -205,6 +205,7 @@ end
 
 function main()
     local t = Test()
+    -- t._keep = true
     io.printf("Running tests\n")
     local start = os.clock()
     t:run_modules()
