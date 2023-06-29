@@ -1,3 +1,8 @@
+mlua_add_lua_test_modules(mlua_mod_00_setup_test 00_setup.test.lua)
+target_link_libraries(mlua_mod_00_setup_test INTERFACE
+    mlua_mod_pico_stdlib
+)
+
 mlua_add_c_module(mlua_mod_hardware_adc hardware.adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware_adc INTERFACE
     hardware_adc
