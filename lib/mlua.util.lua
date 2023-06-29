@@ -53,3 +53,16 @@ function sort(list, comp)
     table.sort(list, comp)
     return list
 end
+
+-- Return a table comparator comparing table pairs by the elements at the given
+-- keys.
+function table_comp(keys)
+    return function(a, b)
+        for _, k in ipairs(keys) do
+            local ak, bk = a[k], b[k]
+            if ak < bk then return true
+            elseif ak > bk then return false end
+        end
+        return false
+    end
+end

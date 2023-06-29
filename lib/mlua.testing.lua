@@ -103,23 +103,11 @@ function Test:result()
     return self:failed() and 'FAIL' or self._skipped and 'SKIP' or 'PASS'
 end
 
-function Test:run(name, fn, keep)
+function Test:run(name, fn)
     local t = Test(name, self)
-    t:_run(fn)
-    if keep or t.children or t:failed() then
-        self.children = util.append(self.children, t)
-    end
+    if t:_run(fn) then self.children = util.append(self.children, t) end
     t = nil
     collectgarbage('collect')
-end
-
-function Test:_root()
-    local t = self
-    while true do
-        local p = t._parent
-        if not p then return t end
-        t = p
-    end
 end
 
 function Test:_run(fn)
@@ -131,11 +119,17 @@ function Test:_run(fn)
     self._cleanups = nil
     self:_restore_output()
     if not self._out then io.printf("----- END   %s\n", self.name) end
-    local root = self:_root()
-    if self:failed() then root.failed_cnt = root.failed_cnt + 1
-    elseif self._skipped then root.skipped_cnt = root.skipped_cnt + 1
-    else root.passed_cnt = root.passed_cnt + 1 end
+    local keep = not self._parent._parent or self.children or self._skipped
+                 or self:failed()
+    self:_walk_up(function(t)
+        keep = keep or t._keep
+        if not t.failed_cnt then return end
+        if self:failed() then t.failed_cnt = t.failed_cnt + 1
+        elseif self._skipped then t.skipped_cnt = t.skipped_cnt + 1
+        else t.passed_cnt = t.passed_cnt + 1 end
+    end)
     self._parent, self._out = nil, nil
+    return keep
 end
 
 function Test:_pcall(fn, ...)
@@ -163,23 +157,38 @@ function Test:_restore_output()
     _G.stdout, self._old_out = self._old_out, nil
 end
 
+function Test:_walk_up(fn)
+    local t = self
+    while t do
+        fn(t)
+        t = t._parent
+    end
+end
+
+local fn_comp = util.table_comp{1, 2}
+
 function Test:run_module(name, pat)
     pat = pat or def_func_pat
     local module = require(name)
     self:cleanup(function() package.loaded[name] = nil end)
     local ok, fn = pcall(function() return module.set_up end)
     if ok and fn then fn(self) end
+    local fns = {}
     for name, fn in pairs(module) do
-        if name:find(pat) then self:run(name, fn) end
+        if name:find(pat) then
+            local info = debug.getinfo(fn, 'S')
+            util.append(fns, {info and info.linedefined or 0, name, fn})
+        end
     end
+    for _, fn in ipairs(util.sort(fns, fn_comp)) do self:run(fn[2], fn[3]) end
 end
 
-function Test:run_all_modules(mod_pat, func_pat)
+function Test:run_modules(mod_pat, func_pat)
     mod_pat = mod_pat or def_mod_pat
     func_pat = func_pat or def_func_pat
-    for name in pairs(package.preload) do
+    for _, name in ipairs(util.sort(util.keys(package.preload))) do
         if name:find(mod_pat) then
-            self:run(name, function(t) t:run_module(name, func_pat) end, true)
+            self:run(name, function(t) t:run_module(name, func_pat) end)
         end
     end
 end
@@ -191,7 +200,6 @@ function Test:print_result(indent)
         indent = indent .. '  '
     end
     if not self.children then return end
-    table.sort(self.children, function(a, b) return a.name < b.name end)
     for _, t in ipairs(self.children) do t:print_result(indent) end
 end
 
@@ -199,9 +207,8 @@ function main()
     local t = Test()
     io.printf("Running tests\n")
     local start = os.clock()
-    t:run_all_modules()
-    local dt = os.clock() - start
-    local mem = collectgarbage('count') * 1024
+    t:run_modules()
+    local dt, mem = os.clock() - start, collectgarbage('count') * 1024
     io.write("\n")
     t:print_result()
     io.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
@@ -209,4 +216,6 @@ function main()
                t.passed_cnt + t.skipped_cnt + t.failed_cnt)
     io.printf("CPU time: %.2f s, memory: %d bytes\n", dt, mem)
     io.printf("Result: %s\n\n", t:result())
+
+    -- TODO: Wait for input, allow re-running with different output options
 end
