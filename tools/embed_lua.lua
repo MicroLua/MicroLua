@@ -19,11 +19,9 @@ function check(...)
     error(msg, 0)
 end
 
--- Return the basename of the given path.
-function basename(path)
-    local i = path:find(string.format('%s[^%s]*$', dirsep, dirsep))
-    if i ~= nil then return path:sub(i + 1) end
-    return path
+-- Return the module name for the given path.
+function module_name(path)
+    return path:gsub(('^.*%s([^%s]*)%%.lua$'):format(dirsep, dirsep), '%1')
 end
 
 function main(input_path, output_path)
@@ -31,7 +29,7 @@ function main(input_path, output_path)
     local name = '=<unknown>'
     if input_path ~= '-' then
         io.input(input_path)
-        name = '@' .. basename(input_path)
+        name = '@' .. module_name(input_path)
     end
     local chunk = check(load(function() return io.read(4096) end, name))
     local bin = string.dump(chunk)
@@ -44,7 +42,7 @@ function main(input_path, output_path)
         for i = 1, 16 do
             local v = bin:byte(offset + i)
             if v == nil then break end
-            check(io.write(string.format('0x%02x,', v)))
+            check(io.write(('0x%02x,'):format(v)))
         end
         check(io.write('\n'))
         offset = offset + 16
@@ -55,6 +53,6 @@ end
 
 local res, err = pcall(main, ...)
 if not res then
-    io.stderr:write(string.format("ERROR: %s\n", err))
+    io.stderr:write(("ERROR: %s\n"):format(err))
     os.exit(1, true)
 end

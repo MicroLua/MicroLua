@@ -13,14 +13,10 @@ function read(...) return stdin:read(...) end
 function write(...) return stdout:write(...) end
 
 -- Print formatted to stdout.
-function printf(format, ...)
-    stdout:write(format:format(...))
-end
+function printf(format, ...) return stdout:write(format:format(...)) end
 
 -- Print formatted to an output stream.
-function fprintf(out, format, ...)
-    out:write(format:format(...))
-end
+function fprintf(out, format, ...) return out:write(format:format(...)) end
 
 -- A writer that collects all writes and can replay them.
 Buffer = oo.class('Buffer')
@@ -42,9 +38,7 @@ end
 
 -- Replay the written data to the given writer.
 function Buffer:replay(w)
-    for _, data in ipairs(self) do
-        w:write(data)
-    end
+    for _, data in ipairs(self) do w:write(data) end
 end
 
 -- Return the content of the buffer as a string.

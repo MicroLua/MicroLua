@@ -26,10 +26,10 @@ end
 
 function test_info(t)
     t:enable_output()
-    t:message("integer: %d bits", integer_bits)
-    t:message("number: %d bits", number_bits)
+    t:printf("integer: %d bits\n", integer_bits)
+    t:printf("number: %d bits\n", number_bits)
     local v = int64(0)
-    t:message("int64 type: %s", math.type(v) or type(v))
+    t:printf("int64 type: %s\n", math.type(v) or type(v))
 end
 
 function test_limits(t)

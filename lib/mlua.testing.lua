@@ -2,6 +2,7 @@
 
 _ENV = mlua.Module(...)
 
+local debug = require 'debug'
 local io = require 'mlua.io'
 local oo = require 'mlua.oo'
 local util = require 'mlua.util'
@@ -14,7 +15,10 @@ local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
 local err_terminate = {}
 
+local module_name = ...
+
 Test = oo.class('Test')
+Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
@@ -31,16 +35,14 @@ function Test:patch(tab, name, value)
     rawset(tab, name, value)
 end
 
-function Test:message(format, ...)
-    if format:sub(-1) ~= '\n' then format = format .. '\n' end
-    io.printf(format, ...)
-    -- TODO: Include location
-end
+function Test:printf(format, ...) return io.printf(format, ...) end
+
+function Test:log(format, ...) return self:_log('', format, ...) end
 
 function Test:error(format, ...)
     self._failed = true
     self:enable_output()
-    self:message("ERROR: " .. format, ...)
+    return self:_log("ERROR: ", format, ...)
 end
 
 function Test:fatal(format, ...)
@@ -50,16 +52,41 @@ end
 
 function Test:skip(format, ...)
     self._skipped = true
-    self:message("SKIP: " .. format, ...)
+    self:_log("SKIP: ", format, ...)
     error(err_terminate)
 end
 
 function Test:expect(cond, format, ...)
-    if not cond then self:error(format, ...) end
+    if not cond then return self:error(format, ...) end
 end
 
 function Test:assert(cond, format, ...)
-    if not cond then self:fatal(format, ...) end
+    if not cond then return self:fatal(format, ...) end
+end
+
+function Test:_log(prefix, format, ...)
+    local msg = format:format(...)
+    local eol = msg:sub(-1) ~= '\n' and '\n' or ''
+    return io.printf('%s%s%s%s', prefix, self:_location(1), msg, eol)
+end
+
+function Test:_location(level)
+    level = level + 2
+    while true do
+        local info = debug.getinfo(level, 'Sl')
+        if not info then return '' end
+        local src, line = info.short_src, info.currentline
+        if src ~= module_name and line > 0 then
+            local i = 1
+            while true do
+                local name, value = debug.getlocal(level, i)
+                if not name then return ('%s:%s: '):format(src, line) end
+                if value == self.helper then break end
+                i = i + 1
+            end
+        end
+        level = level + 1
+    end
 end
 
 function Test:failed()
@@ -113,7 +140,7 @@ end
 
 function Test:_pcall(fn, ...)
     local ok, err = pcall(fn, ...)
-    if not ok and err ~= err_terminate then self:error("%s", err) end
+    if not ok and err ~= err_terminate then return self:error("%s", err) end
 end
 
 function Test:enable_output()
