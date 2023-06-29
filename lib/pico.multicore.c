@@ -46,15 +46,13 @@ static int mod_launch_core1(lua_State* ls) {
 
 MLUA_FUNC_0_0(mod_, multicore_, reset_core1)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(reset_core1),
-    MLUA_SYM(launch_core1),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(reset_core1, mod_),
+    MLUA_SYM_F(launch_core1, mod_),
 };
 
 int luaopen_pico_multicore(lua_State* ls) {
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

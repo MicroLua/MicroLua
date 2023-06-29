@@ -88,6 +88,10 @@ target_link_libraries(mlua_mod_mlua INTERFACE
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_test mlua.test.lua)
+target_link_libraries(mlua_mod_mlua_test INTERFACE
+    mlua_mod_pico
+    mlua_mod_table
+)
 
 mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE

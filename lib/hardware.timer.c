@@ -107,28 +107,26 @@ MLUA_FUNC_1_1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
               luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, hardware_alarm_, force_irq, check_alarm)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(time_us_32),
-    MLUA_SYM(time_us_64),
-    MLUA_SYM(busy_wait_us_32),
-    MLUA_SYM(busy_wait_us),
-    MLUA_SYM(busy_wait_ms),
-    MLUA_SYM(busy_wait_until),
-    MLUA_SYM(time_reached),
-    MLUA_SYM(claim),
-    MLUA_SYM(claim_unused),
-    MLUA_SYM(unclaim),
-    MLUA_SYM(is_claimed),
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(time_us_32, mod_),
+    MLUA_SYM_F(time_us_64, mod_),
+    MLUA_SYM_F(busy_wait_us_32, mod_),
+    MLUA_SYM_F(busy_wait_us, mod_),
+    MLUA_SYM_F(busy_wait_ms, mod_),
+    MLUA_SYM_F(busy_wait_until, mod_),
+    MLUA_SYM_F(time_reached, mod_),
+    MLUA_SYM_F(claim, mod_),
+    MLUA_SYM_F(claim_unused, mod_),
+    MLUA_SYM_F(unclaim, mod_),
+    MLUA_SYM_F(is_claimed, mod_),
     // hardware_alarm_set_callback: See enable_alarm, wait_alarm
-    MLUA_SYM(set_target),
-    MLUA_SYM(cancel),
-    MLUA_SYM(force_irq),
+    MLUA_SYM_F(set_target, mod_),
+    MLUA_SYM_F(cancel, mod_),
+    MLUA_SYM_F(force_irq, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM(enable_alarm),
-    MLUA_SYM(wait_alarm),
+    MLUA_SYM_F(enable_alarm, mod_),
+    MLUA_SYM_F(wait_alarm, mod_),
 #endif
-#undef MLUA_SYM
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -146,6 +144,6 @@ int luaopen_hardware_timer(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

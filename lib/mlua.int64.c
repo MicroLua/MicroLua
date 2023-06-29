@@ -124,11 +124,11 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
 #endif
 }
 
-static void int64_max(lua_State* ls, MLuaReg const* reg) {
+static void int64_max(lua_State* ls, MLuaSym const* sym) {
     mlua_push_int64(ls, INT64_MAX);
 }
 
-static void int64_min(lua_State* ls, MLuaReg const* reg) {
+static void int64_min(lua_State* ls, MLuaSym const* sym) {
     mlua_push_int64(ls, INT64_MIN);
 }
 
@@ -426,54 +426,49 @@ static int int64___call(lua_State* ls) {
 
 #define int64_eq int64___eq
 
-static MLuaReg const int64_regs[] = {
-#define MLUA_SYM(n) MLUA_REG_PUSH(n, int64_ ## n)
-    MLUA_SYM(max),
-    MLUA_SYM(min),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
-    MLUA_SYM(ashr),
-    MLUA_SYM(eq),
-    MLUA_SYM(hex),
-    MLUA_SYM(tointeger),
-    MLUA_SYM(tonumber),
-    MLUA_SYM(ult),
+static MLuaSym const int64_syms[] = {
+    MLUA_SYM_P(max, int64_),
+    MLUA_SYM_P(min, int64_),
+    MLUA_SYM_F(ashr, int64_),
+    MLUA_SYM_F(eq, int64_),
+    MLUA_SYM_F(hex, int64_),
+    MLUA_SYM_F(tointeger, int64_),
+    MLUA_SYM_F(tonumber, int64_),
+    MLUA_SYM_F(ult, int64_),
 #if !IS64INT
-    MLUA_SYM(__add),
-    MLUA_SYM(__sub),
-    MLUA_SYM(__mul),
-    MLUA_SYM(__idiv),
-    MLUA_SYM(__mod),
-    MLUA_SYM(__unm),
-    MLUA_SYM(__div),
-    MLUA_SYM(__pow),
-    MLUA_SYM(__band),
-    MLUA_SYM(__bor),
-    MLUA_SYM(__bxor),
-    MLUA_SYM(__bnot),
-    MLUA_SYM(__shl),
-    MLUA_SYM(__shr),
-    MLUA_SYM(__eq),
-    MLUA_SYM(__lt),
-    MLUA_SYM(__le),
-    MLUA_SYM(__tostring),
+    MLUA_SYM_F(__add, int64_),
+    MLUA_SYM_F(__sub, int64_),
+    MLUA_SYM_F(__mul, int64_),
+    MLUA_SYM_F(__idiv, int64_),
+    MLUA_SYM_F(__mod, int64_),
+    MLUA_SYM_F(__unm, int64_),
+    MLUA_SYM_F(__div, int64_),
+    MLUA_SYM_F(__pow, int64_),
+    MLUA_SYM_F(__band, int64_),
+    MLUA_SYM_F(__bor, int64_),
+    MLUA_SYM_F(__bxor, int64_),
+    MLUA_SYM_F(__bnot, int64_),
+    MLUA_SYM_F(__shl, int64_),
+    MLUA_SYM_F(__shr, int64_),
+    MLUA_SYM_F(__eq, int64_),
+    MLUA_SYM_F(__lt, int64_),
+    MLUA_SYM_F(__le, int64_),
+    MLUA_SYM_F(__tostring, int64_),
 #ifndef LUA_NOCVTN2S
-    MLUA_SYM(__concat),
+    MLUA_SYM_F(__concat, int64_),
 #endif  // LUA_NOCVTN2S
 #endif  // !IS64INT
-#undef MLUA_SYM
 };
 
-static MLuaReg const int64_meta_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, int64_ ## n)
-    MLUA_SYM(__call),
-#undef MLUA_SYM
+static MLuaSym const int64_meta_syms[] = {
+    MLUA_SYM_F(__call, int64_),
+    MLUA_SYM_V(__index, function, &mlua_index_undefined),
 };
 
 int luaopen_mlua_int64(lua_State* ls) {
     // Create the int64 class and make it callable.
-    mlua_new_class(ls, int64_name, int64_regs);
-    mlua_new_table(ls, int64_meta_regs);
+    mlua_new_class(ls, int64_name, int64_syms);
+    mlua_new_table(ls, 0, int64_meta_syms);
     lua_setmetatable(ls, -2);
     return 1;
 }

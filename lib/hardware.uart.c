@@ -237,49 +237,45 @@ MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, check_Uart,
 
 MLUA_FUNC_0_0(mod_, uart_, default_tx_wait_blocking)
 
-static MLuaReg const Uart_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, Uart_ ## n)
-    MLUA_SYM(get_index),
-    MLUA_SYM(init),
-    MLUA_SYM(deinit),
-    MLUA_SYM(set_baudrate),
-    MLUA_SYM(set_hw_flow),
-    MLUA_SYM(set_format),
-    MLUA_SYM(set_irq_enables),
-    MLUA_SYM(is_enabled),
-    MLUA_SYM(set_fifo_enabled),
-    MLUA_SYM(is_writable),
-    // MLUA_SYM(wait_writable),
-    // MLUA_SYM(tx_is_busy),
-    MLUA_SYM(tx_wait_blocking),
-    MLUA_SYM(is_readable),
-    // MLUA_SYM(wait_readable),
-    MLUA_SYM(write_blocking),
-    MLUA_SYM(read_blocking),
-    // MLUA_SYM(putc_raw),
-    // MLUA_SYM(putc),
-    // MLUA_SYM(puts),
-    // MLUA_SYM(getc),
-    MLUA_SYM(set_break),
-    MLUA_SYM(set_translate_crlf),
-    // MLUA_SYM(is_readable_within_us),
-    MLUA_SYM(get_dreq),
-    MLUA_SYM(enable_loopback),
+static MLuaSym const Uart_syms[] = {
+    MLUA_SYM_F(get_index, Uart_),
+    MLUA_SYM_F(init, Uart_),
+    MLUA_SYM_F(deinit, Uart_),
+    MLUA_SYM_F(set_baudrate, Uart_),
+    MLUA_SYM_F(set_hw_flow, Uart_),
+    MLUA_SYM_F(set_format, Uart_),
+    MLUA_SYM_F(set_irq_enables, Uart_),
+    MLUA_SYM_F(is_enabled, Uart_),
+    MLUA_SYM_F(set_fifo_enabled, Uart_),
+    MLUA_SYM_F(is_writable, Uart_),
+    // MLUA_SYM_F(wait_writable, Uart_),
+    // MLUA_SYM_F(tx_is_busy, Uart_),
+    MLUA_SYM_F(tx_wait_blocking, Uart_),
+    MLUA_SYM_F(is_readable, Uart_),
+    // MLUA_SYM_F(wait_readable, Uart_),
+    MLUA_SYM_F(write_blocking, Uart_),
+    MLUA_SYM_F(read_blocking, Uart_),
+    // MLUA_SYM_F(putc_raw, Uart_),
+    // MLUA_SYM_F(putc, Uart_),
+    // MLUA_SYM_F(puts, Uart_),
+    // MLUA_SYM_F(getc, Uart_),
+    MLUA_SYM_F(set_break, Uart_),
+    MLUA_SYM_F(set_translate_crlf, Uart_),
+    // MLUA_SYM_F(is_readable_within_us, Uart_),
+    MLUA_SYM_F(get_dreq, Uart_),
+    MLUA_SYM_F(enable_loopback, Uart_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM(enable_irq),
+    MLUA_SYM_F(enable_irq, Uart_),
 #endif
-#undef MLUA_SYM
 };
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(integer, n, UART_ ## n)
-    MLUA_SYM(PARITY_NONE),
-    MLUA_SYM(PARITY_EVEN),
-    MLUA_SYM(PARITY_ODD),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(default_tx_wait_blocking),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(PARITY_NONE, integer, UART_PARITY_NONE),
+    MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
+    MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
+    MLUA_SYM_V(@_default, boolean, false),
+
+    MLUA_SYM_F(default_tx_wait_blocking, mod_),
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -298,12 +294,11 @@ int luaopen_hardware_uart(lua_State* ls) {
     mlua_event_require(ls);
 
     // Create the module.
-    lua_createtable(ls, 2, MLUA_SIZE(module_regs) + 1);
-    mlua_set_fields(ls, module_regs);
+    mlua_new_module(ls, NUM_UARTS, module_syms);
     int mod_index = lua_gettop(ls);
 
     // Create the Uart class.
-    mlua_new_class(ls, Uart_name, Uart_regs);
+    mlua_new_class(ls, Uart_name, Uart_syms);
     lua_pop(ls, 1);
 
     // Create Uart instances.

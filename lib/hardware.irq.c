@@ -117,67 +117,62 @@ MLUA_FUNC_0_1(mod_,, user_irq_claim, check_user_irq)
 MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
 MLUA_FUNC_0_1(mod_,, user_irq_unclaim, check_user_irq)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
-    MLUA_SYM(TIMER_IRQ_0),
-    MLUA_SYM(TIMER_IRQ_1),
-    MLUA_SYM(TIMER_IRQ_2),
-    MLUA_SYM(TIMER_IRQ_3),
-    MLUA_SYM(PWM_IRQ_WRAP),
-    MLUA_SYM(USBCTRL_IRQ),
-    MLUA_SYM(XIP_IRQ),
-    MLUA_SYM(PIO0_IRQ_0),
-    MLUA_SYM(PIO0_IRQ_1),
-    MLUA_SYM(PIO1_IRQ_0),
-    MLUA_SYM(PIO1_IRQ_1),
-    MLUA_SYM(DMA_IRQ_0),
-    MLUA_SYM(DMA_IRQ_1),
-    MLUA_SYM(IO_IRQ_BANK0),
-    MLUA_SYM(IO_IRQ_QSPI),
-    MLUA_SYM(SIO_IRQ_PROC0),
-    MLUA_SYM(SIO_IRQ_PROC1),
-    MLUA_SYM(CLOCKS_IRQ),
-    MLUA_SYM(SPI0_IRQ),
-    MLUA_SYM(SPI1_IRQ),
-    MLUA_SYM(UART0_IRQ),
-    MLUA_SYM(UART1_IRQ),
-    MLUA_SYM(ADC_IRQ_FIFO),
-    MLUA_SYM(I2C0_IRQ),
-    MLUA_SYM(I2C1_IRQ),
-    MLUA_SYM(RTC_IRQ),
-    MLUA_SYM(FIRST_USER_IRQ),
-    MLUA_SYM(NUM_USER_IRQS),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(integer, n, PICO_ ## n)
-    MLUA_SYM(DEFAULT_IRQ_PRIORITY),
-    MLUA_SYM(LOWEST_IRQ_PRIORITY),
-    MLUA_SYM(HIGHEST_IRQ_PRIORITY),
-    MLUA_SYM(SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY),
-    MLUA_SYM(SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY),
-    MLUA_SYM(SHARED_IRQ_HANDLER_LOWEST_ORDER_PRIORITY),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(set_priority),
-    MLUA_SYM(get_priority),
-    MLUA_SYM(set_enabled),
-    MLUA_SYM(is_enabled),
-    MLUA_SYM(set_mask_enabled),
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(TIMER_IRQ_0, integer, TIMER_IRQ_0),
+    MLUA_SYM_V(TIMER_IRQ_1, integer, TIMER_IRQ_1),
+    MLUA_SYM_V(TIMER_IRQ_2, integer, TIMER_IRQ_2),
+    MLUA_SYM_V(TIMER_IRQ_3, integer, TIMER_IRQ_3),
+    MLUA_SYM_V(PWM_IRQ_WRAP, integer, PWM_IRQ_WRAP),
+    MLUA_SYM_V(USBCTRL_IRQ, integer, USBCTRL_IRQ),
+    MLUA_SYM_V(XIP_IRQ, integer, XIP_IRQ),
+    MLUA_SYM_V(PIO0_IRQ_0, integer, PIO0_IRQ_0),
+    MLUA_SYM_V(PIO0_IRQ_1, integer, PIO0_IRQ_1),
+    MLUA_SYM_V(PIO1_IRQ_0, integer, PIO1_IRQ_0),
+    MLUA_SYM_V(PIO1_IRQ_1, integer, PIO1_IRQ_1),
+    MLUA_SYM_V(DMA_IRQ_0, integer, DMA_IRQ_0),
+    MLUA_SYM_V(DMA_IRQ_1, integer, DMA_IRQ_1),
+    MLUA_SYM_V(IO_IRQ_BANK0, integer, IO_IRQ_BANK0),
+    MLUA_SYM_V(IO_IRQ_QSPI, integer, IO_IRQ_QSPI),
+    MLUA_SYM_V(SIO_IRQ_PROC0, integer, SIO_IRQ_PROC0),
+    MLUA_SYM_V(SIO_IRQ_PROC1, integer, SIO_IRQ_PROC1),
+    MLUA_SYM_V(CLOCKS_IRQ, integer, CLOCKS_IRQ),
+    MLUA_SYM_V(SPI0_IRQ, integer, SPI0_IRQ),
+    MLUA_SYM_V(SPI1_IRQ, integer, SPI1_IRQ),
+    MLUA_SYM_V(UART0_IRQ, integer, UART0_IRQ),
+    MLUA_SYM_V(UART1_IRQ, integer, UART1_IRQ),
+    MLUA_SYM_V(ADC_IRQ_FIFO, integer, ADC_IRQ_FIFO),
+    MLUA_SYM_V(I2C0_IRQ, integer, I2C0_IRQ),
+    MLUA_SYM_V(I2C1_IRQ, integer, I2C1_IRQ),
+    MLUA_SYM_V(RTC_IRQ, integer, RTC_IRQ),
+    MLUA_SYM_V(FIRST_USER_IRQ, integer, FIRST_USER_IRQ),
+    MLUA_SYM_V(NUM_USER_IRQS, integer, NUM_USER_IRQS),
+    MLUA_SYM_V(DEFAULT_IRQ_PRIORITY, integer, PICO_DEFAULT_IRQ_PRIORITY),
+    MLUA_SYM_V(LOWEST_IRQ_PRIORITY, integer, PICO_LOWEST_IRQ_PRIORITY),
+    MLUA_SYM_V(HIGHEST_IRQ_PRIORITY, integer, PICO_HIGHEST_IRQ_PRIORITY),
+    MLUA_SYM_V(SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY, integer, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY),
+    MLUA_SYM_V(SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY, integer, PICO_SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY),
+    MLUA_SYM_V(SHARED_IRQ_HANDLER_LOWEST_ORDER_PRIORITY, integer, PICO_SHARED_IRQ_HANDLER_LOWEST_ORDER_PRIORITY),
+
+    MLUA_SYM_F(set_priority, mod_),
+    MLUA_SYM_F(get_priority, mod_),
+    MLUA_SYM_F(set_enabled, mod_),
+    MLUA_SYM_F(is_enabled, mod_),
+    MLUA_SYM_F(set_mask_enabled, mod_),
     // irq_set_exclusive_handler: See enable_user_irq, wait_user_irq
     // irq_get_exclusive_handler: not useful in Lua
     // irq_add_shared_handler: See enable_user_irq, wait_user_irq
     // irq_remove_handler: See enable_user_irq, wait_user_irq
-    MLUA_SYM(has_shared_handler),
+    MLUA_SYM_F(has_shared_handler, mod_),
     // irq_get_vtable_handler: not useful in Lua
-    MLUA_SYM(clear),
-    MLUA_SYM(set_pending),
-    MLUA_SYM(user_irq_claim),
-    MLUA_SYM(user_irq_claim_unused),
-    MLUA_SYM(user_irq_unclaim),
+    MLUA_SYM_F(clear, mod_),
+    MLUA_SYM_F(set_pending, mod_),
+    MLUA_SYM_F(user_irq_claim, mod_),
+    MLUA_SYM_F(user_irq_claim_unused, mod_),
+    MLUA_SYM_F(user_irq_unclaim, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM(enable_user_irq),
-    MLUA_SYM(wait_user_irq),
+    MLUA_SYM_F(enable_user_irq, mod_),
+    MLUA_SYM_F(wait_user_irq, mod_),
 #endif
-#undef MLUA_SYM
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -197,6 +192,6 @@ int luaopen_hardware_irq(lua_State* ls) {
     mlua_event_require(ls);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

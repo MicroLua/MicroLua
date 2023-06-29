@@ -20,44 +20,39 @@ MLUA_FUNC_0_3(mod_, clock_, gpio_init, luaL_checkinteger,
 MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
-    MLUA_SYM(clk_gpout0),
-    MLUA_SYM(clk_gpout1),
-    MLUA_SYM(clk_gpout2),
-    MLUA_SYM(clk_gpout3),
-    MLUA_SYM(clk_ref),
-    MLUA_SYM(clk_sys),
-    MLUA_SYM(clk_peri),
-    MLUA_SYM(clk_usb),
-    MLUA_SYM(clk_adc),
-    MLUA_SYM(clk_rtc),
-    MLUA_SYM(CLK_COUNT),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(integer, n, CLOCKS_ ## n)
-    MLUA_SYM(FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY),
-    MLUA_SYM(FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY),
-    MLUA_SYM(FC0_SRC_VALUE_ROSC_CLKSRC),
-    MLUA_SYM(FC0_SRC_VALUE_CLK_SYS),
-    MLUA_SYM(FC0_SRC_VALUE_CLK_PERI),
-    MLUA_SYM(FC0_SRC_VALUE_CLK_USB),
-    MLUA_SYM(FC0_SRC_VALUE_CLK_ADC),
-    MLUA_SYM(FC0_SRC_VALUE_CLK_RTC),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(configure),
-    MLUA_SYM(stop),
-    MLUA_SYM(get_hz),
-    MLUA_SYM(frequency_count_khz),
-    MLUA_SYM(set_reported_hz),
-    MLUA_SYM(gpio_init_int_frac),
-    MLUA_SYM(gpio_init),
-    MLUA_SYM(configure_gpin),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(clk_gpout0, integer, clk_gpout0),
+    MLUA_SYM_V(clk_gpout1, integer, clk_gpout1),
+    MLUA_SYM_V(clk_gpout2, integer, clk_gpout2),
+    MLUA_SYM_V(clk_gpout3, integer, clk_gpout3),
+    MLUA_SYM_V(clk_ref, integer, clk_ref),
+    MLUA_SYM_V(clk_sys, integer, clk_sys),
+    MLUA_SYM_V(clk_peri, integer, clk_peri),
+    MLUA_SYM_V(clk_usb, integer, clk_usb),
+    MLUA_SYM_V(clk_adc, integer, clk_adc),
+    MLUA_SYM_V(clk_rtc, integer, clk_rtc),
+    MLUA_SYM_V(CLK_COUNT, integer, CLK_COUNT),
+    MLUA_SYM_V(FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY, integer, CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY),
+    MLUA_SYM_V(FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY, integer, CLOCKS_FC0_SRC_VALUE_PLL_USB_CLKSRC_PRIMARY),
+    MLUA_SYM_V(FC0_SRC_VALUE_ROSC_CLKSRC, integer, CLOCKS_FC0_SRC_VALUE_ROSC_CLKSRC),
+    MLUA_SYM_V(FC0_SRC_VALUE_CLK_SYS, integer, CLOCKS_FC0_SRC_VALUE_CLK_SYS),
+    MLUA_SYM_V(FC0_SRC_VALUE_CLK_PERI, integer, CLOCKS_FC0_SRC_VALUE_CLK_PERI),
+    MLUA_SYM_V(FC0_SRC_VALUE_CLK_USB, integer, CLOCKS_FC0_SRC_VALUE_CLK_USB),
+    MLUA_SYM_V(FC0_SRC_VALUE_CLK_ADC, integer, CLOCKS_FC0_SRC_VALUE_CLK_ADC),
+    MLUA_SYM_V(FC0_SRC_VALUE_CLK_RTC, integer, CLOCKS_FC0_SRC_VALUE_CLK_RTC),
+
+    MLUA_SYM_F(configure, mod_),
+    MLUA_SYM_F(stop, mod_),
+    MLUA_SYM_F(get_hz, mod_),
+    MLUA_SYM_F(frequency_count_khz, mod_),
+    MLUA_SYM_F(set_reported_hz, mod_),
+    MLUA_SYM_F(gpio_init_int_frac, mod_),
+    MLUA_SYM_F(gpio_init, mod_),
+    MLUA_SYM_F(configure_gpin, mod_),
 };
 
 int luaopen_hardware_clocks(lua_State* ls) {
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

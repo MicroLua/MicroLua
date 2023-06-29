@@ -1,5 +1,10 @@
 _ENV = mlua.Module(...)
 
+local pico = require 'pico'
+local table = require 'table'
+
+local module_name = ...
+
 local function has(tab, name)
     local ok, value = pcall(function() return tab[name] end)
     return ok and value ~= nil
@@ -10,25 +15,44 @@ public_var = 'public'
 
 function test_variable_access(t)
     public_var2 = 'public2'
+
+    -- Unqualified.
+    local ok, err = pcall(function() return UNKNOWN end)
+    t:assert(not ok, "Lookup succeeded, got: %s", err)
+    t:expect(err:find("undefined symbol: UNKNOWN$"),
+             "Unexpected error: %q", err)
+
+    -- In globals.
     t:expect(not has(_G, 'private_var'), "private_var is in _G")
     t:expect(not has(_G, 'public_var'), "public_var is in _G")
     t:expect(not has(_G, 'public_var2'), "public_var2 is in _G")
     t:expect(has(_G, 'error'), "error is not in _G")
 
-    local mod = require 'mlua.test'
-    local got = tostring(mod)
-    t:expect(got:find('^mlua%.Module:'), "Unexpected class name: %q", got)
+    -- In Lua module.
+    local mod = require(module_name)
     t:expect(not has(mod, 'private_var'), "private_var is in module")
     t:expect(has(mod, 'public_var'), "public_var is not in module")
     t:expect(has(mod, 'public_var2'), "public_var2 is not in module")
     t:expect(has(mod, 'error'), "error is not in module")
+
+    -- In C module.
+    t:expect(has(pico, 'OK'), "OK is not in module")
+    t:expect(not has(pico, 'UNKNOWN'), "UNKNOWN is in module")
 end
 
-function test_strict_mode(t)
-    local ok, err = pcall(function() return unknown_symbol end)
-    t:assert(not ok, "Unknown symbol lookup succeeded")
-    t:expect(err:find("undefined symbol: unknown_symbol$"),
-             "Unexpected error: %q", err)
+function test_strict(t)
+    for _, test in ipairs{
+        {"Lua module", require(module_name)},
+        {"C module", pico},
+        {"C class", stderr},
+    } do
+        local desc, tab = table.unpack(test)
+        local ok, err = pcall(function() return tab.UNKNOWN end)
+        t:assert(not ok, "%s: Lookup succeeded, got: %s", desc, err)
+        t:expect(err:find("undefined symbol: UNKNOWN$"),
+                 "Unexpected error: %q", err)
+    end
+
 end
 
 function test_Function_close(t)

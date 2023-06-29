@@ -66,12 +66,13 @@ __force_inline static bool mlua_yield_enabled(void) { return false; }
 #endif
 void mlua_require(lua_State* ls, char const* module, bool keep);
 bool mlua_to_cbool(lua_State* ls, int index);
+int mlua_index_undefined(lua_State* ls);
 
 extern spin_lock_t* mlua_lock;
 
-typedef struct MLuaReg {
+typedef struct MLuaSym {
     char const* name;
-    void (*push)(lua_State*, struct MLuaReg const*);
+    void (*push)(lua_State*, struct MLuaSym const*);
     union {
         bool boolean;
         lua_Integer integer;
@@ -79,31 +80,34 @@ typedef struct MLuaReg {
         char const* string;
         lua_CFunction function;
     };
-} MLuaReg;
+} MLuaSym;
 
-#define MLUA_REG(t, n, v) {.name=MLUA_STR(n), .push=mlua_reg_push_ ## t, .t=(v)}
-#define MLUA_REG_PUSH(n, p) {.name=MLUA_STR(n), .push=p}
+#define MLUA_SYM_P(n, p) {.name=#n, .push=p ## n}
+#define MLUA_SYM_V(n, t, v) {.name=#n, .push=mlua_sym_push_ ## t, .t=(v)}
+#define MLUA_SYM_F(n, p) \
+    {.name=#n, .push=mlua_sym_push_function, .function=&p ## n}
 
-void mlua_reg_push_boolean(lua_State* ls, MLuaReg const* reg);
-void mlua_reg_push_integer(lua_State* ls, MLuaReg const* reg);
-void mlua_reg_push_number(lua_State* ls, MLuaReg const* reg);
-void mlua_reg_push_string(lua_State* ls, MLuaReg const* reg);
-void mlua_reg_push_function(lua_State* ls, MLuaReg const* reg);
+void mlua_sym_push_boolean(lua_State* ls, MLuaSym const* sym);
+void mlua_sym_push_integer(lua_State* ls, MLuaSym const* sym);
+void mlua_sym_push_number(lua_State* ls, MLuaSym const* sym);
+void mlua_sym_push_string(lua_State* ls, MLuaSym const* sym);
+void mlua_sym_push_function(lua_State* ls, MLuaSym const* sym);
 
 #define mlua_set_fields(ls, fields) \
     mlua_set_fields_((ls), (fields), MLUA_SIZE(fields))
-void mlua_set_fields_(lua_State* ls, MLuaReg const* fields, int cnt);
+void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt);
 
-#define mlua_new_table(ls, fields) \
-    do { \
-        lua_createtable((ls), 0, MLUA_SIZE(fields)); \
-        mlua_set_fields((ls), (fields)); \
-    } while(0)
+#define mlua_new_table(ls, narr, fields) \
+    mlua_new_table_((ls), (fields), (narr), MLUA_SIZE(fields))
+void mlua_new_table_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
 
+#define mlua_new_module(ls, narr, fields) \
+    mlua_new_module_((ls), (fields), (narr), MLUA_SIZE(fields))
+void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
 
 #define mlua_new_class(ls, name, fields) \
     mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields))
-void mlua_new_class_(lua_State* ls, char const* name, MLuaReg const* fields,
+void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
                      int cnt);
 
 #ifdef __cplusplus

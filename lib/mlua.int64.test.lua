@@ -32,6 +32,13 @@ function test_info(t)
     t:printf("int64 type: %s\n", math.type(v) or type(v))
 end
 
+function test_strict(t)
+    local ok = pcall(function() return int64.UNKNOWN end)
+    t:expect(not ok, "int64 class is non-strict")
+    local ok = pcall(function() return int64(0).UNKNOWN end)
+    t:expect(not ok, "int64 instance is non-strict")
+end
+
 function test_limits(t)
     for _, test in ipairs{
         {"int64.min", int64.min, int64('0x8000000000000000')},

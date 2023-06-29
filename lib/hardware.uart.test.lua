@@ -3,6 +3,13 @@ _ENV = mlua.Module(...)
 local uart = require 'hardware.uart'
 local thread = require 'mlua.thread'
 
+function test_strict(t)
+    local ok = pcall(function() return uart.UNKNOWN end)
+    t:expect(not ok, "module is non-strict")
+    local ok = pcall(function() return uart[0].UNKNOWN end)
+    t:expect(not ok, "Uart instance is non-strict")
+end
+
 function test_blocking_write_read(t)
     local u = uart[1]
     local got = u:get_index()

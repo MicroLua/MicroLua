@@ -15,11 +15,11 @@ static void push_absolute_time(lua_State* ls, absolute_time_t t) {
     mlua_push_int64(ls, to_us_since_boot(t));
 }
 
-static void push_at_the_end_of_time(lua_State* ls, MLuaReg const* reg) {
+static void push_at_the_end_of_time(lua_State* ls, MLuaSym const* sym) {
     push_absolute_time(ls, at_the_end_of_time);
 }
 
-static void push_nil_time(lua_State* ls, MLuaReg const* reg) {
+static void push_nil_time(lua_State* ls, MLuaSym const* sym) {
     push_absolute_time(ls, nil_time);
 }
 
@@ -71,58 +71,51 @@ MLUA_FUNC_1_1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
 MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG_PUSH(n, push_ ## n)
-    MLUA_SYM(at_the_end_of_time),
-    MLUA_SYM(nil_time),
-#undef MLUA_SYM
-#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_boolean, .boolean=n}
-    //! MLUA_SYM(DEFAULT_ALARM_POOL_DISABLED),
-#undef MLUA_SYM
-#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
-    //! MLUA_SYM(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
-    //! MLUA_SYM(DEFAULT_ALARM_POOL_MAX_TIMERS),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_P(at_the_end_of_time, push_),
+    MLUA_SYM_P(nil_time, push_),
+    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_DISABLED, boolean, DEFAULT_ALARM_POOL_DISABLED),
+    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM, integer, DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
+    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_MAX_TIMERS, integer, DEFAULT_ALARM_POOL_MAX_TIMERS),
+
     // to_us_since_boot: not useful in Lua
     // update_us_since_boot: not useful in Lua
     // from_us_since_boot: not useful in Lua
-    MLUA_SYM(get_absolute_time),
-    MLUA_SYM(to_ms_since_boot),
-    MLUA_SYM(delayed_by_us),
-    MLUA_SYM(delayed_by_ms),
-    MLUA_SYM(make_timeout_time_us),
-    MLUA_SYM(make_timeout_time_ms),
-    MLUA_SYM(absolute_time_diff_us),
-    MLUA_SYM(absolute_time_min),
-    MLUA_SYM(is_at_the_end_of_time),
-    MLUA_SYM(is_nil_time),
-    MLUA_SYM(sleep_until),
-    MLUA_SYM(sleep_us),
-    MLUA_SYM(sleep_ms),
-    MLUA_SYM(best_effort_wfe_or_timeout),
-    // MLUA_SYM(alarm_pool_init_default),
-    // MLUA_SYM(alarm_pool_get_default),
-    // MLUA_SYM(alarm_pool_create),
-    // MLUA_SYM(alarm_pool_create_with_unused_hardware_alarm),
-    // MLUA_SYM(alarm_pool_hardware_alarm_num),
-    // MLUA_SYM(alarm_pool_core_num),
-    // MLUA_SYM(alarm_pool_destroy),
-    // MLUA_SYM(alarm_pool_add_alarm_at),
-    // MLUA_SYM(alarm_pool_add_alarm_at_force_in_context),
-    // MLUA_SYM(alarm_pool_add_alarm_in_us),
-    // MLUA_SYM(alarm_pool_add_alarm_in_ms),
-    // MLUA_SYM(alarm_pool_cancel_alarm),
-    // MLUA_SYM(add_alarm_at),
-    // MLUA_SYM(add_alarm_in_us),
-    // MLUA_SYM(add_alarm_in_ms),
-    // MLUA_SYM(cancel_alarm),
-    // MLUA_SYM(alarm_pool_add_repeating_timer_us),
-    // MLUA_SYM(alarm_pool_add_repeating_timer_ms),
-    // MLUA_SYM(add_repeating_timer_us),
-    // MLUA_SYM(add_repeating_timer_ms),
-    // MLUA_SYM(cancel_repeating_timer),
-#undef MLUA_SYM
+    MLUA_SYM_F(get_absolute_time, mod_),
+    MLUA_SYM_F(to_ms_since_boot, mod_),
+    MLUA_SYM_F(delayed_by_us, mod_),
+    MLUA_SYM_F(delayed_by_ms, mod_),
+    MLUA_SYM_F(make_timeout_time_us, mod_),
+    MLUA_SYM_F(make_timeout_time_ms, mod_),
+    MLUA_SYM_F(absolute_time_diff_us, mod_),
+    MLUA_SYM_F(absolute_time_min, mod_),
+    MLUA_SYM_F(is_at_the_end_of_time, mod_),
+    MLUA_SYM_F(is_nil_time, mod_),
+    MLUA_SYM_F(sleep_until, mod_),
+    MLUA_SYM_F(sleep_us, mod_),
+    MLUA_SYM_F(sleep_ms, mod_),
+    MLUA_SYM_F(best_effort_wfe_or_timeout, mod_),
+    // MLUA_SYM_F(alarm_pool_init_default, mod_),
+    // MLUA_SYM_F(alarm_pool_get_default, mod_),
+    // MLUA_SYM_F(alarm_pool_create, mod_),
+    // MLUA_SYM_F(alarm_pool_create_with_unused_hardware_alarm, mod_),
+    // MLUA_SYM_F(alarm_pool_hardware_alarm_num, mod_),
+    // MLUA_SYM_F(alarm_pool_core_num, mod_),
+    // MLUA_SYM_F(alarm_pool_destroy, mod_),
+    // MLUA_SYM_F(alarm_pool_add_alarm_at, mod_),
+    // MLUA_SYM_F(alarm_pool_add_alarm_at_force_in_context, mod_),
+    // MLUA_SYM_F(alarm_pool_add_alarm_in_us, mod_),
+    // MLUA_SYM_F(alarm_pool_add_alarm_in_ms, mod_),
+    // MLUA_SYM_F(alarm_pool_cancel_alarm, mod_),
+    // MLUA_SYM_F(add_alarm_at, mod_),
+    // MLUA_SYM_F(add_alarm_in_us, mod_),
+    // MLUA_SYM_F(add_alarm_in_ms, mod_),
+    // MLUA_SYM_F(cancel_alarm, mod_),
+    // MLUA_SYM_F(alarm_pool_add_repeating_timer_us, mod_),
+    // MLUA_SYM_F(alarm_pool_add_repeating_timer_ms, mod_),
+    // MLUA_SYM_F(add_repeating_timer_us, mod_),
+    // MLUA_SYM_F(add_repeating_timer_ms, mod_),
+    // MLUA_SYM_F(cancel_repeating_timer, mod_),
 };
 
 int luaopen_pico_time(lua_State* ls) {
@@ -130,6 +123,6 @@ int luaopen_pico_time(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

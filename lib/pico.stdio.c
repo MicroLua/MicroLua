@@ -56,32 +56,29 @@ MLUA_FUNC_1_1(mod_,, getchar_timeout_us, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(boolean, n, PICO_STDIO_ ## n)
-    //! MLUA_SYM(ENABLE_CRLF_SUPPORT),
-    //! MLUA_SYM(DEFAULT_CRLF),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(init_all),
-    MLUA_SYM(flush),
-    MLUA_SYM(getchar_timeout_us),
-    // MLUA_SYM(set_driver_enabled),
-    // MLUA_SYM(filter_driver),
-    // MLUA_SYM(set_translate_crlf),
-    MLUA_SYM(putchar_raw),
-    MLUA_SYM(puts_raw),
+static MLuaSym const module_syms[] = {
+    //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_STDIO_ENABLE_CRLF_SUPPORT),
+    //! MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_STDIO_DEFAULT_CRLF),
+
+    MLUA_SYM_F(init_all, mod_),
+    MLUA_SYM_F(flush, mod_),
+    MLUA_SYM_F(getchar_timeout_us, mod_),
+    // MLUA_SYM_F(set_driver_enabled, mod_),
+    // MLUA_SYM_F(filter_driver, mod_),
+    // MLUA_SYM_F(set_translate_crlf, mod_),
+    MLUA_SYM_F(putchar_raw, mod_),
+    MLUA_SYM_F(puts_raw, mod_),
     // set_chars_available_callback: See enable_chars_available, wait_chars_available
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM(enable_chars_available),
-    MLUA_SYM(wait_chars_available),
+    MLUA_SYM_F(enable_chars_available, mod_),
+    MLUA_SYM_F(wait_chars_available, mod_),
 #endif
-#undef MLUA_SYM
 };
 
 int luaopen_pico_stdio(lua_State* ls) {
     mlua_event_require(ls);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

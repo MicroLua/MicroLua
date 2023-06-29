@@ -70,16 +70,12 @@ static int std_print(lua_State* ls) {
     return 0;
 }
 
-static MLuaReg const StdInStream_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, StdInStream_ ## n)
-    MLUA_SYM(read),
-#undef MLUA_SYM
+static MLuaSym const StdInStream_syms[] = {
+    MLUA_SYM_F(read, StdInStream_),
 };
 
-static MLuaReg const StdOutStream_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, StdOutStream_ ## n)
-    MLUA_SYM(write),
-#undef MLUA_SYM
+static MLuaSym const StdOutStream_syms[] = {
+    MLUA_SYM_F(write, StdOutStream_),
 };
 
 static void create_stream(lua_State* ls, char const* name, char const* cls,
@@ -93,8 +89,8 @@ static void create_stream(lua_State* ls, char const* name, char const* cls,
 
 static void init_stdio(lua_State* ls) {
     // Create the StdInStream and StdOutStream classes.
-    mlua_new_class(ls, StdInStream_name, StdInStream_regs);
-    mlua_new_class(ls, StdOutStream_name, StdOutStream_regs);
+    mlua_new_class(ls, StdInStream_name, StdInStream_syms);
+    mlua_new_class(ls, StdOutStream_name, StdOutStream_syms);
 
     // Create global objects for stdin, stdout and stderr.
     create_stream(ls, "stdin", StdInStream_name, STDIN_FILENO);
@@ -136,8 +132,6 @@ static int getfield(lua_State* ls) {
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
     mlua_register_modules(ls);
-    lua_pushstring(ls, LUA_RELEASE);
-    lua_setglobal(ls, "_RELEASE");
     mlua_util_init(ls);
 
     // Set up stdio streams.

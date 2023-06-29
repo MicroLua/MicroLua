@@ -18,15 +18,13 @@ static int mod_get_unique_board_id_string(lua_State* ls) {
     return 1;
 }
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(get_unique_board_id),
-    MLUA_SYM(get_unique_board_id_string),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(get_unique_board_id, mod_),
+    MLUA_SYM_F(get_unique_board_id_string, mod_),
 };
 
 int luaopen_pico_unique_id(lua_State* ls) {
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

@@ -4,9 +4,6 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
-#include "mlua/util.h"
-
-static char const mlua_name[] = "mlua";
 
 void mlua_register_modules(lua_State* ls) {
     // Require library "base".
@@ -25,8 +22,4 @@ void mlua_register_modules(lua_State* ls) {
         lua_setfield(ls, -2, m->name);
     }
     lua_pop(ls, 1);  // Remove preload
-
-    // Load the mlua module and register it in globals.
-    mlua_require(ls, mlua_name, true);
-    lua_setglobal(ls, mlua_name);
 }

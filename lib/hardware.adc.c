@@ -58,33 +58,31 @@ MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(init),
-    MLUA_SYM(gpio_init),
-    MLUA_SYM(select_input),
-    MLUA_SYM(get_selected_input),
-    MLUA_SYM(set_round_robin),
-    MLUA_SYM(set_temp_sensor_enabled),
-    MLUA_SYM(read),
-    MLUA_SYM(run),
-    MLUA_SYM(set_clkdiv),
-    MLUA_SYM(fifo_setup),
-    MLUA_SYM(fifo_is_empty),
-    MLUA_SYM(fifo_get_level),
-    MLUA_SYM(fifo_get),
-    MLUA_SYM(fifo_get_blocking),
-    MLUA_SYM(fifo_drain),
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(init, mod_),
+    MLUA_SYM_F(gpio_init, mod_),
+    MLUA_SYM_F(select_input, mod_),
+    MLUA_SYM_F(get_selected_input, mod_),
+    MLUA_SYM_F(set_round_robin, mod_),
+    MLUA_SYM_F(set_temp_sensor_enabled, mod_),
+    MLUA_SYM_F(read, mod_),
+    MLUA_SYM_F(run, mod_),
+    MLUA_SYM_F(set_clkdiv, mod_),
+    MLUA_SYM_F(fifo_setup, mod_),
+    MLUA_SYM_F(fifo_is_empty, mod_),
+    MLUA_SYM_F(fifo_get_level, mod_),
+    MLUA_SYM_F(fifo_get, mod_),
+    MLUA_SYM_F(fifo_get_blocking, mod_),
+    MLUA_SYM_F(fifo_drain, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM(fifo_enable_irq),
+    MLUA_SYM_F(fifo_enable_irq, mod_),
 #endif
-#undef MLUA_SYM
 };
 
 int luaopen_hardware_adc(lua_State* ls) {
     mlua_event_require(ls);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

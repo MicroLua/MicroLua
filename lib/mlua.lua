@@ -2,11 +2,6 @@
 
 local package = require 'package'
 
--- Make the lookup of undefined keys in the global environment an error.
-setmetatable(_G, {
-    __index = function (_, name) error("undefined symbol: " .. name, 2) end,
-})
-
 -- Forward key lookups in the module to the global environment.
 local mt = {__name = 'mlua.Module', __index = _G}
 

@@ -319,11 +319,9 @@ int mod_set_thread_metatable(lua_State* ls) {
     return 0;
 }
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(dispatch),
-    MLUA_SYM(set_thread_metatable),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(dispatch, mod_),
+    MLUA_SYM_F(set_thread_metatable, mod_),
 };
 
 static __attribute__((constructor)) void init(void) {
@@ -337,6 +335,6 @@ int luaopen_mlua_event(lua_State* ls) {
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
 
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

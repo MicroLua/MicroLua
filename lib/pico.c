@@ -7,82 +7,107 @@
 char const __flash_binary_start;
 char const __flash_binary_end;
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n, v) MLUA_REG(integer, n, v)
-    MLUA_SYM(flash_binary_start, (lua_Integer)&__flash_binary_start),
-    MLUA_SYM(flash_binary_end, (lua_Integer)&__flash_binary_end),
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(integer, n, PICO_ ## n)
-    MLUA_SYM(OK),
-    MLUA_SYM(ERROR_NONE),
-    MLUA_SYM(ERROR_TIMEOUT),
-    MLUA_SYM(ERROR_GENERIC),
-    MLUA_SYM(ERROR_NO_DATA),
-    MLUA_SYM(ERROR_NOT_PERMITTED),
-    MLUA_SYM(ERROR_INVALID_ARG),
-    MLUA_SYM(ERROR_IO),
-    MLUA_SYM(ERROR_BADAUTH),
-    MLUA_SYM(ERROR_CONNECT_FAILED),
-    MLUA_SYM(SDK_VERSION_MAJOR),
-    MLUA_SYM(SDK_VERSION_MINOR),
-    MLUA_SYM(SDK_VERSION_REVISION),
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(flash_binary_start, integer, (lua_Integer)&__flash_binary_start),
+    MLUA_SYM_V(flash_binary_end, integer, (lua_Integer)&__flash_binary_end),
+    MLUA_SYM_V(SDK_VERSION_STRING, string, PICO_SDK_VERSION_STRING),
+    MLUA_SYM_V(OK, integer, PICO_OK),
+    MLUA_SYM_V(ERROR_NONE, integer, PICO_ERROR_NONE),
+    MLUA_SYM_V(ERROR_TIMEOUT, integer, PICO_ERROR_TIMEOUT),
+    MLUA_SYM_V(ERROR_GENERIC, integer, PICO_ERROR_GENERIC),
+    MLUA_SYM_V(ERROR_NO_DATA, integer, PICO_ERROR_NO_DATA),
+    MLUA_SYM_V(ERROR_NOT_PERMITTED, integer, PICO_ERROR_NOT_PERMITTED),
+    MLUA_SYM_V(ERROR_INVALID_ARG, integer, PICO_ERROR_INVALID_ARG),
+    MLUA_SYM_V(ERROR_IO, integer, PICO_ERROR_IO),
+    MLUA_SYM_V(ERROR_BADAUTH, integer, PICO_ERROR_BADAUTH),
+    MLUA_SYM_V(ERROR_CONNECT_FAILED, integer, PICO_ERROR_CONNECT_FAILED),
+    MLUA_SYM_V(SDK_VERSION_MAJOR, integer, PICO_SDK_VERSION_MAJOR),
+    MLUA_SYM_V(SDK_VERSION_MINOR, integer, PICO_SDK_VERSION_MINOR),
+    MLUA_SYM_V(SDK_VERSION_REVISION, integer, PICO_SDK_VERSION_REVISION),
+    MLUA_SYM_V(PICO_DEFAULT_UART, integer, PICO_DEFAULT_UART),
 #ifdef PICO_DEFAULT_UART
-    MLUA_SYM(DEFAULT_UART),
+    MLUA_SYM_V(DEFAULT_UART, integer, PICO_DEFAULT_UART),
+#else
+    MLUA_SYM_V(DEFAULT_UART, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_UART_TX_PIN
-    MLUA_SYM(DEFAULT_UART_TX_PIN),
+    MLUA_SYM_V(DEFAULT_UART_TX_PIN, integer, PICO_DEFAULT_UART_TX_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_UART_TX_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_UART_RX_PIN
-    MLUA_SYM(DEFAULT_UART_RX_PIN),
+    MLUA_SYM_V(DEFAULT_UART_RX_PIN, integer, PICO_DEFAULT_UART_RX_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_UART_RX_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_LED_PIN
-    MLUA_SYM(DEFAULT_LED_PIN),
+    MLUA_SYM_V(DEFAULT_LED_PIN, integer, PICO_DEFAULT_LED_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_LED_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_I2C
-    MLUA_SYM(DEFAULT_I2C),
+    MLUA_SYM_V(DEFAULT_I2C, integer, PICO_DEFAULT_I2C),
+#else
+    MLUA_SYM_V(DEFAULT_I2C, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_I2C_SDA_PIN
-    MLUA_SYM(DEFAULT_I2C_SDA_PIN),
+    MLUA_SYM_V(DEFAULT_I2C_SDA_PIN, integer, PICO_DEFAULT_I2C_SDA_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_I2C_SDA_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_I2C_SCL_PIN
-    MLUA_SYM(DEFAULT_I2C_SCL_PIN),
+    MLUA_SYM_V(DEFAULT_I2C_SCL_PIN, integer, PICO_DEFAULT_I2C_SCL_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_I2C_SCL_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_SCK_PIN
-    MLUA_SYM(DEFAULT_SCK_PIN),
+    MLUA_SYM_V(DEFAULT_SCK_PIN, integer, PICO_DEFAULT_SCK_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_SCK_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_TX_PIN
-    MLUA_SYM(DEFAULT_TX_PIN),
+    MLUA_SYM_V(DEFAULT_TX_PIN, integer, PICO_DEFAULT_TX_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_TX_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_SPI_RX_PIN
-    MLUA_SYM(DEFAULT_SPI_RX_PIN),
+    MLUA_SYM_V(DEFAULT_SPI_RX_PIN, integer, PICO_DEFAULT_SPI_RX_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_SPI_RX_PIN, boolean, false),
 #endif
 #ifdef PICO_DEFAULT_SPI_CSN_PIN
-    MLUA_SYM(DEFAULT_SPI_CSN_PIN),
+    MLUA_SYM_V(DEFAULT_SPI_CSN_PIN, integer, PICO_DEFAULT_SPI_CSN_PIN),
+#else
+    MLUA_SYM_V(DEFAULT_SPI_CSN_PIN, boolean, false),
 #endif
 #ifdef PICO_FLASH_SPI_CLKDIV
-    MLUA_SYM(FLASH_SPI_CLKDIV),
+    MLUA_SYM_V(FLASH_SPI_CLKDIV, integer, PICO_FLASH_SPI_CLKDIV),
+#else
+    MLUA_SYM_V(FLASH_SPI_CLKDIV, boolean, false),
 #endif
 #ifdef PICO_FLASH_SIZE_BYTES
-    MLUA_SYM(FLASH_SIZE_BYTES),
+    MLUA_SYM_V(FLASH_SIZE_BYTES, integer, PICO_FLASH_SIZE_BYTES),
+#else
+    MLUA_SYM_V(FLASH_SIZE_BYTES, boolean, false),
 #endif
 #ifdef PICO_SMPS_MODE_PIN
-    MLUA_SYM(SMPS_MODE_PIN),
+    MLUA_SYM_V(SMPS_MODE_PIN, integer, PICO_SMPS_MODE_PIN),
+#else
+    MLUA_SYM_V(SMPS_MODE_PIN, boolean, false),
 #endif
-#undef MLUA_SYM
-#define MLUA_SYM(n) MLUA_REG(string, n, PICO_ ## n)
-    MLUA_SYM(SDK_VERSION_STRING),
-#undef MLUA_SYM
-#define MLUA_SYM(n) {.name=#n, .push=mlua_reg_push_integer, .integer=n}
 #ifdef CYW43_WL_GPIO_COUNT
-    MLUA_SYM(CYW43_WL_GPIO_COUNT),
+    MLUA_SYM_V(CYW43_WL_GPIO_COUNT, integer, CYW43_WL_GPIO_COUNT),
+#else
+    MLUA_SYM_V(CYW43_WL_GPIO_COUNT, boolean, false),
 #endif
 #ifdef CYW43_WL_GPIO_LED_PIN
-    MLUA_SYM(CYW43_WL_GPIO_LED_PIN),
+    MLUA_SYM_V(CYW43_WL_GPIO_LED_PIN, integer, CYW43_WL_GPIO_LED_PIN),
+#else
+    MLUA_SYM_V(CYW43_WL_GPIO_LED_PIN, boolean, false),
 #endif
-#undef MLUA_SYM
 };
 
 int luaopen_pico(lua_State* ls) {
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

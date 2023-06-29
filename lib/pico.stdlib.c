@@ -20,17 +20,15 @@ MLUA_FUNC_0_3(mod_,, set_sys_clock_pll, luaL_checkinteger, luaL_checkinteger,
               luaL_checkinteger)
 MLUA_FUNC_0_2(mod_,, set_sys_clock_khz, luaL_checkinteger, mlua_to_cbool)
 
-static MLuaReg const module_regs[] = {
-#define MLUA_SYM(n) MLUA_REG(function, n, mod_ ## n)
-    MLUA_SYM(setup_default_uart),
-    MLUA_SYM(set_sys_clock_48mhz),
-    MLUA_SYM(set_sys_clock_pll),
-    MLUA_SYM(set_sys_clock_khz),
-#undef MLUA_SYM
+static MLuaSym const module_syms[] = {
+    MLUA_SYM_F(setup_default_uart, mod_),
+    MLUA_SYM_F(set_sys_clock_48mhz, mod_),
+    MLUA_SYM_F(set_sys_clock_pll, mod_),
+    MLUA_SYM_F(set_sys_clock_khz, mod_),
 };
 
 int luaopen_pico_stdlib(lua_State* ls) {
     // Create the module.
-    mlua_new_table(ls, module_regs);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }
