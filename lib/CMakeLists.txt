@@ -241,6 +241,7 @@ target_link_libraries(mlua_mod_pico_unique_id INTERFACE
 mlua_add_lua_test_modules(mlua_mod_pico_unique_id_test pico.unique_id.test.lua)
 target_link_libraries(mlua_mod_pico_unique_id_test INTERFACE
     mlua_mod_pico_unique_id
+    mlua_mod_string
 )
 
 set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING

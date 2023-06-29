@@ -19,6 +19,8 @@ static int mod_get_unique_board_id_string(lua_State* ls) {
 }
 
 static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(BOARD_ID_SIZE, integer, PICO_UNIQUE_BOARD_ID_SIZE_BYTES),
+
     MLUA_SYM_F(get_unique_board_id, mod_),
     MLUA_SYM_F(get_unique_board_id_string, mod_),
 };
