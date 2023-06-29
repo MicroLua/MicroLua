@@ -235,8 +235,6 @@ MLUA_FUNC_0_2(Uart_, uart_, set_translate_crlf, check_Uart, mlua_to_cbool)
 MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, check_Uart,
               mlua_to_cbool)
 
-MLUA_FUNC_0_0(mod_, uart_, default_tx_wait_blocking)
-
 static MLuaSym const Uart_syms[] = {
     MLUA_SYM_F(get_index, Uart_),
     MLUA_SYM_F(init, Uart_),
@@ -274,8 +272,6 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
     MLUA_SYM_V(@_default, boolean, false),
-
-    MLUA_SYM_F(default_tx_wait_blocking, mod_),
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT

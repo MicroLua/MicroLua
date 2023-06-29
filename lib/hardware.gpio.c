@@ -286,7 +286,6 @@ static __attribute__((constructor)) void init(void) {
 int luaopen_hardware_gpio(lua_State* ls) {
     mlua_event_require(ls);
 
-    // Create the module.
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

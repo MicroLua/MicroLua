@@ -122,7 +122,6 @@ int luaopen_pico_time(lua_State* ls) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
-    // Create the module.
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

@@ -466,7 +466,7 @@ static MLuaSym const int64_meta_syms[] = {
 };
 
 int luaopen_mlua_int64(lua_State* ls) {
-    // Create the int64 class and make it callable.
+    // Create the int64 class.
     mlua_new_class(ls, int64_name, int64_syms);
     mlua_new_table(ls, 0, int64_meta_syms);
     lua_setmetatable(ls, -2);

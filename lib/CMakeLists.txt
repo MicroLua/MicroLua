@@ -1,5 +1,6 @@
 mlua_add_lua_test_modules(mlua_mod_00_setup_test 00_setup.test.lua)
 target_link_libraries(mlua_mod_00_setup_test INTERFACE
+    mlua_mod_hardware_uart
     mlua_mod_pico_stdlib
 )
 
@@ -184,6 +185,11 @@ target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
 )
 
+mlua_add_lua_test_modules(mlua_mod_pico_test pico.test.lua)
+target_link_libraries(mlua_mod_pico_test INTERFACE
+    mlua_mod_pico
+)
+
 mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico_multicore INTERFACE
     pico_multicore
@@ -222,6 +228,8 @@ target_link_libraries(mlua_mod_pico_stdlib INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_stdlib_test pico.stdlib.test.lua)
 target_link_libraries(mlua_mod_pico_stdlib_test INTERFACE
+    mlua_mod_hardware_clocks
+    mlua_mod_hardware_uart
     mlua_mod_pico_stdlib
 )
 

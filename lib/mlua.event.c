@@ -331,7 +331,8 @@ static __attribute__((constructor)) void init(void) {
 int luaopen_mlua_event(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
-    lua_newtable(ls);  // Watcher thread table
+    // Create the watcher thread table.
+    lua_newtable(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
 
     // Create the module.

@@ -10,7 +10,6 @@ char const __flash_binary_end;
 static MLuaSym const module_syms[] = {
     MLUA_SYM_V(flash_binary_start, integer, (lua_Integer)&__flash_binary_start),
     MLUA_SYM_V(flash_binary_end, integer, (lua_Integer)&__flash_binary_end),
-    MLUA_SYM_V(SDK_VERSION_STRING, string, PICO_SDK_VERSION_STRING),
     MLUA_SYM_V(OK, integer, PICO_OK),
     MLUA_SYM_V(ERROR_NONE, integer, PICO_ERROR_NONE),
     MLUA_SYM_V(ERROR_TIMEOUT, integer, PICO_ERROR_TIMEOUT),
@@ -21,10 +20,10 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_V(ERROR_IO, integer, PICO_ERROR_IO),
     MLUA_SYM_V(ERROR_BADAUTH, integer, PICO_ERROR_BADAUTH),
     MLUA_SYM_V(ERROR_CONNECT_FAILED, integer, PICO_ERROR_CONNECT_FAILED),
-    MLUA_SYM_V(SDK_VERSION_MAJOR, integer, PICO_SDK_VERSION_MAJOR),
-    MLUA_SYM_V(SDK_VERSION_MINOR, integer, PICO_SDK_VERSION_MINOR),
-    MLUA_SYM_V(SDK_VERSION_REVISION, integer, PICO_SDK_VERSION_REVISION),
-    MLUA_SYM_V(PICO_DEFAULT_UART, integer, PICO_DEFAULT_UART),
+    //! MLUA_SYM_V(SDK_VERSION_MAJOR, integer, PICO_SDK_VERSION_MAJOR),
+    //! MLUA_SYM_V(SDK_VERSION_MINOR, integer, PICO_SDK_VERSION_MINOR),
+    //! MLUA_SYM_V(SDK_VERSION_REVISION, integer, PICO_SDK_VERSION_REVISION),
+    //! MLUA_SYM_V(SDK_VERSION_STRING, string, PICO_SDK_VERSION_STRING),
 #ifdef PICO_DEFAULT_UART
     MLUA_SYM_V(DEFAULT_UART, integer, PICO_DEFAULT_UART),
 #else

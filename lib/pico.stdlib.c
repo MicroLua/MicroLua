@@ -33,7 +33,6 @@ static MLuaSym const module_syms[] = {
 };
 
 int luaopen_pico_stdlib(lua_State* ls) {
-    // Create the module.
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

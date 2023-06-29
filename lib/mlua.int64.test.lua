@@ -24,12 +24,11 @@ local function arguments(args)
     return fmt:format(table.unpack(args))
 end
 
-function test_info(t)
+function set_up(t)
     t:enable_output()
-    t:printf("integer: %d bits\n", integer_bits)
-    t:printf("number: %d bits\n", number_bits)
     local v = int64(0)
-    t:printf("int64 type: %s\n", math.type(v) or type(v))
+    t:printf("integer: %d bits, number: %d bits, int64 type: %s\n",
+             integer_bits, number_bits, math.type(v) or type(v))
 end
 
 function test_strict(t)

@@ -4,11 +4,11 @@ local clocks = require 'hardware.clocks'
 local uart = require 'hardware.uart'
 local stdlib = require 'pico.stdlib'
 
-function wait_uart_idle()
+local function wait_uart_idle()
     if uart.default then uart.default:tx_wait_blocking() end
 end
 
-function expect_clk_sys(t, want)
+local function expect_clk_sys(t, want)
     local _helper = t.helper
     local got = clocks.get_hz(clocks.clk_sys)
     t:expect(got == want, "Unexpected clk_sys freq: got %s, want %s", got, want)
