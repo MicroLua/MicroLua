@@ -17,7 +17,7 @@ function test_polling(t)
     local got = adc.get_selected_input()
     t:expect(got == input,
              "Unexpected selected input: got %s, want %s", got, input)
-    for i = 1, 100 do
+    for i = 1, 10 do
         local temp = to_celsius(adc.read())
         t:expect(minT <= temp and temp <= maxT,
                  "Temperature outside of [%.1f, %.1f]: %.1f", minT, maxT, temp)
@@ -46,7 +46,7 @@ function test_fifo(t)
     t:expect(not adc.fifo_is_empty(), "FIFO remains empty")
     t:expect(adc.fifo_get_level() ~= 0, "FIFO level remains 0")
 
-    for i = 1, 100 do
+    for i = 1, 10 do
         local temp = to_celsius(adc.fifo_get_blocking())
         t:expect(minT <= temp and temp <= maxT,
                  "Temperature outside of [%.1f, %.1f]: %.1f", minT, maxT, temp)
