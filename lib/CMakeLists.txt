@@ -150,8 +150,9 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_mlua_io
     mlua_mod_mlua_oo
     mlua_mod_mlua_util
-    mlua_mod_os
+    mlua_mod_math
     mlua_mod_package
+    mlua_mod_pico_time
     mlua_mod_string
     mlua_mod_table
 )

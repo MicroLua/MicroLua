@@ -6,8 +6,9 @@ local debug = require 'debug'
 local io = require 'mlua.io'
 local oo = require 'mlua.oo'
 local util = require 'mlua.util'
-local os = require 'os'
+local math = require 'math'
 local package = require 'package'
+local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
@@ -16,6 +17,17 @@ local def_func_pat = '^test_'
 local err_terminate = {}
 
 local module_name = ...
+
+local Buffer = oo.class('Buffer', io.Buffer)
+
+function Buffer:__init(t) self.t = t end
+
+function Buffer:write(...)
+    io.Buffer.write(self, ...)
+    if not self:is_empty() and self.t:_attr('_full_output') then
+        self.t:enable_output()
+    end
+end
 
 Test = oo.class('Test')
 Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
@@ -112,17 +124,18 @@ end
 
 function Test:_run(fn)
     self:_capture_output()
+    local start = time.get_absolute_time()
     self:_pcall(fn, self)
+    self.duration = time.get_absolute_time() - start
     for i = util.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
     self._cleanups = nil
     self:_restore_output()
     if not self._out then io.printf("----- END   %s\n", self.name) end
-    local keep = not self._parent._parent or self.children or self._skipped
-                 or self:failed()
+    local keep = not self._parent._parent or self.children or self:failed()
     self:_walk_up(function(t)
-        keep = keep or t._keep
+        keep = keep or t._full_results
         if not t.failed_cnt then return end
         if self:failed() then t.failed_cnt = t.failed_cnt + 1
         elseif self._skipped then t.skipped_cnt = t.skipped_cnt + 1
@@ -148,7 +161,7 @@ function Test:enable_output()
 end
 
 function Test:_capture_output()
-    self._out = io.Buffer()
+    self._out = Buffer(self)
     self._old_out, _G.stdout = _G.stdout, self._out
 end
 
@@ -160,9 +173,14 @@ end
 function Test:_walk_up(fn)
     local t = self
     while t do
-        fn(t)
+        local res = fn(t)
+        if res ~= nil then return res end
         t = t._parent
     end
+end
+
+function Test:_attr(name)
+    return self:_walk_up(function(t) return t[name] end)
 end
 
 local fn_comp = util.table_comp{1, 2}
@@ -193,30 +211,65 @@ function Test:run_modules(mod_pat, func_pat)
     end
 end
 
+function Test:main(runs)
+    io.printf("Running tests\n")
+    local start = time.get_absolute_time()
+    if runs > 1 then
+        for i = 1, runs do
+            self:run(("Run #%s"):format(i), function(t) t:run_modules() end)
+        end
+    else
+        self:run_modules()
+    end
+    local dt = time.get_absolute_time() - start
+    local mem = collectgarbage('count') * 1024
+    io.write("\n")
+    self:print_result()
+    io.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
+               self.passed_cnt, self.skipped_cnt, self.failed_cnt,
+               self.passed_cnt + self.skipped_cnt + self.failed_cnt)
+    io.printf("Duration: %.3f s, memory: %d bytes\n", dt / 1e6, mem)
+    io.printf("Result: %s\n\n", self:result())
+end
+
 function Test:print_result(indent)
     indent = indent or ''
     if self.name then
-        io.printf("%s%s: %s\n", indent, self:result(), self.name)
+        local left = ('%s%s: %s'):format(indent, self:result(), self.name)
+        local right = ('(%.3f s)'):format(self.duration / 1e6)
+        io.printf("%s%s %s\n", left, (' '):rep(78 - #left - #right), right)
         indent = indent .. '  '
     end
     if not self.children then return end
     for _, t in ipairs(self.children) do t:print_result(indent) end
 end
 
-function main()
-    local t = Test()
-    -- t._keep = true
-    io.printf("Running tests\n")
-    local start = os.clock()
-    t:run_modules()
-    local dt, mem = os.clock() - start, collectgarbage('count') * 1024
-    io.write("\n")
-    t:print_result()
-    io.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
-               t.passed_cnt, t.skipped_cnt, t.failed_cnt,
-               t.passed_cnt + t.skipped_cnt + t.failed_cnt)
-    io.printf("CPU time: %.2f s, memory: %d bytes\n", dt, mem)
-    io.printf("Result: %s\n\n", t:result())
+function pmain()
+    local full_output, full_results = false, false
+    local runs = 1
+    while true do
+        local t = Test()
+        t._full_output = full_output
+        t._full_results = full_results
+        t:main(runs)
 
-    -- TODO: Wait for input, allow re-running with different output options
+        io.printf("(testing) ")
+        local line = ''
+        while true do
+            local c = stdin:read(1)
+            if c == '\n' then break end
+            line = line .. c
+        end
+        if line == 'fo' then full_output = not full_output
+        elseif line == 'fr' then full_results = not full_results
+        elseif line == 'q' then break
+        elseif line:sub(1, 1) == 'r' then
+            runs = math.tointeger(tonumber(line:sub(2))) or 1
+        end
+    end
+end
+
+function main()
+    ok, err = pcall(pmain)
+    if not ok then io.printf("ERROR: %s\n", err) end
 end
