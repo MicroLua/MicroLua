@@ -52,12 +52,12 @@ function test_timer(t)
     t:expect(timer.set_target(alarm, start), "Setting missed alarm succeeded")
     for delta = 10000, 50000, 10000 do
         local err = timer.set_target(alarm, start + delta)
-        t:assert(not err, "Failed to set alarm at +%s", delta)
+        t:assert(not err, "Failed to set alarm at +%s us", delta)
         timer.wait_alarm(alarm)
         local now = timer.time_us_64()
         t:expect(start + delta <= now,
-                 "Early alarm, by: %s", start + delta - now)
+                 "Early alarm, by: %s us", start + delta - now)
         t:expect(now < start + delta + 200,
-                 "Late alarm, delay: %s", now - (start + delta))
+                 "Late alarm, delay: %s us", now - (start + delta))
     end
 end

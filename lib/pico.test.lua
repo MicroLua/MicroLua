@@ -3,8 +3,9 @@ _ENV = mlua.Module(...)
 local pico = require 'pico'
 
 function set_up(t)
-    t:enable_output()
-    t:printf("Flash: %08x, binary: %08x - %08x (%.1f%%)\n", pico.FLASH_SIZE_BYTES,
+    t:printf("Lua: %s, SDK: %s, Flash: %08x, binary: %08x - %08x (%.1f%%)\n",
+             _RELEASE:gsub('[^ ]+ (.*)', '%1'), pico.SDK_VERSION_STRING,
+             pico.FLASH_SIZE_BYTES,
              pico.flash_binary_start, pico.flash_binary_end,
              (pico.flash_binary_end - pico.flash_binary_start)
              / pico.FLASH_SIZE_BYTES * 100)

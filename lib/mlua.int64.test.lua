@@ -25,7 +25,6 @@ local function arguments(args)
 end
 
 function set_up(t)
-    t:enable_output()
     local v = int64(0)
     t:printf("integer: %d bits, number: %d bits, int64 type: %s\n",
              integer_bits, number_bits, math.type(v) or type(v))

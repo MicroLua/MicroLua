@@ -214,7 +214,10 @@ target_link_libraries(mlua_mod_pico_platform INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_platform_test pico.platform.test.lua)
 target_link_libraries(mlua_mod_pico_platform_test INTERFACE
+    mlua_mod_hardware_clocks
+    mlua_mod_math
     mlua_mod_pico_platform
+    mlua_mod_pico_time
 )
 
 mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
