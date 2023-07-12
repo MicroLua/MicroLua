@@ -135,6 +135,7 @@ target_link_libraries(mlua_mod_mlua_io INTERFACE
 mlua_add_lua_test_modules(mlua_mod_mlua_io_test mlua.io.test.lua)
 target_link_libraries(mlua_mod_mlua_io_test INTERFACE
     mlua_mod_mlua_io
+    mlua_mod_mlua_oo
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_oo mlua.oo.lua)

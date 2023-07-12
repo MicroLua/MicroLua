@@ -1,6 +1,27 @@
 _ENV = mlua.Module(...)
 
 local io = require 'mlua.io'
+local oo = require 'mlua.oo'
+
+function test_read(t)
+    Reader = oo.class('Reader')
+    function Reader:read(arg) return tostring(arg) end
+    t:patch(_G, 'stdin', Reader())
+
+    local got = io.read(1234)
+    t:expect(got == '1234', "Unexpected input: got %q, want \"1234\"", got)
+end
+
+function test_write(t)
+    local b = io.Buffer()
+    t:patch(_G, 'stdout', b)
+
+    io.write('12', '|34')
+    io.printf('|%s|%d', '56', 78)
+    io.fprintf(b, '|%s', 90)
+    local got, want = tostring(b), '12|34|56|78|90'
+    t:expect(got == want, "Unexpected output: got %q, want %q", got, want)
+end
 
 function test_Buffer(t)
     local b = io.Buffer()
