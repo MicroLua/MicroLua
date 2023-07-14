@@ -4,6 +4,7 @@ _ENV = mlua.Module(...)
 
 local debug = require 'debug'
 local io = require 'mlua.io'
+local list = require 'mlua.list'
 local oo = require 'mlua.oo'
 local util = require 'mlua.util'
 local math = require 'math'
@@ -39,12 +40,24 @@ function Test:__init(name, parent)
     end
 end
 
-function Test:cleanup(fn) self._cleanups = util.append(self._cleanups, fn) end
+function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
 
 function Test:patch(tab, name, value)
     local old = rawget(tab, name)
     self:cleanup(function() rawset(tab, name, old) end)
     rawset(tab, name, value)
+end
+
+function Test:str(v)
+    return function() return util.str(v) end
+end
+
+function Test:func(name, args)
+    return function()
+        local parts = list()
+        for _, arg in list.ipairs(args) do parts:append(util.str(arg)) end
+        return ('%s(%s)'):format(name, table.concat(parts, ', '))
+    end
 end
 
 function Test:printf(format, ...) return io.printf(format, ...) end
@@ -76,8 +89,17 @@ function Test:assert(cond, format, ...)
     if not cond then return self:fatal(format, ...) end
 end
 
+function Test:equal(what, got, want)
+    -- TODO: Add optional comparison function
+    return got == want, '%s = %s, want %s', what, got, want
+end
+
 function Test:_log(prefix, format, ...)
-    local msg = format:format(...)
+    local args = list.pack(...)
+    for i, arg in args:ipairs() do
+        if type(arg) == 'function' then args[i] = arg() end
+    end
+    local msg = format:format(args:unpack())
     local eol = msg:sub(-1) ~= '\n' and '\n' or ''
     return io.printf('%s%s%s%s', prefix, self:_location(1), msg, eol)
 end
@@ -103,10 +125,8 @@ end
 
 function Test:failed()
     if self._failed then return true end
-    if self.children then
-        for _, child in ipairs(self.children) do
-            if child:failed() then return true end
-        end
+    for _, child in list.ipairs(self.children) do
+        if child:failed() then return true end
     end
     return false
 end
@@ -117,7 +137,7 @@ end
 
 function Test:run(name, fn)
     local t = Test(name, self)
-    if t:_run(fn) then self.children = util.append(self.children, t) end
+    if t:_run(fn) then self.children = list.append(self.children, t) end
     t = nil
     collectgarbage('collect')
 end
@@ -127,7 +147,7 @@ function Test:_run(fn)
     local start = time.get_absolute_time()
     self:_pcall(fn, self)
     self.duration = time.get_absolute_time() - start
-    for i = util.len(self._cleanups), 1, -1 do
+    for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
     self._cleanups = nil
@@ -191,20 +211,20 @@ function Test:run_module(name, pat)
     self:cleanup(function() package.loaded[name] = nil end)
     local ok, fn = pcall(function() return module.set_up end)
     if ok and fn then fn(self) end
-    local fns = {}
+    local fns = list()
     for name, fn in pairs(module) do
         if name:find(pat) then
             local info = debug.getinfo(fn, 'S')
-            util.append(fns, {info and info.linedefined or 0, name, fn})
+            fns:append({info and info.linedefined or 0, name, fn})
         end
     end
-    for _, fn in ipairs(util.sort(fns, fn_comp)) do self:run(fn[2], fn[3]) end
+    for _, fn in util.sort(fns, fn_comp):ipairs() do self:run(fn[2], fn[3]) end
 end
 
 function Test:run_modules(mod_pat, func_pat)
     mod_pat = mod_pat or def_mod_pat
     func_pat = func_pat or def_func_pat
-    for _, name in ipairs(util.sort(util.keys(package.preload))) do
+    for _, name in util.sort(util.keys(package.preload)):ipairs() do
         if name:find(mod_pat) then
             self:run(name, function(t) t:run_module(name, func_pat) end)
         end
@@ -240,8 +260,7 @@ function Test:print_result(indent)
         io.printf("%s%s %s\n", left, (' '):rep(78 - #left - #right), right)
         indent = indent .. '  '
     end
-    if not self.children then return end
-    for _, t in ipairs(self.children) do t:print_result(indent) end
+    for _, t in list.ipairs(self.children) do t:print_result(indent) end
 end
 
 function pmain()

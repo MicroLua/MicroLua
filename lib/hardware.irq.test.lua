@@ -2,14 +2,14 @@ _ENV = mlua.Module(...)
 
 local irq = require 'hardware.irq'
 local thread = require 'mlua.thread'
-local util = require 'mlua.util'
+local list = require 'mlua.list'
 local string = require 'string'
 
 function test_user_irqs(t)
     local rounds = 10
 
     -- Claim user IRQs.
-    local irqs, nums = {}, ''
+    local irqs, nums = list(), ''
     for i = 1, irq.NUM_USER_IRQS do
         local num = irq.user_irq_claim_unused()
         irq.clear(num)
@@ -18,7 +18,7 @@ function test_user_irqs(t)
             irq.enable_user_irq(num, false)
             irq.user_irq_unclaim(num)
         end)
-        irqs = util.append(irqs, num)
+        irqs:append(num)
         nums = nums .. ('%s '):format(num)
     end
 
