@@ -94,9 +94,45 @@ function test_append(t)
 end
 
 function test_pack(t)
-    -- TODO
+    for _, test in ipairs{
+        {list.pack(), list{[0] = 0}},
+        {list.pack(1, 2, 3), list{[0] = 3, 1, 2, 3}},
+        {list.pack(1, nil, 3), list{[0] = 3, 1, nil, 3}},
+        {list.pack(nil), list{[0] = 1}},
+        {list.pack(nil, nil, nil), list{[0] = 3}},
+    } do
+        local got, want = table.unpack(test)
+        t:expect(got == want,
+                 "pack() = %s, want %s", t:repr(got), t:repr(want))
+    end
 end
 
 function test_unpack(t)
-    -- TODO
+    for _, test in ipairs{
+        {{nil}, nil, nil, nil},
+        {{{}}, nil, nil, nil},
+        {{{1, 2, 3}}, 1, 2, 3},
+        {{list.pack(nil, 2, 3)}, nil, 2, 3},
+    } do
+        local args, wa, wb, wc = table.unpack(test)
+        local a, b, c = list.unpack(table.unpack(args))
+        t:expect(a == wa and b == wb and c == wc,
+                 "%s = (%s, %s, %s), want (%s, %s, %s)", t:func('unpack', args),
+                 t:repr(a), t:repr(b), t:repr(c),
+                 t:repr(wa), t:repr(wb), t:repr(wc))
+    end
+end
+
+function test_repr(t)
+    for _, test in ipairs{
+        {list.pack(), '{}'},
+        {list.pack(1), '{1}'},
+        {list.pack(1, "2", 3, nil), '{1, "2", 3, nil}'},
+    } do
+        local arg, want = table.unpack(test)
+        local got = util.repr(arg)
+        t:expect(got == want,
+                 "repr(%s) = %s, want %s", t:repr(arg), t:repr(got),
+                 t:repr(want))
+    end
 end

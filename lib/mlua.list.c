@@ -108,6 +108,23 @@ static int list_unpack(lua_State* ls) {
     return n;
 }
 
+static int list___repr(lua_State* ls) {
+    luaL_Buffer buf;
+    luaL_buffinit(ls, &buf);
+    luaL_addchar(&buf, '{');
+    lua_Integer len = length(ls, 1);
+    for (lua_Integer i = 0; i < len; ++i) {
+        if (i > 0) luaL_addstring(&buf, ", ");
+        lua_pushvalue(ls, 2);
+        lua_geti(ls, 1, i + 1);
+        lua_call(ls, 1, 1);
+        luaL_addvalue(&buf);
+    }
+    luaL_addchar(&buf, '}');
+    luaL_pushresult(&buf);
+    return 1;
+}
+
 static int list___call(lua_State* ls) {
     if (lua_isnoneornil(ls, 2)) {
         new_list(ls, 0);
@@ -138,6 +155,7 @@ static MLuaSym const list_syms[] = {
     MLUA_SYM_F(unpack, list_),
     MLUA_SYM_F(__len, list_),
     MLUA_SYM_F(__eq, list_),
+    MLUA_SYM_F(__repr, list_),
 };
 
 static MLuaSym const list_meta_syms[] = {

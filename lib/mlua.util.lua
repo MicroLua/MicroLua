@@ -14,6 +14,8 @@ function eq(a, b) return a == b end
 
 -- Return a string representation of the given value.
 function repr(v)
+    local ok, s = pcall(function() return v:__repr(repr) end)
+    if ok and s then return s end
     local typ = type(v)
     if typ == 'string' then return ('%q'):format(v)
     elseif typ ~= 'table' then return tostring(v) end
