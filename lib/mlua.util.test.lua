@@ -3,7 +3,7 @@ _ENV = mlua.Module(...)
 local util = require 'mlua.util'
 local table = require 'table'
 
-function test_str(t)
+function test_repr(t)
     for _, test in ipairs{
         {nil, 'nil'},
         {123, '123'},
@@ -17,9 +17,9 @@ function test_str(t)
          '{["a"] = {[1] = 1, [2] = 2}, ["b"] = {["c"] = 3, ["d"] = 4}}'},
     } do
         local v, want = table.unpack(test)
-        local got = util.str(v)
+        local got = util.repr(v)
         t:expect(got == want,
-                 "str(%s) = %s, want %s", t:str(v), t:str(got), t:str(want))
+                 "repr(%s) = %s, want %s", t:repr(v), t:repr(got), t:repr(want))
     end
 end
 
@@ -34,7 +34,8 @@ function test_keys(t)
         local got = util.keys(tab, filter)
         table.sort(got)
         t:expect(util.table_eq(got, want),
-                 "keys(%s) = %s, want %s", t:str(tab), t:str(got), t:str(want))
+                 "keys(%s) = %s, want %s", t:repr(tab), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -49,8 +50,8 @@ function test_values(t)
         local got = util.values(tab, filter)
         table.sort(got)
         t:expect(util.table_eq(got, want),
-                 "values(%s) = %s, want %s", t:str(tab), t:str(got),
-                 t:str(want))
+                 "values(%s) = %s, want %s", t:repr(tab), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -64,8 +65,8 @@ function test_sort(t)
         local items, comp, want = table.unpack(test)
         local got = util.sort(items, comp)
         t:expect(util.table_eq(got, want),
-                 "sort(%s) = %s, want %s", t:str(items), t:str(got),
-                 t:str(want))
+                 "sort(%s) = %s, want %s", t:repr(items), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -83,8 +84,8 @@ function test_table_eq(t)
         local a, b, want = table.unpack(test)
         local got = util.table_eq(a, b)
         t:expect(got == want,
-                 "table_eq(%s, %s) = %s, want %s", t:str(a), t:str(b),
-                 t:str(got), t:str(want))
+                 "table_eq(%s, %s) = %s, want %s", t:repr(a), t:repr(b),
+                 t:repr(got), t:repr(want))
     end
 end
 
@@ -97,7 +98,7 @@ function test_table_comp(t)
         local keys, want = table.unpack(test)
         local got = util.table_comp(keys)(a, b)
         t:expect(got == want,
-                 "table_comp(%s) = %s, want %s", t:str(keys), t:str(got),
-                 t:str(want))
+                 "table_comp(%s) = %s, want %s", t:repr(keys), t:repr(got),
+                 t:repr(want))
     end
 end

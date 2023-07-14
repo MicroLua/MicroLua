@@ -48,14 +48,14 @@ function Test:patch(tab, name, value)
     rawset(tab, name, value)
 end
 
-function Test:str(v)
-    return function() return util.str(v) end
+function Test:repr(v)
+    return function() return util.repr(v) end
 end
 
 function Test:func(name, args)
     return function()
         local parts = list()
-        for _, arg in list.ipairs(args) do parts:append(util.str(arg)) end
+        for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
         return ('%s(%s)'):format(name, table.concat(parts, ', '))
     end
 end

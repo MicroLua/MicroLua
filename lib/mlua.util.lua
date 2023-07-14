@@ -13,13 +13,13 @@ function ident(...) return ... end
 function eq(a, b) return a == b end
 
 -- Return a string representation of the given value.
-function str(v)
+function repr(v)
     local typ = type(v)
     if typ == 'string' then return ('%q'):format(v)
     elseif typ ~= 'table' then return tostring(v) end
     local parts = list()
     for k, v in pairs(v) do
-        parts:append(('[%s] = %s'):format(str(k), str(v)))
+        parts:append(('[%s] = %s'):format(repr(k), repr(v)))
     end
     table.sort(parts)
     return '{' .. table.concat(parts, ', ') .. '}'

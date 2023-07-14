@@ -13,7 +13,8 @@ function test_list(t)
         local arg, want = table.unpack(test)
         local got = list(arg)
         t:expect(util.table_eq(got, want),
-                 "list(%s) = %s, want %s", t:str(arg), t:str(got), t:str(want))
+                 "list(%s) = %s, want %s", t:repr(arg), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -27,7 +28,8 @@ function test_len(t)
         local arg, want = table.unpack(test)
         local got = list.len(arg)
         t:expect(got == want,
-                 "len(%s) = %s, want %s", t:str(arg), t:str(got), t:str(want))
+                 "len(%s) = %s, want %s", t:repr(arg), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -45,12 +47,12 @@ function test_eq(t)
         local a, b, want = table.unpack(test)
         local got = list.eq(a, b)
         t:expect(got == want,
-                 "eq(%s, %s) = %s, want %s", t:str(a), t:str(b), t:str(got),
-                 t:str(want))
+                 "eq(%s, %s) = %s, want %s", t:repr(a), t:repr(b), t:repr(got),
+                 t:repr(want))
         local got = list.eq(b, a)
         t:expect(got == want,
-                 "eq(%s, %s) = %s, want %s", t:str(b), t:str(a), t:str(got),
-                 t:str(want))
+                 "eq(%s, %s) = %s, want %s", t:repr(b), t:repr(a), t:repr(got),
+                 t:repr(want))
     end
 end
 
@@ -68,11 +70,11 @@ function test_ipairs(t)
             vs:append(v)
         end
         t:expect(is == wis,
-                 "ipairs(%s) indexes %s, want %s", t:str(arg), t:str(is),
-                 t:str(wis))
+                 "ipairs(%s) indexes %s, want %s", t:repr(arg), t:repr(is),
+                 t:repr(wis))
         t:expect(vs == wvs,
-                 "ipairs(%s) values %s, want %s", t:str(arg), t:str(vs),
-                 t:str(wvs))
+                 "ipairs(%s) values %s, want %s", t:repr(arg), t:repr(vs),
+                 t:repr(wvs))
     end
 end
 
@@ -86,8 +88,8 @@ function test_append(t)
         local arg, els, want = table.unpack(test)
         local got = list.append(arg, list.unpack(els))
         t:expect(util.table_eq(got, want),
-                 "append(%s) = %s, want %s", t:str(list), t:str(got),
-                 t:str(want))
+                 "append(%s) = %s, want %s", t:repr(list), t:repr(got),
+                 t:repr(want))
     end
 end
 
