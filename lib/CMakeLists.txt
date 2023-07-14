@@ -264,7 +264,10 @@ target_link_libraries(mlua_mod_pico_time INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_time_test pico.time.test.lua)
 target_link_libraries(mlua_mod_pico_time_test INTERFACE
+    mlua_mod_mlua_int64
+    mlua_mod_mlua_util
     mlua_mod_pico_time
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico_unique_id pico.unique_id pico.unique_id.c)
