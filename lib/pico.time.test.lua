@@ -19,8 +19,7 @@ function test_time_computation(t)
         {'is_nil_time', {time.nil_time}, true},
     } do
         local fn, args, want = table.unpack(test)
-        local got = time[fn](table.unpack(args))
-        t:expect(t:equal(t:func(fn, args), got, want))
+        t:expect(t:eq(want)(time)[fn](table.unpack(args)))
     end
 end
 

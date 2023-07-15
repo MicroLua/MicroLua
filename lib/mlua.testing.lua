@@ -30,6 +30,50 @@ function Buffer:write(...)
     end
 end
 
+local Matcher = {__name = 'Matcher'}
+local mkey = {}
+
+local function matcher(root, pred)
+    return setmetatable({[mkey] = {root = root, pred = pred, [0] = 0}}, Matcher)
+end
+
+function Matcher:__index(k)
+    list.append(self[mkey], {
+        function(s)
+            -- TODO: Use [k] when not a symbol
+            return ('%s%s%s'):format(s, s ~= '' and '.' or '', k)
+        end,
+        function(v) return v[k] end,
+    })
+    return self
+end
+
+function Matcher:__call(...)
+    local args = list.pack(...)
+    list.append(self[mkey], {
+        function(s)
+            local parts = list()
+            for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
+            return ('%s(%s)'):format(s, table.concat(parts, ', '))
+        end,
+        function(v) return v(args:unpack()) end,
+    })
+    return self
+end
+
+function Matcher:__repr(repr)
+    local s = ''
+    for _, it in list.ipairs(self[mkey]) do s = it[1](s) end
+    return s
+end
+
+function Matcher:__match(fail)
+    local m = self[mkey]
+    local v = m.root
+    for _, it in list.ipairs(m) do v = it[2](v) end
+    return m.pred(self, v, fail)
+end
+
 local PASS = '@{+GREEN}PASS@{NORM}'
 local SKIP = '@{+YELLOW}SKIP@{NORM}'
 local FAIL = '@{+RED}FAIL@{NORM}'
@@ -87,16 +131,30 @@ function Test:skip(format, ...)
 end
 
 function Test:expect(cond, format, ...)
-    if not cond then return self:error(format, ...) end
+    return self:_expect(cond, self.error, format, ...)
 end
 
 function Test:assert(cond, format, ...)
-    if not cond then return self:fatal(format, ...) end
+    return self:_expect(cond, self.fatal, format, ...)
 end
 
-function Test:equal(what, got, want)
-    -- TODO: Add optional comparison function
-    return got == want, '%s = %s, want %s', what, got, want
+function Test:eq(want, cmp, fix)
+    return function(root)
+        return matcher(root, function(m, got, fail)
+            if fix then got = fix(got) end
+            if (cmp or util.eq)(got, want) then return end
+            return fail("%s = %s, want %s", util.repr(m), util.repr(got),
+                        util.repr(want))
+        end)
+    end
+end
+
+function Test:_expect(cond, fail, format, ...)
+    local mt = getmetatable(cond)
+    if mt == Matcher then
+        return mt.__match(cond, function(f, ...) return fail(self, f, ...) end)
+    end
+    if not cond then return fail(self, format, ...) end
 end
 
 function Test:_log(prefix, format, ...)

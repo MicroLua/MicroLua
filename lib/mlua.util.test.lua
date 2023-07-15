@@ -17,9 +17,7 @@ function test_repr(t)
          '{["a"] = {[1] = 1, [2] = 2}, ["b"] = {["c"] = 3, ["d"] = 4}}'},
     } do
         local v, want = table.unpack(test)
-        local got = util.repr(v)
-        t:expect(got == want,
-                 "repr(%s) = %s, want %s", t:repr(v), t:repr(got), t:repr(want))
+        t:expect(t:eq(want)(util).repr(v))
     end
 end
 
@@ -31,11 +29,7 @@ function test_keys(t)
          {[0] = 1, 'c'}},
     } do
         local tab, filter, want = table.unpack(test)
-        local got = util.keys(tab, filter)
-        table.sort(got)
-        t:expect(util.table_eq(got, want),
-                 "keys(%s) = %s, want %s", t:repr(tab), t:repr(got),
-                 t:repr(want))
+        t:expect(t:eq(want, util.table_eq, util.sort)(util).keys(tab, filter))
     end
 end
 
@@ -47,11 +41,7 @@ function test_values(t)
          {[0] = 1, 6}},
     } do
         local tab, filter, want = table.unpack(test)
-        local got = util.values(tab, filter)
-        table.sort(got)
-        t:expect(util.table_eq(got, want),
-                 "values(%s) = %s, want %s", t:repr(tab), t:repr(got),
-                 t:repr(want))
+        t:expect(t:eq(want, util.table_eq, util.sort)(util).values(tab, filter))
     end
 end
 
@@ -63,10 +53,7 @@ function test_sort(t)
         {{1, 4, 2, 8, 5}, function(a, b) return a > b end, {8, 5, 4, 2, 1}},
     } do
         local items, comp, want = table.unpack(test)
-        local got = util.sort(items, comp)
-        t:expect(util.table_eq(got, want),
-                 "sort(%s) = %s, want %s", t:repr(items), t:repr(got),
-                 t:repr(want))
+        t:expect(t:eq(want, util.table_eq)(util).sort(items, comp))
     end
 end
 
@@ -82,10 +69,7 @@ function test_table_eq(t)
         {{a = 1, b = 2}, {a = 1, b = 3}, false},
     } do
         local a, b, want = table.unpack(test)
-        local got = util.table_eq(a, b)
-        t:expect(got == want,
-                 "table_eq(%s, %s) = %s, want %s", t:repr(a), t:repr(b),
-                 t:repr(got), t:repr(want))
+        t:expect(t:eq(want)(util).table_eq(a, b))
     end
 end
 
@@ -96,9 +80,6 @@ function test_table_comp(t)
         {{1, 2, 3}, true}, {{2, 2, 2}, false}, {{3, 2, 1}, false},
     } do
         local keys, want = table.unpack(test)
-        local got = util.table_comp(keys)(a, b)
-        t:expect(got == want,
-                 "table_comp(%s) = %s, want %s", t:repr(keys), t:repr(got),
-                 t:repr(want))
+        t:expect(t:eq(want)(util).table_comp(keys)(a, b))
     end
 end
