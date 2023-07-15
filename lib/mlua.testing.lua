@@ -30,13 +30,18 @@ function Buffer:write(...)
     end
 end
 
+local PASS = '@{+GREEN}PASS@{NORM}'
+local SKIP = '@{+YELLOW}SKIP@{NORM}'
+local FAIL = '@{+RED}FAIL@{NORM}'
+local ERROR = '@{+RED}ERROR@{NORM}'
+
 Test = oo.class('Test')
 Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
     if not parent then
-        self.failed_cnt, self.skipped_cnt, self.passed_cnt = 0, 0, 0
+        self.nerror, self.nfail, self.nskip, self.npass = 0, 0, 0, 0
     end
 end
 
@@ -60,14 +65,14 @@ function Test:func(name, args)
     end
 end
 
-function Test:printf(format, ...) return io.printf(format, ...) end
+function Test:printf(format, ...) return io.aprintf(format, ...) end
 
 function Test:log(format, ...) return self:_log('', format, ...) end
 
 function Test:error(format, ...)
-    self._failed = true
+    self._fail = true
     self:enable_output()
-    return self:_log("ERROR: ", format, ...)
+    return self:_log(FAIL, format, ...)
 end
 
 function Test:fatal(format, ...)
@@ -76,8 +81,8 @@ function Test:fatal(format, ...)
 end
 
 function Test:skip(format, ...)
-    self._skipped = true
-    self:_log("SKIP: ", format, ...)
+    self._skip = true
+    self:_log(SKIP, format, ...)
     error(err_terminate)
 end
 
@@ -99,9 +104,9 @@ function Test:_log(prefix, format, ...)
     for i, arg in args:ipairs() do
         if type(arg) == 'function' then args[i] = arg() end
     end
-    local msg = format:format(args:unpack())
-    local eol = msg:sub(-1) ~= '\n' and '\n' or ''
-    return io.printf('%s%s%s%s', prefix, self:_location(1), msg, eol)
+    local msg = io.aformat(format, args:unpack())
+    return io.printf('%s%s%s%s%s', io.ansi(prefix), prefix ~= '' and ': ' or '',
+                     self:_location(1), msg, msg:sub(-1) ~= '\n' and '\n' or '')
 end
 
 function Test:_location(level)
@@ -114,7 +119,9 @@ function Test:_location(level)
             local i = 1
             while true do
                 local name, value = debug.getlocal(level, i)
-                if not name then return ('%s:%s: '):format(src, line) end
+                if not name then
+                    return io.aformat('@{CYAN}%s:%s@{NORM}: ', src, line)
+                end
                 if value == self.helper then break end
                 i = i + 1
             end
@@ -124,7 +131,7 @@ function Test:_location(level)
 end
 
 function Test:failed()
-    if self._failed then return true end
+    if self._error or self._fail then return true end
     for _, child in list.ipairs(self.children) do
         if child:failed() then return true end
     end
@@ -132,7 +139,8 @@ function Test:failed()
 end
 
 function Test:result()
-    return self:failed() and 'FAIL' or self._skipped and 'SKIP' or 'PASS'
+    return io.ansi(self._error and ERROR or self:failed() and FAIL
+                   or self._skip and SKIP or PASS)
 end
 
 function Test:run(name, fn)
@@ -143,6 +151,7 @@ function Test:run(name, fn)
 end
 
 function Test:_run(fn)
+    self:_progress_tick()
     self:_capture_output()
     local start = time.get_absolute_time()
     self:_pcall(fn, self)
@@ -152,14 +161,14 @@ function Test:_run(fn)
     end
     self._cleanups = nil
     self:_restore_output()
-    if not self._out then io.printf("----- END   %s\n", self.name) end
-    local keep = not self._parent._parent or self.children or self:failed()
-    self:_walk_up(function(t)
+    local keep = self.children or self:failed()
+    self:_up(function(t)
         keep = keep or t._full_results
-        if not t.failed_cnt then return end
-        if self:failed() then t.failed_cnt = t.failed_cnt + 1
-        elseif self._skipped then t.skipped_cnt = t.skipped_cnt + 1
-        else t.passed_cnt = t.passed_cnt + 1 end
+        if not t.nerror then return end
+        if self._error then t.nerror = t.nerror + 1
+        elseif self:failed() then t.nfail = t.nfail + 1
+        elseif self._skip then t.nskip = t.nskip + 1
+        else t.npass = t.npass + 1 end
     end)
     self._parent, self._out = nil, nil
     return keep
@@ -167,16 +176,39 @@ end
 
 function Test:_pcall(fn, ...)
     local ok, err = pcall(fn, ...)
-    if not ok and err ~= err_terminate then return self:error("%s", err) end
+    if not ok and err ~= err_terminate then
+        self._error = true
+        self:enable_output()
+        return self:_log(ERROR, "%s", err)
+    end
+end
+
+function Test:_progress_tick()
+    local progress = self:_attr('_progress')
+    if progress then return progress:write('.') end
+end
+
+function Test:_progress_end()
+    self:_up(function(t)
+        if not t._parent and t._progress then
+            t._progress:write('\n')
+            t._progress = nil
+        end
+    end)
 end
 
 function Test:enable_output()
     if not self._out then return end
+    self:_progress_end()
     local out = self._out
     self._out = nil
     self:_restore_output()
     if self._parent then self._parent:enable_output() end
-    io.printf("----- BEGIN %s\n", self.name)
+    local level = -1
+    self:_up(function(t) level = level + 1 end)
+    io.aprintf("@{BLUE}%s@{NORM} @{+WHITE}%s@{NORM} @{BLUE}%s@{NORM}\n",
+               ('-'):rep(2 * level), self.name,
+               ('-'):rep(77 - 2 * level - #self.name))
     out:replay(stdout)
 end
 
@@ -190,7 +222,7 @@ function Test:_restore_output()
     _G.stdout, self._old_out = self._old_out, nil
 end
 
-function Test:_walk_up(fn)
+function Test:_up(fn)
     local t = self
     while t do
         local res = fn(t)
@@ -200,7 +232,7 @@ function Test:_walk_up(fn)
 end
 
 function Test:_attr(name)
-    return self:_walk_up(function(t) return t[name] end)
+    return self:_up(function(t) return t[name] end)
 end
 
 local fn_comp = util.table_comp{1, 2}
@@ -232,7 +264,8 @@ function Test:run_modules(mod_pat, func_pat)
 end
 
 function Test:main(runs)
-    io.printf("Running tests\n")
+    io.aprintf("@{CLR}Running tests\n")
+    self._progress = stdout
     local start = time.get_absolute_time()
     if runs > 1 then
         for i = 1, runs do
@@ -243,11 +276,13 @@ function Test:main(runs)
     end
     local dt = time.get_absolute_time() - start
     local mem = collectgarbage('count') * 1024
+    self:_progress_end()
     io.write("\n")
     self:print_result()
-    io.printf("\nTests: %d passed, %d skipped, %d failed, %d total\n",
-               self.passed_cnt, self.skipped_cnt, self.failed_cnt,
-               self.passed_cnt + self.skipped_cnt + self.failed_cnt)
+    if list.len(self.children) > 0 then io.write("\n") end
+    io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
+              self.npass, self.nskip, self.nfail, self.nerror,
+              self.npass + self.nskip + self.nfail + self.nerror)
     io.printf("Duration: %.3f s, memory: %d bytes\n", dt / 1e6, mem)
     io.printf("Result: %s\n\n", self:result())
 end
@@ -279,6 +314,8 @@ function pmain()
             if c == '\n' then break end
             line = line .. c
         end
+        -- TODO: Terminate on first failure
+        -- TODO: Launch repl on failure
         if line == 'fo' then full_output = not full_output
         elseif line == 'fr' then full_results = not full_results
         elseif line == 'q' then break

@@ -156,6 +156,7 @@ static MLuaSym const list_syms[] = {
     MLUA_SYM_F(__len, list_),
     MLUA_SYM_F(__eq, list_),
     MLUA_SYM_F(__repr, list_),
+    // TODO: concat, insert, move, remove, slice, sort
 };
 
 static MLuaSym const list_meta_syms[] = {
