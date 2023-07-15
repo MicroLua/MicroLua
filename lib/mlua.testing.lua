@@ -47,6 +47,8 @@ function Expr:__index(k)
 end
 
 function Expr:__call(...)
+    -- TODO: Add support for v:f() calls, by detecting if first argument is self
+    -- TODO: Add support for calls returning multiple values
     local args = list.pack(...)
     list.append(self[ekey], {
         function(s)
@@ -60,14 +62,15 @@ function Expr:__call(...)
 end
 
 function Expr:__repr(repr)
-    local s = ''
-    for _, it in list.ipairs(self[ekey]) do s = it[1](s) end
+    local e = self[ekey]
+    local s = e.n or ''
+    for _, it in list.ipairs(e) do s = it[1](s) end
     return s
 end
 
 function Expr:__eval()
     local e = self[ekey]
-    local v = e.root
+    local v = e.r
     for _, it in list.ipairs(e) do v = it[2](v) end
     return v
 end
@@ -144,8 +147,10 @@ function Test:func(name, args)
     end
 end
 
-function Test:expr(root)
-    return setmetatable({[ekey] = {root = root, [0] = 0}}, Expr)
+function Test:expr(root, name)
+    -- TODO: Rename to __call?
+    -- TODO: When root == nil, look up from the parent scope => t:expr().int64()
+    return setmetatable({[ekey] = {r = root, n = name, [0] = 0}}, Expr)
 end
 
 function Test:printf(format, ...) return io.aprintf(format, ...) end
@@ -258,12 +263,14 @@ function Test:_run(fn)
 end
 
 function Test:_pcall(fn, ...)
-    local ok, err = pcall(fn, ...)
-    if not ok and err ~= err_terminate then
-        self._error = true
-        self:enable_output()
-        return self:_log(ERROR, "%s", err)
-    end
+    return xpcall(fn, function(err)
+        if err ~= err_terminate then
+            self._error = true
+            self:enable_output()
+            return self:_log(ERROR, "%s\n%s", err, debug.traceback(nil, 2))
+        end
+        return err
+    end, ...)
 end
 
 function Test:_progress_tick()
@@ -409,6 +416,8 @@ function pmain()
 end
 
 function main()
-    ok, err = pcall(pmain)
-    if not ok then io.printf("ERROR: %s\n", err) end
+    return xpcall(pmain, function(err)
+        io.printf("ERROR: %s\n%s\n", err, debug.traceback(nil, 2))
+        return err
+    end)
 end
