@@ -74,3 +74,7 @@ function test_Function_close(t)
     end)
     t:expect(called, "To-be-closed function wasn't called on error")
 end
+
+function test_print(t)
+    -- TODO
+end

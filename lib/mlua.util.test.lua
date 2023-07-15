@@ -17,7 +17,7 @@ function test_repr(t)
          '{["a"] = {[1] = 1, [2] = 2}, ["b"] = {["c"] = 3, ["d"] = 4}}'},
     } do
         local v, want = table.unpack(test)
-        t:expect(t:eq(want)(util).repr(v))
+        t:expect(t:expr(util).repr(v)):eq(want)
     end
 end
 
@@ -29,7 +29,8 @@ function test_keys(t)
          {[0] = 1, 'c'}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:eq(want, util.table_eq, util.sort)(util).keys(tab, filter))
+        t:expect(t:expr(util).keys(tab, filter)):fix(util.sort)
+            :eq(want, util.table_eq)
     end
 end
 
@@ -41,7 +42,8 @@ function test_values(t)
          {[0] = 1, 6}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:eq(want, util.table_eq, util.sort)(util).values(tab, filter))
+        t:expect(t:expr(util).values(tab, filter)):fix(util.sort)
+            :eq(want, util.table_eq)
     end
 end
 
@@ -53,7 +55,7 @@ function test_sort(t)
         {{1, 4, 2, 8, 5}, function(a, b) return a > b end, {8, 5, 4, 2, 1}},
     } do
         local items, comp, want = table.unpack(test)
-        t:expect(t:eq(want, util.table_eq)(util).sort(items, comp))
+        t:expect(t:expr(util).sort(items, comp)):eq(want, util.table_eq)
     end
 end
 
@@ -69,7 +71,7 @@ function test_table_eq(t)
         {{a = 1, b = 2}, {a = 1, b = 3}, false},
     } do
         local a, b, want = table.unpack(test)
-        t:expect(t:eq(want)(util).table_eq(a, b))
+        t:expect(t:expr(util).table_eq(a, b)):eq(want)
     end
 end
 
@@ -80,6 +82,6 @@ function test_table_comp(t)
         {{1, 2, 3}, true}, {{2, 2, 2}, false}, {{3, 2, 1}, false},
     } do
         local keys, want = table.unpack(test)
-        t:expect(t:eq(want)(util).table_comp(keys)(a, b))
+        t:expect(t:expr(util).table_comp(keys)(a, b))
     end
 end

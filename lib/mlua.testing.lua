@@ -30,27 +30,25 @@ function Buffer:write(...)
     end
 end
 
-local Matcher = {__name = 'Matcher'}
-local mkey = {}
+local Expr = {__name = 'Expr'}
+local ekey = {}
 
-local function matcher(root, pred)
-    return setmetatable({[mkey] = {root = root, pred = pred, [0] = 0}}, Matcher)
-end
-
-function Matcher:__index(k)
-    list.append(self[mkey], {
+function Expr:__index(k)
+    list.append(self[ekey], {
         function(s)
-            -- TODO: Use [k] when not a symbol
-            return ('%s%s%s'):format(s, s ~= '' and '.' or '', k)
+            if type(k) == 'string' and k:find('^[%a_][%w_]*$') then
+                return ('%s%s%s'):format(s, s ~= '' and '.' or '', k)
+            end
+            return ('%s[%s]'):format(s, util.repr(k))
         end,
         function(v) return v[k] end,
     })
     return self
 end
 
-function Matcher:__call(...)
+function Expr:__call(...)
     local args = list.pack(...)
-    list.append(self[mkey], {
+    list.append(self[ekey], {
         function(s)
             local parts = list()
             for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
@@ -61,17 +59,54 @@ function Matcher:__call(...)
     return self
 end
 
-function Matcher:__repr(repr)
+function Expr:__repr(repr)
     local s = ''
-    for _, it in list.ipairs(self[mkey]) do s = it[1](s) end
+    for _, it in list.ipairs(self[ekey]) do s = it[1](s) end
     return s
 end
 
-function Matcher:__match(fail)
-    local m = self[mkey]
-    local v = m.root
-    for _, it in list.ipairs(m) do v = it[2](v) end
-    return m.pred(self, v, fail)
+function Expr:__eval()
+    local e = self[ekey]
+    local v = e.root
+    for _, it in list.ipairs(e) do v = it[2](v) end
+    return v
+end
+
+local Matcher = oo.class('Matcher')
+
+function Matcher:__init(value, t, fail)
+    self._v, self._t, self._f = value, t, fail
+end
+
+function Matcher:_eval()
+    if not self._has_ev then
+        local v = self._v
+        local ok, e = pcall(function() return getmetatable(v).__eval end)
+        if ok and e then v = e(v) end
+        self._ev, self._has_ev = v, true
+    end
+    return self._ev
+end
+
+function Matcher:_fail(format, ...) return self._f(self._t, format, ...) end
+
+function Matcher:label(s)
+    self._l = s
+    return self
+end
+
+function Matcher:fix(fn)
+    self._ev = fn(self:_eval())
+    return self
+end
+
+function Matcher:eq(want, cmp)
+    local got = self:_eval()
+    if not (cmp or util.eq)(got, want) then
+        self:_fail("%s = %s, want %s", self._l or util.repr(self._v),
+                   util.repr(got), util.repr(want))
+    end
+    return self
 end
 
 local PASS = '@{+GREEN}PASS@{NORM}'
@@ -85,7 +120,7 @@ Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
     if not parent then
-        self.nerror, self.nfail, self.nskip, self.npass = 0, 0, 0, 0
+        self.npass, self.nskip, self.nfail, self.nerror = 0, 0, 0, 0
     end
 end
 
@@ -109,9 +144,19 @@ function Test:func(name, args)
     end
 end
 
+function Test:expr(root)
+    return setmetatable({[ekey] = {root = root, [0] = 0}}, Expr)
+end
+
 function Test:printf(format, ...) return io.aprintf(format, ...) end
 
 function Test:log(format, ...) return self:_log('', format, ...) end
+
+function Test:skip(format, ...)
+    self._skip = true
+    self:_log(SKIP, format, ...)
+    error(err_terminate)
+end
 
 function Test:error(format, ...)
     self._fail = true
@@ -124,12 +169,6 @@ function Test:fatal(format, ...)
     error(err_terminate)
 end
 
-function Test:skip(format, ...)
-    self._skip = true
-    self:_log(SKIP, format, ...)
-    error(err_terminate)
-end
-
 function Test:expect(cond, format, ...)
     return self:_expect(cond, self.error, format, ...)
 end
@@ -138,22 +177,8 @@ function Test:assert(cond, format, ...)
     return self:_expect(cond, self.fatal, format, ...)
 end
 
-function Test:eq(want, cmp, fix)
-    return function(root)
-        return matcher(root, function(m, got, fail)
-            if fix then got = fix(got) end
-            if (cmp or util.eq)(got, want) then return end
-            return fail("%s = %s, want %s", util.repr(m), util.repr(got),
-                        util.repr(want))
-        end)
-    end
-end
-
 function Test:_expect(cond, fail, format, ...)
-    local mt = getmetatable(cond)
-    if mt == Matcher then
-        return mt.__match(cond, function(f, ...) return fail(self, f, ...) end)
-    end
+    if not format then return Matcher(cond, self, fail) end
     if not cond then return fail(self, format, ...) end
 end
 
@@ -222,7 +247,7 @@ function Test:_run(fn)
     local keep = self.children or self:failed()
     self:_up(function(t)
         keep = keep or t._full_results
-        if not t.nerror then return end
+        if not t.npass then return end
         if self._error then t.nerror = t.nerror + 1
         elseif self:failed() then t.nfail = t.nfail + 1
         elseif self._skip then t.nskip = t.nskip + 1
