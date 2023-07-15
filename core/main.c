@@ -47,26 +47,22 @@ static int StdOutStream_write(lua_State* ls) {
     return 1;
 }
 
-static void std_write(lua_State* ls, int index, char const* s, size_t len) {
-    index = lua_absindex(ls, index);
-    lua_pushvalue(ls, index + 1);
-    lua_pushvalue(ls, index);
-    lua_pushlstring(ls, s, len);
+static void std_write(lua_State* ls, char const* s) {
+    lua_getglobal(ls, "stdout");
+    lua_getfield(ls, -1, "write");
+    lua_rotate(ls, -2, 1);
+    if (s != NULL) { lua_pushstring(ls, s); } else { lua_rotate(ls, -3, -1); }
     lua_call(ls, 2, 0);
 }
 
 static int std_print(lua_State* ls) {
     int top = lua_gettop(ls);
-    lua_getglobal(ls, "stdout");
-    lua_getfield(ls, -1, "write");
     for (int i = 1; i <= top; ++i) {
-        if (i > 1) std_write(ls, top + 1, "\t", 1);
-        size_t len;
-        char const* s = luaL_tolstring(ls, i, &len);
-        std_write(ls, top + 1, s, len);
-        lua_pop(ls, 1);
+        if (i > 1) std_write(ls, "\t");
+        luaL_tolstring(ls, i, NULL);
+        std_write(ls, NULL);
     }
-    std_write(ls, top + 1, "\n", 1);
+    std_write(ls, "\n");
     return 0;
 }
 
