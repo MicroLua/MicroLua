@@ -16,6 +16,8 @@ function eq(a, b) return a == b end
 function repr(v)
     local ok, r = pcall(function() return getmetatable(v).__repr end)
     if ok and r then return r(v, repr) end
+    -- TODO: Format numbers to full accuracy
+    -- TODO: Detect lists and use simpler formatting
     local typ = type(v)
     if typ == 'string' then return ('%q'):format(v)
     elseif typ ~= 'table' then return tostring(v) end
@@ -62,10 +64,10 @@ end
 -- Return true iff the key / value pairs of the given tables compare equal.
 function table_eq(a, b)
     for k, v in pairs(a) do
-        if b[k] ~= v then return false end
+        if rawget(b, k) ~= v then return false end
     end
     for k in pairs(b) do
-        if a[k] == nil then return false end
+        if rawget(a, k) == nil then return false end
     end
     return true
 end
