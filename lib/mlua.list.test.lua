@@ -11,10 +11,8 @@ function test_list(t)
         {{[0] = 2}, {[0] = 2}},
     } do
         local arg, want = table.unpack(test)
-        local got = list(arg)
-        t:expect(util.table_eq(got, want),
-                 "list(%s) = %s, want %s", t:repr(arg), t:repr(got),
-                 t:repr(want))
+        -- TODO: t:expect(t:expr().list(arg)):eq(want)
+        t:expect(t:expr(list, 'list')(arg)):eq(want)
     end
 end
 
@@ -26,10 +24,7 @@ function test_len(t)
         {{[0] = 7}, 7},
     } do
         local arg, want = table.unpack(test)
-        local got = list.len(arg)
-        t:expect(got == want,
-                 "len(%s) = %s, want %s", t:repr(arg), t:repr(got),
-                 t:repr(want))
+        t:expect(t:expr(list).len(arg)):eq(want)
     end
 end
 
@@ -45,14 +40,8 @@ function test_eq(t)
         {{1, 2, 3, a = 4}, {1, 2, 3, b = 5}, true},
     } do
         local a, b, want = table.unpack(test)
-        local got = list.eq(a, b)
-        t:expect(got == want,
-                 "eq(%s, %s) = %s, want %s", t:repr(a), t:repr(b), t:repr(got),
-                 t:repr(want))
-        local got = list.eq(b, a)
-        t:expect(got == want,
-                 "eq(%s, %s) = %s, want %s", t:repr(b), t:repr(a), t:repr(got),
-                 t:repr(want))
+        t:expect(t:expr(list).eq(a, b)):eq(want)
+        t:expect(t:expr(list).eq(b, a)):eq(want)
     end
 end
 
@@ -80,16 +69,16 @@ end
 
 function test_append(t)
     for _, test in ipairs{
-        {nil, {1}, {[0] = 1, 1}},
-        {{}, {1}, {[0] = 1, 1}},
-        {{1, 2}, {3}, {[0] = 3, 1, 2, 3}},
+        {nil, {1, 2}, {[0] = 2, 1, 2}},
+        {{}, {3, 4, 5}, {[0] = 3, 3, 4, 5}},
+        {{1, 2}, {3, 4}, {[0] = 4, 1, 2, 3, 4}},
         {{[0] = 2, 1, 2}, {3}, {[0] = 3, 1, 2, 3}},
+        {nil, {}, {[0] = 0}},
+        {{1, 2}, {}, {[0] = 2, 1, 2}},
     } do
         local arg, els, want = table.unpack(test)
-        local got = list.append(arg, list.unpack(els))
-        t:expect(util.table_eq(got, want),
-                 "append(%s) = %s, want %s", t:repr(list), t:repr(got),
-                 t:repr(want))
+        t:expect(t:expr(list).append(arg, list.unpack(els)))
+            :eq(want, util.table_eq)
     end
 end
 
@@ -102,8 +91,7 @@ function test_pack(t)
         {list.pack(nil, nil, nil), list{[0] = 3}},
     } do
         local got, want = table.unpack(test)
-        t:expect(got == want,
-                 "pack() = %s, want %s", t:repr(got), t:repr(want))
+        t:expect(got):label("pack()"):eq(want)
     end
 end
 
@@ -113,8 +101,10 @@ function test_unpack(t)
         {{{}}, nil, nil, nil},
         {{{1, 2, 3}}, 1, 2, 3},
         {{list.pack(nil, 2, 3)}, nil, 2, 3},
+        -- TODO: Add test cases with index arguments
     } do
         local args, wa, wb, wc = table.unpack(test)
+        -- TODO: Test round-tripping instead of using multiple assignment
         local a, b, c = list.unpack(table.unpack(args))
         t:expect(a == wa and b == wb and c == wc,
                  "%s = (%s, %s, %s), want (%s, %s, %s)", t:func('unpack', args),
@@ -130,9 +120,6 @@ function test_repr(t)
         {list.pack(1, "2", 3, nil), '{1, "2", 3, nil}'},
     } do
         local arg, want = table.unpack(test)
-        local got = util.repr(arg)
-        t:expect(got == want,
-                 "repr(%s) = %s, want %s", t:repr(arg), t:repr(got),
-                 t:repr(want))
+        t:expect(t:expr(util).repr(arg)):eq(want)
     end
 end

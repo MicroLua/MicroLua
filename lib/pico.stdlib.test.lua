@@ -10,8 +10,7 @@ end
 
 local function expect_clk_sys(t, want)
     local _helper = t.helper
-    local got = clocks.get_hz(clocks.clk_sys)
-    t:expect(got == want, "Unexpected clk_sys freq: got %s, want %s", got, want)
+    t:expect(clocks.get_hz(clocks.clk_sys)):label("clk_sys"):eq(want)
 end
 
 function test_sys_clock(t)

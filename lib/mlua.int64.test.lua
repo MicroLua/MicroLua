@@ -9,21 +9,6 @@ local table = require 'table'
 local integer_bits = string.packsize('j') * 8
 local number_bits = string.packsize('n') * 8
 
-local function arguments(args)
-    local fmt = '('
-    for i, arg in ipairs(args) do
-        if i > 1 then fmt = fmt .. ', ' end
-        if (type(arg) == 'number' and math.type(arg) ~= 'integer')
-                or (type(arg) == 'userdata' and arg.__name == 'int64') then
-            fmt = fmt .. '%s'
-        else
-            fmt = fmt .. '%q'
-        end
-    end
-    fmt = fmt .. ')'
-    return fmt:format(table.unpack(args))
-end
-
 function set_up(t)
     local v = int64(0)
     t:printf("integer: %d bits, number: %d bits, int64 type: %s\n",
@@ -45,7 +30,7 @@ function test_limits(t)
         {"int64.max + 1", int64.max + 1, int64.min},
     } do
         local desc, value, want = table.unpack(test)
-        t:expect(value == want, "%s = %s, want %s", desc, value, want)
+        t:expect(value):label(desc):eq(want)
     end
 end
 
@@ -60,8 +45,7 @@ function test_hex(t)
         {{int64(0x1234), 16}, '0000000000001234'},
     } do
         local args, want = table.unpack(test)
-        local got = int64.hex(table.unpack(args))
-        t:expect(got == want, "hex%s = %q, want %q", arguments(args), got, want)
+        t:expect(t:expr(int64).hex(table.unpack(args))):eq(want)
     end
 end
 
@@ -78,8 +62,7 @@ function test_tointeger(t)
          math.mininteger <= int64.min and -9223372036854775808 or nil},
     } do
         local value, want = table.unpack(test)
-        local got = int64.tointeger(value)
-        t:expect(got == want, "tointeger(%s) = %s, want %s", value, got, want)
+        t:expect(t:expr(int64).tointeger(value)):eq(want)
     end
 end
 
@@ -92,8 +75,7 @@ function test_tonumber(t)
         {int64.min, -9223372036854775808.0},
     } do
         local value, want = table.unpack(test)
-        local got = int64.tonumber(value)
-        t:expect(got == want, "tonumber(%s) = %s, want %s", value, got, want)
+        t:expect(t:expr(int64).tonumber(value)):eq(want)
     end
 end
 
@@ -144,9 +126,8 @@ function test_cast_to_int64(t)
     } do
         if test == skip then goto continue end
         local args, want = table.unpack(test)
-        local got = int64(table.unpack(args))
-        t:expect(got == want,
-                 "int64%s = %s, want %s", arguments(args), got, want)
+        -- TODO: t:expect(t:expr().int64)(table.unpack(args))):eq(want)
+        t:expect(t:expr(int64, 'int64')(table.unpack(args))):eq(want)
         ::continue::
     end
 end
@@ -392,8 +373,8 @@ function test_tostring(t)
         {int64.min, '-9223372036854775808'},
     } do
         local value, want = table.unpack(test)
-        local got = tostring(value)
-        t:expect(got == want, "tostring(%s) = %s, want %s", value, got, want)
+        -- TODO: t:expect(t:expr().tostring(value)):eq(want)
+        t:expect(t:expr(tostring, 'tostring')(value)):eq(want)
     end
 end
 

@@ -8,8 +8,7 @@ function test_read(t)
     function Reader:read(arg) return tostring(arg) end
     t:patch(_G, 'stdin', Reader())
 
-    local got = io.read(1234)
-    t:expect(got == '1234', "Unexpected input: got %q, want \"1234\"", got)
+    t:expect(t:expr(io).read(1234)):eq('1234')
 end
 
 function test_write(t)
@@ -19,8 +18,7 @@ function test_write(t)
     io.write('12', '|34')
     io.printf('|%s|%d', '56', 78)
     io.fprintf(b, '|%s', 90)
-    local got, want = tostring(b), '12|34|56|78|90'
-    t:expect(got == want, "Unexpected output: got %q, want %q", got, want)
+    t:expect(t:expr(tostring, 'tostring')(b)):eq('12|34|56|78|90')
 end
 
 function test_Buffer(t)
@@ -35,11 +33,9 @@ function test_Buffer(t)
     b:write('foo', 'bar', '', 'baz')
     b:write('quux')
     t:expect(not b:is_empty(), "Non-empty buffer reports empty")
-    local got, want = tostring(b), 'foobarbazquux'
-    t:expect(got == want, "Unexpected buffer value: got %q, want %q", got, want)
+    t:expect(t:expr(tostring, 'tostring')(b)):eq('foobarbazquux')
 
     local b2 = io.Buffer()
     b:replay(b2)
-    local got, want = tostring(b2), tostring(b)
-    t:expect(got == want, "Unexpected replay: got %q, want %q", got, want)
+    t:expect(t:expr(tostring, 'tostring')(b2)):eq(tostring(b))
 end

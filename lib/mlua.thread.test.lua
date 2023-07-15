@@ -4,26 +4,21 @@ local thread = require 'mlua.thread'
 local string = require 'string'
 
 function test_Thread_name(t)
-    local got, want = thread.running():name(), 'main'
-    t:expect(got == want,
-             "Unexpected main thread name: got %q, want %q", got, want)
+    local running = thread.running()
+    -- TODO: Use v:f() call when supported
+    t:expect(t:expr(running).name(running)):eq('main')
     local th1<close> = thread.start(function() end)
-    got, want = th1:name(), tostring(th1):gsub('^[^:]+: ([0-9A-F]+)$', '%1')
-    t:expect(got == want,
-             "Unexpected default thread name: got %q, want %q", got, want)
-    want = 'some-thread'
+    t:expect(t:expr(th1).name(th1))
+        :eq((tostring(th1):gsub('^[^:]+: ([0-9A-F]+)$', '%1')))
+    local want = 'some-thread'
     local th2<close> = thread.start(function() end):set_name(want)
-    got = th2:name()
-    t:expect(got == want,
-             "Unexpected custom thread name: got %q, want %q", got, want)
+    t:expect(t:expr(th1).name(th2)):eq(want)
 end
 
 function test_Thread_suspend_resume(t)
     local want
     local th<close> = thread.start(function()
-        local got = thread.running()
-        t:expect(got == want,
-                 "Unexpected running thread: got %s, want %s", got, want)
+        t:expect(thread.running()):label("running"):eq(want)
         thread.yield(true)
     end)
     want = th
@@ -57,7 +52,7 @@ function test_Thread_join(t)
     local th3 = thread.start(function() error("boom", 0) end)
     local ok, err = pcall(function() th3:join() end)
     t:assert(not ok, "join didn't raise an error")
-    t:expect(err == 'boom', "Unexpected error: got %q, want \"boom\"", err)
+    t:expect(err):label('error'):eq("boom")
 end
 
 function test_yield(t)
