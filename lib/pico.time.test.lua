@@ -31,7 +31,7 @@ function test_timeouts(t)
         local fn, arg, want = table.unpack(test)
         local now = time.get_absolute_time()
         local got = time[fn](arg) - now
-        t:expect(0 <= got, "Short timeout, by: %s us", -got)
+        t:expect(want <= got, "Short timeout, by: %s us", want - got)
         t:expect(got < want + 200, "Long timeout, delay: %s us", got - want)
     end
 end
