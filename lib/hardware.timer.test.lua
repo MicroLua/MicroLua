@@ -8,9 +8,7 @@ function test_time_us(t)
     local t32, t64 = timer.time_us_32(), timer.time_us_64()
     t32 = int64(t32) + (t32 < 0 and (int64(1) << 32) or 0)
     t64 = t64 & ((int64(1) << 32) - 1)
-    local delta = t64 - t32
-    t:expect(0 <= delta and delta < 10,
-             "t64 - t32 = %s, want >= 0 and < 10", delta)
+    t:expect(t64 - t32):label("t64 - t32"):gte(0):lt(10)
 end
 
 function test_time_reached(t)
@@ -33,7 +31,8 @@ function test_busy_wait(t)
         timer[fn](arg)
         local t2 = timer.time_us_64()
         if want == 0 then want = t1 + want_delta end
-        t:expect(t2 >= want, "%s(%s) -> %s, want >= %s", fn, arg, t2, want)
+        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
+                 t1, t2, want)
     end
 end
 
@@ -55,9 +54,6 @@ function test_timer(t)
         t:assert(not err, "Failed to set alarm at +%s us", delta)
         timer.wait_alarm(alarm)
         local now = timer.time_us_64()
-        t:expect(start + delta <= now,
-                 "Early alarm, by: %s us", start + delta - now)
-        t:expect(now < start + delta + 200,
-                 "Late alarm, delay: %s us", now - (start + delta))
+        t:expect(now - start):label("alarm"):gte(delta):lt(delta + 200)
     end
 end

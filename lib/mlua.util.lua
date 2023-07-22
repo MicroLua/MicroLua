@@ -6,11 +6,16 @@ local list = require 'mlua.list'
 local string = require 'string'
 local table = require 'table'
 
--- Return all arguments.
+-- Identity function.
 function ident(...) return ... end
 
--- Return true iff a == b.
+-- Relational operators as functions.
 function eq(a, b) return a == b end
+function neq(a, b) return a ~= b end
+function lt(a, b) return a < b end
+function lte(a, b) return a <= b end
+function gt(a, b) return a > b end
+function gte(a, b) return a >= b end
 
 -- Return a string representation of the given value.
 function repr(v)

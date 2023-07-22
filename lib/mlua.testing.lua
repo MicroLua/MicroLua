@@ -147,11 +147,21 @@ function Matcher:fix(fn)
     return self
 end
 
-function Matcher:eq(want, cmp)
+function Matcher:eq(want, cmp) return self:_check(want, '', cmp or util.eq) end
+
+function Matcher:lt(want) return self:_check(want, '<', util.lt) end
+
+function Matcher:lte(want) return self:_check(want, '<=', util.lte) end
+
+function Matcher:gt(want) return self:_check(want, '>', util.gt) end
+
+function Matcher:gte(want) return self:_check(want, '>=', util.gte) end
+
+function Matcher:_check(want, op, cmp)
     local got = self:_eval()
-    if not (cmp or util.eq)(got, want) then
-        self:_fail("%s = %s, want %s", self._l or util.repr(self._v),
-                   util.repr(got), util.repr(want))
+    if not cmp(got, want) then
+        self:_fail("%s = %s, want %s%s", self._l or util.repr(self._v),
+                   util.repr(got), op, util.repr(want))
     end
     return self
 end
