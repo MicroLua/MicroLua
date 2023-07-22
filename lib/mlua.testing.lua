@@ -175,9 +175,6 @@ end
 function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
 
 function Test:patch(tab, name, value)
-    if rawequal(tab, _G) and name == 'stdout' then
-        self:fatal("Patching _G.stdout interferes with test output capture")
-    end
     local old = rawget(tab, name)
     self:cleanup(function() rawset(tab, name, old) end)
     rawset(tab, name, value)
@@ -300,7 +297,7 @@ function Test:_run(fn)
         elseif self._skip then t.nskip = t.nskip + 1
         else t.npass = t.npass + 1 end
     end)
-    self._parent, self._out = nil, nil
+    self._parent, self._out, self._old_out = nil, nil, nil
     return keep
 end
 
@@ -336,6 +333,7 @@ function Test:enable_output()
     self._out = nil
     self:_restore_output()
     if self._parent then self._parent:enable_output() end
+    self._old_out = _G.stdout
     local level = -1
     self:_up(function(t) level = level + 1 end)
     io.aprintf("@{BLUE}%s@{NORM} @{+WHITE}%s@{NORM} @{BLUE}%s@{NORM}\n",
@@ -351,7 +349,7 @@ end
 
 function Test:_restore_output()
     if not self._old_out then return end
-    _G.stdout, self._old_out = self._old_out, nil
+    _G.stdout = self._old_out
 end
 
 function Test:_up(fn)

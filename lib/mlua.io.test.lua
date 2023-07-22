@@ -13,18 +13,11 @@ end
 
 function test_write(t)
     local b = io.Buffer()
-    do
-        -- TODO: This can still mess up the output if an error is thrown,
-        --       because the output is enabled in the error handler, before
-        --       restore is run.
-        local old = _G.stdout
-        local restore<close> = function() _G.stdout = old end
-        _G.stdout = b
-        io.write('12', '|34')
-        io.printf('|%s|%d', '56', 78)
-        io.fprintf(b, '|%s', 90)
-    end
+    t:patch(_G, 'stdout', b)
 
+    io.write('12', '|34')
+    io.printf('|%s|%d', '56', 78)
+    io.fprintf(b, '|%s', 90)
     t:expect(t.expr.tostring(b)):eq('12|34|56|78|90')
 end
 
