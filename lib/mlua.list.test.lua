@@ -5,14 +5,14 @@ local util = require 'mlua.util'
 local table = require 'table'
 
 function test_list(t)
+    local list = list
     for _, test in ipairs{
         {nil, {[0] = 0}},
         {{1, 2, 3}, {[0] = 3, 1, 2, 3}},
         {{[0] = 2}, {[0] = 2}},
     } do
         local arg, want = table.unpack(test)
-        -- TODO: t:expect(t:expr().list(arg)):eq(want)
-        t:expect(t:expr(list, 'list')(arg)):eq(want)
+        t:expect(t.expr.list(arg)):eq(want)
     end
 end
 

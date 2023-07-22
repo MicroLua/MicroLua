@@ -4,15 +4,13 @@ local thread = require 'mlua.thread'
 local string = require 'string'
 
 function test_Thread_name(t)
-    local running = thread.running()
-    -- TODO: Use v:f() call when supported
-    t:expect(t:expr(running).name(running)):eq('main')
+    t:expect(t:expr(thread).running():name()):eq('main')
     local th1<close> = thread.start(function() end)
-    t:expect(t:expr(th1).name(th1))
+    t:expect(t.expr.th1:name())
         :eq((tostring(th1):gsub('^[^:]+: ([0-9A-F]+)$', '%1')))
     local want = 'some-thread'
     local th2<close> = thread.start(function() end):set_name(want)
-    t:expect(t:expr(th1).name(th2)):eq(want)
+    t:expect(t.expr.th2:name()):eq(want)
 end
 
 function test_Thread_suspend_resume(t)

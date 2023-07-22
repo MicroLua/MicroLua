@@ -126,8 +126,7 @@ function test_cast_to_int64(t)
     } do
         if test == skip then goto continue end
         local args, want = table.unpack(test)
-        -- TODO: t:expect(t:expr().int64)(table.unpack(args))):eq(want)
-        t:expect(t:expr(int64, 'int64')(table.unpack(args))):eq(want)
+        t:expect(t.expr.int64(table.unpack(args))):eq(want)
         ::continue::
     end
 end
@@ -373,8 +372,7 @@ function test_tostring(t)
         {int64.min, '-9223372036854775808'},
     } do
         local value, want = table.unpack(test)
-        -- TODO: t:expect(t:expr().tostring(value)):eq(want)
-        t:expect(t:expr(tostring, 'tostring')(value)):eq(want)
+        t:expect(t.expr.tostring(value)):eq(want)
     end
 end
 

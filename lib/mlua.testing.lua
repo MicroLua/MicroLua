@@ -30,49 +30,93 @@ function Buffer:write(...)
     end
 end
 
+local function locals(level)
+    level = (level or 1) + 1
+    local loc, i = {}, 1
+    while true do
+        local name, value = debug.getlocal(level, i)
+        if not name then break end
+        if name:sub(1, 1) ~= '(' then loc[name] = value end
+        i = i + 1
+    end
+    local info = debug.getinfo(level, 'f')
+    if info then
+        local f = info.func
+        setmetatable(loc, {__index = function(_, k)
+            local env, i = nil, 1
+            while true do
+                local name, value = debug.getupvalue(f, i)
+                if not name then break end
+                if name == k then return value end
+                if name == '_ENV' then env = value end
+                i = i + 1
+            end
+            if env then return env[k] end
+        end})
+    end
+    return loc
+end
+
 local Expr = {__name = 'Expr'}
 local ekey = {}
 
 function Expr:__index(k)
-    list.append(self[ekey], {
+    list.append(rawget(self, ekey), {
         function(s)
             if type(k) == 'string' and k:find('^[%a_][%w_]*$') then
                 return ('%s%s%s'):format(s, s ~= '' and '.' or '', k)
             end
             return ('%s[%s]'):format(s, util.repr(k))
         end,
-        function(v) return v[k] end,
+        function(pv, v) return v[k] end,
     })
     return self
 end
 
 function Expr:__call(...)
-    -- TODO: Add support for v:f() calls, by detecting if first argument is self
     -- TODO: Add support for calls returning multiple values
     local args = list.pack(...)
-    list.append(self[ekey], {
+    list.append(rawget(self, ekey), {
         function(s)
-            local parts = list()
-            for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
+            local parts, n = list(), 1
+            if rawequal(args[1], self) then
+                s = s:gsub('%.([%a_][%w_]*)$', ':%1')
+                n = 2
+            end
+            for i = n, args:len() do parts:append(util.repr(args[i])) end
             return ('%s(%s)'):format(s, table.concat(parts, ', '))
         end,
-        function(v) return v(args:unpack()) end,
+        function(pv, v)
+            if rawequal(args[1], self) then return v(pv, args:unpack(2)) end
+            return v(args:unpack())
+        end,
     })
     return self
 end
 
 function Expr:__repr(repr)
-    local e = self[ekey]
-    local s = e.n or ''
+    local e = rawget(self, ekey)
+    local s = ''
     for _, it in list.ipairs(e) do s = it[1](s) end
     return s
 end
 
 function Expr:__eval()
-    local e = self[ekey]
-    local v = e.r
-    for _, it in list.ipairs(e) do v = it[2](v) end
+    local e = rawget(self, ekey)
+    local pv, v = nil, e.r
+    for _, it in list.ipairs(e) do pv, v = v, it[2](pv, v) end
     return v
+end
+
+local ExprFactory = {__name = 'ExprFactory'}
+
+function ExprFactory:__index(k)
+    return setmetatable({[ekey] = {r = locals(2), [0] = 0}}, Expr)[k]
+end
+
+function ExprFactory:__call(t, root)
+    if not oo.isinstance(t, Test) then root = t end
+    return setmetatable({[ekey] = {r = root, [0] = 0}}, Expr)
 end
 
 local Matcher = oo.class('Matcher')
@@ -119,6 +163,7 @@ local ERROR = '@{+RED}ERROR@{NORM}'
 
 Test = oo.class('Test')
 Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
+Test.expr = setmetatable({}, ExprFactory)
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
@@ -130,6 +175,9 @@ end
 function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
 
 function Test:patch(tab, name, value)
+    if rawequal(tab, _G) and name == 'stdout' then
+        self:fatal("Patching _G.stdout interferes with test output capture")
+    end
     local old = rawget(tab, name)
     self:cleanup(function() rawset(tab, name, old) end)
     rawset(tab, name, value)
@@ -145,12 +193,6 @@ function Test:func(name, args)
         for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
         return ('%s(%s)'):format(name, table.concat(parts, ', '))
     end
-end
-
-function Test:expr(root, name)
-    -- TODO: Rename to __call?
-    -- TODO: When root == nil, look up from the parent scope => t:expr().int64()
-    return setmetatable({[ekey] = {r = root, n = name, [0] = 0}}, Expr)
 end
 
 function Test:printf(format, ...) return io.aprintf(format, ...) end

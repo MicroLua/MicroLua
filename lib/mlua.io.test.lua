@@ -13,12 +13,19 @@ end
 
 function test_write(t)
     local b = io.Buffer()
-    t:patch(_G, 'stdout', b)
+    do
+        -- TODO: This can still mess up the output if an error is thrown,
+        --       because the output is enabled in the error handler, before
+        --       restore is run.
+        local old = _G.stdout
+        local restore<close> = function() _G.stdout = old end
+        _G.stdout = b
+        io.write('12', '|34')
+        io.printf('|%s|%d', '56', 78)
+        io.fprintf(b, '|%s', 90)
+    end
 
-    io.write('12', '|34')
-    io.printf('|%s|%d', '56', 78)
-    io.fprintf(b, '|%s', 90)
-    t:expect(t:expr(tostring, 'tostring')(b)):eq('12|34|56|78|90')
+    t:expect(t.expr.tostring(b)):eq('12|34|56|78|90')
 end
 
 function test_Buffer(t)
@@ -33,9 +40,9 @@ function test_Buffer(t)
     b:write('foo', 'bar', '', 'baz')
     b:write('quux')
     t:expect(not b:is_empty(), "Non-empty buffer reports empty")
-    t:expect(t:expr(tostring, 'tostring')(b)):eq('foobarbazquux')
+    t:expect(t.expr.tostring(b)):eq('foobarbazquux')
 
     local b2 = io.Buffer()
     b:replay(b2)
-    t:expect(t:expr(tostring, 'tostring')(b2)):eq(tostring(b))
+    t:expect(t.expr.tostring(b2)):eq(tostring(b))
 end

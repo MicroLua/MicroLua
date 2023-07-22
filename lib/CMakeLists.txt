@@ -171,6 +171,7 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_testing_test mlua.testing.test.lua)
 target_link_libraries(mlua_mod_mlua_testing_test INTERFACE
+    mlua_mod_mlua_list
     mlua_mod_mlua_util
     mlua_mod_table
 )
