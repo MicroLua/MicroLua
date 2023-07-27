@@ -36,9 +36,29 @@ function test_timeouts(t)
 end
 
 function test_sleep(t)
-    -- TODO
+    local start = time.get_absolute_time()
+    for _, test in ipairs{
+        {'sleep_until', start + 3000, start + 3000, 0},
+        {'sleep_us', 4000, 0, 4000},
+        {'sleep_ms', 6, 0, 6000},
+    } do
+        local fn, arg, want, want_delta = table.unpack(test)
+        local t1 = time.get_absolute_time()
+        time[fn](arg)
+        local t2 = time.get_absolute_time()
+        if want == 0 then want = t1 + want_delta end
+        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
+                 t1, t2, want)
+    end
 end
 
 function test_best_effort_wfe_or_timeout(t)
-    -- TODO
+    local start = time.get_absolute_time()
+    for i = 0, 4 do
+        local want = start + i * 3000
+        local reached = time.best_effort_wfe_or_timeout(want)
+        local got = time.get_absolute_time()
+        local ex = t:expect(got):label('time'):lt(want + 200)
+        if reached then ex:gte(want) end
+    end
 end
