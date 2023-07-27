@@ -24,7 +24,7 @@ function repr(v)
     -- TODO: Format numbers to full accuracy
     -- TODO: Detect lists and use simpler formatting
     local typ = type(v)
-    if typ == 'string' then return ('%q'):format(v)
+    if typ == 'string' then return ('%q'):format(v):gsub('\\\n', '\\n')
     elseif typ ~= 'table' then return tostring(v) end
     local parts = list()
     for k, v in pairs(v) do

@@ -8,7 +8,7 @@ function test_repr(t)
         {nil, 'nil'},
         {123, '123'},
         {4.5, '4.500000'},
-        {'abc', '"abc"'},
+        {'abc\ndef', '"abc\\ndef"'},
         {true, 'true'},
         {{}, '{}'},
         {{1, 2}, '{[1] = 1, [2] = 2}'},
