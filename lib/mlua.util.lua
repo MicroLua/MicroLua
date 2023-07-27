@@ -17,6 +17,29 @@ function lte(a, b) return a <= b end
 function gt(a, b) return a > b end
 function gte(a, b) return a >= b end
 
+local escapes = {
+    [7] = '\\a', [8] = '\\b', [9] = '\\t', [10] = '\\n', [11] = '\\v',
+    [12] = '\\f', [13] = '\\r', [34] = '\\"', [92] = '\\\\',
+}
+
+local function repr_string(v)
+    return ('"%s"'):format(v:gsub('["\\%c]', function(c)
+        local cv = c:byte(1)
+        local e = escapes[cv]
+        if e ~= nil then return e end
+        return ('\\x%02x'):format(cv)
+    end))
+end
+
+local function repr_table(v)
+    local parts = list()
+    for k, v in pairs(v) do
+        parts:append(('[%s] = %s'):format(repr(k), repr(v)))
+    end
+    table.sort(parts)
+    return ('{%s}'):format(table.concat(parts, ', '))
+end
+
 -- Return a string representation of the given value.
 function repr(v)
     local ok, r = pcall(function() return getmetatable(v).__repr end)
@@ -24,14 +47,9 @@ function repr(v)
     -- TODO: Format numbers to full accuracy
     -- TODO: Detect lists and use simpler formatting
     local typ = type(v)
-    if typ == 'string' then return ('%q'):format(v):gsub('\\\n', '\\n')
-    elseif typ ~= 'table' then return tostring(v) end
-    local parts = list()
-    for k, v in pairs(v) do
-        parts:append(('[%s] = %s'):format(repr(k), repr(v)))
-    end
-    table.sort(parts)
-    return '{' .. table.concat(parts, ', ') .. '}'
+    if typ == 'string' then return repr_string(v)
+    elseif typ == 'table' then return repr_table(v)
+    else return tostring(v) end
 end
 
 -- Return the keys of the given table, optionally filtered.
