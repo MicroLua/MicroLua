@@ -97,6 +97,7 @@ target_link_libraries(mlua_mod_mlua INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_test mlua.test.lua)
 target_link_libraries(mlua_mod_mlua_test INTERFACE
+    mlua_mod_mlua_io
     mlua_mod_pico
     mlua_mod_table
 )
