@@ -85,9 +85,11 @@ int mlua_event_yield(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
                        int index);
 
+typedef int (*MLuaEventGetter)(lua_State*, bool);
+
 // Wait for an event, suspending as long as try_get returns a negative value.
 // The index is passed to mlua_event_suspend as a deadline index.
-int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
+int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
                     int index);
 
 #if !LIB_MLUA_MOD_MLUA_EVENT

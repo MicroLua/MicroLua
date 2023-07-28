@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "hardware/adc.h"
 #include "hardware/irq.h"
 #include "pico/platform.h"
@@ -25,7 +27,7 @@ static int mod_fifo_enable_irq(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-static int try_fifo_get(lua_State* ls) {
+static int try_fifo_get(lua_State* ls, bool timeout) {
     if (!adc_fifo_is_empty()) {
         lua_pushinteger(ls, adc_fifo_get());
         return 1;

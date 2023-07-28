@@ -70,7 +70,7 @@ static int mod_enable_irq(lua_State* ls) {
     return 0;
 }
 
-static int try_events(lua_State* ls) {
+static int try_events(lua_State* ls, bool timeout) {
     IRQState* state = &irq_state[get_core_num()];
     int cnt = lua_gettop(ls);
     bool active = false;

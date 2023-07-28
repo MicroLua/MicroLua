@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "hardware/address_mapped.h"
@@ -122,7 +123,7 @@ static inline void enable_tx_irq(uart_inst_t* u) {
     hw_set_bits(&uart_get_hw(u)->imsc, UART_UARTIMSC_TXIM_BITS);
 }
 
-static int try_write(lua_State* ls) {
+static int try_write(lua_State* ls, bool timeout) {
     uart_inst_t* u = to_Uart(ls, 1);
     size_t len;
     uint8_t const* src = (uint8_t const*)lua_tolstring(ls, 2, &len);
@@ -160,7 +161,7 @@ static inline void enable_rx_irq(uart_inst_t* u) {
                 UART_UARTIMSC_RXIM_BITS | UART_UARTIMSC_RTIM_BITS);
 }
 
-static int try_read(lua_State* ls) {
+static int try_read(lua_State* ls, bool timeout) {
     uart_inst_t* u = to_Uart(ls, 1);
     size_t len = lua_tointeger(ls, 2);
     size_t offset = lua_tointeger(ls, 3);

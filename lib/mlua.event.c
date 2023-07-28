@@ -67,9 +67,8 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     *ev = MLUA_EVENT_UNSET;
     mlua_event_unlock(save);
     lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
-    lua_pushinteger(ls, e);
     lua_pushnil(ls);
-    lua_rawset(ls, -3);
+    lua_rawseti(ls, -2, e);
     lua_pop(ls, 1);
 }
 
@@ -222,31 +221,36 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 }
 
 static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
-                             lua_CFunction try_get, int index);
+                             MLuaEventGetter try_get, int index);
 static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx);
 
-int mlua_event_wait(lua_State* ls, MLuaEvent event, lua_CFunction try_get,
+int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
                     int index) {
     if (event >= NUM_EVENTS) return luaL_error(ls, "wait for unclaimed event");
-    int res = try_get(ls);
+    int res = try_get(ls, false);
     if (res >= 0) return res;
     mlua_event_watch(ls, event);
     return mlua_event_wait_1(ls, event, try_get, index);
 }
 
 static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
-                             lua_CFunction try_get, int index) {
-    lua_pushcfunction(ls, try_get);
+                             MLuaEventGetter try_get, int index) {
+    lua_pushlightuserdata(ls, try_get);
     lua_pushinteger(ls, index);
     return mlua_event_suspend(ls, &mlua_event_wait_2, event, index);
 }
 
 static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
-    lua_CFunction try_get = lua_tocfunction(ls, -2);
+    MLuaEventGetter try_get = (MLuaEventGetter)lua_touserdata(ls, -2);
     int index = lua_tointeger(ls, -1);
     lua_pop(ls, 2);  // Restore the stack for try_get
-    int res = try_get(ls);
-    if (res < 0) return mlua_event_wait_1(ls, (MLuaEvent)ctx, try_get, index);
+    int res = try_get(ls, false);
+    if (res < 0) {
+        if (index == 0 || !time_reached(mlua_check_int64(ls, index))) {
+            return mlua_event_wait_1(ls, (MLuaEvent)ctx, try_get, index);
+        }
+        res = try_get(ls, true);
+    }
     mlua_event_unwatch(ls, (MLuaEvent)ctx);
     return res;
 }
@@ -332,7 +336,7 @@ int luaopen_mlua_event(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the watcher thread table.
-    lua_newtable(ls);
+    lua_createtable(ls, NUM_EVENTS, 0);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
 
     // Create the module.

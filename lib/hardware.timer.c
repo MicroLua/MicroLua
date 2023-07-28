@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "hardware/timer.h"
 #include "pico/platform.h"
 
@@ -50,7 +52,7 @@ static int mod_enable_alarm(lua_State* ls) {
     return 0;
 }
 
-static int try_pending(lua_State* ls) {
+static int try_pending(lua_State* ls, bool timeout) {
     uint8_t mask = 1u << lua_tointeger(ls, 1);
     uint32_t save = mlua_event_lock();
     uint8_t pending = alarm_state.pending;

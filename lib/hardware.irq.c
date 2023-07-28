@@ -56,7 +56,7 @@ static int mod_enable_user_irq(lua_State* ls) {
     return 0;
 }
 
-static int try_pending(lua_State* ls) {
+static int try_pending(lua_State* ls, bool timeout) {
     IRQState* state = &uirq_state[get_core_num()];
     uint8_t mask = 1u << (lua_tointeger(ls, 1) - FIRST_USER_IRQ);
     uint32_t save = save_and_disable_interrupts();
