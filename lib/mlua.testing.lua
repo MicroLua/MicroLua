@@ -316,7 +316,7 @@ function Test:_pcall(fn, ...)
         if err ~= err_terminate then
             self._error = true
             self:enable_output()
-            return self:_log(ERROR, "%s\n%s", err, debug.traceback(nil, 2))
+            return self:_log(ERROR, "%s", debug.traceback(err, 2))
         end
         return err
     end, ...)
@@ -467,7 +467,7 @@ end
 
 function main()
     return xpcall(pmain, function(err)
-        io.printf("ERROR: %s\n%s\n", err, debug.traceback(nil, 2))
+        io.printf("ERROR: %s\n", debug.traceback(err, 2))
         return err
     end)
 end
