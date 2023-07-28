@@ -24,11 +24,21 @@ typedef uint8_t MLuaEvent;
 // A marker for "no event assigned".
 #define MLUA_EVENT_UNSET ((MLuaEvent)-1)
 
-// Claim an event. Returns NULL on success, or a message describing the error.
-char const* mlua_event_claim(MLuaEvent* pev);
+// The error returned by mlua_event_claim*() if the event was already claimed.
+extern char const* const mlua_event_err_already_claimed;
+
+// Claim an event for the given core. Returns NULL on success, or a message
+// describing the error.
+char const* mlua_event_claim_core(MLuaEvent* ev, uint core);
+
+// Claim an event for the calling core. Returns NULL on success, or a message
+// describing the error.
+static inline char const* mlua_event_claim(MLuaEvent* ev) {
+    return mlua_event_claim_core(ev, get_core_num());
+}
 
 // Free an event.
-void mlua_event_unclaim(lua_State* ls, MLuaEvent* pev);
+void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
 
 extern spin_lock_t* mlua_event_spinlock;
 
@@ -65,6 +75,9 @@ char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
 
 // Set an event pending.
 void mlua_event_set(MLuaEvent ev);
+
+// Set an event pending. Must be in a locked section.
+void mlua_event_set_nolock(MLuaEvent ev);
 
 // Clear the pending state of an event.
 void mlua_event_clear(MLuaEvent ev);

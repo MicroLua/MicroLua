@@ -24,19 +24,19 @@ typedef struct EventState {
 
 static EventState event_state;
 
-char const* mlua_event_claim(MLuaEvent* ev) {
+char const* const mlua_event_err_already_claimed
+    = "event already claimed";
+
+char const* mlua_event_claim_core(MLuaEvent* ev, uint core) {
     uint32_t save = mlua_event_lock();
     MLuaEvent e = *ev;
     if (e < NUM_EVENTS) {
         mlua_event_unlock(save);
-        return "event already claimed";
+        return mlua_event_err_already_claimed;
     }
-    uint core = get_core_num();
     for (uint block = 0; block < EVENTS_SIZE; ++block) {
         uint32_t mask = 0;
-        for (uint core = 0; core < NUM_CORES; ++core) {
-            mask |= event_state.mask[core][block];
-        }
+        for (uint c = 0; c < NUM_CORES; ++c) mask |= event_state.mask[c][block];
         int idx = __builtin_ffs(~mask);
         if (idx > 0) {
             --idx;
@@ -123,6 +123,12 @@ void __time_critical_func(mlua_event_set)(MLuaEvent ev) {
     uint32_t save = mlua_event_lock();
     event_state.pending[ev / 32] |= 1u << (ev % 32);
     mlua_event_unlock(save);
+    __sev();
+}
+
+void __time_critical_func(mlua_event_set_nolock)(MLuaEvent ev) {
+    if (ev >= NUM_EVENTS) return;
+    event_state.pending[ev / 32] |= 1u << (ev % 32);
     __sev();
 }
 
