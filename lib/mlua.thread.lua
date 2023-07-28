@@ -63,6 +63,14 @@ local function remove_timer(thread)
     end
 end
 
+local _shutdown = false
+
+-- Shut down the scheduler.
+function shutdown()
+    _shutdown = true
+    yield()
+end
+
 -- Make threads a class.
 local Thread = {__name = 'Thread'}
 Thread.__index = Thread
@@ -180,10 +188,20 @@ end
 
 -- Run the thread dispatch loop.
 function main()
+    local thread
+    local cleanup<close> = function()
+        if thread then co_close(thread) end
+        while head ~= tail do
+            co_close(active[head])
+            head = head + 1
+        end
+        for thread in pairs(waiting) do co_close(thread) end
+        active, head, tail, waiting, timers = nil, nil, nil, nil, nil
+    end
     local resume = Thread.resume
     local nil_time, at_the_end_of_time = time.nil_time, time.at_the_end_of_time
-    local thread
-    while true do
+
+    while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
         event.dispatch(resume,
                        (thread ~= nil or head ~= tail) and nil_time
