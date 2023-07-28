@@ -19,6 +19,22 @@ local err_terminate = {}
 
 local module_name = ...
 
+local function pcall_res(ok, ...)
+    if ok then return ok, list.pack(...) end
+    return ok, (...)
+end
+
+-- Wrap the given function to print a traceback if it raises an error.
+function with_traceback(fn)
+    return function(...)
+        local ok, res = pcall_res(xpcall(fn, function(err)
+            io.printf("ERROR: %s\n", debug.traceback(err, 2))
+            return err
+        end, ...))
+        if ok then return res:unpack() else error(res, 0) end
+    end
+end
+
 local Buffer = oo.class('Buffer', io.Buffer)
 
 function Buffer:__init(t) self.t = t end
