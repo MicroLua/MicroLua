@@ -174,9 +174,25 @@ static int mod_fifo_pop_timeout_us(lua_State* ls) {
     return fifo_pop(ls, 1);
 }
 
+static int mod_fifo_clear_irq(lua_State* ls) {
+    FifoState* st = &fifo_state[get_core_num()];
+    uint32_t save = save_and_disable_interrupts();
+    multicore_fifo_clear_irq();
+    st->status = 0;
+    restore_interrupts(save);
+    return 0;
+}
+
+static int mod_fifo_get_status(lua_State* ls) {
+    FifoState* st = &fifo_state[get_core_num()];
+    uint32_t save = save_and_disable_interrupts();
+    uint32_t status = multicore_fifo_get_status() | st->status;
+    restore_interrupts(save);
+    lua_pushinteger(ls, status);
+    return 1;
+}
+
 // TODO: Implement interruptible fifo_push_*() with polling
-// TODO: fifo_clear_irq should clear the saved status as well
-// TODO: fifo_get_status should return the combined status
 
 MLUA_FUNC_1_0(mod_, multicore_, fifo_rvalid, lua_pushboolean)
 MLUA_FUNC_1_0(mod_, multicore_, fifo_wready, lua_pushboolean)
@@ -184,10 +200,13 @@ MLUA_FUNC_0_1(mod_, multicore_, fifo_push_blocking, luaL_checkinteger)
 MLUA_FUNC_1_2(mod_, multicore_, fifo_push_timeout_us, lua_pushboolean,
               luaL_checkinteger, mlua_check_int64)
 MLUA_FUNC_0_0(mod_, multicore_, fifo_drain)
-MLUA_FUNC_0_0(mod_, multicore_, fifo_clear_irq)
-MLUA_FUNC_1_0(mod_, multicore_, fifo_get_status, lua_pushinteger)
 
 static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(FIFO_ROE, integer, SIO_FIFO_ST_ROE_BITS),
+    MLUA_SYM_V(FIFO_WOF, integer, SIO_FIFO_ST_WOF_BITS),
+    MLUA_SYM_V(FIFO_RDY, integer, SIO_FIFO_ST_RDY_BITS),
+    MLUA_SYM_V(FIFO_VLD, integer, SIO_FIFO_ST_VLD_BITS),
+
     MLUA_SYM_F(reset_core1, mod_),
     MLUA_SYM_F(launch_core1, mod_),
     MLUA_SYM_F(wait_shutdown, mod_),
