@@ -219,6 +219,7 @@ target_link_libraries(mlua_mod_pico_test INTERFACE
 mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico_multicore INTERFACE
     mlua_mod_mlua_event
+    mlua_mod_mlua_int64
     pico_multicore
     pico_platform
     pico_time

@@ -63,6 +63,12 @@ function core1_push_one()
     multicore.fifo_push_blocking(1)
 end
 
+function test_fifo_status_noyield(t)
+    local save = yield_enabled(false)
+    t:cleanup(function() yield_enabled(save) end)
+    test_fifo_status(t)
+end
+
 function test_fifo_push_pop(t)
     multicore.launch_core1(module_name, 'core1_fifo_echo')
     t:cleanup(multicore.reset_core1)
@@ -82,4 +88,10 @@ function core1_fifo_echo()
     while true do
         multicore.fifo_push_blocking(multicore.fifo_pop_blocking())
     end
+end
+
+function test_fifo_push_pop_noyield(t)
+    local save = yield_enabled(false)
+    t:cleanup(function() yield_enabled(save) end)
+    test_fifo_push_pop(t)
 end
