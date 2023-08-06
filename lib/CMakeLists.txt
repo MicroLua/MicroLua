@@ -218,21 +218,34 @@ target_link_libraries(mlua_mod_pico_test INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico_multicore INTERFACE
-    hardware_structs
     mlua_mod_mlua_event
+    pico_multicore
+    pico_platform
+)
+
+mlua_add_lua_test_modules(mlua_mod_pico_multicore_test pico.multicore.test.lua)
+target_link_libraries(mlua_mod_pico_multicore_test INTERFACE
+    mlua_mod_mlua_thread
+    mlua_mod_pico_multicore
+)
+
+mlua_add_c_module(mlua_mod_pico_multicore_fifo pico.multicore.fifo
+    pico.multicore.fifo.c)
+target_link_libraries(mlua_mod_pico_multicore_fifo INTERFACE
+    hardware_structs
+    mlua_mod_mlua_event_headers
     mlua_mod_mlua_int64
     pico_multicore
     pico_platform
     pico_time
 )
 
-mlua_add_lua_test_modules(mlua_mod_pico_multicore_test pico.multicore.test.lua)
-target_link_libraries(mlua_mod_pico_multicore_test INTERFACE
-    mlua_mod_debug
-    mlua_mod_mlua_io
+mlua_add_lua_test_modules(mlua_mod_pico_multicore_fifo_test
+    pico.multicore.fifo.test.lua)
+target_link_libraries(mlua_mod_pico_multicore_fifo_test INTERFACE
     mlua_mod_mlua_thread
     mlua_mod_pico_multicore
-    mlua_mod_string
+    mlua_mod_pico_multicore_fifo
 )
 
 mlua_add_c_module(mlua_mod_pico_platform pico.platform pico.platform.c)
