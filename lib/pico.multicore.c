@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hardware/structs/sio.h"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/time.h"
@@ -165,7 +166,7 @@ static int mod_fifo_push_blocking_1(lua_State* ls, int status,
                                     lua_KContext ctx) {
     // Busy loop, as there is no interrupt for RDY.
     if (multicore_fifo_wready()) {
-        multicore_fifo_push_blocking(luaL_checkinteger(ls, 1));
+        sio_hw->fifo_wr = luaL_checkinteger(ls, 1);
         return 0;
     }
     return mlua_event_yield(ls, &mod_fifo_push_blocking_1, 0, 0);
@@ -194,7 +195,7 @@ static int mod_fifo_push_timeout_us_1(lua_State* ls, int status,
                                       lua_KContext ctx) {
     // Busy loop, as there is no interrupt for RDY.
     if (multicore_fifo_wready()) {
-        multicore_fifo_push_blocking(luaL_checkinteger(ls, 1));
+        sio_hw->fifo_wr = luaL_checkinteger(ls, 1);
         lua_pushboolean(ls, true);
         return 1;
     } else if (time_reached(from_us_since_boot(mlua_check_int64(ls, 2)))) {
@@ -209,7 +210,7 @@ static int mod_fifo_push_timeout_us_1(lua_State* ls, int status,
 static int try_fifo_pop(lua_State* ls, bool timeout) {
     if (timeout) return 0;
     if (multicore_fifo_rvalid()) {
-        lua_pushinteger(ls, multicore_fifo_pop_blocking());
+        lua_pushinteger(ls, sio_hw->fifo_rd);
         return 1;
     }
     irq_set_enabled(SIO_IRQ_PROC0 + get_core_num(), true);
@@ -239,7 +240,7 @@ static int mod_fifo_pop_timeout_us(lua_State* ls) {
     while (!multicore_fifo_rvalid()) {
         if (best_effort_wfe_or_timeout(deadline)) return false;
     }
-    lua_pushinteger(ls, multicore_fifo_pop_blocking());
+    lua_pushinteger(ls, sio_hw->fifo_rd);
     return 1;
 }
 
