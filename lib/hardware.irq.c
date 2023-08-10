@@ -116,7 +116,7 @@ static int mod_set_enabled(lua_State* ls) {
     bool enabled = mlua_to_cbool(ls, 2);
 #if LIB_MLUA_MOD_MLUA_EVENT
     if (enabled && is_user_irq(irq)) {
-        // Clear pending state before enabling. irq_set_enabled does the same.
+        // Clear pending state before enabling. irq_set_enabled() does the same.
         mod_clear(ls);
     }
 #endif

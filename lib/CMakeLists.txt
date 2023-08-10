@@ -42,6 +42,11 @@ target_link_libraries(mlua_mod_hardware_gpio INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_gpio_test hardware.gpio.test.lua)
 target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
     mlua_mod_hardware_gpio
+    mlua_mod_hardware_irq
+    mlua_mod_mlua_list
+    mlua_mod_mlua_thread
+    mlua_mod_pico
+    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)

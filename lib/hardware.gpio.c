@@ -88,7 +88,7 @@ static int try_events(lua_State* ls, bool timeout) {
         lua_pushinteger(ls, e);
     }
     if (active) return cnt;
-    lua_pop(ls, cnt);
+    lua_settop(ls, cnt);
     return -1;
 }
 
@@ -115,7 +115,9 @@ static int mod_wait_events(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int mod_set_irq_enabled(lua_State* ls) {
+typedef void (*IRQEnabler)(uint, uint32_t, bool);
+
+int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enable = mlua_to_cbool(ls, 3);
@@ -124,14 +126,43 @@ int mod_set_irq_enabled(lua_State* ls) {
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
     uint32_t save = save_and_disable_interrupts();
+    // Acknowledge before enabling. gpio_set_irq_enabled() does the same.
+    state->pending[block] &= ~mask;
     if (enable) {
         state->mask[block] |= mask;
     } else {
         state->mask[block] &= ~mask;
     }
+    set_enabled(gpio, event_mask, enable);
     restore_interrupts(save);
+#else
+    set_enabled(gpio, event_mask, enable);
 #endif
-    gpio_set_irq_enabled(gpio, event_mask, enable);
+    return 0;
+}
+
+int mod_set_irq_enabled(lua_State* ls) {
+    return set_irq_enabled(ls, &gpio_set_irq_enabled);
+}
+
+int mod_set_dormant_irq_enabled(lua_State* ls) {
+    return set_irq_enabled(ls, &gpio_set_dormant_irq_enabled);
+}
+
+int mod_acknowledge_irq(lua_State* ls) {
+    uint gpio = check_gpio(ls, 1);
+    uint32_t event_mask = luaL_checkinteger(ls, 2);
+#if LIB_MLUA_MOD_MLUA_EVENT
+    IRQState* state = &irq_state[get_core_num()];
+    uint block = gpio / 8;
+    uint32_t mask = event_mask << 4 * (gpio % 8);
+    uint32_t save = save_and_disable_interrupts();
+    state->pending[block] &= ~mask;
+    gpio_acknowledge_irq(gpio, event_mask);
+    restore_interrupts(save);
+#else
+    gpio_acknowledge_irq(gpio, event_mask);
+#endif
     return 0;
 }
 
@@ -163,10 +194,7 @@ MLUA_FUNC_0_2(mod_, gpio_, set_drive_strength, check_gpio,
               luaL_checkinteger)
 MLUA_FUNC_1_1(mod_, gpio_, get_drive_strength, lua_pushinteger,
               check_gpio)
-MLUA_FUNC_0_3(mod_, gpio_, set_dormant_irq_enabled, check_gpio,
-              luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, gpio_, get_irq_event_mask, lua_pushinteger, check_gpio)
-MLUA_FUNC_0_2(mod_, gpio_, acknowledge_irq, check_gpio, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, init, check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, deinit, check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, init_mask, luaL_checkinteger)
