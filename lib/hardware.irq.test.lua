@@ -5,6 +5,18 @@ local thread = require 'mlua.thread'
 local list = require 'mlua.list'
 local string = require 'string'
 
+function test_pending(t)
+    local num = irq.user_irq_claim_unused()
+    t:cleanup(function() irq.user_irq_unclaim(num) end)
+
+    irq.clear(num)
+    t:expect(t:expr(irq).is_pending(num)):eq(false)
+    irq.set_pending(num)
+    t:expect(t:expr(irq).is_pending(num)):eq(true)
+    irq.clear(num)
+    t:expect(t:expr(irq).is_pending(num)):eq(false)
+end
+
 function test_user_irqs(t)
     local rounds = 10
 

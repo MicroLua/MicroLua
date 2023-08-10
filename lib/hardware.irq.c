@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include "hardware/irq.h"
+#include "hardware/structs/nvic.h"
 #include "hardware/sync.h"
 #include "pico/platform.h"
 
@@ -94,6 +95,22 @@ static int mod_clear(lua_State* ls) {
     return 0;
 }
 
+static int mod_is_pending(lua_State* ls) {
+    uint irq = check_irq(ls, 1);
+    bool pending = (nvic_hw->icpr & (1u << irq)) != 0;
+#if LIB_MLUA_MOD_MLUA_EVENT
+    if (!pending && is_user_irq(irq)) {
+        IRQState* state = &uirq_state[get_core_num()];
+        uint num = irq - FIRST_USER_IRQ;
+        uint32_t save = save_and_disable_interrupts();
+        if (state->pending & (1u << num)) pending = true;
+        restore_interrupts(save);
+    }
+#endif
+    lua_pushboolean(ls, pending);
+    return 1;
+}
+
 static int mod_set_enabled(lua_State* ls) {
     uint irq = check_user_irq(ls, 1);
     bool enabled = mlua_to_cbool(ls, 2);
@@ -166,10 +183,12 @@ static MLuaSym const module_syms[] = {
     // irq_get_vtable_handler: not useful in Lua
     MLUA_SYM_F(clear, mod_),
     MLUA_SYM_F(set_pending, mod_),
+    MLUA_SYM_F(is_pending, mod_),
     MLUA_SYM_F(user_irq_claim, mod_),
     MLUA_SYM_F(user_irq_claim_unused, mod_),
     MLUA_SYM_F(user_irq_unclaim, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
+    // TODO: Handle all IRQs, not only user IRQs
     MLUA_SYM_F(enable_user_irq, mod_),
     MLUA_SYM_F(wait_user_irq, mod_),
 #endif
