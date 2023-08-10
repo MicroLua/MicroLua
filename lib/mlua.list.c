@@ -108,6 +108,33 @@ static int list_unpack(lua_State* ls) {
     return n;
 }
 
+static void add_value(lua_State* ls, luaL_Buffer* buf, lua_Integer i) {
+    lua_geti(ls, 1, i);
+    if (luai_unlikely(!lua_isstring(ls, -1))) {
+        luaL_error(ls, "list.concat: invalid value (%s) at index %I",
+                   luaL_typename(ls, -1), (LUAI_UACINT)i);
+    }
+    luaL_addvalue(buf);
+}
+
+static int list_concat(lua_State* ls) {
+    lua_Integer last = length(ls, 1);
+    size_t lsep;
+    char const* sep = luaL_optlstring(ls, 2, "", &lsep);
+    lua_Integer i = luaL_optinteger(ls, 3, 1);
+    last = luaL_optinteger(ls, 4, last);
+
+    luaL_Buffer buf;
+    luaL_buffinit(ls, &buf);
+    for (; i < last; ++i) {
+        add_value(ls, &buf, i);
+        luaL_addlstring(&buf, sep, lsep);
+    }
+    if (i == last) add_value(ls, &buf, i);
+    luaL_pushresult(&buf);
+    return 1;
+}
+
 static int list___repr(lua_State* ls) {
     luaL_Buffer buf;
     luaL_buffinit(ls, &buf);
@@ -153,10 +180,11 @@ static MLuaSym const list_syms[] = {
     MLUA_SYM_F(append, list_),
     MLUA_SYM_F(pack, list_),
     MLUA_SYM_F(unpack, list_),
+    MLUA_SYM_F(concat, list_),
     MLUA_SYM_F(__len, list_),
     MLUA_SYM_F(__eq, list_),
     MLUA_SYM_F(__repr, list_),
-    // TODO: concat, insert, move, remove, slice, sort
+    // TODO: insert, move, remove, slice, sort
 };
 
 static MLuaSym const list_meta_syms[] = {

@@ -113,6 +113,21 @@ function test_unpack(t)
     end
 end
 
+function test_concat(t)
+    for _, test in ipairs{
+        {{nil, ','}, ''},
+        {{{}, ','}, ''},
+        {{{'a', 'b', 'c'}, ''}, 'abc'},
+        {{{'a', 'b', 'c'}, ','}, 'a,b,c'},
+        {{{'a', 'b', 'c'}, ',', 2}, 'b,c'},
+        {{{'a', 'b', 'c', 'd'}, ',', 2, 3}, 'b,c'},
+        {{{'a', 'b', 'c', 'd'}, ',', 3, 2}, ''},
+    } do
+        local args, want = table.unpack(test)
+        t:expect(t:expr(list).concat(table.unpack(args))):eq(want)
+    end
+end
+
 function test_repr(t)
     for _, test in ipairs{
         {list.pack(), '{}'},
