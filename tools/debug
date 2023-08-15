@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [[ $# != 1 ]]; then
+    echo "Usage: $(basename "$0") BINARY.elf" >&2
+    exit 2
+fi
+
+gdb --eval-command="target extended-remote localhost:3333" \
+    --eval-command="monitor reset halt" \
+    --eval-command="monitor arm semihosting enable" \
+    "$1"
