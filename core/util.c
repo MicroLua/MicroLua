@@ -10,11 +10,17 @@ void mlua_require(lua_State* ls, char const* module, bool keep) {
     lua_call(ls, 1, keep ? 1 : 0);
 }
 
-bool mlua_to_cbool(lua_State* ls, int index) {
-    if (lua_isinteger(ls, index)) return lua_tointeger(ls, index) != 0;
-    if (lua_type(ls, index) == LUA_TNUMBER)
-        return lua_tonumber(ls, index) != l_mathop(0.0);
-    return lua_toboolean(ls, index);
+bool mlua_to_cbool(lua_State* ls, int arg) {
+    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
+    if (lua_type(ls, arg) == LUA_TNUMBER)
+        return lua_tonumber(ls, arg) != l_mathop(0.0);
+    return lua_toboolean(ls, arg);
+}
+
+void* mlua_check_userdata(lua_State* ls, int arg) {
+    void* ud = lua_touserdata(ls, arg);
+    luaL_argexpected(ls, ud != NULL, arg, "userdata");
+    return ud;
 }
 
 int mlua_index_undefined(lua_State* ls) {
@@ -39,6 +45,10 @@ void mlua_sym_push_string(lua_State* ls, MLuaSym const* sym) {
 
 void mlua_sym_push_function(lua_State* ls, MLuaSym const* sym) {
     lua_pushcfunction(ls, sym->function);
+}
+
+void mlua_sym_push_lightuserdata(lua_State* ls, MLuaSym const* sym) {
+    lua_pushlightuserdata(ls, sym->lightuserdata);
 }
 
 void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {

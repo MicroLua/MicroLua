@@ -65,7 +65,8 @@ bool mlua_yield_enabled(void);
 __force_inline static bool mlua_yield_enabled(void) { return false; }
 #endif
 void mlua_require(lua_State* ls, char const* module, bool keep);
-bool mlua_to_cbool(lua_State* ls, int index);
+bool mlua_to_cbool(lua_State* ls, int arg);
+void* mlua_check_userdata(lua_State* ls, int arg);
 int mlua_index_undefined(lua_State* ls);
 
 extern spin_lock_t* mlua_lock;
@@ -79,6 +80,7 @@ typedef struct MLuaSym {
         lua_Number number;
         char const* string;
         lua_CFunction function;
+        void* lightuserdata;
     };
 } MLuaSym;
 
@@ -92,6 +94,7 @@ void mlua_sym_push_integer(lua_State* ls, MLuaSym const* sym);
 void mlua_sym_push_number(lua_State* ls, MLuaSym const* sym);
 void mlua_sym_push_string(lua_State* ls, MLuaSym const* sym);
 void mlua_sym_push_function(lua_State* ls, MLuaSym const* sym);
+void mlua_sym_push_lightuserdata(lua_State* ls, MLuaSym const* sym);
 
 #define mlua_set_fields(ls, fields) \
     mlua_set_fields_((ls), (fields), MLUA_SIZE(fields))

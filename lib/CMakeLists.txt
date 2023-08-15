@@ -273,6 +273,23 @@ target_link_libraries(mlua_mod_pico_stdio INTERFACE
     pico_stdio
 )
 
+mlua_add_c_module(mlua_mod_pico_stdio_semihosting pico.stdio.semihosting
+    pico.stdio.semihosting.c)
+target_link_libraries(mlua_mod_pico_stdio_semihosting INTERFACE
+    hardware_exception
+    pico_stdio_semihosting
+)
+
+mlua_add_c_module(mlua_mod_pico_stdio_uart pico.stdio.uart pico.stdio.uart.c)
+target_link_libraries(mlua_mod_pico_stdio_uart INTERFACE
+    pico_stdio_uart
+)
+
+mlua_add_c_module(mlua_mod_pico_stdio_usb pico.stdio.usb pico.stdio.usb.c)
+target_link_libraries(mlua_mod_pico_stdio_usb INTERFACE
+    pico_stdio_usb
+)
+
 mlua_add_lua_test_modules(mlua_mod_pico_stdio_test pico.stdio.test.lua)
 target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
     mlua_mod_pico_stdio
