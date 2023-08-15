@@ -22,8 +22,9 @@ function test_user_irqs(t)
 
     -- Claim user IRQs.
     local irqs, nums = list(), ''
-    for i = 1, irq.NUM_USER_IRQS do
+    while true do
         local num = irq.user_irq_claim_unused()
+        if num < 0 then break end
         irq.clear(num)
         irq.enable_user_irq(num)
         t:cleanup(function()
@@ -33,6 +34,7 @@ function test_user_irqs(t)
         irqs:append(num)
         nums = nums .. ('%s '):format(num)
     end
+    t:assert(#irqs > 0, "No user IRQs available")
 
     -- Set up IRQ handlers.
     local log
