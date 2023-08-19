@@ -10,10 +10,17 @@ function test_strict(t)
     t:expect(not ok, "Uart instance is non-strict")
 end
 
+local function non_default_uart(t)
+    for i, u in ipairs(uart) do
+        if u ~= uart.default then return u, i end
+    end
+    t:fatal("No non-default UART found")
+end
+
 function test_blocking_write_read_Y(t)
-    local u = uart[1]
+    local u, idx = non_default_uart(t)
     local got = u:get_index()
-    t:expect(got == 1, "get_index() = %s, want 1", got)
+    t:expect(got == idx, "get_index() = %s, want %s", got, idx)
     u:init(115200)
     t:cleanup(function() u:deinit() end)
     u:set_format(8, 1, uart.PARITY_NONE)
@@ -37,7 +44,7 @@ function test_blocking_write_read_Y(t)
 end
 
 function test_threaded_write_read(t)
-    local u = uart[1]
+    local u = non_default_uart(t)
     u:init(115200)
     t:cleanup(function() u:deinit() end)
     u:enable_loopback(true)
