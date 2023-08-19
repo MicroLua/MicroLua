@@ -72,6 +72,13 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     lua_pop(ls, 1);
 }
 
+bool mlua_event_is_claimed(MLuaEvent* ev) {
+    uint32_t save = mlua_event_lock();
+    bool claimed = *ev < NUM_EVENTS;
+    mlua_event_unlock(save);
+    return claimed;
+}
+
 bool mlua_event_enable_irq_arg(lua_State* ls, int index,
                                lua_Integer* priority) {
     int type = lua_type(ls, index);

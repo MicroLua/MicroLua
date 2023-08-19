@@ -40,6 +40,9 @@ static inline char const* mlua_event_claim(MLuaEvent* ev) {
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
 
+// Return true iff the given event has been claimed.
+bool mlua_event_is_claimed(MLuaEvent* ev);
+
 extern spin_lock_t* mlua_event_spinlock;
 
 // Lock event handling. This disables interrupts.

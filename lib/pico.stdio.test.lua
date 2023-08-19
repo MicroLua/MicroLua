@@ -33,13 +33,17 @@ local function enable_stdio_loopback(t, crlf)
     stdio.set_driver_enabled(stdio_uart.driver, true)
     stdio.filter_driver(stdio_uart.driver)
     stdio.set_translate_crlf(stdio_uart.driver, crlf)
+    if yield_enabled() then stdio.enable_chars_available() end
 
     -- Enable UART loopback, and prevent output data from actually appearing at
     -- the Tx pin.
     local u = uart.default
     local tx = find_uart_tx_pin(u)
     u:tx_wait_blocking()
-    if tx then gpio.set_outover(tx, gpio.OVERRIDE_HIGH) end
+    if tx then
+        gpio.set_outover(
+            tx, gpio.get_pad(tx) and gpio.OVERRIDE_HIGH or gpio.OVERRIDE_LOW)
+    end
     u:enable_loopback(true)
 
     return function()
@@ -48,6 +52,7 @@ local function enable_stdio_loopback(t, crlf)
         while stdio.getchar_timeout_us(1000) >= 0 do end
         u:enable_loopback(false)
         if tx then gpio.set_outover(tx, gpio.OVERRIDE_NORMAL) end
+        if yield_enabled() then stdio.enable_chars_available(false) end
         stdio.set_translate_crlf(stdio_uart.driver, stdio.DEFAULT_CRLF)
         stdio.filter_driver(nil)
     end
@@ -94,8 +99,6 @@ function test_chars_available(t)
     local got, want = '', 'abcdefghijklmnopqrstuvwxyz'
     t:expect(pcall(function()
         local done<close> = enable_stdio_loopback(t, false)
-        stdio.enable_chars_available()
-        local unreg<close> = function() stdio.enable_chars_available(false) end
         local reader<close> = thread.start(function()
             while true do
                 stdio.wait_chars_available()

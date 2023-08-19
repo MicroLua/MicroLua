@@ -270,7 +270,9 @@ target_link_libraries(mlua_mod_pico_platform_test INTERFACE
 mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
 target_link_libraries(mlua_mod_pico_stdio INTERFACE
     mlua_mod_mlua_event_headers
+    mlua_mod_mlua_int64
     pico_stdio
+    pico_time
 )
 
 mlua_add_c_module(mlua_mod_pico_stdio_semihosting pico.stdio.semihosting

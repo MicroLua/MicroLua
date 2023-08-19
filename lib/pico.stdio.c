@@ -2,59 +2,92 @@
 #include <stdio.h>
 
 #include "pico/stdio.h"
+#include "pico/time.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
+#include "mlua/int64.h"
 #include "mlua/util.h"
 
-// TODO: Implement non-blocking getchar and getchar_timeout_us
 // TODO: Add read(), write()
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-typedef struct AvailableState {
+typedef struct StdioState {
     MLuaEvent event;
     bool pending;
-} AvailableState;
+} StdioState;
 
-static AvailableState chars_available_state = {.event = MLUA_EVENT_UNSET};
+static StdioState stdio_state = {.event = MLUA_EVENT_UNSET};
 
 static void __time_critical_func(chars_available)(void* ud) {
     uint32_t save = mlua_event_lock();
-    chars_available_state.pending = true;
+    stdio_state.pending = true;
+    mlua_event_set_nolock(stdio_state.event);
     mlua_event_unlock(save);
-    mlua_event_set(chars_available_state.event);
 }
 
 static int mod_enable_chars_available(lua_State* ls) {
     if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
         stdio_set_chars_available_callback(NULL, NULL);
-        mlua_event_unclaim(ls, &chars_available_state.event);
+        mlua_event_unclaim(ls, &stdio_state.event);
         return 0;
     }
-    char const* err = mlua_event_claim(&chars_available_state.event);
+    char const* err = mlua_event_claim(&stdio_state.event);
     if (err != NULL) return luaL_error(ls, "stdio: %s", err);
     uint32_t save = mlua_event_lock();
-    chars_available_state.pending = false;
+    stdio_state.pending = false;
     mlua_event_unlock(save);
     stdio_set_chars_available_callback(&chars_available, NULL);
     return 0;
 }
 
-static int try_pending(lua_State* ls, bool timeout) {
+static int try_chars_available(lua_State* ls, bool timeout) {
     uint32_t save = mlua_event_lock();
-    bool pending = chars_available_state.pending;
-    chars_available_state.pending = false;
+    bool pending = stdio_state.pending;
     mlua_event_unlock(save);
     return pending ? 0 : -1;
 }
 
 static int mod_wait_chars_available(lua_State* ls) {
-    return mlua_event_wait(ls, chars_available_state.event, &try_pending, 0);
+    return mlua_event_wait(ls, stdio_state.event, &try_chars_available, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
+
+static int try_getchar(lua_State* ls, bool timeout) {
+    if (timeout) {
+        lua_pushinteger(ls, -1);
+        return 1;
+    }
+    uint32_t save = mlua_event_lock();
+    bool pending = stdio_state.pending;
+    stdio_state.pending = false;
+    mlua_event_unlock(save);
+    if (!pending) return -1;
+    lua_pushinteger(ls, getchar());
+    return 1;
+}
+
+static int mod_getchar(lua_State* ls) {
+    if (mlua_yield_enabled() && mlua_event_is_claimed(&stdio_state.event)) {
+        return mlua_event_wait(ls, stdio_state.event, &try_getchar, 0);
+    }
+    lua_pushinteger(ls, getchar());
+    return 1;
+}
+
+static int mod_getchar_timeout_us(lua_State* ls) {
+    uint32_t timeout = luaL_checkinteger(ls, 1);
+    if (mlua_yield_enabled() && mlua_event_is_claimed(&stdio_state.event)) {
+        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
+        lua_replace(ls, 1);
+        return mlua_event_wait(ls, stdio_state.event, &try_getchar, 1);
+    }
+    lua_pushinteger(ls, getchar_timeout_us(timeout));
+    return 1;
+}
 
 MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)
 MLUA_FUNC_0_0(mod_, stdio_, flush)
@@ -63,8 +96,6 @@ MLUA_FUNC_0_2(mod_, stdio_, set_driver_enabled, mlua_check_userdata,
 MLUA_FUNC_0_1(mod_, stdio_, filter_driver, mlua_check_userdata_or_nil)
 MLUA_FUNC_0_2(mod_, stdio_, set_translate_crlf, mlua_check_userdata,
               mlua_to_cbool)
-MLUA_FUNC_1_0(mod_,, getchar, lua_pushinteger)
-MLUA_FUNC_1_1(mod_,, getchar_timeout_us, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, putchar, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, puts, lua_pushinteger, luaL_checkstring)
@@ -94,6 +125,7 @@ static MLuaSym const module_syms[] = {
 
 int luaopen_pico_stdio(lua_State* ls) {
     mlua_event_require(ls);
+    mlua_require(ls, "mlua.int64", false);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;
