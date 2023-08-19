@@ -162,6 +162,17 @@ target_link_libraries(mlua_mod_mlua_oo_test INTERFACE
     mlua_mod_string
 )
 
+mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio mlua.stdio.c)
+target_link_libraries(mlua_mod_mlua_stdio INTERFACE
+    pico_stdio
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_stdio_test mlua.stdio.test.lua)
+target_link_libraries(mlua_mod_mlua_stdio_test INTERFACE
+    mlua_mod_mlua_io
+    mlua_mod_mlua_stdio
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_debug
@@ -352,6 +363,7 @@ endif()
 
 add_executable(mlua_tests)
 target_link_libraries(mlua_tests
+    mlua_mod_mlua_stdio
     mlua_mod_mlua_testing
     mlua_mod_mlua_thread
     pico_stdlib
