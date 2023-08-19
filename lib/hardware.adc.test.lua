@@ -25,7 +25,7 @@ function test_polling(t)
     end
 end
 
-function test_fifo(t)
+function test_fifo_Y(t)
     adc.init()
     adc.set_temp_sensor_enabled(true)
     adc.select_input(input)
@@ -51,10 +51,4 @@ function test_fifo(t)
         t:expect(minT <= temp and temp <= maxT,
                  "Temperature outside of [%.1f, %.1f]: %.1f", minT, maxT, temp)
     end
-end
-
-function test_fifo_noyield(t)
-    local save = yield_enabled(false)
-    t:cleanup(function() yield_enabled(save) end)
-    test_fifo(t)
 end

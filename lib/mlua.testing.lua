@@ -15,6 +15,7 @@ local table = require 'table'
 
 local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
+local yield_pat = '_Y$'
 local err_terminate = {}
 
 local module_name = ...
@@ -153,8 +154,8 @@ end
 
 function Matcher:_fail(format, ...) return self._f(self._t, format, ...) end
 
-function Matcher:label(s)
-    self._l = s
+function Matcher:label(s, ...)
+    self._l = s:format(...)
     return self
 end
 
@@ -406,7 +407,17 @@ function Test:run_module(name, pat)
             fns:append({info and info.linedefined or 0, name, fn})
         end
     end
-    for _, fn in util.sort(fns, fn_comp):ipairs() do self:run(fn[2], fn[3]) end
+    for _, fn in util.sort(fns, fn_comp):ipairs() do
+        local y = fn[2]:find(yield_pat)
+        self:run(fn[2] .. (y and " (yield)" or ""), fn[3])
+        if y then
+            self:run(fn[2] .. " (no yield)", function(t)
+                local save = yield_enabled(false)
+                t:cleanup(function() yield_enabled(save) end)
+                return fn[3](t)
+            end)
+        end
+    end
 end
 
 function Test:run_modules(mod_pat, func_pat)

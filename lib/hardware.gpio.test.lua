@@ -237,5 +237,3 @@ function test_irq_handling(t)
     stop = true
     gpio.put(pin, 1)
 end
-
-function test_3(t) test_irq_handling(t) end

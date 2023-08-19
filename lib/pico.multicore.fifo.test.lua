@@ -13,7 +13,7 @@ local function watch_shutdown()
     end)
 end
 
-function test_status(t)
+function test_status_Y(t)
     fifo.enable_irq()
     t:cleanup(function() fifo.enable_irq(false) end)
 
@@ -49,13 +49,7 @@ function core1_push_one()
     fifo.push_blocking(1)
 end
 
-function test_status_noyield(t)
-    local save = yield_enabled(false)
-    t:cleanup(function() yield_enabled(save) end)
-    test_status(t)
-end
-
-function test_push_pop(t)
+function test_push_pop_Y(t)
     multicore.launch_core1(module_name, 'core1_echo')
     t:cleanup(multicore.reset_core1)
 
@@ -74,10 +68,4 @@ function core1_echo()
     while true do
         fifo.push_blocking(fifo.pop_blocking())
     end
-end
-
-function test_push_pop_noyield(t)
-    local save = yield_enabled(false)
-    t:cleanup(function() yield_enabled(save) end)
-    test_push_pop(t)
 end

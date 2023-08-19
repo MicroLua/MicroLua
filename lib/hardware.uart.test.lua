@@ -10,7 +10,7 @@ function test_strict(t)
     t:expect(not ok, "Uart instance is non-strict")
 end
 
-function test_blocking_write_read(t)
+function test_blocking_write_read_Y(t)
     local u = uart[1]
     local got = u:get_index()
     t:expect(got == 1, "get_index() = %s, want 1", got)
@@ -34,12 +34,6 @@ function test_blocking_write_read(t)
     t:expect(got == true, "is_readable() = %s, want true", got)
     local got = u:read_blocking(#data)
     t:expect(got == data, "Unexpected data: got %q, want %q", got, data)
-end
-
-function test_blocking_write_read_noyield(t)
-    local save = yield_enabled(false)
-    t:cleanup(function() yield_enabled(save) end)
-    test_blocking_write_read(t)
 end
 
 function test_threaded_write_read(t)
