@@ -107,11 +107,15 @@ static int global_yield_enabled(lua_State* ls) {
     return 1;
 }
 
+static int Function___close_1(lua_State* ls, int status, lua_KContext ctx) {
+    return 0;
+}
+
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.
-    lua_call(ls, lua_gettop(ls) - 1, 0);
-    return 0;
+    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &Function___close_1);
+    return Function___close_1(ls, LUA_OK, 0);
 }
 
 static __attribute__((constructor)) void init(void) {
