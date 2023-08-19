@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "pico/stdio.h"
 
@@ -6,6 +7,9 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/util.h"
+
+// TODO: Implement non-blocking getchar and getchar_timeout_us
+// TODO: Add read(), write()
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
@@ -56,24 +60,30 @@ MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)
 MLUA_FUNC_0_0(mod_, stdio_, flush)
 MLUA_FUNC_0_2(mod_, stdio_, set_driver_enabled, mlua_check_userdata,
               mlua_to_cbool)
-MLUA_FUNC_0_1(mod_, stdio_, filter_driver, mlua_check_userdata)
+MLUA_FUNC_0_1(mod_, stdio_, filter_driver, mlua_check_userdata_or_nil)
 MLUA_FUNC_0_2(mod_, stdio_, set_translate_crlf, mlua_check_userdata,
               mlua_to_cbool)
+MLUA_FUNC_1_0(mod_,, getchar, lua_pushinteger)
 MLUA_FUNC_1_1(mod_,, getchar_timeout_us, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_,, putchar, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_,, puts, lua_pushinteger, luaL_checkstring)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
 static MLuaSym const module_syms[] = {
     //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_STDIO_ENABLE_CRLF_SUPPORT),
-    //! MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_STDIO_DEFAULT_CRLF),
+    MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_STDIO_DEFAULT_CRLF),
 
     MLUA_SYM_F(init_all, mod_),
     MLUA_SYM_F(flush, mod_),
+    MLUA_SYM_F(getchar, mod_),
     MLUA_SYM_F(getchar_timeout_us, mod_),
     MLUA_SYM_F(set_driver_enabled, mod_),
     MLUA_SYM_F(filter_driver, mod_),
     MLUA_SYM_F(set_translate_crlf, mod_),
+    MLUA_SYM_F(putchar, mod_),
     MLUA_SYM_F(putchar_raw, mod_),
+    MLUA_SYM_F(puts, mod_),
     MLUA_SYM_F(puts_raw, mod_),
     // set_chars_available_callback: See enable_chars_available, wait_chars_available
 #if LIB_MLUA_MOD_MLUA_EVENT

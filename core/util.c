@@ -23,6 +23,13 @@ void* mlua_check_userdata(lua_State* ls, int arg) {
     return ud;
 }
 
+void* mlua_check_userdata_or_nil(lua_State* ls, int arg) {
+    if (lua_isnoneornil(ls, arg)) return NULL;
+    void* ud = lua_touserdata(ls, arg);
+    luaL_argexpected(ls, ud != NULL, arg, "userdata or nil");
+    return ud;
+}
+
 int mlua_index_undefined(lua_State* ls) {
     return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
 }

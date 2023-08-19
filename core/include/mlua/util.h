@@ -67,6 +67,7 @@ __force_inline static bool mlua_yield_enabled(void) { return false; }
 void mlua_require(lua_State* ls, char const* module, bool keep);
 bool mlua_to_cbool(lua_State* ls, int arg);
 void* mlua_check_userdata(lua_State* ls, int arg);
+void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 int mlua_index_undefined(lua_State* ls);
 
 extern spin_lock_t* mlua_lock;

@@ -292,7 +292,13 @@ target_link_libraries(mlua_mod_pico_stdio_usb INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_pico_stdio_test pico.stdio.test.lua)
 target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_uart
+    mlua_mod_mlua_list
+    mlua_mod_mlua_thread
     mlua_mod_pico_stdio
+    mlua_mod_pico_stdio_uart
+    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib pico.stdlib.c)
