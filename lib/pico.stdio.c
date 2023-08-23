@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "pico/stdio.h"
 #include "pico/time.h"
@@ -9,8 +10,6 @@
 #include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/util.h"
-
-// TODO: Add read(), write()
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
@@ -43,6 +42,14 @@ static int mod_enable_chars_available(lua_State* ls) {
     return 0;
 }
 
+static bool chars_available_reset() {
+    uint32_t save = mlua_event_lock();
+    bool pending = stdio_state.pending;
+    stdio_state.pending = false;
+    mlua_event_unlock(save);
+    return pending;
+}
+
 static int try_chars_available(lua_State* ls, bool timeout) {
     uint32_t save = mlua_event_lock();
     bool pending = stdio_state.pending;
@@ -61,11 +68,7 @@ static int try_getchar(lua_State* ls, bool timeout) {
         lua_pushinteger(ls, -1);
         return 1;
     }
-    uint32_t save = mlua_event_lock();
-    bool pending = stdio_state.pending;
-    stdio_state.pending = false;
-    mlua_event_unlock(save);
-    if (!pending) return -1;
+    if (!chars_available_reset()) return -1;
     lua_pushinteger(ls, getchar());
     return 1;
 }
@@ -86,6 +89,38 @@ static int mod_getchar_timeout_us(lua_State* ls) {
         return mlua_event_wait(ls, stdio_state.event, &try_getchar, 1);
     }
     lua_pushinteger(ls, getchar_timeout_us(timeout));
+    return 1;
+}
+
+static int do_read(lua_State* ls, int fd, lua_Integer len) {
+    luaL_Buffer buf;
+    char* p = luaL_buffinitsize(ls, &buf, len);
+    int cnt = read(fd, p, len);
+    if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
+    luaL_pushresultsize(&buf, cnt);
+    return 1;
+}
+
+static int try_read(lua_State* ls, bool timeout) {
+    if (!chars_available_reset()) return -1;
+    return do_read(ls, STDIN_FILENO, lua_tointeger(ls, 1));
+}
+
+static int mod_read(lua_State* ls) {
+    lua_Integer len = luaL_checkinteger(ls, 1);
+    luaL_argcheck(ls, 0 <= len, 1, "invalid length");
+    if (mlua_yield_enabled() && mlua_event_is_claimed(&stdio_state.event)) {
+        return mlua_event_wait(ls, stdio_state.event, &try_read, 0);
+    }
+    return do_read(ls, STDIN_FILENO, len);
+}
+
+static int mod_write(lua_State* ls) {
+    size_t len;
+    char const* s = luaL_checklstring(ls, 1, &len);
+    int cnt = write(STDOUT_FILENO, s, len);
+    if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
+    lua_pushinteger(ls, cnt);
     return 1;
 }
 
@@ -117,6 +152,8 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(puts, mod_),
     MLUA_SYM_F(puts_raw, mod_),
     // set_chars_available_callback: See enable_chars_available, wait_chars_available
+    MLUA_SYM_F(read, mod_),
+    MLUA_SYM_F(write, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(enable_chars_available, mod_),
     MLUA_SYM_F(wait_chars_available, mod_),

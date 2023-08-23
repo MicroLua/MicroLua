@@ -310,6 +310,7 @@ target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
     mlua_mod_hardware_uart
     mlua_mod_mlua_list
     mlua_mod_mlua_thread
+    mlua_mod_mlua_util
     mlua_mod_pico_stdio
     mlua_mod_pico_stdio_uart
     mlua_mod_string

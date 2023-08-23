@@ -4,6 +4,7 @@ local gpio = require 'hardware.gpio'
 local uart = require 'hardware.uart'
 local list = require 'mlua.list'
 local thread = require 'mlua.thread'
+local util = require 'mlua.util'
 local stdio = require 'pico.stdio'
 local stdio_uart = require 'pico.stdio.uart'
 local string = require 'string'
@@ -91,6 +92,25 @@ function test_puts(t)
             stdio.puts(s)
             for i = 1, #want do got = got .. string.char(stdio.getchar()) end
         end))
+        t:expect(got):label("crlf: %s, got", crlf):eq(want)
+    end
+end
+
+function test_write_read_Y(t)
+    for _, test in ipairs{
+        {false, {'a', '', 'bc\n', 'def', 'gh\nij'}, 'abc\ndefgh\nij'},
+        {true, {'a', '', 'bc\n', 'def', 'gh\nij'}, 'abc\r\ndefgh\r\nij'},
+    } do
+        local crlf, writes, want = list.unpack(test)
+        local wr, got = list(), ''
+        t:expect(pcall(function()
+            local done<close> = enable_stdio_loopback(t, crlf)
+            for _, w in ipairs(writes) do wr:append(stdio.write(w)) end
+            while #got < #want do got = got .. stdio.read(#want - #got) end
+        end))
+        for i, w in ipairs(writes) do
+            t:expect(wr[i]):label("write(%s)", util.repr(w)):eq(#w)
+        end
         t:expect(got):label("crlf: %s, got", crlf):eq(want)
     end
 end
