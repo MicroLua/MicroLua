@@ -188,7 +188,6 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(user_irq_claim_unused, mod_),
     MLUA_SYM_F(user_irq_unclaim, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    // TODO: Handle all IRQs, not only user IRQs
     MLUA_SYM_F(enable_user_irq, mod_),
     MLUA_SYM_F(wait_user_irq, mod_),
 #endif
