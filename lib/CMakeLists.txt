@@ -213,6 +213,7 @@ target_link_libraries(mlua_mod_mlua_thread_test INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
 target_link_libraries(mlua_mod_mlua_util INTERFACE
     mlua_mod_mlua_list
+    mlua_mod_math
     mlua_mod_string
     mlua_mod_table
 )

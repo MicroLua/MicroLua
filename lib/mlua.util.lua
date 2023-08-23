@@ -3,6 +3,7 @@
 _ENV = mlua.Module(...)
 
 local list = require 'mlua.list'
+local math = require 'math'
 local string = require 'string'
 local table = require 'table'
 
@@ -31,10 +32,32 @@ local function repr_string(v)
     end))
 end
 
-local function repr_table(v)
+local function is_list(v)
+    local len = list.len(v)
+    if math.type(len) ~= 'integer' or len < 0 then return false end
+    local cnt = 0
+    for k in pairs(v) do
+        if math.type(k) ~= 'integer' or k < 0 or k > len then return false end
+        cnt = cnt + 1
+    end
+    if len > 10 and cnt < len // 2 then return false end
+    return true, len
+end
+
+local function repr_list(v, len)
     local parts = list()
-    for k, v in pairs(v) do
-        parts:append(('[%s] = %s'):format(repr(k), repr(v)))
+    local v0 = v[0]
+    if v0 then parts:append(('[0] = %s'):format(repr(v0))) end
+    for i = 1, len do parts:append(repr(v[i])) end
+    return ('{%s}'):format(parts:concat(', '))
+end
+
+local function repr_table(v)
+    local ok, len = is_list(v)
+    if ok then return repr_list(v, len) end
+    local parts = list()
+    for k, vk in pairs(v) do
+        parts:append(('[%s] = %s'):format(repr(k), repr(vk)))
     end
     table.sort(parts)
     return ('{%s}'):format(table.concat(parts, ', '))
@@ -45,7 +68,6 @@ function repr(v)
     local ok, r = pcall(function() return getmetatable(v).__repr end)
     if ok and r then return r(v, repr) end
     -- TODO: Format numbers to full accuracy
-    -- TODO: Detect lists and use simpler formatting
     local typ = type(v)
     if typ == 'string' then return repr_string(v)
     elseif typ == 'table' then return repr_table(v)

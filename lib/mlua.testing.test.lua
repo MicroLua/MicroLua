@@ -48,7 +48,7 @@ function test_Expr(t)
         {t.expr(c):g(11):h(12), 'g(11):h(12)', 38},
         {t:expr(c):g(11):h(12), 'g(11):h(12)', 38},
         {t:expr(_ENV).f1(1, 2).f2(3, 4), 'f1(1, 2).f2(3, 4)', 10},
-        {t:expr(_ENV).f1(5)[v], 'f1(5)[{[1] = 13}]', 42},
+        {t:expr(_ENV).f1(5)[v], 'f1(5)[{13}]', 42},
     } do
         local e, want_repr, want_eval = table.unpack(test)
         t:expect(util.repr(e)):label('repr()'):eq(want_repr)
