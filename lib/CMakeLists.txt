@@ -164,13 +164,17 @@ target_link_libraries(mlua_mod_mlua_oo_test INTERFACE
 
 mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio mlua.stdio.c)
 target_link_libraries(mlua_mod_mlua_stdio INTERFACE
+    mlua_mod_pico_stdio_headers
     pico_stdio
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_stdio_test mlua.stdio.test.lua)
 target_link_libraries(mlua_mod_mlua_stdio_test INTERFACE
     mlua_mod_mlua_io
+    mlua_mod_mlua_list
     mlua_mod_mlua_stdio
+    mlua_mod_mlua_testing_stdio
+    mlua_mod_mlua_util
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
@@ -192,6 +196,14 @@ target_link_libraries(mlua_mod_mlua_testing_test INTERFACE
     mlua_mod_mlua_list
     mlua_mod_mlua_util
     mlua_mod_table
+)
+
+mlua_add_lua_modules(mlua_mod_mlua_testing_stdio mlua.testing.stdio.lua)
+target_link_libraries(mlua_mod_mlua_testing_stdio INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_uart
+    mlua_mod_pico_stdio
+    mlua_mod_pico_stdio_uart
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
@@ -280,11 +292,23 @@ target_link_libraries(mlua_mod_pico_platform_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
+target_include_directories(mlua_mod_pico_stdio_headers INTERFACE
+    include_pico.stdio)
 target_link_libraries(mlua_mod_pico_stdio INTERFACE
     mlua_mod_mlua_event_headers
     mlua_mod_mlua_int64
     pico_stdio
     pico_time
+)
+
+mlua_add_lua_test_modules(mlua_mod_pico_stdio_test pico.stdio.test.lua)
+target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
+    mlua_mod_mlua_list
+    mlua_mod_mlua_testing_stdio
+    mlua_mod_mlua_thread
+    mlua_mod_mlua_util
+    mlua_mod_pico_stdio
+    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_pico_stdio_semihosting pico.stdio.semihosting
@@ -302,18 +326,6 @@ target_link_libraries(mlua_mod_pico_stdio_uart INTERFACE
 mlua_add_c_module(mlua_mod_pico_stdio_usb pico.stdio.usb pico.stdio.usb.c)
 target_link_libraries(mlua_mod_pico_stdio_usb INTERFACE
     pico_stdio_usb
-)
-
-mlua_add_lua_test_modules(mlua_mod_pico_stdio_test pico.stdio.test.lua)
-target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
-    mlua_mod_hardware_gpio
-    mlua_mod_hardware_uart
-    mlua_mod_mlua_list
-    mlua_mod_mlua_thread
-    mlua_mod_mlua_util
-    mlua_mod_pico_stdio
-    mlua_mod_pico_stdio_uart
-    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib pico.stdlib.c)

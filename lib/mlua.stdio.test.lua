@@ -1,7 +1,33 @@
 _ENV = mlua.Module(...)
 
 local io = require 'mlua.io'
+local list = require 'mlua.list'
 local stdio = require 'mlua.stdio'
+local testing_stdio = require 'mlua.testing.stdio'
+local util = require 'mlua.util'
+
+function test_streams_Y(t)
+    for _, test in ipairs{
+        {false, stdio.stdout, {'a', '', 'bc\n', 'def'}, 'abc\ndef'},
+        {true, stdio.stdout, {'a', '', 'bc\n', 'def'}, 'abc\r\ndef'},
+        {false, stdio.stderr, {'uvw\n', 'xyz'}, 'uvw\nxyz'},
+        {true, stdio.stderr, {'uvw\n', 'xyz'}, 'uvw\r\nxyz'},
+    } do
+        local crlf, stream, writes, want = list.unpack(test)
+        local wr, got = list(), ''
+        t:expect(pcall(function()
+            local done<close> = testing_stdio.enable_loopback(t, crlf)
+            for _, w in ipairs(writes) do wr:append(stream:write(w)) end
+            while #got < #want do
+                got = got .. stdio.stdin:read(#want - #got)
+            end
+        end))
+        for i, w in ipairs(writes) do
+            t:expect(wr[i]):label("write(%s)", util.repr(w)):eq(#w)
+        end
+        t:expect(got):label("crlf: %s, got", crlf):eq(want)
+    end
+end
 
 function test_print(t)
     local b = io.Buffer()

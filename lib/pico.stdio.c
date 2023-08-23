@@ -1,3 +1,5 @@
+#include "mlua/pico.stdio.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -5,7 +7,6 @@
 #include "pico/stdio.h"
 #include "pico/time.h"
 
-#include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/int64.h"
@@ -103,25 +104,35 @@ static int do_read(lua_State* ls, int fd, lua_Integer len) {
 
 static int try_read(lua_State* ls, bool timeout) {
     if (!chars_available_reset()) return -1;
-    return do_read(ls, STDIN_FILENO, lua_tointeger(ls, 1));
+    return do_read(ls, lua_tointeger(ls, -2), lua_tointeger(ls, -1));
+}
+
+int mlua_pico_stdio_read(lua_State* ls, int fd, int index) {
+    lua_Integer len = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, 0 <= len, index, "invalid length");
+    if (mlua_yield_enabled() && mlua_event_is_claimed(&stdio_state.event)) {
+        lua_pushinteger(ls, fd);
+        lua_pushinteger(ls, len);
+        return mlua_event_wait(ls, stdio_state.event, &try_read, 0);
+    }
+    return do_read(ls, fd, len);
 }
 
 static int mod_read(lua_State* ls) {
-    lua_Integer len = luaL_checkinteger(ls, 1);
-    luaL_argcheck(ls, 0 <= len, 1, "invalid length");
-    if (mlua_yield_enabled() && mlua_event_is_claimed(&stdio_state.event)) {
-        return mlua_event_wait(ls, stdio_state.event, &try_read, 0);
-    }
-    return do_read(ls, STDIN_FILENO, len);
+    return mlua_pico_stdio_read(ls, STDIN_FILENO, 1);
 }
 
-static int mod_write(lua_State* ls) {
+int mlua_pico_stdio_write(lua_State* ls, int fd, int index) {
     size_t len;
-    char const* s = luaL_checklstring(ls, 1, &len);
-    int cnt = write(STDOUT_FILENO, s, len);
+    char const* s = luaL_checklstring(ls, index, &len);
+    int cnt = write(fd, s, len);
     if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
     lua_pushinteger(ls, cnt);
     return 1;
+}
+
+static int mod_write(lua_State* ls) {
+    return mlua_pico_stdio_write(ls, STDOUT_FILENO, 1);
 }
 
 MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)
