@@ -137,6 +137,14 @@ void mlua_run_main(lua_State* ls) {
     }
 }
 
+#ifndef MLUA_MAIN_MODULE
+#define MLUA_MAIN_MODULE main
+#endif
+
+#ifndef MLUA_MAIN_FUNCTION
+#define MLUA_MAIN_FUNCTION main
+#endif
+
 void mlua_main_core0() {
     // Ensure that the system timer is ticking. This seems to take some time
     // after a reset.

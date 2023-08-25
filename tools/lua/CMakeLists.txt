@@ -11,7 +11,11 @@ mlua_core_copy("${srcs}" src)
 mlua_core_luaconf(src)
 
 add_executable(lua "${CMAKE_CURRENT_BINARY_DIR}/src/onelua.c")
-target_compile_definitions(lua PRIVATE LUA_USE_LINUX MAKE_LUA)
+target_compile_definitions(lua PRIVATE
+    MAKE_LUA
+    MLUA_MAXSTACK=0
+    MLUA_BUFFERSIZE=0
+)
 target_link_options(lua PRIVATE -lm)
 if(CMAKE_HOST_WIN32)
     target_compile_definitions(lua PRIVATE LUA_USE_WINDOWS)

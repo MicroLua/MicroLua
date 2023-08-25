@@ -382,6 +382,9 @@ if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
 endif()
 
 add_executable(mlua_tests)
+target_compile_definitions(mlua_tests PRIVATE
+    MLUA_MAIN_MODULE=mlua.testing
+)
 target_link_libraries(mlua_tests
     mlua_mod_mlua_stdio
     mlua_mod_mlua_testing
@@ -389,5 +392,4 @@ target_link_libraries(mlua_tests
     pico_stdlib
     ${TESTS}
 )
-mlua_main(mlua_tests mlua.testing)
 pico_add_extra_outputs(mlua_tests)

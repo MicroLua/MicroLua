@@ -7,10 +7,12 @@
 #define LUA_PATH_DEFAULT ""
 #define LUA_CPATH_DEFAULT ""
 
-#if !@MLUA_NUM_TO_STR_CONV@
+// When true, enable automatic coercion from number to string.
+#if !MLUA_NUM_TO_STR_CONV
 #define LUA_NOCVTN2S
 #endif
-#if !@MLUA_STR_TO_NUM_CONV@
+// When true, enable automatic coercion from string to number.
+#if !MLUA_STR_TO_NUM_CONV
 #define LUA_NOCVTS2N
 #endif
 
@@ -25,14 +27,22 @@
 
 #ifdef PICO_BUILD
 
-#if @MLUA_MAXSTACK@ > 0
+// The Lua stack size limit. When <= 0, use the default.
+#ifndef MLUA_MAXSTACK
+#define MLUA_MAXSTACK 1000
+#endif
+#if MLUA_MAXSTACK > 0
 #undef LUAI_MAXSTACK
-#define LUAI_MAXSTACK @MLUA_MAXSTACK@
+#define LUAI_MAXSTACK MLUA_MAXSTACK
 #endif
 
-#if @MLUA_BUFFERSIZE@ > 0
+// The initial buffer size used by lauxlib. When <= 0, use the default.
+#ifndef MLUA_BUFFERSIZE
+#define MLUA_BUFFERSIZE 32
+#endif
+#if MLUA_BUFFERSIZE > 0
 #undef LUAL_BUFFERSIZE
-#define LUAL_BUFFERSIZE @MLUA_BUFFERSIZE@
+#define LUAL_BUFFERSIZE MLUA_BUFFERSIZE
 #endif
 
 // lua_writestring and lua_writeline are only used by print(), which we override

@@ -38,12 +38,6 @@ set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
 mlua_set(MLUA_FLOAT FLOAT CACHE STRING
     "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
 set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
-mlua_set(MLUA_MAXSTACK 1000 CACHE STRING "The maximum size of the Lua stack")
-mlua_set(MLUA_BUFFERSIZE 32 CACHE STRING "The initial size of buffers")
-mlua_set(MLUA_NUM_TO_STR_CONV 0 CACHE STRING
-    "When true, enable automatic number-to-string coercion")
-mlua_set(MLUA_STR_TO_NUM_CONV 0 CACHE STRING
-    "When true, enable automatic string-to-number coercion")
 
 function(mlua_core_luaconf DEST)
     file(READ "${MLUA_LUA_SOURCE_DIR}/luaconf.h" LUACONF)
@@ -115,12 +109,4 @@ function(mlua_add_lua_test_modules TARGET)
     get_property(tests GLOBAL PROPERTY mlua_test_targets)
     list(APPEND tests "${TARGET}")
     set_property(GLOBAL PROPERTY mlua_test_targets "${tests}")
-endfunction()
-
-function(mlua_main TARGET FUNC)
-    string(REGEX MATCH "^([^:]*)(:(.*))?$" DUMMY "${FUNC}")
-    set_target_properties("${TARGET}" PROPERTIES
-        MLUA_TARGET_MAIN_MODULE "${CMAKE_MATCH_1}"
-        MLUA_TARGET_MAIN_FUNCTION "${CMAKE_MATCH_3}"
-    )
 endfunction()

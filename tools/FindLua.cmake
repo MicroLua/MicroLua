@@ -16,8 +16,6 @@ if (NOT Lua_FOUND)
                 "-DMLUA_PATH:PATH=${MLUA_PATH}"
                 "-DMLUA_INT:STRING=${MLUA_INT}"
                 "-DMLUA_FLOAT:STRING=${MLUA_FLOAT}"
-                "-DMLUA_NUM_TO_STR_CONV:STRING=${MLUA_NUM_TO_STR_CONV}"
-                "-DMLUA_STR_TO_NUM_CONV:STRING=${MLUA_STR_TO_NUM_CONV}"
             BUILD_ALWAYS 1  # Force dependency checking
             INSTALL_COMMAND ""
         )
