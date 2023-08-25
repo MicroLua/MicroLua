@@ -38,8 +38,8 @@ end
 
 function test_puts(t)
     for _, test in ipairs{
-        {false, 'abcdef', 'abcdef\nabcdef\n'},
-        {true, 'abcdef', 'abcdef\nabcdef\r\n'},
+        {false, 'ab\ncd\r\nef', 'ab\ncd\r\nef\nab\ncd\r\nef\n'},
+        {true, 'ab\ncd\r\nef', 'ab\ncd\r\nef\nab\r\ncd\r\nef\r\n'},
     } do
         local crlf, s, want = list.unpack(test)
         local got = ''
