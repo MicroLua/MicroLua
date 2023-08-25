@@ -493,6 +493,7 @@ function pmain()
             if c == '\n' then break end
             line = line .. c
         end
+        -- TODO: Show full results up to level x
         -- TODO: Terminate on first failure
         -- TODO: Launch repl on failure
         if line == 'fo' then full_output = not full_output

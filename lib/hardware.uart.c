@@ -209,6 +209,25 @@ static int Uart_read_blocking(lua_State* ls) {
     return 1;
 }
 
+static int try_getc(lua_State* ls, bool timeout) {
+    uart_inst_t* u = to_Uart(ls, 1);
+    if (!uart_is_readable(u)) return -1;
+    lua_pushinteger(ls, uart_getc(u));
+    return 1;
+}
+
+static int Uart_getc(lua_State* ls) {
+    uart_inst_t* u = check_Uart(ls, 1);
+    if (mlua_yield_enabled()) {
+        MLuaEvent* ev = &uart_state[uart_get_index(u)].rx_event;
+        if (mlua_event_is_claimed(ev)) {
+            return mlua_event_wait(ls, *ev, &try_getc, 0);
+        }
+    }
+    lua_pushinteger(ls, uart_getc(u));
+    return 1;
+}
+
 static int Uart_enable_loopback(lua_State* ls) {
     uart_inst_t* u = check_Uart(ls, 1);
     if (mlua_to_cbool(ls, 2)) {
@@ -237,6 +256,9 @@ MLUA_FUNC_1_1(Uart_, uart_, is_enabled, lua_pushboolean, check_Uart)
 MLUA_FUNC_0_2(Uart_, uart_, set_fifo_enabled, check_Uart, mlua_to_cbool)
 MLUA_FUNC_1_1(Uart_, uart_, is_writable, lua_pushboolean, check_Uart)
 MLUA_FUNC_1_1(Uart_, uart_, is_readable, lua_pushboolean, check_Uart)
+MLUA_FUNC_0_2(Uart_, uart_, putc_raw, check_Uart, luaL_checkinteger)
+MLUA_FUNC_0_2(Uart_, uart_, putc, check_Uart, luaL_checkinteger)
+MLUA_FUNC_0_2(Uart_, uart_, puts, check_Uart, luaL_checkstring)
 MLUA_FUNC_0_2(Uart_, uart_, set_break, check_Uart, mlua_to_cbool)
 MLUA_FUNC_0_2(Uart_, uart_, set_translate_crlf, check_Uart, mlua_to_cbool)
 MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, check_Uart,
@@ -260,10 +282,10 @@ static MLuaSym const Uart_syms[] = {
     // TODO: MLUA_SYM_F(wait_readable, Uart_),
     MLUA_SYM_F(write_blocking, Uart_),
     MLUA_SYM_F(read_blocking, Uart_),
-    // TODO: MLUA_SYM_F(putc_raw, Uart_),
-    // TODO: MLUA_SYM_F(putc, Uart_),
-    // TODO: MLUA_SYM_F(puts, Uart_),
-    // TODO: MLUA_SYM_F(getc, Uart_),
+    MLUA_SYM_F(putc_raw, Uart_),
+    MLUA_SYM_F(putc, Uart_),
+    MLUA_SYM_F(puts, Uart_),
+    MLUA_SYM_F(getc, Uart_),
     MLUA_SYM_F(set_break, Uart_),
     MLUA_SYM_F(set_translate_crlf, Uart_),
     // TODO: MLUA_SYM_F(is_readable_within_us, Uart_),
@@ -275,6 +297,9 @@ static MLuaSym const Uart_syms[] = {
 };
 
 static MLuaSym const module_syms[] = {
+    //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_UART_ENABLE_CRLF_SUPPORT),
+    //! MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_UART_DEFAULT_CRLF),
+    //! MLUA_SYM_V(DEFAULT_BAUD_RATE, boolean, PICO_DEFAULT_UART_BAUD_RATE),
     MLUA_SYM_V(PARITY_NONE, integer, UART_PARITY_NONE),
     MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),

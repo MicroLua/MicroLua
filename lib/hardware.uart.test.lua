@@ -2,7 +2,9 @@ _ENV = mlua.Module(...)
 
 local uart = require 'hardware.uart'
 local math = require 'math'
+local list = require 'mlua.list'
 local thread = require 'mlua.thread'
+local string = require 'string'
 
 function test_strict(t)
     local ok = pcall(function() return uart.UNKNOWN end)
@@ -18,9 +20,11 @@ local function non_default_uart(t)
     t:fatal("No non-default UART found")
 end
 
+
 local function setup(t)
     local u, idx = non_default_uart(t)
-    u:init(115200)
+    local baud = 1000000
+    t:expect(t:expr(u):init(baud)):close_to_rel(baud, 0.05)
     t:cleanup(function() u:deinit() end)
     u:enable_loopback(true)
     u:enable_irq()
@@ -33,9 +37,9 @@ function test_configuration(t)
     local u, idx = setup(t)
     t:expect(t:expr(u):get_index()):eq(idx)
     u:enable_irq(false)
-    local baud = 115200
+    local baud = 460800
     t:expect(t:expr(u):set_baudrate(baud)):close_to_rel(baud, 0.05)
-    u:set_format(7, 1, uart.PARITY_ODD)
+    u:set_format(7, 2, uart.PARITY_ODD)
     u:set_hw_flow(false, false)
     u:set_fifo_enabled(true)
     u:enable_irq()
@@ -52,7 +56,8 @@ function test_blocking_write_read_Y(t)
     t:expect(t:expr(u):is_tx_busy()):eq(false)
     t:expect(t:expr(u):is_readable()):eq(false)
     u:write_blocking(data)
-    t:expect(t:expr(u):is_tx_busy()):eq(true)
+    local busy = u:is_tx_busy()  -- t:expr() is too slow for high bitrates
+    t:expect(busy):label("is_tx_busy()"):eq(true)
     u:tx_wait_blocking()
     t:expect(t:expr(u):is_tx_busy()):eq(false)
     t:expect(t:expr(u):is_readable()):eq(true)
@@ -62,12 +67,53 @@ end
 
 function test_threaded_write_read(t)
     local u = setup(t)
-    local cnt, data = 100, "0123456"
+    local cnt, data = 50, "0123456"
     local writer<close> = thread.start(function()
-        for i = 1, cnt do u:write_blocking(data) end
+        for i = 1, cnt do
+            u:write_blocking(data)
+            thread.yield()
+        end
     end)
     for i = 1, cnt do
-        t:expect(t:expr(u):read_blocking(#data)):eq(data)
+        local got = u:read_blocking(#data)  -- t:expr() is slow
+        t:expect(got):label("got"):eq(data)
     end
     t:expect(t:expr(u):is_readable()):eq(false)
+end
+
+function test_putc_getc_Y(t)
+    local u = setup(t)
+    for _, test in ipairs{
+        {false, {65, 10, 66, 13, 10, 67},
+                {65, 10, 66, 13, 10, 67, 65, 10, 66, 13, 10, 67}},
+        -- BUG(pico-sdk): A CR/LF in the input should output a CR/LF, not a
+        --   CR/CR/LF. pico_stdio does it correctly. There's a similar issue
+        --   across two puts() calls, with the first ending with a CR and the
+        --   second starting with an LF.
+        {true, {65, 10, 66, 13, 10, 67},
+               {65, 10, 66, 13, 10, 67, 65, 13, 10, 66, 13, 13, 10, 67}},
+    } do
+        local crlf, chars, want = list.unpack(test)
+        u:set_translate_crlf(crlf)
+        for _, c in ipairs(chars) do u:putc_raw(c) end
+        for _, c in ipairs(chars) do u:putc(c) end
+        local got = list()
+        for i = 1, #want do got:append(u:getc()) end
+        t:expect(got):label("crlf: %s, got", crlf):eq(want, list.eq)
+    end
+end
+
+function test_puts(t)
+    local u = setup(t)
+    for _, test in ipairs{
+        {false, 'ab\ncd\r\nef', 'ab\ncd\r\nef'},
+        {true, 'ab\ncd\r\nef', 'ab\r\ncd\r\nef'},
+    } do
+        local crlf, s, want = list.unpack(test)
+        u:set_translate_crlf(crlf)
+        u:puts(s)
+        local got = ''
+        for i = 1, #want do got = got .. string.char(u:getc()) end
+        t:expect(got):label("crlf: %s, got", crlf):eq(want)
+    end
 end
