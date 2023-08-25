@@ -72,13 +72,6 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     lua_pop(ls, 1);
 }
 
-bool mlua_event_is_claimed(MLuaEvent* ev) {
-    uint32_t save = mlua_event_lock();
-    bool claimed = *ev < NUM_EVENTS;
-    mlua_event_unlock(save);
-    return claimed;
-}
-
 bool mlua_event_enable_irq_arg(lua_State* ls, int index,
                                lua_Integer* priority) {
     int type = lua_type(ls, index);
@@ -231,6 +224,16 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
         lua_pushboolean(ls, true);
     }
     return mlua_event_yield(ls, cont, ctx, 1);
+}
+
+bool mlua_event_can_wait(MLuaEvent* event) {
+    if (!mlua_yield_enabled()) return false;
+    uint32_t save = mlua_event_lock();
+    MLuaEvent e = *event;
+    bool ok = e < NUM_EVENTS && (event_state.mask[get_core_num()][e / 32]
+                                 & (1u << (e % 32))) != 0;
+    mlua_event_unlock(save);
+    return ok;
 }
 
 static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,

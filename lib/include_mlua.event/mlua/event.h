@@ -40,9 +40,6 @@ static inline char const* mlua_event_claim(MLuaEvent* ev) {
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
 
-// Return true iff the given event has been claimed.
-bool mlua_event_is_claimed(MLuaEvent* ev);
-
 extern spin_lock_t* mlua_event_spinlock;
 
 // Lock event handling. This disables interrupts.
@@ -103,6 +100,10 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 
 typedef int (*MLuaEventGetter)(lua_State*, bool);
 
+// Return true iff waiting for the given even is possible, i.e. yielding is
+// enabled and the event was claimed.
+bool mlua_event_can_wait(MLuaEvent* event);
+
 // Wait for an event, suspending as long as try_get returns a negative value.
 // The index is passed to mlua_event_suspend as a deadline index.
 int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
@@ -110,6 +111,7 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
 
 #if !LIB_MLUA_MOD_MLUA_EVENT
 #define mlua_event_require(ls) do {} while(0)
+#define mlua_event_can_wait(event) (false)
 #define mlua_event_wait(ls, event, try_get, index) ((int)0)
 #endif
 
