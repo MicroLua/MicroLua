@@ -164,21 +164,33 @@ function Matcher:fix(fn)
     return self
 end
 
-function Matcher:eq(want, cmp) return self:_check(want, '', cmp or util.eq) end
+function Matcher:eq(want, cmp) return self:_rel_op(want, cmp or util.eq, '') end
+function Matcher:lt(want) return self:_rel_op(want, util.lt, '<') end
+function Matcher:lte(want) return self:_rel_op(want, util.lte, '<=') end
+function Matcher:gt(want) return self:_rel_op(want, util.gt, '>') end
+function Matcher:gte(want) return self:_rel_op(want, util.gte, '>=') end
 
-function Matcher:lt(want) return self:_check(want, '<', util.lt) end
+function Matcher:_rel_op(want, cmp, op)
+    return self:_compare(want, cmp, function()
+        return ('%s%s'):format(op, util.repr(want))
+    end)
+end
 
-function Matcher:lte(want) return self:_check(want, '<=', util.lte) end
+function Matcher:close_to(want, eps)
+    return self:_compare(
+        want, function(g, w) return w - eps <= g and g <= w + eps end,
+        function() return ('%s ±%s'):format(util.repr(want), util.repr(eps)) end)
+end
 
-function Matcher:gt(want) return self:_check(want, '>', util.gt) end
+function Matcher:close_to_rel(want, fact)
+    return self:close_to(want, fact * want)
+end
 
-function Matcher:gte(want) return self:_check(want, '>=', util.gte) end
-
-function Matcher:_check(want, op, cmp)
+function Matcher:_compare(want, cmp, fmt)
     local got = self:_eval()
     if not cmp(got, want) then
-        self:_fail("%s = %s, want %s%s", self._l or util.repr(self._v),
-                   util.repr(got), op, util.repr(want))
+        self:_fail("%s = @{+WHITE}%s@{NORM}, want @{+CYAN}%s@{NORM}",
+                   self._l or util.repr(self._v), util.repr(got), fmt)
     end
     return self
 end
