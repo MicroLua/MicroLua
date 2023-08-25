@@ -29,6 +29,12 @@ static inline uart_inst_t* to_Uart(lua_State* ls, int arg) {
     return *((uart_inst_t**)lua_touserdata(ls, arg));
 }
 
+static int Uart_is_tx_busy(lua_State* ls) {
+    uart_inst_t* u = check_Uart(ls, 1);
+    lua_pushboolean(ls, (uart_get_hw(u)->fr & UART_UARTFR_BUSY_BITS) != 0);
+    return 1;
+}
+
 static int Uart_tx_wait_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int Uart_tx_wait_blocking(lua_State* ls) {
@@ -248,7 +254,7 @@ static MLuaSym const Uart_syms[] = {
     MLUA_SYM_F(set_fifo_enabled, Uart_),
     MLUA_SYM_F(is_writable, Uart_),
     // TODO: MLUA_SYM_F(wait_writable, Uart_),
-    // TODO: MLUA_SYM_F(tx_is_busy, Uart_),
+    MLUA_SYM_F(is_tx_busy, Uart_),
     MLUA_SYM_F(tx_wait_blocking, Uart_),
     MLUA_SYM_F(is_readable, Uart_),
     // TODO: MLUA_SYM_F(wait_readable, Uart_),

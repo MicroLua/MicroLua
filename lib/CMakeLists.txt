@@ -93,6 +93,7 @@ target_link_libraries(mlua_mod_hardware_uart INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_uart_test hardware.uart.test.lua)
 target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_hardware_uart
+    mlua_mod_math
     mlua_mod_mlua_thread
 )
 
@@ -180,11 +181,11 @@ target_link_libraries(mlua_mod_mlua_stdio_test INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_debug
+    mlua_mod_math
     mlua_mod_mlua_io
     mlua_mod_mlua_list
     mlua_mod_mlua_oo
     mlua_mod_mlua_util
-    mlua_mod_math
     mlua_mod_package
     mlua_mod_pico_time
     mlua_mod_string
@@ -224,8 +225,8 @@ target_link_libraries(mlua_mod_mlua_thread_test INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
 target_link_libraries(mlua_mod_mlua_util INTERFACE
-    mlua_mod_mlua_list
     mlua_mod_math
+    mlua_mod_mlua_list
     mlua_mod_string
     mlua_mod_table
 )
