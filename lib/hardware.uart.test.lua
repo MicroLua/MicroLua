@@ -41,7 +41,6 @@ function test_configuration(t)
     local baud = 460800
     t:expect(t:expr(u):set_baudrate(baud)):close_to_rel(baud, 0.05)
     u:set_format(7, 2, uart.PARITY_ODD)
-    u:set_hw_flow(false, false)
     u:set_fifo_enabled(true)
     u:enable_irq()
     local data = 'abc\x81\x92\xa3'
@@ -82,11 +81,9 @@ end
 function test_threaded_write_read(t)
     local u = setup(t)
     local cnt, data = 50, "0123456"
+    u:set_hw_flow(true, true)
     local writer<close> = thread.start(function()
-        for i = 1, cnt do
-            u:write_blocking(data)
-            thread.yield()
-        end
+        for i = 1, cnt do u:write_blocking(data) end
     end)
     for i = 1, cnt do
         local got = u:read_blocking(#data)  -- t:expr() is slow
