@@ -125,8 +125,8 @@ static int mod_pop_timeout_us(lua_State* ls) {
                                &try_fifo_pop, 1);
     }
 
-    // We don't use multicore_fifo_pop_timeout_us() here, because of
-    // <https://github.com/raspberrypi/pico-sdk/issues/1142>.
+    // BUG(pico-sdk): We don't use multicore_fifo_pop_timeout_us() here, because
+    // of <https://github.com/raspberrypi/pico-sdk/issues/1142>.
     while (!multicore_fifo_rvalid()) {
         if (best_effort_wfe_or_timeout(deadline)) return false;
     }

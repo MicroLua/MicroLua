@@ -13,6 +13,11 @@ local function watch_shutdown()
     end)
 end
 
+function set_up(t)
+    multicore.reset_core1()
+    fifo.drain()
+end
+
 function test_status_Y(t)
     fifo.enable_irq()
     t:cleanup(function() fifo.enable_irq(false) end)
