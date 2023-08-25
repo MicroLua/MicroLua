@@ -93,12 +93,46 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_V(stdout, boolean, false),
 };
 
-// TODO: Allow customizing which stdio drivers to enable early
+// When true, initialize UART-based stdin.
+#ifndef MLUA_STDIO_INIT_UART_IN
+#define MLUA_STDIO_INIT_UART_IN 1
+#endif
+
+// When true, initialize UART-based stdout.
+#ifndef MLUA_STDIO_INIT_UART_OUT
+#define MLUA_STDIO_INIT_UART_OUT 1
+#endif
+
+// When true, initialize USB-based stdio.
+#ifndef MLUA_STDIO_INIT_USB
+#define MLUA_STDIO_INIT_USB 0
+#endif
+
+// When true, initialize semihosting-based stdio.
+#ifndef MLUA_STDIO_INIT_SEMIHOSTING
+#define MLUA_STDIO_INIT_SEMIHOSTING 0
+#endif
 
 static __attribute__((constructor)) void init(void) {
-#if LIB_PICO_STDIO_UART
-    stdio_uart_init();
+#if LIB_PICO_STDIO_SEMIHOSTING
+#if MLUA_STDIO_INIT_SEMIHOSTING
+    stdout_usb_init();
 #endif
+#endif  // LIB_PICO_STDIO_SEMIHOSTING
+#if LIB_PICO_STDIO_UART
+#if MLUA_STDIO_INIT_UART_IN && MLUA_STDIO_INIT_UART_OUT
+    stdio_uart_init();
+#elif MLUA_STDIO_INIT_UART_IN
+    stdin_uart_init();
+#elif MLUA_STDIO_INIT_UART_OUT
+    stdout_uart_init();
+#endif
+#endif  // LIB_PICO_STDIO_UART
+#if LIB_PICO_STDIO_USB
+#if MLUA_STDIO_INIT_USB
+    stdout_usb_init();
+#endif
+#endif  // LIB_PICO_STDIO_USB
 }
 
 int luaopen_mlua_stdio(lua_State* ls) {
