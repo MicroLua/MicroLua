@@ -87,7 +87,9 @@ target_link_libraries(mlua_mod_hardware_uart INTERFACE
     hardware_regs
     hardware_uart
     mlua_mod_mlua_event_headers
+    mlua_mod_mlua_int64
     pico_platform
+    pico_time
 )
 
 mlua_add_lua_test_modules(mlua_mod_hardware_uart_test hardware.uart.test.lua)
@@ -96,6 +98,7 @@ target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_math
     mlua_mod_mlua_list
     mlua_mod_mlua_thread
+    mlua_mod_pico_time
     mlua_mod_string
 )
 

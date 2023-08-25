@@ -6,10 +6,12 @@
 #include "hardware/regs/intctrl.h"
 #include "hardware/uart.h"
 #include "pico/platform.h"
+#include "pico/time.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
+#include "mlua/int64.h"
 #include "mlua/util.h"
 
 static char const Uart_name[] = "hardware.uart.Uart";
@@ -225,6 +227,30 @@ static int Uart_getc(lua_State* ls) {
     return 1;
 }
 
+static int try_is_readable(lua_State* ls, bool timeout) {
+    if (timeout) {
+        lua_pushboolean(ls, false);
+        return 1;
+    }
+    uart_inst_t* u = to_Uart(ls, 1);
+    if (!uart_is_readable(u)) return -1;
+    lua_pushboolean(ls, true);
+    return 1;
+}
+
+static int Uart_is_readable_within_us(lua_State* ls) {
+    uart_inst_t* u = check_Uart(ls, 1);
+    uint32_t timeout = luaL_checkinteger(ls, 2);
+    MLuaEvent* event = &uart_state[uart_get_index(u)].rx_event;
+    if (mlua_event_can_wait(event)) {
+        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
+        lua_replace(ls, 2);
+        return mlua_event_wait(ls, *event, &try_is_readable, 2);
+    }
+    lua_pushboolean(ls, uart_is_readable_within_us(u, timeout));
+    return 1;
+}
+
 static int Uart_enable_loopback(lua_State* ls) {
     uart_inst_t* u = check_Uart(ls, 1);
     if (mlua_to_cbool(ls, 2)) {
@@ -285,7 +311,7 @@ static MLuaSym const Uart_syms[] = {
     MLUA_SYM_F(getc, Uart_),
     MLUA_SYM_F(set_break, Uart_),
     MLUA_SYM_F(set_translate_crlf, Uart_),
-    // TODO: MLUA_SYM_F(is_readable_within_us, Uart_),
+    MLUA_SYM_F(is_readable_within_us, Uart_),
     MLUA_SYM_F(get_dreq, Uart_),
     MLUA_SYM_F(enable_loopback, Uart_),
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -317,6 +343,7 @@ static __attribute__((constructor)) void init(void) {
 
 int luaopen_hardware_uart(lua_State* ls) {
     mlua_event_require(ls);
+    mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
     mlua_new_module(ls, NUM_UARTS, module_syms);

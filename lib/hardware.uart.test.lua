@@ -4,6 +4,7 @@ local uart = require 'hardware.uart'
 local math = require 'math'
 local list = require 'mlua.list'
 local thread = require 'mlua.thread'
+local time = require 'pico.time'
 local string = require 'string'
 
 function test_strict(t)
@@ -55,12 +56,25 @@ function test_blocking_write_read_Y(t)
     t:expect(t:expr(u):is_writable()):eq(true)
     t:expect(t:expr(u):is_tx_busy()):eq(false)
     t:expect(t:expr(u):is_readable()):eq(false)
+    local start = time.get_absolute_time()
+    local got = u:is_readable_within_us(1000)
+    local now = time.get_absolute_time()
+    t:expect(got):label("is_readable_within_us()"):eq(false)
+    t:expect(now - start):label("is_readable_within_us() duration"):gte(1000)
+
     u:write_blocking(data)
     local busy = u:is_tx_busy()  -- t:expr() is too slow for high bitrates
     t:expect(busy):label("is_tx_busy()"):eq(true)
     u:tx_wait_blocking()
     t:expect(t:expr(u):is_tx_busy()):eq(false)
+
     t:expect(t:expr(u):is_readable()):eq(true)
+    local start = time.get_absolute_time()
+    local got = u:is_readable_within_us(1000000)
+    local now = time.get_absolute_time()
+    t:expect(got):label("is_readable_within_us()"):eq(true)
+    t:expect(now - start):label("is_readable_within_us() duration"):lt(100)
+
     t:expect(t:expr(u):read_blocking(#data)):eq(data)
     t:expect(t:expr(u):is_readable()):eq(false)
 end
