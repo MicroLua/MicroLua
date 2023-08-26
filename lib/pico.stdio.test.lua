@@ -25,7 +25,7 @@ function test_putchar_getchar_Y(t)
     } do
         local crlf, chars, want = list.unpack(test)
         local got = list()
-        t:expect(pcall(function()
+        t:expect(pcall(function()  -- No output in this block
             local done<close> = testing_stdio.enable_loopback(t, crlf)
             for _, c in ipairs(chars) do stdio.putchar_raw(c) end
             for _, c in ipairs(chars) do stdio.putchar(c) end
@@ -43,7 +43,7 @@ function test_puts(t)
     } do
         local crlf, s, want = list.unpack(test)
         local got = ''
-        t:expect(pcall(function()
+        t:expect(pcall(function()  -- No output in this block
             local done<close> = testing_stdio.enable_loopback(t, crlf)
             stdio.puts_raw(s)
             stdio.puts(s)
@@ -60,7 +60,7 @@ function test_write_read_Y(t)
     } do
         local crlf, writes, want = list.unpack(test)
         local wr, got = list(), ''
-        t:expect(pcall(function()
+        t:expect(pcall(function()  -- No output in this block
             local done<close> = testing_stdio.enable_loopback(t, crlf)
             for _, w in ipairs(writes) do wr:append(stdio.write(w)) end
             while #got < #want do got = got .. stdio.read(#want - #got) end
@@ -74,7 +74,7 @@ end
 
 function test_chars_available(t)
     local got, want = '', 'abcdefghijklmnopqrstuvwxyz'
-    t:expect(pcall(function()
+    t:expect(pcall(function()  -- No output in this block
         local done<close> = testing_stdio.enable_loopback(t, false)
         local reader<close> = thread.start(function()
             while true do

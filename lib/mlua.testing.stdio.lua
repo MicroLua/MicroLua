@@ -2,16 +2,9 @@ _ENV = mlua.Module(...)
 
 local gpio = require 'hardware.gpio'
 local uart = require 'hardware.uart'
+local testing_uart = require 'mlua.testing.uart'
 local stdio = require 'pico.stdio'
 local stdio_uart = require 'pico.stdio.uart'
-
-local uart_tx_pins = {[0] = {0, 12, 16, 28}, [1] = {4, 8, 20, 24}}
-
-local function find_uart_tx_pin(uart)
-    for _, pin in ipairs(uart_tx_pins[uart:get_index()]) do
-        if gpio.get_function(pin) == gpio.FUNC_UART then return pin end
-    end
-end
 
 function enable_loopback(t, crlf)
     t:assert(stdio_uart.driver, "UART stdio driver unavailable")
@@ -26,7 +19,7 @@ function enable_loopback(t, crlf)
     -- Enable UART loopback, and prevent output data from actually appearing at
     -- the Tx pin.
     local u = uart.default
-    local tx = find_uart_tx_pin(u)
+    local tx = testing_uart.find_pins(u)
     u:tx_wait_blocking()
     if tx then
         gpio.set_outover(tx, gpio.get_pad(tx) and gpio.OVERRIDE_HIGH

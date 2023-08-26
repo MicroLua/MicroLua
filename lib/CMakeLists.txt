@@ -82,6 +82,8 @@ target_link_libraries(mlua_mod_hardware_timer_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_hardware_uart hardware.uart hardware.uart.c)
+target_include_directories(mlua_mod_hardware_uart_headers INTERFACE
+    include_hardware.uart)
 target_link_libraries(mlua_mod_hardware_uart INTERFACE
     hardware_irq
     hardware_regs
@@ -97,6 +99,7 @@ target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_hardware_uart
     mlua_mod_math
     mlua_mod_mlua_list
+    mlua_mod_mlua_testing_uart
     mlua_mod_mlua_thread
     mlua_mod_pico_time
     mlua_mod_string
@@ -208,8 +211,16 @@ mlua_add_lua_modules(mlua_mod_mlua_testing_stdio mlua.testing.stdio.lua)
 target_link_libraries(mlua_mod_mlua_testing_stdio INTERFACE
     mlua_mod_hardware_gpio
     mlua_mod_hardware_uart
+    mlua_mod_mlua_testing_uart
     mlua_mod_pico_stdio
     mlua_mod_pico_stdio_uart
+)
+
+mlua_add_lua_modules(mlua_mod_mlua_testing_uart mlua.testing.uart.lua)
+target_link_libraries(mlua_mod_mlua_testing_uart INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_uart
+    mlua_mod_mlua_list
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
@@ -326,7 +337,19 @@ target_link_libraries(mlua_mod_pico_stdio_semihosting INTERFACE
 
 mlua_add_c_module(mlua_mod_pico_stdio_uart pico.stdio.uart pico.stdio.uart.c)
 target_link_libraries(mlua_mod_pico_stdio_uart INTERFACE
+    mlua_mod_hardware_uart_headers
     pico_stdio_uart
+)
+
+mlua_add_lua_test_modules(mlua_mod_pico_stdio_uart_test
+    pico.stdio.uart.test.lua)
+target_link_libraries(mlua_mod_pico_stdio_uart_test INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_uart
+    mlua_mod_mlua_list
+    mlua_mod_mlua_testing_uart
+    mlua_mod_pico
+    mlua_mod_pico_stdio_uart
 )
 
 mlua_add_c_module(mlua_mod_pico_stdio_usb pico.stdio.usb pico.stdio.usb.c)

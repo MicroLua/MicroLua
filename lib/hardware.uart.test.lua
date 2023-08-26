@@ -3,6 +3,7 @@ _ENV = mlua.Module(...)
 local uart = require 'hardware.uart'
 local math = require 'math'
 local list = require 'mlua.list'
+local testing_uart = require 'mlua.testing.uart'
 local thread = require 'mlua.thread'
 local time = require 'pico.time'
 local string = require 'string'
@@ -14,16 +15,8 @@ function test_strict(t)
     t:expect(not ok, "Uart instance is non-strict")
 end
 
-local function non_default_uart(t)
-    for i, u in ipairs(uart) do
-        if u ~= uart.default then return u, i end
-    end
-    t:fatal("No non-default UART found")
-end
-
-
 local function setup(t)
-    local u, idx = non_default_uart(t)
+    local u, idx = testing_uart.non_default(t)
     local baud = 1000000
     t:expect(t:expr(u):init(baud)):close_to_rel(baud, 0.05)
     t:cleanup(function() u:deinit() end)
