@@ -1,7 +1,7 @@
 _ENV = mlua.Module(...)
 
 local int64 = require 'mlua.int64'
-local util = require 'mlua.util'
+local thread = require 'mlua.thread'
 local time = require 'pico.time'
 local table = require 'table'
 
@@ -60,5 +60,27 @@ function test_best_effort_wfe_or_timeout(t)
         local got = time.get_absolute_time()
         local ex = t:expect(got):label('time'):lt(want + 200)
         if reached then ex:gte(want) end
+    end
+end
+
+function test_default_alarm_pool(t)
+    if not time.add_alarm_at then t:skip("Default alarm pool disabled") end
+    local start = time.get_absolute_time()
+    for _, test in ipairs{
+        {'add_alarm_at', start + 3000, start + 3000, 0},
+        {'add_alarm_in_us', 4000, 0, 4000},
+        {'add_alarm_in_ms', 6, 0, 6000},
+    } do
+        local fn, arg, want, want_delta = table.unpack(test)
+        local t1, t2, alarm = time.get_absolute_time(), nil, nil
+        alarm = time[fn](arg, function(got_alarm)
+            t2 = time.get_absolute_time()
+            t:expect(got_alarm):label("alarm"):eq(alarm)
+        end)
+        alarm:thread():join()
+        if want == 0 then want = t1 + want_delta end
+        t:expect(t2):label("%s(%s): end time", fn, arg):gte(want)
+        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
+                 t1, t2, want)
     end
 end

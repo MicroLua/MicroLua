@@ -76,8 +76,7 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
 
 bool mlua_event_enable_irq_arg(lua_State* ls, int index,
                                lua_Integer* priority) {
-    int type = lua_type(ls, index);
-    switch (type) {
+    switch (lua_type(ls, index)) {
     case LUA_TBOOLEAN:
         if (!lua_toboolean(ls, index)) return false;
         break;
