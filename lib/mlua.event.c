@@ -41,7 +41,9 @@ char const* mlua_event_claim_core(MLuaEvent* ev, uint core) {
         if (idx > 0) {
             --idx;
             *ev = block * 32 + idx;
-            event_state.mask[core][block] |= 1u << idx;
+            uint32_t m = 1u << idx;
+            event_state.pending[block] &= ~m;
+            event_state.mask[core][block] |= m;
             mlua_event_unlock(save);
             return NULL;
         }
@@ -272,7 +274,14 @@ static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int mod_dispatch(lua_State* ls) {
-    absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 2));
+    absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 1));
+
+    // Get Thread.resume.
+    lua_pushthread(ls);
+    luaL_getmetafield(ls, -1, "resume");
+    lua_replace(ls, 1);
+    lua_settop(ls, 1);
+
     lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
     uint32_t* masks = event_state.mask[get_core_num()];
     for (;;) {
@@ -292,7 +301,7 @@ static int mod_dispatch(lua_State* ls) {
                 if (idx == 0) break;
                 --idx;
                 active &= ~(1u << idx);
-                switch (lua_rawgeti(ls, -1, block * 32 + idx)) {
+                switch (lua_rawgeti(ls, 2, block * 32 + idx)) {
                 case LUA_TTHREAD:  // A single watcher
                     lua_pushvalue(ls, 1);
                     lua_rotate(ls, -2, 1);
