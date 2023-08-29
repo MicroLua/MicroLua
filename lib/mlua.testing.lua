@@ -142,11 +142,16 @@ function Matcher:__init(value, t, fail)
     self._v, self._t, self._f = value, t, fail
 end
 
+function Matcher:_value()
+    local v = self._v
+    local ok, e = pcall(function() return getmetatable(v).__eval end)
+    return v, ok and e or nil
+end
+
 function Matcher:_eval()
     if not self._has_ev then
-        local v = self._v
-        local ok, e = pcall(function() return getmetatable(v).__eval end)
-        if ok and e then v = e(v) end
+        local v, e = self:_value()
+        if e then v = e(v) end
         self._ev, self._has_ev = v, true
     end
     return self._ev
@@ -193,6 +198,18 @@ function Matcher:_compare(want, cmp, fmt)
                    self._l or util.repr(self._v), util.repr(got), fmt)
     end
     return self
+end
+
+function Matcher:raises(want)
+    local v, e = self:_value()
+    local ok, err = pcall(function() if e then e(v) else v() end end)
+    if ok then
+        self:_fail("%s didn't raise an error", self._l or util.repr(v))
+    elseif not err:find(want) then
+        self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n"
+                   .. "  @{+WHITE}%s@{NORM}", self._l or util.repr(v),
+                   util.repr(want), err)
+    end
 end
 
 local PASS = '@{+GREEN}PASS@{NORM}'
