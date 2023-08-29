@@ -16,7 +16,7 @@ end
 function test_Thread_suspend_resume(t)
     local want
     local th<close> = thread.start(function()
-        t:expect(thread.running()):label("running"):eq(want)
+        t:expect(t:expr(thread).running()):eq(want)
         thread.yield(true)
     end)
     want = th
@@ -32,12 +32,31 @@ function test_Thread_suspend_resume(t)
     t:expect(not th:is_alive(), "Terminated thread is alive")
 end
 
+function test_Thread_kill(t)
+    t:expect(t:expr(thread).running():kill()):raises("running coroutine")
+    for _, suspend in ipairs{false, true} do
+        local closed = false
+        local th<close> = thread.start(function()
+            local done<close> = function() closed = true end
+            thread.yield(suspend)
+            error("never reached")
+        end)
+        thread.yield()
+        t:expect(t:expr(th):is_alive()):eq(true)
+        t:expect(th:is_alive(), "Thread is dead before kill")
+        t:expect(not closed, "Cleanup has run before kill")
+        th:kill()
+        t:expect(not th:is_alive(), "Killed thread is alive")
+        t:expect(closed, "Cleanup hasn't run on kill")
+    end
+end
+
 function test_Thread_join(t)
     local th1<close> = thread.start(function() thread.yield() end)
     thread.yield()
     t:expect(th1:is_alive(), "Thread isn't alive")
     th1:join()
-    t:expect(not th1:is_alive(), "Thread is alive")
+    t:expect(not th1:is_alive(), "Joined thread is alive")
 
     local th2
     do
@@ -45,7 +64,7 @@ function test_Thread_join(t)
         th2 = closing
         t:expect(th2:is_alive(), "Thread isn't alive")
     end
-    t:expect(not th2:is_alive(), "Thread is alive")
+    t:expect(not th2:is_alive(), "Joined thread is alive")
 
     local th3 = thread.start(function() error("boom", 0) end)
     local ok, err = pcall(function() th3:join() end)

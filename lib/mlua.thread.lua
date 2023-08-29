@@ -77,12 +77,14 @@ Thread.__index = Thread
 event.set_thread_metatable(Thread)
 
 -- Start a new thread calling the given function.
-function start(fn)
+function Thread.start(fn)
     local thread = coroutine.create(fn)
     active[tail] = thread
     tail = tail + 1
     return thread
 end
+
+start = Thread.start
 
 local names = setmetatable({}, weak_keys)
 
@@ -114,6 +116,19 @@ end
 
 local terms = setmetatable({}, weak_keys)
 local joiners = setmetatable({}, weak_keys)
+
+-- Kill the thread.
+function Thread:kill()
+    local ok, err = co_close(self)
+    waiting[self] = nil
+    if not ok then terms[self] = err end
+    local js = joiners[self]
+    if js then
+        joiners[self] = nil
+        if type(js) ~= 'table' then js:resume()
+        else for _, j in ipairs(js) do j:resume() end end
+    end
+end
 
 -- Block until the thread has terminated.
 function Thread:join()
@@ -210,32 +225,26 @@ function main()
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
 
-        -- Get the thread at the head of the active queue. If it is still
-        -- active, move the previous running thread to the end of the active
-        -- queue, after threads resumed by events.
+        -- If the previous running thread is still active, move it to the end of
+        -- the active queue, after threads resumed by events. Then get the
+        -- thread at the head of the active queue, skipping killed threads.
         if head ~= tail then
-            if thread ~= nil then
+            if thread then
                 active[tail] = thread
                 tail = tail + 1
             end
-            thread = active[head]
-            active[head] = nil
-            head = head + 1
+            repeat
+                thread = active[head]
+                active[head] = nil
+                head = head + 1
+            until co_status(thread) ~= 'dead'
         end
-
 
         -- Resume the next thread, then close it if it's dead, or move it to the
         -- wait list if it's suspended.
         local _, deadline = co_resume(thread)
         if co_status(thread) == 'dead' then
-            local ok, err = co_close(thread)
-            if not ok then terms[thread] = err end
-            local js = joiners[thread]
-            if js then
-                joiners[thread] = nil
-                if type(js) ~= 'table' then js:resume()
-                else for _, j in ipairs(js) do j:resume() end end
-            end
+            thread:kill()
             thread = nil
         elseif deadline then
             waiting[thread] = deadline
