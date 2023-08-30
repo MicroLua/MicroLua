@@ -74,19 +74,27 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
     lua_pop(ls, 1);
 }
 
-bool mlua_event_enable_irq_arg(lua_State* ls, int index,
-                               lua_Integer* priority) {
-    switch (lua_type(ls, index)) {
-    case LUA_TBOOLEAN:
-        if (!lua_toboolean(ls, index)) return false;
-        break;
+lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
+                                          lua_Integer def) {
+    switch (lua_type(ls, arg)) {
     case LUA_TNONE:
     case LUA_TNIL:
-        break;
+        return def;
+    case LUA_TNUMBER:
+        lua_Integer priority = luaL_checkinteger(ls, arg);
+        luaL_argcheck(
+            ls, priority <= PICO_SHARED_IRQ_HANDLER_HIGHEST_ORDER_PRIORITY,
+            arg, "invalid priority");
+        return priority;
     default:
-        *priority = luaL_checkinteger(ls, index);
-        break;
+        return luaL_typeerror(ls, arg, "integer or nil");
     }
+}
+
+bool mlua_event_enable_irq_arg(lua_State* ls, int arg,
+                               lua_Integer* priority) {
+    if (lua_isboolean(ls, arg)) return lua_toboolean(ls, arg);
+    *priority = mlua_event_parse_irq_priority(ls, arg, *priority);
     return true;
 }
 
@@ -97,25 +105,21 @@ void mlua_event_set_irq_handler(uint irq, void (*handler)(void),
     } else {
         irq_add_shared_handler(irq, handler, priority);
     }
-    irq_set_enabled(irq, true);
-}
-
-void mlua_event_remove_irq_handler(uint irq, void (*handler)(void)) {
-    irq_set_enabled(irq, false);
-    irq_remove_handler(irq, handler);
 }
 
 char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
                                   void (*handler)(void), int index,
                                   lua_Integer priority) {
     if (!mlua_event_enable_irq_arg(ls, index, &priority)) {  // Disable IRQ
-        mlua_event_remove_irq_handler(irq, handler);
+        irq_set_enabled(irq, false);
+        irq_remove_handler(irq, handler);
         mlua_event_unclaim(ls, ev);
         return NULL;
     }
     char const* err = mlua_event_claim(ev);
     if (err != NULL) return err;
     mlua_event_set_irq_handler(irq, handler, priority);
+    irq_set_enabled(irq, true);
     return NULL;
 }
 

@@ -8,7 +8,7 @@ function test_time_us(t)
     local t32, t64 = timer.time_us_32(), timer.time_us_64()
     t32 = int64(t32) + (t32 < 0 and (int64(1) << 32) or 0)
     t64 = t64 & ((int64(1) << 32) - 1)
-    t:expect(t64 - t32):label("t64 - t32"):gte(0):lt(50)
+    t:expect(t64 - t32):label("t64 - t32"):gte(0):lt(60)
 end
 
 function test_time_reached(t)

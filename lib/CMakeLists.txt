@@ -407,6 +407,7 @@ endif()
 add_executable(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_MAIN_MODULE=mlua.testing
+    PICO_MAX_SHARED_IRQ_HANDLERS=16
 )
 target_link_libraries(mlua_tests
     mlua_mod_mlua_stdio

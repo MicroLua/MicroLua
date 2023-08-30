@@ -87,7 +87,8 @@ static int Uart_enable_irq(lua_State* ls) {
     UartState* state = &uart_state[num];
     lua_Integer priority = -1;
     if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQ
-        mlua_event_remove_irq_handler(irq, &handle_irq);
+        irq_set_enabled(irq, false);
+        irq_remove_handler(irq, &handle_irq);
         mlua_event_unclaim(ls, &state->rx_event);
         mlua_event_unclaim(ls, &state->tx_event);
         return 0;
@@ -104,6 +105,7 @@ static int Uart_enable_irq(lua_State* ls) {
                     | (2 << UART_UARTIFLS_TXIFLSEL_LSB),
                     UART_UARTIFLS_RXIFLSEL_BITS | UART_UARTMIS_TXMIS_BITS);
     mlua_event_set_irq_handler(irq, &handle_irq, priority);
+    irq_set_enabled(irq, true);
     return 0;
 }
 

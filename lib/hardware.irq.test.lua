@@ -20,33 +20,20 @@ end
 function test_user_irqs(t)
     local rounds = 10
 
-    -- Claim user IRQs.
-    local irqs, nums = list(), ''
+    -- Set up IRQ handlers.
+    local irqs, nums, log = list(), '', nil
     while true do
         local num = irq.user_irq_claim_unused()
         if num < 0 then break end
-        irq.clear(num)
-        irq.enable_user_irq(num)
-        t:cleanup(function()
-            irq.enable_user_irq(num, false)
-            irq.user_irq_unclaim(num)
-        end)
+        t:cleanup(function() irq.user_irq_unclaim(num) end)
+        irq.set_handler(num, function(n) log = log .. ('%s '):format(n) end)
+        t:cleanup(function() irq.remove_handler(num) end)
+        irq.set_enabled(num, true)
+        t:cleanup(function() irq.set_enabled(num, false) end)
         irqs:append(num)
         nums = nums .. ('%s '):format(num)
     end
     t:assert(#irqs > 0, "No user IRQs available")
-
-    -- Set up IRQ handlers.
-    local log
-    local handlers<close> = thread.Group()
-    for _, num in ipairs(irqs) do
-        handlers:start(function()
-            for i = 1, rounds do
-                irq.wait_user_irq(num)
-                log = log .. ('%s '):format(num)
-            end
-        end)
-    end
 
     -- Trigger IRQs.
     for i = 1, rounds do

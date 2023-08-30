@@ -52,15 +52,16 @@ __force_inline static void mlua_event_unlock(uint32_t save) {
     spin_unlock(mlua_event_spinlock, save);
 }
 
+// Parse an IRQ priority argument, which must be an integer or nil.
+lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
+                                          lua_Integer def);
+
 // Parse the enable_irq argument.
-bool mlua_event_enable_irq_arg(lua_State* ls, int index, lua_Integer* priority);
+bool mlua_event_enable_irq_arg(lua_State* ls, int arg, lua_Integer* priority);
 
 // Set an IRQ handler.
 void mlua_event_set_irq_handler(uint irq, irq_handler_t handler,
                                 lua_Integer priority);
-
-// Remove an IRQ handler.
-void mlua_event_remove_irq_handler(uint irq, irq_handler_t handler);
 
 // Enable or disable IRQ handling. The argument at the given index determines
 // what is done:
