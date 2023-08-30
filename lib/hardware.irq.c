@@ -48,8 +48,8 @@ static void __time_critical_func(handle_user_irq)(void) {
     IRQState* state = &uirq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     state->pending |= 1u << num;
-    mlua_event_set_nolock(state->events[num]);
     restore_interrupts(save);
+    mlua_event_set(state->events[num]);
 }
 
 static int irq_thread_1(lua_State* ls, int status, lua_KContext ctx);
@@ -89,8 +89,8 @@ static int irq_thread_2(lua_State* ls, bool timeout) {
 static int irq_thread_done(lua_State* ls) {
     uint irq = lua_tointeger(ls, lua_upvalueindex(1));
     irq_remove_handler(irq, &handle_user_irq);
-    lua_pushnil(ls);
     MLuaEvent* ev = user_irq_event(irq);
+    lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
     mlua_event_unclaim(ls, ev);
     return 0;
@@ -135,10 +135,12 @@ static int mod_add_shared_handler(lua_State* ls) {
 }
 
 static int mod_remove_handler(lua_State* ls) {
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, user_irq_event(check_user_irq(ls, 1)));
-    luaL_getmetafield(ls, -1, "kill");
-    lua_rotate(ls, -2, 1);
-    lua_call(ls, 1, 0);
+    MLuaEvent* ev = user_irq_event(check_user_irq(ls, 1));
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
+        luaL_getmetafield(ls, -1, "kill");
+        lua_rotate(ls, -2, 1);
+        lua_call(ls, 1, 0);
+    }
     return 0;
 }
 

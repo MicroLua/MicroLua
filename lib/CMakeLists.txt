@@ -69,8 +69,9 @@ target_link_libraries(mlua_mod_hardware_irq_test INTERFACE
 mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
 target_link_libraries(mlua_mod_hardware_timer INTERFACE
     hardware_timer
-    mlua_mod_mlua_int64
     mlua_mod_mlua_event_headers
+    mlua_mod_mlua_int64
+    mlua_mod_mlua_thread
     pico_platform
 )
 

@@ -34,36 +34,80 @@ static AlarmState alarm_state;
 static void __time_critical_func(handle_alarm)(uint alarm) {
     uint32_t save = mlua_event_lock();
     alarm_state.pending |= 1u << alarm;
+    mlua_event_set_nolock(alarm_state.events[alarm]);
     mlua_event_unlock(save);
-    mlua_event_set(alarm_state.events[alarm]);
 }
 
-static int mod_enable_alarm(lua_State* ls) {
-    uint alarm = check_alarm(ls, 1);
-    MLuaEvent* ev = &alarm_state.events[alarm];
-    if (lua_type(ls, 2) == LUA_TBOOLEAN && !lua_toboolean(ls, 2)) {
-        hardware_alarm_set_callback(alarm, NULL);
-        mlua_event_unclaim(ls, ev);
-        return 0;
-    }
-    char const* err = mlua_event_claim(ev);
-    if (err != NULL) return luaL_error(ls, "TIMER%d: %s", alarm, err);
-    hardware_alarm_set_callback(alarm, &handle_alarm);
-    return 0;
+static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx);
+static int alarm_thread_2(lua_State* ls, bool timeout);
+static int alarm_thread_done(lua_State* ls);
+
+static int alarm_thread(lua_State* ls) {
+    // Set up a deferred to clean up on exit.
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_pushcclosure(ls, &alarm_thread_done, 1);
+    lua_toclose(ls, -1);
+
+    return alarm_thread_1(ls, LUA_OK, 0);
 }
 
-static int try_pending(lua_State* ls, bool timeout) {
-    uint8_t mask = 1u << lua_tointeger(ls, 1);
+static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx) {
+    uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
+    return mlua_event_wait(ls, alarm_state.events[alarm], &alarm_thread_2, 0);
+}
+
+static int alarm_thread_2(lua_State* ls, bool timeout) {
+    uint8_t mask = 1u << lua_tointeger(ls, lua_upvalueindex(1));
     uint32_t save = mlua_event_lock();
     uint8_t pending = alarm_state.pending;
     alarm_state.pending &= ~mask;
     mlua_event_unlock(save);
-    return (pending & mask) != 0 ? 0 : -1;
+    if ((pending & mask) != 0) {  // Call the callback
+        lua_pushvalue(ls, lua_upvalueindex(2));
+        lua_pushvalue(ls, lua_upvalueindex(1));
+        lua_callk(ls, 1, 1, 0, &alarm_thread_1);
+    }
+    return -1;
 }
 
-static int mod_wait_alarm(lua_State* ls) {
+static int alarm_thread_done(lua_State* ls) {
+    uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
+    hardware_alarm_set_callback(alarm, NULL);
+    lua_pushnil(ls);
+    MLuaEvent* ev = &alarm_state.events[alarm];
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
+    mlua_event_unclaim(ls, ev);
+    return 0;
+}
+
+static int mod_set_callback(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
-    return mlua_event_wait(ls, alarm_state.events[alarm], &try_pending, 0);
+    MLuaEvent* ev = &alarm_state.events[alarm];
+    if (lua_isnoneornil(ls, 2)) {  // Nil callback, kill the handler thread
+        if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
+            luaL_getmetafield(ls, -1, "kill");
+            lua_rotate(ls, -2, 1);
+            lua_call(ls, 1, 0);
+        }
+        return 0;
+    }
+
+    // Set the callback.
+    char const* err = mlua_event_claim(ev);
+    if (err != NULL) return luaL_error(ls, "TIMER%d: %s", alarm, err);
+    hardware_alarm_set_callback(alarm, &handle_alarm);
+
+    // Start the event handler thread.
+    lua_pushthread(ls);
+    luaL_getmetafield(ls, -1, "start");
+    lua_remove(ls, -2);
+    lua_pushvalue(ls, 1);  // alarm
+    lua_pushvalue(ls, 2);  // handler
+    lua_pushcclosure(ls, &alarm_thread, 2);
+    lua_call(ls, 1, 1);
+    lua_pushvalue(ls, -1);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
+    return 1;
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -121,14 +165,12 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(claim_unused, mod_),
     MLUA_SYM_F(unclaim, mod_),
     MLUA_SYM_F(is_claimed, mod_),
-    // hardware_alarm_set_callback: See enable_alarm, wait_alarm
+#if LIB_MLUA_MOD_MLUA_EVENT
+    MLUA_SYM_F(set_callback, mod_),
+#endif
     MLUA_SYM_F(set_target, mod_),
     MLUA_SYM_F(cancel, mod_),
     MLUA_SYM_F(force_irq, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM_F(enable_alarm, mod_),
-    MLUA_SYM_F(wait_alarm, mod_),
-#endif
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT

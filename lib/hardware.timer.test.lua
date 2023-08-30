@@ -2,6 +2,7 @@ _ENV = mlua.Module(...)
 
 local timer = require 'hardware.timer'
 local int64 = require 'mlua.int64'
+local thread = require 'mlua.thread'
 local table = require 'table'
 
 function test_time_us(t)
@@ -44,16 +45,23 @@ function test_timer(t)
                  "Unclaimed alarm reported as claimed")
     end)
     t:expect(timer.is_claimed(alarm), "Claimed alarm reported as unclaimed")
-    timer.enable_alarm(alarm)
-    t:cleanup(function() timer.enable_alarm(alarm, false) end)
 
+    -- Set up the alarm callback.
+    local parent, got = thread.running(), nil
+    timer.set_callback(alarm, function(a)
+        got = timer.time_us_64()
+        t:expect(a):label("alarm"):eq(alarm)
+        parent:resume()
+    end)
+    t:cleanup(function() timer.set_callback(alarm, nil) end)
+
+    -- Trigger alarms.
     local start = timer.time_us_64()
     t:expect(timer.set_target(alarm, start), "Setting missed alarm succeeded")
-    for delta = 10000, 50000, 10000 do
+    for delta = 10000, 50000, 3000 do
         local err = timer.set_target(alarm, start + delta)
         t:assert(not err, "Failed to set alarm at +%s us", delta)
-        timer.wait_alarm(alarm)
-        local now = timer.time_us_64()
-        t:expect(now - start):label("alarm"):gte(delta):lt(delta + 200)
+        thread.yield(true)
+        t:expect(got - start):label("alarm time"):gte(delta):lt(delta + 200)
     end
 end
