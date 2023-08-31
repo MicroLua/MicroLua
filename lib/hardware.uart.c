@@ -50,7 +50,7 @@ static int Uart_tx_wait_blocking_1(lua_State* ls, int status,
     uart_inst_t* u = (uart_inst_t*)ctx;
     // Busy loop, same as uart_tx_wait_blocking.
     if ((uart_get_hw(u)->fr & UART_UARTFR_BUSY_BITS) == 0) return 0;
-    return mlua_event_yield(ls, &Uart_tx_wait_blocking_1, ctx, 0);
+    return mlua_event_yield(ls, 0, &Uart_tx_wait_blocking_1, ctx);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT

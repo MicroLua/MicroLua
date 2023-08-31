@@ -215,8 +215,8 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     }
 }
 
-int mlua_event_yield(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
-                     int nresults) {
+int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
+                     lua_KContext ctx) {
     lua_yieldk(ls, nresults, ctx, cont);
     return luaL_error(ls, "unable to yield");
 }
@@ -228,7 +228,7 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     } else {
         lua_pushboolean(ls, true);
     }
-    return mlua_event_yield(ls, cont, ctx, 1);
+    return mlua_event_yield(ls, 1, cont, ctx);
 }
 
 bool mlua_event_can_wait(MLuaEvent* event) {
@@ -274,6 +274,77 @@ static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
     }
     mlua_event_unwatch(ls, (MLuaEvent)ctx);
     return res;
+}
+
+static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx);
+static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx);
+static int handler_thread_done(lua_State* ls);
+
+static int handler_thread(lua_State* ls) {
+    // Set up a deferred to clean up on exit.
+    lua_pushvalue(ls, lua_upvalueindex(1));  // event
+    lua_pushvalue(ls, lua_upvalueindex(3));  // done
+    lua_pushcclosure(ls, &handler_thread_done, 2);
+    lua_toclose(ls, -1);
+
+    // Watch the event.
+    MLuaEvent* event = lua_touserdata(ls, lua_upvalueindex(1));
+    mlua_event_watch(ls, *event);
+    return handler_thread_1(ls, LUA_OK, 0);
+}
+
+static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
+    // Call the event handler.
+    MLuaEventHandler handler =
+        (MLuaEventHandler)lua_touserdata(ls, lua_upvalueindex(2));
+    handler(ls);
+    return handler_thread_2(ls, LUA_OK, 0);
+}
+
+void mlua_event_handler_call(lua_State* ls, int nargs) {
+    lua_callk(ls, nargs, 0, 0, &handler_thread_2);
+}
+
+static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
+    // Suspend until the event gets pending.
+    lua_pushboolean(ls, true);
+    return mlua_event_yield(ls, 1, &handler_thread_1, 0);
+}
+
+static int handler_thread_done(lua_State* ls) {
+    // Call the "handler done" callback.
+    MLuaEvent* event = lua_touserdata(ls, lua_upvalueindex(1));
+    MLuaEventHandlerDone done =
+        (MLuaEventHandlerDone)lua_touserdata(ls, lua_upvalueindex(2));
+    done(event);
+
+    // Stop watching and unclaim the event.
+    lua_pushnil(ls);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, event);
+    mlua_event_unclaim(ls, event);
+    return 0;
+}
+
+void mlua_event_handle(lua_State* ls, MLuaEvent* event,
+                       MLuaEventHandler handler, int nup,
+                       MLuaEventHandlerDone done) {
+    lua_pushlightuserdata(ls, event);
+    lua_pushlightuserdata(ls, handler);
+    lua_pushlightuserdata(ls, done);
+    lua_rotate(ls, -(MLUA_EVENT_HANDLER_UPVALUES + nup),
+               MLUA_EVENT_HANDLER_UPVALUES);
+    lua_pushcclosure(ls, &handler_thread, MLUA_EVENT_HANDLER_UPVALUES + nup);
+    mlua_thread_start(ls);
+    lua_pushvalue(ls, -1);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, event);
+}
+
+void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event) {
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, event) == LUA_TTHREAD) {
+        mlua_thread_kill(ls);
+    } else {
+        lua_pop(ls, 1);
+    }
 }
 
 static int mod_dispatch(lua_State* ls) {

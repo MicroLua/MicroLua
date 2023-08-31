@@ -38,57 +38,30 @@ static void __time_critical_func(handle_alarm)(uint alarm) {
     mlua_event_unlock(save);
 }
 
-static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx);
-static int alarm_thread_2(lua_State* ls, bool timeout);
-static int alarm_thread_done(lua_State* ls);
-
-static int alarm_thread(lua_State* ls) {
-    // Set up a deferred to clean up on exit.
-    lua_pushvalue(ls, lua_upvalueindex(1));
-    lua_pushcclosure(ls, &alarm_thread_done, 1);
-    lua_toclose(ls, -1);
-
-    return alarm_thread_1(ls, LUA_OK, 0);
-}
-
-static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx) {
-    uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
-    return mlua_event_wait(ls, alarm_state.events[alarm], &alarm_thread_2, 0);
-}
-
-static int alarm_thread_2(lua_State* ls, bool timeout) {
-    uint8_t mask = 1u << lua_tointeger(ls, lua_upvalueindex(1));
+static void handle_alarm_event(lua_State* ls) {
+    uint alarm = lua_tointeger(ls, mlua_event_handler_upvalue(1));
+    uint8_t mask = 1u << alarm;
     uint32_t save = mlua_event_lock();
     uint8_t pending = alarm_state.pending;
     alarm_state.pending &= ~mask;
     mlua_event_unlock(save);
     if ((pending & mask) != 0) {  // Call the callback
-        lua_pushvalue(ls, lua_upvalueindex(2));
-        lua_pushvalue(ls, lua_upvalueindex(1));
-        lua_callk(ls, 1, 1, 0, &alarm_thread_1);
+        lua_pushvalue(ls, mlua_event_handler_upvalue(2));
+        lua_pushinteger(ls, alarm);
+        mlua_event_handler_call(ls, 1);
     }
-    return -1;
 }
 
-static int alarm_thread_done(lua_State* ls) {
-    uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
+static void alarm_handler_done(MLuaEvent* event) {
+    uint alarm = event - &alarm_state.events[0];
     hardware_alarm_set_callback(alarm, NULL);
-    lua_pushnil(ls);
-    MLuaEvent* ev = &alarm_state.events[alarm];
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
-    mlua_event_unclaim(ls, ev);
-    return 0;
 }
 
 static int mod_set_callback(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
     MLuaEvent* ev = &alarm_state.events[alarm];
     if (lua_isnoneornil(ls, 2)) {  // Nil callback, kill the handler thread
-        if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
-            luaL_getmetafield(ls, -1, "kill");
-            lua_rotate(ls, -2, 1);
-            lua_call(ls, 1, 0);
-        }
+        mlua_event_stop_handler(ls, ev);
         return 0;
     }
 
@@ -98,15 +71,9 @@ static int mod_set_callback(lua_State* ls) {
     hardware_alarm_set_callback(alarm, &handle_alarm);
 
     // Start the event handler thread.
-    lua_pushthread(ls);
-    luaL_getmetafield(ls, -1, "start");
-    lua_remove(ls, -2);
     lua_pushvalue(ls, 1);  // alarm
     lua_pushvalue(ls, 2);  // handler
-    lua_pushcclosure(ls, &alarm_thread, 2);
-    lua_call(ls, 1, 1);
-    lua_pushvalue(ls, -1);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
+    mlua_event_handle(ls, ev, &handle_alarm_event, 2, &alarm_handler_done);
     return 1;
 }
 

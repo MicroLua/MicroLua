@@ -61,7 +61,7 @@ static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx) {
         sio_hw->fifo_wr = luaL_checkinteger(ls, 1);
         return 0;
     }
-    return mlua_event_yield(ls, &mod_push_blocking_1, 0, 0);
+    return mlua_event_yield(ls, 0, &mod_push_blocking_1, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -92,7 +92,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
         lua_pushboolean(ls, false);
         return 1;
     }
-    return mlua_event_yield(ls, &mod_push_timeout_us_1, 0, 0);
+    return mlua_event_yield(ls, 0, &mod_push_timeout_us_1, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT

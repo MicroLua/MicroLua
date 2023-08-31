@@ -90,8 +90,8 @@ void mlua_event_watch(lua_State* ls, MLuaEvent ev);
 void mlua_event_unwatch(lua_State* ls, MLuaEvent ev);
 
 // Yield from the running thread.
-int mlua_event_yield(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
-                     int nresults);
+int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
+                     lua_KContext ctx);
 
 // Suspend the running thread. If the given index is non-zero, yield the value
 // at that index, which must be a deadline in microseconds. Otherwise, yield
@@ -115,6 +115,32 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
 #define mlua_event_can_wait(event) (false)
 #define mlua_event_wait(ls, event, try_get, index) ((int)0)
 #endif
+
+// An event handler.
+typedef void (*MLuaEventHandler)(lua_State*);
+
+// A event handler cleanup function.
+typedef void (*MLuaEventHandlerDone)(MLuaEvent*);
+
+#define MLUA_EVENT_HANDLER_UPVALUES 3
+
+static inline int mlua_event_handler_upvalue(int i) {
+    return lua_upvalueindex(MLUA_EVENT_HANDLER_UPVALUES + i);
+}
+
+// Call lua_callk() with a continuation that is appropriate for an event
+// handler. This must be used instead of lua_callk() within an MLuaEventHandler.
+void mlua_event_handler_call(lua_State* ls, int nargs);
+
+// Start an event handler thread for the given event. The handler function is
+// called from that thread every time the event is triggered. The cleanup
+// function is called when the thread exits.
+void mlua_event_handle(lua_State* ls, MLuaEvent* event,
+                       MLuaEventHandler handler, int nup,
+                       MLuaEventHandlerDone done);
+
+// Stop the event handler thread for the given event.
+void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event);
 
 #ifdef __cplusplus
 }

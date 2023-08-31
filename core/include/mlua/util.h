@@ -114,6 +114,13 @@ void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
                      int cnt);
 
+// Start a new thread calling the function at the top of the stack. Pops the
+// function from the stack and pushes the thread.
+void mlua_thread_start(lua_State* ls);
+
+// Kill the thread at the top of the stack. Pops the thread from the stack.
+void mlua_thread_kill(lua_State* ls);
+
 #ifdef __cplusplus
 }
 #endif

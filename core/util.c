@@ -125,6 +125,20 @@ static int Function___close(lua_State* ls) {
     return Function___close_1(ls, LUA_OK, 0);
 }
 
+void mlua_thread_start(lua_State* ls) {
+    lua_pushthread(ls);
+    luaL_getmetafield(ls, -1, "start");
+    lua_rotate(ls, -3, 1);
+    lua_pop(ls, 1);
+    lua_call(ls, 1, 1);
+}
+
+void mlua_thread_kill(lua_State* ls) {
+    luaL_getmetafield(ls, -1, "kill");
+    lua_rotate(ls, -2, 1);
+    lua_call(ls, 1, 0);
+}
+
 static __attribute__((constructor)) void init(void) {
     mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
 #if LIB_MLUA_MOD_MLUA_EVENT
