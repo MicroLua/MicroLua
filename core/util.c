@@ -125,6 +125,10 @@ static int Function___close(lua_State* ls) {
     return Function___close_1(ls, LUA_OK, 0);
 }
 
+int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
+    return ctx;
+}
+
 void mlua_thread_start(lua_State* ls) {
     lua_pushthread(ls);
     luaL_getmetafield(ls, -1, "start");

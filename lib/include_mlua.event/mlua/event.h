@@ -116,28 +116,11 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
 #define mlua_event_wait(ls, event, try_get, index) ((int)0)
 #endif
 
-// An event handler.
-typedef void (*MLuaEventHandler)(lua_State*);
-
-// A event handler cleanup function.
-typedef void (*MLuaEventHandlerDone)(MLuaEvent*);
-
-#define MLUA_EVENT_HANDLER_UPVALUES 3
-
-static inline int mlua_event_handler_upvalue(int i) {
-    return lua_upvalueindex(MLUA_EVENT_HANDLER_UPVALUES + i);
-}
-
-// Call lua_callk() with a continuation that is appropriate for an event
-// handler. This must be used instead of lua_callk() within an MLuaEventHandler.
-void mlua_event_handler_call(lua_State* ls, int nargs);
-
-// Start an event handler thread for the given event. The handler function is
-// called from that thread every time the event is triggered. The cleanup
-// function is called when the thread exits.
-void mlua_event_handle(lua_State* ls, MLuaEvent* event,
-                       MLuaEventHandler handler, int nup,
-                       MLuaEventHandlerDone done);
+// Start an event handler thread for the given event. The function expects two
+// arguments on the stack: the event handler and the cleanup handler. The former
+// is called from the thread every time the event is triggered. The latter is
+// called when the thread exits. Pops both arguments, and pushes the thread.
+void mlua_event_handle(lua_State* ls, MLuaEvent* event);
 
 // Stop the event handler thread for the given event.
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event);

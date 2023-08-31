@@ -114,6 +114,9 @@ void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
                      int cnt);
 
+// A continuation that returns its ctx argument.
+int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
+
 // Start a new thread calling the function at the top of the stack. Pops the
 // function from the stack and pushes the thread.
 void mlua_thread_start(lua_State* ls);

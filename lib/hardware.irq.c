@@ -52,24 +52,26 @@ static void __time_critical_func(handle_user_irq)(void) {
     mlua_event_set(state->events[num]);
 }
 
-static void handle_user_irq_event(lua_State* ls) {
+static int handle_user_irq_event(lua_State* ls) {
     IRQState* state = &uirq_state[get_core_num()];
-    uint irq = lua_tointeger(ls, mlua_event_handler_upvalue(1));
+    uint irq = lua_tointeger(ls, lua_upvalueindex(1));
     uint8_t mask = 1u << (irq - FIRST_USER_IRQ);
     uint32_t save = save_and_disable_interrupts();
     uint8_t pending = state->pending;
     state->pending &= ~mask;
     restore_interrupts(save);
     if ((pending & mask) != 0) {  // Call the handler
-        lua_pushvalue(ls, mlua_event_handler_upvalue(2));
+        lua_pushvalue(ls, lua_upvalueindex(2));
         lua_pushinteger(ls, irq);
-        mlua_event_handler_call(ls, 1);
+        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
     }
+    return 0;
 }
 
-static void user_irq_handler_done(MLuaEvent* event) {
-    uint irq = FIRST_USER_IRQ + (event - &uirq_state[get_core_num()].events[0]);
+static int user_irq_handler_done(lua_State* ls) {
+    uint irq = lua_tointeger(ls, lua_upvalueindex(1));
     irq_remove_handler(irq, &handle_user_irq);
+    return 0;
 }
 
 static int set_handler(lua_State* ls, lua_Integer priority) {
@@ -83,8 +85,10 @@ static int set_handler(lua_State* ls, lua_Integer priority) {
     // Start the event handler thread.
     lua_pushvalue(ls, 1);  // irq
     lua_pushvalue(ls, 2);  // handler
-    mlua_event_handle(ls, ev, &handle_user_irq_event, 2,
-                      &user_irq_handler_done);
+    lua_pushcclosure(ls, &handle_user_irq_event, 2);
+    lua_pushvalue(ls, 1);  // irq
+    lua_pushcclosure(ls, &user_irq_handler_done, 1);
+    mlua_event_handle(ls, ev);
     return 1;
 }
 
