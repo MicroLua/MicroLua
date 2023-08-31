@@ -117,6 +117,10 @@ void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
 // A continuation that returns its ctx argument.
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
 
+// Push the thread metatable field with the given name. Returns the type of the
+// field, or LUA_TNIL if the metatable doesn't have this field.
+int mlua_thread_meta(lua_State* ls, char const* name);
+
 // Start a new thread calling the function at the top of the stack. Pops the
 // function from the stack and pushes the thread.
 void mlua_thread_start(lua_State* ls);

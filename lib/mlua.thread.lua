@@ -63,14 +63,6 @@ local function remove_timer(thread)
     end
 end
 
-local _shutdown = false
-
--- Shut down the scheduler.
-function shutdown()
-    _shutdown = true
-    yield()
-end
-
 -- Make threads a class.
 local Thread = {__name = 'Thread'}
 Thread.__index = Thread
@@ -150,6 +142,16 @@ end
 
 -- Join the thread on closure.
 Thread.__close = Thread.join
+
+local _shutdown = false
+
+-- Shut down the scheduler.
+function Thread.shutdown()
+    _shutdown = true
+    yield()
+end
+
+shutdown = Thread.shutdown
 
 -- A group of threads managed together.
 Group = oo.class('Group')

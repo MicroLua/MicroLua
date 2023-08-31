@@ -6,13 +6,6 @@ local fifo = require 'pico.multicore.fifo'
 
 local module_name = ...
 
-local function watch_shutdown()
-    thread.start(function()
-        multicore.wait_shutdown()
-        thread.shutdown()
-    end)
-end
-
 function set_up(t)
     multicore.reset_core1()
     fifo.drain()
@@ -48,7 +41,7 @@ function test_status_Y(t)
 end
 
 function core1_push_one()
-    watch_shutdown()
+    multicore.set_shutdown_handler()
     fifo.enable_irq()
     local done<close> = function() fifo.enable_irq(false) end
     fifo.push_blocking(1)
@@ -67,7 +60,7 @@ function test_push_pop_Y(t)
 end
 
 function core1_echo()
-    watch_shutdown()
+    multicore.set_shutdown_handler()
     fifo.enable_irq()
     local done<close> = function() fifo.enable_irq(false) end
     while true do

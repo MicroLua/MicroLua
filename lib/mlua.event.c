@@ -309,8 +309,10 @@ static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
 
 static int handler_thread_done(lua_State* ls) {
     // Call the "handler done" callback.
-    lua_pushvalue(ls, lua_upvalueindex(2));
-    lua_callk(ls, 0, 0, 0, &handler_thread_done_1);
+    if (!lua_isnil(ls, lua_upvalueindex(2))) {
+        lua_pushvalue(ls, lua_upvalueindex(2));
+        lua_callk(ls, 0, 0, 0, &handler_thread_done_1);
+    }
     return handler_thread_done_1(ls, LUA_OK, 0);
 }
 

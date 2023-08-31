@@ -129,16 +129,29 @@ int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
     return ctx;
 }
 
+int mlua_thread_meta(lua_State* ls, char const* name) {
+    lua_pushthread(ls);
+    int res = luaL_getmetafield(ls, -1, name);
+    lua_remove(ls, res != LUA_TNIL ? -2 : -1);
+    return res;
+}
+
 void mlua_thread_start(lua_State* ls) {
     lua_pushthread(ls);
-    luaL_getmetafield(ls, -1, "start");
+    if (luaL_getmetafield(ls, -1, "start") == LUA_TNIL) {
+        luaL_error(ls, "threads have no start method");
+        return;
+    }
     lua_rotate(ls, -3, 1);
     lua_pop(ls, 1);
     lua_call(ls, 1, 1);
 }
 
 void mlua_thread_kill(lua_State* ls) {
-    luaL_getmetafield(ls, -1, "kill");
+    if (luaL_getmetafield(ls, -1, "kill") == LUA_TNIL) {
+        luaL_error(ls, "threads have no kill method");
+        return;
+    }
     lua_rotate(ls, -2, 1);
     lua_call(ls, 1, 0);
 }

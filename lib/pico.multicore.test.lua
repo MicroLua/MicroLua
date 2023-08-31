@@ -1,6 +1,5 @@
 _ENV = mlua.Module(...)
 
-local thread = require 'mlua.thread'
 local multicore = require 'pico.multicore'
 
 local module_name = ...
@@ -13,6 +12,5 @@ function test_core1(t)
 end
 
 function core1_wait_shutdown()
-    multicore.wait_shutdown()
-    thread.shutdown()
+    multicore.set_shutdown_handler()
 end

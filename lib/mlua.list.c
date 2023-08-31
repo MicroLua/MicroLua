@@ -113,6 +113,7 @@ static void add_value(lua_State* ls, luaL_Buffer* buf, lua_Integer i) {
     if (luai_unlikely(!lua_isstring(ls, -1))) {
         luaL_error(ls, "list.concat: invalid value (%s) at index %I",
                    luaL_typename(ls, -1), (LUAI_UACINT)i);
+        return;
     }
     luaL_addvalue(buf);
 }

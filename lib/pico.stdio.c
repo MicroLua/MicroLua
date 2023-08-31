@@ -45,6 +45,7 @@ static void enable_chars_available(lua_State* ls) {
         stdio_set_chars_available_callback(&handle_chars_available, NULL);
     } else if (err != mlua_event_err_already_claimed) {
         luaL_error(ls, "stdio: %s", err);
+        return;
     }
 }
 
@@ -69,12 +70,6 @@ static int handle_chars_available_event(lua_State* ls) {
     return 0;
 }
 
-static int chars_available_handler_done(lua_State* ls) {
-    // The chars_available callback is intentionally left enabled here. It can
-    // be disabled with enable_chars_available(false).
-    return 0;
-}
-
 static int mod_set_chars_available_callback(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) {  // Nil callback, kill the handler thread
         mlua_event_stop_handler(ls, &stdio_state.event);
@@ -84,10 +79,13 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     // Set the callback.
     enable_chars_available(ls);
 
-    // Start the event handler thread.
+    // Start the event handler thread. The chars_available callback is
+    // intentionally left enabled when the thread terminates, as it may be used
+    // by other functions in this module. It can be disabled manually with
+    // enable_chars_available(false).
     lua_pushvalue(ls, 1);  // handler
     lua_pushcclosure(ls, &handle_chars_available_event, 1);
-    lua_pushcfunction(ls, &chars_available_handler_done);
+    lua_pushnil(ls);
     mlua_event_handle(ls, &stdio_state.event);
     return 1;
 }

@@ -100,25 +100,39 @@ static int mod_reset_core1(lua_State* ls) {
     return mlua_event_wait(ls, st->stopped_event, &try_stopped, 0);
 }
 
-static int try_shutdown(lua_State* ls, bool timeout) {
+static int handle_shutdown_event(lua_State* ls) {
     CoreState* st = &core_state[get_core_num() - 1];
     uint32_t save = mlua_event_lock();
     bool shutdown = st->shutdown;
     mlua_event_unlock(save);
-    return shutdown ? 0 : -1;
+    if (shutdown) {  // Call the callback
+        lua_pushvalue(ls, lua_upvalueindex(1));
+        lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
+    }
+    return 0;
 }
 
-static int mod_wait_shutdown(lua_State* ls) {
+static int mod_set_shutdown_handler(lua_State* ls) {
     uint core = get_core_num();
-    if (core == 0) return luaL_error(ls, "cannot wait for shutdown on core 0");
-    return mlua_event_wait(ls, core_state[core - 1].shutdown_event,
-                           &try_shutdown, 0);
+    if (lua_isnone(ls, 1)) {  // No argument, use Thread.shutdown by default
+        mlua_thread_meta(ls, "shutdown");
+    } else if (lua_isnil(ls, 1)) {  // Nil handler, kill the handler thread
+        mlua_event_stop_handler(ls, &core_state[core - 1].shutdown_event);
+        return 0;
+    }
+
+    // Start the event handler thread.
+    lua_settop(ls, 1);  // handler
+    lua_pushcclosure(ls, &handle_shutdown_event, 1);
+    lua_pushnil(ls);
+    mlua_event_handle(ls, &core_state[core - 1].shutdown_event);
+    return 1;
 }
 
 static MLuaSym const module_syms[] = {
     MLUA_SYM_F(reset_core1, mod_),
     MLUA_SYM_F(launch_core1, mod_),
-    MLUA_SYM_F(wait_shutdown, mod_),
+    MLUA_SYM_F(set_shutdown_handler, mod_),
 };
 
 static __attribute__((constructor)) void init(void) {
