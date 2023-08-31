@@ -71,6 +71,7 @@ static int handle_user_irq_event(lua_State* ls) {
 static int user_irq_handler_done(lua_State* ls) {
     uint irq = lua_tointeger(ls, lua_upvalueindex(1));
     irq_remove_handler(irq, &handle_user_irq);
+    mlua_event_unclaim(ls, user_irq_event(irq));
     return 0;
 }
 

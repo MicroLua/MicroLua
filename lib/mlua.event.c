@@ -315,11 +315,11 @@ static int handler_thread_done(lua_State* ls) {
 }
 
 static int handler_thread_done_1(lua_State* ls, int status, lua_KContext ctx) {
-    // Stop watching and unclaim the event.
+    // Stop watching the event.
     MLuaEvent* event = lua_touserdata(ls, lua_upvalueindex(1));
+    mlua_event_unwatch(ls, *event);
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, event);
-    mlua_event_unclaim(ls, event);
     return 0;
 }
 

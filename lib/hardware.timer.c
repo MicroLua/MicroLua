@@ -56,6 +56,7 @@ static int handle_alarm_event(lua_State* ls) {
 static int alarm_handler_done(lua_State* ls) {
     uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
     hardware_alarm_set_callback(alarm, NULL);
+    mlua_event_unclaim(ls, &alarm_state.events[alarm]);
     return 0;
 }
 

@@ -72,19 +72,16 @@ function test_write_read_Y(t)
     end
 end
 
-function test_chars_available(t)
+function test_set_chars_available_callback(t)
     local got, want = '', 'abcdefghijklmnopqrstuvwxyz'
     t:expect(pcall(function()  -- No output in this block
         local done<close> = testing_stdio.enable_loopback(t, false)
-        local reader<close> = thread.start(function()
-            while true do
-                stdio.wait_chars_available()
-                local c = stdio.getchar()
-                if c == 10 then return end
-                got = got .. string.char(c)
-            end
+        stdio.set_chars_available_callback(function()
+            got = got .. string.char(stdio.getchar())
         end)
+        local cb<close> = function() stdio.set_chars_available_callback(nil) end
         stdio.puts_raw(want)
+        while #got < #want + 1 do thread.yield() end
     end))
-    t:expect(got):label("got"):eq(want)
+    t:expect(got):label("got"):eq(want .. '\n')
 end

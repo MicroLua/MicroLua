@@ -21,26 +21,11 @@ typedef struct StdioState {
 
 static StdioState stdio_state = {.event = MLUA_EVENT_UNSET};
 
-static void __time_critical_func(chars_available)(void* ud) {
+static void __time_critical_func(handle_chars_available)(void* ud) {
     uint32_t save = mlua_event_lock();
     stdio_state.pending = true;
     mlua_event_set_nolock(stdio_state.event);
     mlua_event_unlock(save);
-}
-
-static int mod_enable_chars_available(lua_State* ls) {
-    if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
-        stdio_set_chars_available_callback(NULL, NULL);
-        mlua_event_unclaim(ls, &stdio_state.event);
-        return 0;
-    }
-    char const* err = mlua_event_claim(&stdio_state.event);
-    if (err != NULL) return luaL_error(ls, "stdio: %s", err);
-    uint32_t save = mlua_event_lock();
-    stdio_state.pending = false;
-    mlua_event_unlock(save);
-    stdio_set_chars_available_callback(&chars_available, NULL);
-    return 0;
 }
 
 static bool chars_available_reset() {
@@ -51,15 +36,60 @@ static bool chars_available_reset() {
     return pending;
 }
 
-static int try_chars_available(lua_State* ls, bool timeout) {
+static void enable_chars_available(lua_State* ls) {
+    char const* err = mlua_event_claim(&stdio_state.event);
+    if (err == NULL) {
+        uint32_t save = mlua_event_lock();
+        stdio_state.pending = false;
+        mlua_event_unlock(save);
+        stdio_set_chars_available_callback(&handle_chars_available, NULL);
+    } else if (err != mlua_event_err_already_claimed) {
+        luaL_error(ls, "stdio: %s", err);
+    }
+}
+
+static int mod_enable_chars_available(lua_State* ls) {
+    if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
+        stdio_set_chars_available_callback(NULL, NULL);
+        mlua_event_unclaim(ls, &stdio_state.event);
+        return 0;
+    }
+    enable_chars_available(ls);
+    return 0;
+}
+
+static int handle_chars_available_event(lua_State* ls) {
     uint32_t save = mlua_event_lock();
     bool pending = stdio_state.pending;
     mlua_event_unlock(save);
-    return pending ? 0 : -1;
+    if (pending) {  // Call the callback
+        lua_pushvalue(ls, lua_upvalueindex(1));
+        lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
+    }
+    return 0;
 }
 
-static int mod_wait_chars_available(lua_State* ls) {
-    return mlua_event_wait(ls, stdio_state.event, &try_chars_available, 0);
+static int chars_available_handler_done(lua_State* ls) {
+    // The chars_available callback is intentionally left enabled here. It can
+    // be disabled with enable_chars_available(false).
+    return 0;
+}
+
+static int mod_set_chars_available_callback(lua_State* ls) {
+    if (lua_isnoneornil(ls, 1)) {  // Nil callback, kill the handler thread
+        mlua_event_stop_handler(ls, &stdio_state.event);
+        return 0;
+    }
+
+    // Set the callback.
+    enable_chars_available(ls);
+
+    // Start the event handler thread.
+    lua_pushvalue(ls, 1);  // handler
+    lua_pushcclosure(ls, &handle_chars_available_event, 1);
+    lua_pushcfunction(ls, &chars_available_handler_done);
+    mlua_event_handle(ls, &stdio_state.event);
+    return 1;
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -162,12 +192,13 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(putchar_raw, mod_),
     MLUA_SYM_F(puts, mod_),
     MLUA_SYM_F(puts_raw, mod_),
-    // set_chars_available_callback: See enable_chars_available, wait_chars_available
+#if LIB_MLUA_MOD_MLUA_EVENT
+    MLUA_SYM_F(set_chars_available_callback, mod_),
+#endif
     MLUA_SYM_F(read, mod_),
     MLUA_SYM_F(write, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(enable_chars_available, mod_),
-    MLUA_SYM_F(wait_chars_available, mod_),
 #endif
 };
 
