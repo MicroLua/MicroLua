@@ -4,10 +4,17 @@
 #include "lauxlib.h"
 #include "mlua/util.h"
 
+static char const board[] = PICO_BOARD;
+static char const build_type[] = PICO_CMAKE_BUILD_TYPE;
+static char const build_target[] = PICO_TARGET_NAME;
+
 char const __flash_binary_start;
 char const __flash_binary_end;
 
 static MLuaSym const module_syms[] = {
+    MLUA_SYM_V(board, string, board),
+    MLUA_SYM_V(build_type, string, build_type),
+    MLUA_SYM_V(build_target, string, build_target),
     MLUA_SYM_V(flash_binary_start, integer, (lua_Integer)&__flash_binary_start),
     MLUA_SYM_V(flash_binary_end, integer, (lua_Integer)&__flash_binary_end),
     MLUA_SYM_V(OK, integer, PICO_OK),

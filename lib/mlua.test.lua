@@ -6,6 +6,10 @@ local table = require 'table'
 
 local module_name = ...
 
+function set_up(t)
+    t:printf("Lua: %s\n", _RELEASE:gsub('[^ ]+ (.*)', '%1'))
+end
+
 local function has(tab, name)
     local ok, value = pcall(function() return tab[name] end)
     return ok and value ~= nil
