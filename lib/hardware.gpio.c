@@ -29,15 +29,16 @@ typedef struct IRQState {
 
 static IRQState irq_state[NUM_CORES];
 
-#define LEVEL_EVENTS_MASK ( \
-      ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 0) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 4) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 8) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 12) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 16) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 20) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 24) \
-    | ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH) << 28))
+#define LEVEL_MASK (GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH)
+#define EDGE_MASK (GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE)
+#define LEVEL_MASK_BLOCK ( \
+      (LEVEL_MASK << 0) | (LEVEL_MASK << 4) | (LEVEL_MASK << 8) \
+    | (LEVEL_MASK << 12) | (LEVEL_MASK << 16) | (LEVEL_MASK << 20) \
+    | (LEVEL_MASK << 24) | (LEVEL_MASK << 28))
+#define EDGE_MASK_BLOCK ( \
+      (EDGE_MASK << 0) | (EDGE_MASK << 4) | (EDGE_MASK << 8) \
+    | (EDGE_MASK << 12) | (EDGE_MASK << 16) | (EDGE_MASK << 20) \
+    | (EDGE_MASK << 24) | (EDGE_MASK << 28))
 
 io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
     return core == 1 ? &iobank0_hw->proc1_irq_ctrl
@@ -52,65 +53,109 @@ static void __time_critical_func(handle_irq)(void) {
     for (uint block = 0; block < MLUA_SIZE(state->pending); ++block) {
         uint32_t pending = irq_ctrl_base->ints[block] & state->mask[block];
         iobank0_hw->intr[block] = pending;  // Acknowledge
-        state->pending[block] |= pending;
+        state->pending[block] |= pending & EDGE_MASK_BLOCK;
         notify = notify || pending != 0;
 
         // Disable active level-triggered events.
-        pending &= LEVEL_EVENTS_MASK;
-        hw_clear_bits(&irq_ctrl_base->inte[block], pending);
+        hw_clear_bits(&irq_ctrl_base->inte[block], pending & LEVEL_MASK_BLOCK);
      }
      if (notify) mlua_event_set(state->irq_event);
 }
 
-static int mod_enable_irq(lua_State* ls) {
-    char const* err = mlua_event_enable_irq(
-        ls, &irq_state[get_core_num()].irq_event, IO_IRQ_BANK0, &handle_irq, 1,
-        GPIO_RAW_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    if (err != NULL) return luaL_error(ls, "GPIO: %s", err);
-    return 0;
+static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx);
+
+static int handle_irq_event(lua_State* ls) {
+    lua_pushinteger(ls, (uint)-1);  // block
+    lua_pushinteger(ls, 0);  // pending
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &irq_state[get_core_num()].pending[0]);
+    return handle_irq_event_1(ls, LUA_OK, lua_absindex(ls, -3));
 }
 
-static int try_events(lua_State* ls, bool timeout) {
-    IRQState* state = &irq_state[get_core_num()];
-    int cnt = lua_gettop(ls);
-    bool active = false;
-    for (int i = 1; i <= cnt; ++i) {
-        uint gpio = lua_tointeger(ls, i);  // Arguments were checked before
-        uint block = gpio / 8;
-        int shift = 4 * (gpio % 8);
-        uint32_t mask = 0xfu << shift;
-        uint32_t save = save_and_disable_interrupts();
-        uint32_t pending = state->pending[block];
-        state->pending[block] &= ~mask;
-        restore_interrupts(save);
-        lua_Integer e = (pending & mask) >> shift;
-        active = active || (e != 0);
-        lua_pushinteger(ls, e);
-    }
-    if (active) return cnt;
-    lua_settop(ls, cnt);
-    return -1;
-}
-
-static int mod_wait_events(lua_State* ls) {
-    int cnt = lua_gettop(ls);
-    if (cnt == 0) return 0;
-
-    // Enable level-triggered events once, to propagate their current state.
+static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx) {
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
-    for (int i = 1; i <= cnt; ++i) {
-        uint gpio = check_gpio(ls, i);
-        uint block = gpio / 8;
-        uint32_t mask = state->mask[block]
-                        & ((GPIO_IRQ_LEVEL_LOW | GPIO_IRQ_LEVEL_HIGH)
-                           << 4 * (gpio % 8));
-        hw_set_bits(&irq_ctrl_base->inte[block], mask);
+    uint block = lua_tointeger(ls, ctx);
+    uint32_t pending = lua_tointeger(ls, ctx + 1);
+    for (;;) {
+        while (pending == 0) {
+            ++block;
+            if (block > 0) {  // Re-enable level-triggered events
+                hw_set_bits(&irq_ctrl_base->inte[block - 1],
+                            state->mask[block - 1] & LEVEL_MASK_BLOCK);
+            }
+            if (block >= MLUA_SIZE(state->pending)) return 0;
+            lua_pushinteger(ls, block);  // Update block
+            lua_replace(ls, ctx);
+            pending = iobank0_hw->intr[block];  // Raw state
+            uint32_t save = save_and_disable_interrupts();
+            pending |= state->pending[block];  // Mix in stored edge state
+            state->pending[block] = 0;  // Acknowledge
+            restore_interrupts(save);
+            pending &= state->mask[block];
+        }
+
+        // Call the IRQ callback.
+        int shift = (__builtin_ffs(pending) - 1) & ~3;
+        lua_pushvalue(ls, ctx + 2);  // handler
+        lua_pushinteger(ls, 8 * block + shift / 4);  // gpio
+        lua_pushinteger(ls, (pending >> shift) & 0xfu);  // event_mask
+        pending &= ~(0xfu << shift);
+        lua_pushinteger(ls, pending);  // Update pending
+        lua_replace(ls, ctx + 1);
+        lua_callk(ls, 2, 0, ctx, &handle_irq_event_1);
+    }
+}
+
+static int irq_handler_done(lua_State* ls) {
+    irq_remove_handler(IO_IRQ_BANK0, &handle_irq);
+    mlua_event_unclaim(ls, &irq_state[get_core_num()].irq_event);
+    return 0;
+}
+
+static int mod_set_irq_callback(lua_State* ls) {
+    if (lua_isnone(ls, 1)) return 0;  // No argument => no change
+    IRQState* state = &irq_state[get_core_num()];
+    MLuaEvent* event = &state->irq_event;
+    if (lua_isnil(ls, 1)) {  // Nil callback, kill the handler thread
+        mlua_event_stop_handler(ls, event);
+        return 0;
     }
 
-    return mlua_event_wait(ls, irq_state[get_core_num()].irq_event,
-                           &try_events, 0);
+    // Set the IRQ handler.
+    char const* err = mlua_event_claim(event);
+    if (err == NULL) {
+        irq_add_shared_handler(IO_IRQ_BANK0, &handle_irq,
+                               GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
+    } else if (err != mlua_event_err_already_claimed) {
+        return luaL_error(ls, "GPIO: %s", err);
+    }
+    lua_settop(ls, 1);  // handler
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, &state->pending[0]);
+
+    // Start the event handler thread.
+    lua_pushcfunction(ls, &handle_irq_event);
+    lua_pushcfunction(ls, &irq_handler_done);
+    mlua_event_handle(ls, event);
+    return 1;
+}
+
+int mod_set_irq_enabled(lua_State* ls);
+
+static int mod_set_irq_enabled_with_callback(lua_State* ls) {
+    lua_pushcfunction(ls, &mod_set_irq_enabled);
+    lua_pushvalue(ls, 1);
+    lua_pushvalue(ls, 2);
+    lua_pushvalue(ls, 3);
+    lua_call(ls, 3, 0);
+    bool has_callback = !lua_isnone(ls, 4);
+    if (has_callback) {
+        lua_pushcfunction(ls, &mod_set_irq_callback);
+        lua_pushvalue(ls, 4);
+        lua_call(ls, 1, 1);
+    }
+    if (mlua_to_cbool(ls, 3)) irq_set_enabled(IO_IRQ_BANK0, true);
+    return has_callback ? 1 : 0;
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
@@ -120,7 +165,7 @@ typedef void (*IRQEnabler)(uint, uint32_t, bool);
 int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
-    bool enable = mlua_to_cbool(ls, 3);
+    bool enabled = mlua_to_cbool(ls, 3);
 #if LIB_MLUA_MOD_MLUA_EVENT
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
@@ -128,15 +173,15 @@ int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     uint32_t save = save_and_disable_interrupts();
     // Acknowledge before enabling. gpio_set_irq_enabled() does the same.
     state->pending[block] &= ~mask;
-    if (enable) {
+    if (enabled) {
         state->mask[block] |= mask;
     } else {
         state->mask[block] &= ~mask;
     }
-    set_enabled(gpio, event_mask, enable);
+    set_enabled(gpio, event_mask, enabled);
     restore_interrupts(save);
 #else
-    set_enabled(gpio, event_mask, enable);
+    set_enabled(gpio, event_mask, enabled);
 #endif
     return 0;
 }
@@ -149,6 +194,21 @@ int mod_set_dormant_irq_enabled(lua_State* ls) {
     return set_irq_enabled(ls, &gpio_set_dormant_irq_enabled);
 }
 
+int mod_get_irq_event_mask(lua_State* ls) {
+    uint gpio = check_gpio(ls, 1);
+    uint block = gpio / 8;
+    uint32_t pending = iobank0_hw->intr[block];  // Raw state
+#if LIB_MLUA_MOD_MLUA_EVENT
+    IRQState* state = &irq_state[get_core_num()];
+    uint32_t save = save_and_disable_interrupts();
+    pending |= state->pending[block];  // Mix in stored edge state
+    restore_interrupts(save);
+#endif
+    lua_pushinteger(ls, ((pending & state->mask[block])
+                         >> 4 * (gpio % 8)) & 0xfu);
+    return 1;
+}
+
 int mod_acknowledge_irq(lua_State* ls) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
@@ -158,7 +218,7 @@ int mod_acknowledge_irq(lua_State* ls) {
     uint32_t mask = event_mask << 4 * (gpio % 8);
     uint32_t save = save_and_disable_interrupts();
     state->pending[block] &= ~mask;
-    gpio_acknowledge_irq(gpio, event_mask);
+    iobank0_hw->intr[block] = mask;  // Acknowledge
     restore_interrupts(save);
 #else
     gpio_acknowledge_irq(gpio, event_mask);
@@ -194,7 +254,6 @@ MLUA_FUNC_0_2(mod_, gpio_, set_drive_strength, check_gpio,
               luaL_checkinteger)
 MLUA_FUNC_1_1(mod_, gpio_, get_drive_strength, lua_pushinteger,
               check_gpio)
-MLUA_FUNC_1_1(mod_, gpio_, get_irq_event_mask, lua_pushinteger, check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, init, check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, deinit, check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, init_mask, luaL_checkinteger)
@@ -265,17 +324,19 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(set_drive_strength, mod_),
     MLUA_SYM_F(get_drive_strength, mod_),
     MLUA_SYM_F(set_irq_enabled, mod_),
-    // set_irq_callback: See enable_irq, wait_events
-    // set_irq_enabled_with_callback: See enable_irq, wait_events
+#if LIB_MLUA_MOD_MLUA_EVENT
+    MLUA_SYM_F(set_irq_callback, mod_),
+    MLUA_SYM_F(set_irq_enabled_with_callback, mod_),
+#endif
     MLUA_SYM_F(set_dormant_irq_enabled, mod_),
     MLUA_SYM_F(get_irq_event_mask, mod_),
     MLUA_SYM_F(acknowledge_irq, mod_),
-    // gpio_add_raw_irq_handler_with_order_priority_masked: See enable_irq, wait_events
-    // gpio_add_raw_irq_handler_with_order_priority: See enable_irq, wait_events
-    // gpio_add_raw_irq_handler_masked: See enable_irq, wait_events
-    // gpio_add_raw_irq_handler: See enable_irq, wait_events
-    // gpio_remove_raw_irq_handler_masked: See enable_irq, wait_events
-    // gpio_remove_raw_irq_handler: See enable_irq, wait_events
+    // gpio_add_raw_irq_handler_with_order_priority_masked: Not useful with thread-based handlers
+    // gpio_add_raw_irq_handler_with_order_priority: Not useful with thread-based handlers
+    // MLUA_SYM_F(add_raw_irq_handler_masked, mod_),
+    // MLUA_SYM_F(add_raw_irq_handler, mod_),
+    // MLUA_SYM_F(remove_raw_irq_handler_masked, mod_),
+    // MLUA_SYM_F(remove_raw_irq_handler, mod_),
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),
     MLUA_SYM_F(init_mask, mod_),
@@ -295,17 +356,14 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(set_dir, mod_),
     MLUA_SYM_F(is_dir_out, mod_),
     MLUA_SYM_F(get_dir, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM_F(enable_irq, mod_),
-    MLUA_SYM_F(wait_events, mod_),
-#endif
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
 static __attribute__((constructor)) void init(void) {
     for (uint core = 0; core < NUM_CORES; ++core) {
-        irq_state[core].irq_event = MLUA_EVENT_UNSET;
+        IRQState* state = &irq_state[core];
+        state->irq_event = MLUA_EVENT_UNSET;
     }
 }
 

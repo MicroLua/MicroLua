@@ -201,32 +201,31 @@ function test_irq_events(t)
     t:expect(t:expr(gpio).get_irq_event_mask(pin)):eq(0)
 end
 
-function test_irq_handling(t)
+function test_set_irq_callback(t)
+    -- TODO: Test with multiple GPIOs
     config_pin(t)
     gpio.put(pin, 0)
     gpio.set_dir(pin, gpio.OUT)
-    gpio.set_irq_enabled(pin,
-        gpio.IRQ_LEVEL_HIGH | gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE, true)
 
-    -- Start an event watcher.
+    -- Add a GPIO callback.
     local events = {'LEVEL_LOW', 'LEVEL_HIGH', 'EDGE_FALL', 'EDGE_RISE'}
-    local log, stop = '', false
-    local watcher<close> = thread.start(function()
-        gpio.enable_irq()
-        local done<close> = function() gpio.enable_irq(false) end
-        while not stop do
-            local es = gpio.wait_events(pin)
-            local names = list()
-            for _, e in ipairs(events) do
-                if es & gpio[('IRQ_%s'):format(e)] ~= 0 then names:append(e) end
-            end
-            log = log .. ('(%s) '):format(names:concat(' '))
-            thread.yield()
+    local mask = gpio.IRQ_LEVEL_HIGH | gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE
+    local log = ''
+    gpio.set_irq_enabled_with_callback(pin, mask, true, function(p, em)
+        t:expect(p):label("pin"):eq(pin)
+        local names = list()
+        for _, e in ipairs(events) do
+            if em & gpio[('IRQ_%s'):format(e)] ~= 0 then names:append(e) end
         end
+        log = log .. ('(%s) '):format(names:concat(' '))
     end)
+    t:cleanup(function()
+        irq.set_enabled(irq.IO_IRQ_BANK0, false)
+        gpio.set_irq_callback(nil)
+    end)
+    thread.yield()  -- Let the callback handler start
 
-    -- Trigger events and let the watcher record.
-    thread.yield()  -- Let the watcher initialize and block
+    -- Trigger events and let the callback record.
     gpio.put(pin, 1)
     thread.yield()
     thread.yield()
@@ -234,6 +233,4 @@ function test_irq_handling(t)
     thread.yield()
     t:expect(log):label("log")
         :eq('(LEVEL_HIGH EDGE_RISE) (LEVEL_HIGH) (EDGE_FALL) ')
-    stop = true
-    gpio.put(pin, 1)
 end

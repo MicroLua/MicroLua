@@ -155,7 +155,7 @@ static int mod_is_pending(lua_State* ls) {
 }
 
 static int mod_set_enabled(lua_State* ls) {
-    uint irq = check_user_irq(ls, 1);
+    uint irq = check_irq(ls, 1);
     bool enabled = mlua_to_cbool(ls, 2);
 #if LIB_MLUA_MOD_MLUA_EVENT
     if (enabled && is_user_irq(irq)) {
