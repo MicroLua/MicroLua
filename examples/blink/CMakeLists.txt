@@ -6,7 +6,7 @@ target_link_libraries(mlua_examples_blink_main INTERFACE
 )
 
 add_executable(mlua_examples_blink)
-target_link_libraries(mlua_examples_blink
+target_link_libraries(mlua_examples_blink PRIVATE
     mlua_examples_blink_main
     pico_stdlib
 )

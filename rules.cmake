@@ -59,23 +59,47 @@ function(mlua_add_core_library TARGET)
     endforeach()
 endfunction()
 
-function(mlua_register_module TARGET MOD SRC)
-    if(NOT "${SRC}" STREQUAL "NOSRC")
+function(mlua_register_module TARGET SCOPE MOD TYPE)
+    if("${TYPE}" STREQUAL "LUA")
+        if(NOT ${ARGC} GREATER_EQUAL 5)
+            message(FATAL_ERROR "Missing source for Lua module")
+        endif()
         mlua_want_lua()
+        set(SRC "${ARGV4}")
         get_filename_component(SRC "${SRC}" ABSOLUTE)
         set(DATA "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.data.h")
+        set_source_files_properties("${DATA}" DIRECTORY "${CMAKE_SOURCE_DIR}"
+                                    PROPERTIES GENERATED 1)
         add_custom_command(
+            COMMENT "Compiling Lua source ${DATA}"
             OUTPUT "${DATA}"
             DEPENDS "${SRC}"
             COMMAND Lua "${MLUA_PATH}/tools/embed_lua.lua" "${SRC}" "${DATA}"
             VERBATIM
         )
+        target_sources("${TARGET}" "${SCOPE}" "${DATA}")
+    elseif("${TYPE}" STREQUAL "CONFIG")
+        if(NOT ${ARGC} GREATER_EQUAL 5)
+            message(FATAL_ERROR "Missing symbols for config module")
+        endif()
+        mlua_want_lua()
+        set(CONFIG
+            "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.config.h")
+        add_custom_command(
+            COMMENT "Generating config symbols ${CONFIG}"
+            OUTPUT "${CONFIG}"
+            COMMAND Lua "${MLUA_PATH}/tools/embed_config.lua" "${CONFIG}"
+                "${ARGN}"
+            COMMAND_EXPAND_LISTS
+            VERBATIM
+        )
+        target_sources("${TARGET}" "${SCOPE}" "${CONFIG}")
     endif()
     string(REPLACE "." "_" SYM "${MOD}")
     set(REG_C "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.c")
     configure_file("${MLUA_PATH}/core/module_register.in.c" "${REG_C}")
-    target_sources("${TARGET}" INTERFACE "${REG_C}" PRIVATE "${DATA}")
-    target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
+    target_sources("${TARGET}" "${SCOPE}" "${REG_C}")
+    target_link_libraries("${TARGET}" "${SCOPE}" mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_add_core_c_module_noreg MOD)
@@ -85,28 +109,37 @@ endfunction()
 
 function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg("${MOD}" ${ARGN})
-    mlua_register_module("mlua_mod_${MOD}" "${MOD}" NOSRC)
+    mlua_register_module("mlua_mod_${MOD}" INTERFACE "${MOD}" C)
 endfunction()
 
 function(mlua_add_c_module TARGET MOD)
     pico_add_library("${TARGET}")
     target_sources("${TARGET}" INTERFACE ${ARGN})
-    mlua_register_module("${TARGET}" "${MOD}" NOSRC)
+    mlua_register_module("${TARGET}" INTERFACE "${MOD}" C)
 endfunction()
 
 function(mlua_add_lua_modules TARGET)
     pico_add_library("${TARGET}")
     foreach(SRC IN LISTS ARGN)
         get_filename_component(MOD "${SRC}" NAME_WLE)
-        mlua_register_module("${TARGET}" "${MOD}" "${SRC}")
+        mlua_register_module("${TARGET}" INTERFACE "${MOD}" LUA "${SRC}")
     endforeach()
+endfunction()
+
+# TARGET must be a binary target.
+function(mlua_add_config_module TARGET)
+    mlua_register_module("${TARGET}" PRIVATE mlua.config CONFIG
+                         "$<TARGET_PROPERTY:${TARGET},mlua_config_symbols>")
+endfunction()
+
+function(mlua_target_config TARGET)
+    set_property(TARGET "${TARGET}"
+                 APPEND PROPERTY mlua_config_symbols "${ARGN}")
 endfunction()
 
 set_property(GLOBAL PROPERTY mlua_test_targets)
 
 function(mlua_add_lua_test_modules TARGET)
     mlua_add_lua_modules("${TARGET}" ${ARGN})
-    get_property(tests GLOBAL PROPERTY mlua_test_targets)
-    list(APPEND tests "${TARGET}")
-    set_property(GLOBAL PROPERTY mlua_test_targets "${tests}")
+    set_property(GLOBAL APPEND PROPERTY mlua_test_targets "${TARGET}")
 endfunction()

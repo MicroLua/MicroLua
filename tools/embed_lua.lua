@@ -51,8 +51,8 @@ function main(input_path, output_path)
     check(io.close())
 end
 
-local res, err = pcall(main, ...)
-if not res then
+local ok, err = pcall(main, ...)
+if not ok then
     io.stderr:write(("ERROR: %s\n"):format(err))
     os.exit(1, true)
 end

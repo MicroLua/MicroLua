@@ -118,6 +118,8 @@ target_link_libraries(mlua_mod_mlua_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
+
 mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
@@ -405,11 +407,16 @@ if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
 endif()
 
 add_executable(mlua_tests)
+mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_MAIN_MODULE=mlua.testing
     PICO_MAX_SHARED_IRQ_HANDLERS=16
 )
-target_link_libraries(mlua_tests
+mlua_target_config(mlua_tests
+    a:integer=1
+    b:string=\"test\"
+)
+target_link_libraries(mlua_tests PRIVATE
     mlua_mod_mlua_stdio
     mlua_mod_mlua_testing
     mlua_mod_mlua_thread

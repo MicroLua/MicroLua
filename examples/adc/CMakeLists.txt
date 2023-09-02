@@ -13,7 +13,7 @@ add_executable(mlua_examples_adc_onboard_temperature)
 target_compile_definitions(mlua_examples_adc_onboard_temperature PRIVATE
     MLUA_MAIN_MODULE=onboard_temperature_main
 )
-target_link_libraries(mlua_examples_adc_onboard_temperature
+target_link_libraries(mlua_examples_adc_onboard_temperature PRIVATE
     mlua_examples_adc_onboard_temperature_main
     pico_stdlib
 )
@@ -34,7 +34,7 @@ add_executable(mlua_examples_adc_onboard_temperature_irq)
 target_compile_definitions(mlua_examples_adc_onboard_temperature_irq PRIVATE
     MLUA_MAIN_MODULE=onboard_temperature_irq_main
 )
-target_link_libraries(mlua_examples_adc_onboard_temperature_irq
+target_link_libraries(mlua_examples_adc_onboard_temperature_irq PRIVATE
     mlua_examples_adc_onboard_temperature_irq_main
     pico_stdlib
 )
