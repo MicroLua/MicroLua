@@ -59,13 +59,13 @@ function(mlua_add_core_library TARGET)
     endforeach()
 endfunction()
 
-function(mlua_register_module TARGET SCOPE MOD TYPE)
-    if("${TYPE}" STREQUAL "LUA")
-        if(NOT ${ARGC} GREATER_EQUAL 5)
-            message(FATAL_ERROR "Missing source for Lua module")
-        endif()
+function(mlua_register_module TARGET SCOPE MOD)
+    cmake_parse_arguments(PARSE_ARGV 3 args "C" "CONFIG;HEADER;LUA" "")
+    if(args_C)
+        # Nothing to do
+    elseif(DEFINED args_LUA)
         mlua_want_lua()
-        get_filename_component(SRC "${ARGV4}" ABSOLUTE)
+        get_filename_component(SRC "${args_LUA}" ABSOLUTE)
         set(DATA "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.data.h")
         add_custom_command(
             COMMENT "Compiling Lua source ${DATA}"
@@ -75,27 +75,21 @@ function(mlua_register_module TARGET SCOPE MOD TYPE)
             VERBATIM
         )
         target_sources("${TARGET}" "${SCOPE}" "${DATA}")
-    elseif("${TYPE}" STREQUAL "CONFIG")
-        if(NOT ${ARGC} GREATER_EQUAL 5)
-            message(FATAL_ERROR "Missing symbols for config module")
-        endif()
+    elseif(DEFINED args_CONFIG)
         mlua_want_lua()
         set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
         add_custom_command(
             COMMENT "Generating symbols for config ${SYMBOLS}"
             OUTPUT "${SYMBOLS}"
             COMMAND Lua "${MLUA_PATH}/tools/embed_config.lua"
-                "${SYMBOLS}" "${ARGN}"
+                "${SYMBOLS}" "${args_CONFIG}"
             COMMAND_EXPAND_LISTS
             VERBATIM
         )
         target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
-    elseif("${TYPE}" STREQUAL "HEADER")
-        if(NOT ${ARGC} GREATER_EQUAL 5)
-            message(FATAL_ERROR "Missing source for header module")
-        endif()
+    elseif(DEFINED args_HEADER)
         mlua_want_lua()
-        get_filename_component(SRC "${ARGV4}" ABSOLUTE)
+        get_filename_component(SRC "${args_HEADER}" ABSOLUTE)
         set(INCLUDE "#include \"${SRC}\"")
         set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
         add_custom_command(
@@ -108,6 +102,8 @@ function(mlua_register_module TARGET SCOPE MOD TYPE)
             VERBATIM
         )
         target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
+    else()
+        message(FATAL_ERROR "No module type found")
     endif()
     string(REPLACE "." "_" SYM "${MOD}")
     set(REG_C "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.c")
