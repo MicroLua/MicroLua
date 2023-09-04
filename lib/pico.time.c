@@ -54,153 +54,72 @@ static int mod_sleep_ms(lua_State* ls) {
     return mod_sleep_until(ls);
 }
 
-static char const Alarm_name[] = "pico.time.Alarm";
-
-typedef struct Alarm {
-    absolute_time_t time;
-    alarm_pool_t* pool;
-    MLuaEvent event;
-    alarm_id_t id;
-} Alarm;
-
-static int64_t __time_critical_func(handle_alarm)(alarm_id_t id, void* ud) {
-    mlua_event_set(((Alarm*)ud)->event);
-    return 0;
-}
-
-static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx);
+static int alarm_thread_1(lua_State* ls);
 static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx);
-static int alarm_thread_done(lua_State* ls);
+static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx);
 
 static int alarm_thread(lua_State* ls) {
-    Alarm* alarm = lua_touserdata(ls, lua_upvalueindex(1));
-
-    // Set up a deferred to clean up on exit.
-    lua_pushvalue(ls, lua_upvalueindex(1));
-    lua_pushcclosure(ls, &alarm_thread_done, 1);
-    lua_toclose(ls, -1);
-
-    // Start watching the event and suspend.
-    mlua_event_watch(ls, alarm->event);
-    return mlua_event_suspend(ls, &alarm_thread_1, 0, 0);
+    lua_pushvalue(ls, lua_upvalueindex(1));  // time
+    return alarm_thread_1(ls);
 }
 
-static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx) {
-    lua_pushvalue(ls, lua_upvalueindex(2));  // callback
-    lua_pushvalue(ls, lua_upvalueindex(1));  // alarm
-    lua_callk(ls, 1, 1, ctx, &alarm_thread_2);
-    return alarm_thread_2(ls, LUA_OK, ctx);
+static int alarm_thread_1(lua_State* ls) {
+    lua_pushcfunction(ls, &mod_sleep_until);
+    lua_pushvalue(ls, 1);
+    lua_callk(ls, 1, 0, 0, &alarm_thread_2);
+    return alarm_thread_2(ls, LUA_OK, 0);
 }
 
 static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx) {
+    lua_pushvalue(ls, lua_upvalueindex(2));  // callback
+    lua_pushthread(ls);
+    lua_callk(ls, 1, 1, ctx, &alarm_thread_3);
+    return alarm_thread_3(ls, LUA_OK, ctx);
+}
+
+static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx) {
     if (lua_isnoneornil(ls, -1)) return 0;
     int64_t repeat = mlua_check_int64(ls, -1);
     if (repeat == 0) return 0;
-    Alarm* alarm = lua_touserdata(ls, lua_upvalueindex(1));
-    if (repeat < 0) {
-        alarm->time = delayed_by_us(alarm->time, (uint64_t)-repeat);
-    } else {
-        alarm->time = delayed_by_us(get_absolute_time(), (uint64_t)repeat);
+    lua_pop(ls, 1);
+    mlua_push_int64(ls, to_us_since_boot(repeat < 0 ?
+        delayed_by_us(mlua_check_int64(ls, 1), (uint64_t)-repeat) :
+        delayed_by_us(get_absolute_time(), (uint64_t)repeat)));
+    lua_replace(ls, 1);
+    return alarm_thread_1(ls);
     }
-    alarm->id = alarm_pool_add_alarm_at(alarm->pool, alarm->time,
-                                        &handle_alarm, alarm, false);
-    if (alarm->id < 0) {
-        return luaL_error(ls, "alarm: no slots available");
-    } else if (alarm->id == 0) {  // Alarm time in the past
-        return alarm_thread_1(ls, LUA_OK, ctx);
-    }
-    return mlua_event_suspend(ls, &alarm_thread_1, ctx, 0);
-}
 
-static int alarm_thread_done(lua_State* ls) {
-    Alarm* alarm = lua_touserdata(ls, lua_upvalueindex(1));
-    if (alarm->id > 0) {
-        alarm_pool_cancel_alarm(alarm->pool, alarm->id);
-        alarm->id = 0;
-    }
-    mlua_event_unclaim(ls, &alarm->event);
-    lua_pushnil(ls);
-    lua_setiuservalue(ls, lua_upvalueindex(1), -1);
-    return 0;
-}
-
-static int schedule_alarm(lua_State* ls, absolute_time_t time,
-                          alarm_pool_t* pool) {
+static int schedule_alarm(lua_State* ls, absolute_time_t time) {
     bool fire_if_past = mlua_to_cbool(ls, 3);
+    if (!fire_if_past && time_reached(time)) return 0;
 
-    MLuaEvent ev = MLUA_EVENT_UNSET;
-    char const* err = mlua_event_claim(&ev);
-    if (err != NULL) return luaL_error(ls, "alarm: %s", err);
-    Alarm* alarm = lua_newuserdatauv(ls, sizeof(Alarm), 1);
-    luaL_getmetatable(ls, Alarm_name);
-    lua_setmetatable(ls, -2);
-    alarm->time = time;
-    alarm->pool = pool;
-    alarm->event = ev;
-
-    // Schedule the alarm.
-    alarm_id_t id = alarm_pool_add_alarm_at(pool, time, &handle_alarm, alarm,
-                                            fire_if_past);
-    if (id < 0) {  // No alarm slots available
-        return luaL_error(ls, "alarm: no slots available");
-    } else if (id == 0 && !fire_if_past) {  // Alarm time in the past, not fired
-        return 0;
-    }
-    alarm->id = id;
-
-    // Start the callback thread.
-    lua_pushthread(ls);
-    luaL_getmetafield(ls, -1, "start");
-    lua_remove(ls, -2);
-    lua_pushvalue(ls, -2);  // alarm
-    lua_pushvalue(ls, 2);   // callback
+    // Start the alarm thread.
+    mlua_push_int64(ls, to_us_since_boot(time));  // time
+    lua_pushvalue(ls, 2);  // callback
     lua_pushcclosure(ls, &alarm_thread, 2);
-    lua_call(ls, 1, 1);
-    lua_setiuservalue(ls, -2, 1);
+    mlua_thread_start(ls);
     return 1;
 }
-
-static int Alarm_thread(lua_State* ls) {
-    luaL_checkudata(ls, 1, Alarm_name);
-    lua_getiuservalue(ls, 1, 1);
-    return 1;
-}
-
-static int Alarm_cancel(lua_State* ls) {
-    luaL_checkudata(ls, 1, Alarm_name);
-
-    // Kill the callback thread. This will also cancel the alarm.
-    if (lua_getiuservalue(ls, 1, 1) == LUA_TTHREAD) {
-        luaL_getmetafield(ls, -1, "kill");
-        lua_rotate(ls, -2, 1);
-        lua_call(ls, 1, 0);
-    }
-    return 0;
-}
-
-#define Alarm___close Alarm_cancel
-
-static MLuaSym const Alarm_syms[] = {
-    MLUA_SYM_F(thread, Alarm_),
-    MLUA_SYM_F(cancel, Alarm_),
-    MLUA_SYM_F(__close, Alarm_),
-};
 
 static int mod_add_alarm_at(lua_State* ls) {
     absolute_time_t time = from_us_since_boot(mlua_check_int64(ls, 1));
-    return schedule_alarm(ls, time, alarm_pool_get_default());
+    return schedule_alarm(ls, time);
 }
 
 static int mod_add_alarm_in_us(lua_State* ls) {
     uint64_t delay = mlua_check_int64(ls, 1);
-    return schedule_alarm(ls, delayed_by_us(get_absolute_time(), delay),
-                          alarm_pool_get_default());
+    return schedule_alarm(ls, delayed_by_us(get_absolute_time(), delay));
 }
 
 static int mod_add_alarm_in_ms(lua_State* ls) {
     uint32_t delay = luaL_checkinteger(ls, 1);
-    return schedule_alarm(ls, delayed_by_ms(get_absolute_time(), delay),
-                          alarm_pool_get_default());
+    return schedule_alarm(ls, delayed_by_ms(get_absolute_time(), delay));
+}
+
+static int mod_cancel_alarm(lua_State* ls) {
+    lua_settop(ls, 1);
+    mlua_thread_kill(ls);
+    return 0;
 }
 
 MLUA_FUNC_1_0(mod_,, get_absolute_time, push_absolute_time)
@@ -221,8 +140,6 @@ MLUA_FUNC_1_1(mod_,, is_at_the_end_of_time, lua_pushboolean,
 MLUA_FUNC_1_1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
 MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
-
-#define mod_cancel_alarm Alarm_cancel
 
 static MLuaSym const module_syms[] = {
     MLUA_SYM_P(at_the_end_of_time, push_),
@@ -249,21 +166,7 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(sleep_ms, mod_),
     MLUA_SYM_F(best_effort_wfe_or_timeout, mod_),
 
-    // TODO: MLUA_SYM_F(alarm_pool_init_default, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_get_default, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_create, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_create_with_unused_hardware_alarm, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_hardware_alarm_num, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_core_num, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_destroy, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_alarm_at, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_alarm_at_force_in_context, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_alarm_in_us, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_alarm_in_ms, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_cancel_alarm, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_repeating_timer_us, mod_),
-    // TODO: MLUA_SYM_F(alarm_pool_add_repeating_timer_ms, mod_),
-#if !PICO_TIME_DEFAULT_ALARM_POOL_DISABLED
+    // alarm_pool_*: not useful in Lua, as thread-based alarms are unlimited
     MLUA_SYM_F(add_alarm_at, mod_),
     MLUA_SYM_F(add_alarm_in_us, mod_),
     MLUA_SYM_F(add_alarm_in_ms, mod_),
@@ -271,15 +174,6 @@ static MLuaSym const module_syms[] = {
     // TODO: MLUA_SYM_F(add_repeating_timer_us, mod_),
     // TODO: MLUA_SYM_F(add_repeating_timer_ms, mod_),
     // TODO: MLUA_SYM_F(cancel_repeating_timer, mod_),
-#else
-    MLUA_SYM_V(add_alarm_at, boolean, false),
-    MLUA_SYM_V(add_alarm_in_us, boolean, false),
-    MLUA_SYM_V(add_alarm_in_ms, boolean, false),
-    MLUA_SYM_V(cancel_alarm, boolean, false),
-    MLUA_SYM_V(add_repeating_timer_us, boolean, false),
-    MLUA_SYM_V(add_repeating_timer_ms, boolean, false),
-    MLUA_SYM_V(cancel_repeating_timer, boolean, false),
-#endif
 };
 
 int luaopen_pico_time(lua_State* ls) {
@@ -287,10 +181,5 @@ int luaopen_pico_time(lua_State* ls) {
     mlua_require(ls, "mlua.int64", false);
 
     mlua_new_module(ls, 0, module_syms);
-
-    // Create the Alarm class.
-    mlua_new_class(ls, Alarm_name, Alarm_syms);
-    lua_pop(ls, 1);
-
     return 1;
 }

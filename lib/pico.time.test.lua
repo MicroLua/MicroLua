@@ -63,7 +63,7 @@ function test_best_effort_wfe_or_timeout(t)
     end
 end
 
-function test_default_alarm_pool(t)
+function test_alarms(t)
     if not time.add_alarm_at then t:skip("Default alarm pool disabled") end
     local start = time.get_absolute_time()
     for _, test in ipairs{
@@ -73,14 +73,14 @@ function test_default_alarm_pool(t)
     } do
         local fn, arg, want, want_delta = table.unpack(test)
         local t1, t2, alarm = time.get_absolute_time(), nil, nil
-        alarm = time[fn](arg, function(got_alarm)
+        alarm = time[fn](arg, function(a)
             t2 = time.get_absolute_time()
-            t:expect(got_alarm):label("alarm"):eq(alarm)
+            t:expect(a):label("alarm"):eq(alarm)
         end)
-        alarm:thread():join()
+        alarm:join()
         if want == 0 then want = t1 + want_delta end
         t:expect(t2):label("%s(%s): end time", fn, arg):gte(want)
-        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
-                 t1, t2, want)
     end
+
+    -- TODO: Test cancel_alarm
 end
