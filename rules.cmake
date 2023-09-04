@@ -65,11 +65,8 @@ function(mlua_register_module TARGET SCOPE MOD TYPE)
             message(FATAL_ERROR "Missing source for Lua module")
         endif()
         mlua_want_lua()
-        set(SRC "${ARGV4}")
-        get_filename_component(SRC "${SRC}" ABSOLUTE)
+        get_filename_component(SRC "${ARGV4}" ABSOLUTE)
         set(DATA "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.data.h")
-        set_source_files_properties("${DATA}" DIRECTORY "${CMAKE_SOURCE_DIR}"
-                                    PROPERTIES GENERATED 1)
         add_custom_command(
             COMMENT "Compiling Lua source ${DATA}"
             OUTPUT "${DATA}"
@@ -83,17 +80,34 @@ function(mlua_register_module TARGET SCOPE MOD TYPE)
             message(FATAL_ERROR "Missing symbols for config module")
         endif()
         mlua_want_lua()
-        set(CONFIG
-            "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.config.h")
+        set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
         add_custom_command(
-            COMMENT "Generating config symbols ${CONFIG}"
-            OUTPUT "${CONFIG}"
-            COMMAND Lua "${MLUA_PATH}/tools/embed_config.lua" "${CONFIG}"
-                "${ARGN}"
+            COMMENT "Generating symbols for config ${SYMBOLS}"
+            OUTPUT "${SYMBOLS}"
+            COMMAND Lua "${MLUA_PATH}/tools/embed_config.lua"
+                "${SYMBOLS}" "${ARGN}"
             COMMAND_EXPAND_LISTS
             VERBATIM
         )
-        target_sources("${TARGET}" "${SCOPE}" "${CONFIG}")
+        target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
+    elseif("${TYPE}" STREQUAL "HEADER")
+        if(NOT ${ARGC} GREATER_EQUAL 5)
+            message(FATAL_ERROR "Missing source for header module")
+        endif()
+        mlua_want_lua()
+        get_filename_component(SRC "${ARGV4}" ABSOLUTE)
+        set(INCLUDE "#include \"${SRC}\"")
+        set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
+        add_custom_command(
+            COMMENT "Generating symbols for header ${SYMBOLS}"
+            OUTPUT "${SYMBOLS}"
+            DEPENDS "${SRC}"
+            COMMAND "${CMAKE_C_COMPILER}" -E -dD -o "${SYMBOLS}.names" "${SRC}"
+            COMMAND Lua "${MLUA_PATH}/tools/embed_header.lua"
+                "${SYMBOLS}.names" "${SYMBOLS}"
+            VERBATIM
+        )
+        target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
     endif()
     string(REPLACE "." "_" SYM "${MOD}")
     set(REG_C "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.c")
@@ -103,19 +117,24 @@ function(mlua_register_module TARGET SCOPE MOD TYPE)
 endfunction()
 
 function(mlua_add_core_c_module_noreg MOD)
-    mlua_add_core_library("mlua_mod_${MOD}" ${ARGN})
+    mlua_add_core_library("mlua_mod_${MOD}" "${ARGN}")
     target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core)
 endfunction()
 
 function(mlua_add_core_c_module MOD)
-    mlua_add_core_c_module_noreg("${MOD}" ${ARGN})
+    mlua_add_core_c_module_noreg("${MOD}" "${ARGN}")
     mlua_register_module("mlua_mod_${MOD}" INTERFACE "${MOD}" C)
 endfunction()
 
 function(mlua_add_c_module TARGET MOD)
     pico_add_library("${TARGET}")
-    target_sources("${TARGET}" INTERFACE ${ARGN})
+    target_sources("${TARGET}" INTERFACE "${ARGN}")
     mlua_register_module("${TARGET}" INTERFACE "${MOD}" C)
+endfunction()
+
+function(mlua_add_header_module TARGET MOD SRC)
+    pico_add_library("${TARGET}")
+    mlua_register_module("${TARGET}" INTERFACE "${MOD}" HEADER "${SRC}")
 endfunction()
 
 function(mlua_add_lua_modules TARGET)

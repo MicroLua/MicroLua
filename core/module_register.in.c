@@ -1,7 +1,7 @@
 #include "mlua/module.h"
 
 #cmakedefine DATA 1
-#cmakedefine CONFIG 1
+#cmakedefine SYMBOLS 1
 
 #ifdef DATA
 
@@ -21,13 +21,13 @@ int luaopen_@SYM@(lua_State* ls) {
     return 1;
 }
 
-#elif CONFIG
+#elif SYMBOLS
 
 @INCLUDE@
 #include "mlua/util.h"
 
 static MLuaSym const module_syms[] = {
-#include "@CONFIG@"
+#include "@SYMBOLS@"
 };
 
 int luaopen_@SYM@(lua_State* ls) {

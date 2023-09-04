@@ -266,6 +266,17 @@ target_link_libraries(mlua_mod_pico_test INTERFACE
     mlua_mod_pico
 )
 
+mlua_add_header_module(mlua_mod_pico_board pico.board
+    "${CMAKE_BINARY_DIR}/generated/pico_base/pico/config_autogen.h")
+target_link_libraries(mlua_mod_pico INTERFACE
+    pico_base
+)
+
+mlua_add_lua_test_modules(mlua_mod_pico_board_test pico.board.test.lua)
+target_link_libraries(mlua_mod_pico_board_test INTERFACE
+    mlua_mod_pico_board
+)
+
 mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico_multicore INTERFACE
     mlua_mod_mlua_event
