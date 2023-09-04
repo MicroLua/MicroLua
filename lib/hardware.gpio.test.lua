@@ -4,6 +4,7 @@ local gpio = require 'hardware.gpio'
 local irq = require 'hardware.irq'
 local list = require 'mlua.list'
 local thread = require 'mlua.thread'
+local util = require 'mlua.util'
 local pico = require 'pico'
 local string = require 'string'
 
@@ -202,22 +203,20 @@ function test_irq_events(t)
 end
 
 function test_set_irq_callback(t)
-    -- TODO: Test with multiple GPIOs
     config_pin(t)
     gpio.put(pin, 0)
     gpio.set_dir(pin, gpio.OUT)
 
     -- Add a GPIO callback.
     local events = {'LEVEL_LOW', 'LEVEL_HIGH', 'EDGE_FALL', 'EDGE_RISE'}
+    local log = {}
     local mask = gpio.IRQ_LEVEL_HIGH | gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE
-    local log = ''
     gpio.set_irq_enabled_with_callback(pin, mask, true, function(p, em)
-        t:expect(p):label("pin"):eq(pin)
         local names = list()
         for _, e in ipairs(events) do
             if em & gpio[('IRQ_%s'):format(e)] ~= 0 then names:append(e) end
         end
-        log = log .. ('(%s) '):format(names:concat(' '))
+        log[p] = (log[p] or '') .. ('(%s) '):format(names:concat(' '))
     end)
     t:cleanup(function()
         irq.set_enabled(irq.IO_IRQ_BANK0, false)
@@ -225,12 +224,29 @@ function test_set_irq_callback(t)
     end)
     thread.yield()  -- Let the callback handler start
 
+    -- Configure a second pin if available.
+    local pin2 = ({pico = 29, pico_w = 29})[pico.board]
+    if pin2 then
+        gpio.init(pin2)
+        gpio.set_dir(pin2, gpio.OUT)
+        t:cleanup(function()
+            gpio.deinit(pin2)
+            gpio.set_irq_enabled(pin2, all_events, false)
+        end)
+        local mask2 = gpio.IRQ_EDGE_FALL | gpio.IRQ_EDGE_RISE
+        gpio.set_irq_enabled(pin2, mask2, true)
+    end
+
     -- Trigger events and let the callback record.
     gpio.put(pin, 1)
     thread.yield()
+    if pin2 then gpio.put(pin2, 1) end
     thread.yield()
     gpio.put(pin, 0)
+    if pin2 then gpio.put(pin2, 0) end
     thread.yield()
-    t:expect(log):label("log")
-        :eq('(LEVEL_HIGH EDGE_RISE) (LEVEL_HIGH) (EDGE_FALL) ')
+
+    local want = {[pin] = '(LEVEL_HIGH EDGE_RISE) (LEVEL_HIGH) (EDGE_FALL) '}
+    if pin2 then want[pin2] = '(EDGE_RISE) (EDGE_FALL) ' end
+    t:expect(log):label("log"):eq(want, util.table_eq)
 end

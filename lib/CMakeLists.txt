@@ -45,6 +45,7 @@ target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
     mlua_mod_hardware_irq
     mlua_mod_mlua_list
     mlua_mod_mlua_thread
+    mlua_mod_mlua_util
     mlua_mod_pico
     mlua_mod_string
 )
