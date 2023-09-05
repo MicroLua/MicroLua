@@ -128,6 +128,9 @@ void mlua_thread_start(lua_State* ls);
 // Kill the thread at the top of the stack. Pops the thread from the stack.
 void mlua_thread_kill(lua_State* ls);
 
+// Return true iff the given thread is alive.
+bool mlua_thread_is_alive(lua_State* thread);
+
 #ifdef __cplusplus
 }
 #endif

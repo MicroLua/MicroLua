@@ -87,7 +87,7 @@ static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx) {
         delayed_by_us(get_absolute_time(), (uint64_t)repeat)));
     lua_replace(ls, 1);
     return alarm_thread_1(ls);
-    }
+}
 
 static int schedule_alarm(lua_State* ls, absolute_time_t time) {
     bool fire_if_past = mlua_to_cbool(ls, 3);
@@ -117,9 +117,18 @@ static int mod_add_alarm_in_ms(lua_State* ls) {
 }
 
 static int mod_cancel_alarm(lua_State* ls) {
+    lua_State* thread = lua_tothread(ls, 1);
+    luaL_argexpected(ls, thread != NULL, 1, "thread");
+    if (!mlua_thread_is_alive(thread)) {
+        lua_pushboolean(ls, false);
+        return 1;
+    }
+
+    // Kill the alarm thread.
     lua_settop(ls, 1);
     mlua_thread_kill(ls);
-    return 0;
+    lua_pushboolean(ls, true);
+    return 1;
 }
 
 MLUA_FUNC_1_0(mod_,, get_absolute_time, push_absolute_time)

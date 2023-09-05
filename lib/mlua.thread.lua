@@ -111,8 +111,10 @@ local joiners = setmetatable({}, weak_keys)
 
 -- Kill the thread.
 function Thread:kill()
-    local ok, err = co_close(self)
+    local deadline = waiting[self]
+    if deadline and deadline ~= true then remove_timer(self) end
     waiting[self] = nil
+    local ok, err = co_close(self)
     if not ok then terms[self] = err end
     local js = joiners[self]
     if js then

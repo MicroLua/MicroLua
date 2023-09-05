@@ -1,6 +1,7 @@
 _ENV = mlua.Module(...)
 
 local int64 = require 'mlua.int64'
+local list = require 'mlua.list'
 local thread = require 'mlua.thread'
 local time = require 'pico.time'
 local table = require 'table'
@@ -63,24 +64,80 @@ function test_best_effort_wfe_or_timeout(t)
     end
 end
 
-function test_alarms(t)
+function test_add_alarm(t)
     if not time.add_alarm_at then t:skip("Default alarm pool disabled") end
     local start = time.get_absolute_time()
     for _, test in ipairs{
-        {'add_alarm_at', start + 3000, start + 3000, 0},
-        {'add_alarm_in_us', 4000, 0, 4000},
-        {'add_alarm_in_ms', 6, 0, 6000},
+        {'add_alarm_at', start + 3000, true, start + 3000, 0},
+        {'add_alarm_in_us', 4000, true, 0, 4000},
+        {'add_alarm_in_ms', 6, true, 0, 6000},
+        {'add_alarm_at', start - 1000, false, nil, nil},
+        {'add_alarm_at', start - 1000, true, 0, 0},
     } do
-        local fn, arg, want, want_delta = table.unpack(test)
+        local fn, arg, fip, want, want_delta = table.unpack(test)
         local t1, t2, alarm = time.get_absolute_time(), nil, nil
         alarm = time[fn](arg, function(a)
             t2 = time.get_absolute_time()
             t:expect(a):label("alarm"):eq(alarm)
-        end)
-        alarm:join()
-        if want == 0 then want = t1 + want_delta end
-        t:expect(t2):label("%s(%s): end time", fn, arg):gte(want)
+        end, fip)
+        t:expect(alarm ~= nil):label("alarm set"):eq(want ~= nil)
+        if alarm then
+            alarm:join()
+            if want == 0 then want = t1 + want_delta end
+            t:expect(t2):label("%s(%s): end time", fn, arg):gte(want)
+        end
     end
+end
 
-    -- TODO: Test cancel_alarm
+function test_alarm_repeat(t)
+    local res, got = {-4000, 3000, 0}, list()
+    local start = time.get_absolute_time()
+    local alarm = time.add_alarm_at(start + 2000, function()
+        got:append(time.get_absolute_time())
+        time.sleep_us(2000)
+        return res[#got]
+    end)
+    alarm:join()
+
+    local want = {2000, 6000, 11000}
+    t:expect(t:expr(got):len()):eq(#want)
+    for i = 1, #want do
+        t:expect(got[i] - start):label("alarm[%s]", i)
+            :gte(want[i]):lt(want[i] + 1000)
+    end
+end
+
+function test_cancel_alarm(t)
+    local parent = thread.running()
+
+    -- Cancel before the alarm thread starts.
+    local triggered = false
+    local alarm = time.add_alarm_in_ms(10000, function() triggered = true end)
+    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(triggered):label("triggered"):eq(false)
+
+    -- Cancel before the sleep elapses.
+    local triggered = false
+    local alarm = time.add_alarm_in_ms(10000, function() triggered = true end)
+    thread.yield()
+    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(triggered):label("triggered"):eq(false)
+
+    -- Cancel while the callback runs.
+    local triggered = false
+    local alarm = time.add_alarm_in_us(1000, function()
+        parent:resume()
+        thread.yield()
+        triggered = true
+    end)
+    thread.yield(true)
+    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(triggered):label("triggered"):eq(false)
+
+    -- Cancel after the callback terminates.
+    local triggered = false
+    local alarm = time.add_alarm_in_us(100, function() triggered = true end)
+    alarm:join()
+    t:expect(t:expr(time).cancel_alarm(alarm)):eq(false)
+    t:expect(triggered):label("triggered"):eq(true)
 end

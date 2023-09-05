@@ -156,6 +156,19 @@ void mlua_thread_kill(lua_State* ls) {
     lua_call(ls, 1, 0);
 }
 
+bool mlua_thread_is_alive(lua_State* thread) {
+    switch (lua_status(thread)) {
+    case LUA_YIELD:
+        return true;
+    case LUA_OK: {
+        lua_Debug ar;
+        return lua_getstack(thread, 0, &ar) || lua_gettop(thread) != 0;
+    }
+    default:
+        return false;
+    }
+}
+
 static __attribute__((constructor)) void init(void) {
     mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
 #if LIB_MLUA_MOD_MLUA_EVENT
