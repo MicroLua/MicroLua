@@ -44,33 +44,36 @@ local function is_list(v)
     return true, len
 end
 
-local function repr_list(v, len)
+local function repr_list(v, len, seen)
     local parts = list()
     local v0 = v[0]
-    if v0 then parts:append(('[0] = %s'):format(repr(v0))) end
-    for i = 1, len do parts:append(repr(v[i])) end
+    if v0 then parts:append(('[0] = %s'):format(repr(v0, seen))) end
+    for i = 1, len do parts:append(repr(v[i], seen)) end
     return ('{%s}'):format(parts:concat(', '))
 end
 
-local function repr_table(v)
+local function repr_table(v, seen)
+    if rawget(seen, v) then return '...' end
+    rawset(seen, v, true)
+    local done<close> = function() rawset(seen, v, nil) end
     local ok, len = is_list(v)
-    if ok then return repr_list(v, len) end
+    if ok then return repr_list(v, len, seen) end
     local parts = list()
     for k, vk in pairs(v) do
-        parts:append(('[%s] = %s'):format(repr(k), repr(vk)))
+        parts:append(('[%s] = %s'):format(repr(k, seen), repr(vk, seen)))
     end
     table.sort(parts)
     return ('{%s}'):format(table.concat(parts, ', '))
 end
 
 -- Return a string representation of the given value.
-function repr(v)
+function repr(v, seen)
     local ok, r = pcall(function() return getmetatable(v).__repr end)
     if ok and r then return r(v, repr) end
     -- TODO: Format numbers to full accuracy
     local typ = type(v)
     if typ == 'string' then return repr_string(v)
-    elseif typ == 'table' then return repr_table(v)
+    elseif typ == 'table' then return repr_table(v, seen or {})
     else return tostring(v) end
 end
 
