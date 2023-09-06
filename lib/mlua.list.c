@@ -160,6 +160,7 @@ static int list___call(lua_State* ls) {
         lua_rawseti(ls, -2, 0);
         return 1;
     }
+    luaL_argexpected(ls, lua_istable(ls, 2), 2, "table");
     lua_settop(ls, 2);
     if (lua_rawgeti(ls, 2, 0) == LUA_TNIL) {
         lua_pushinteger(ls, luaL_len(ls, 2));
