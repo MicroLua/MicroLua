@@ -60,6 +60,7 @@ static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx);
 
 static int alarm_thread(lua_State* ls) {
     lua_pushvalue(ls, lua_upvalueindex(1));  // time
+    lua_pushvalue(ls, lua_upvalueindex(3));  // delay
     return alarm_thread_1(ls);
 }
 
@@ -78,42 +79,55 @@ static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx) {
-    if (lua_isnoneornil(ls, -1)) return 0;
-    int64_t repeat = mlua_check_int64(ls, -1);
-    if (repeat == 0) return 0;
-    lua_pop(ls, 1);
-    mlua_push_int64(ls, to_us_since_boot(repeat < 0 ?
-        delayed_by_us(mlua_check_int64(ls, 1), (uint64_t)-repeat) :
-        delayed_by_us(get_absolute_time(), (uint64_t)repeat)));
+    int64_t delay = mlua_check_int64(ls, 2);  // delay
+    if (delay == 0) {  // Alarm
+        if (lua_isnil(ls, -1)) return 0;
+        delay = mlua_check_int64(ls, -1);
+        lua_pop(ls, 1);
+    } else if (lua_isboolean(ls, -1)) {  // Repeating timer
+        if (!lua_toboolean(ls, -1)) return 0;
+        lua_pop(ls, 1);
+    } else if (!lua_isnil(ls, -1)) {  // Repeating timer, delay update
+        delay = mlua_check_int64(ls, -1);
+        lua_replace(ls, 2);
+    }
+    if (delay == 0) return 0;
+    mlua_push_int64(ls, to_us_since_boot(delay < 0 ?
+        delayed_by_us(mlua_to_int64(ls, 1), (uint64_t)-delay) :
+        delayed_by_us(get_absolute_time(), (uint64_t)delay)));
     lua_replace(ls, 1);
     return alarm_thread_1(ls);
 }
 
-static int schedule_alarm(lua_State* ls, absolute_time_t time) {
-    bool fire_if_past = mlua_to_cbool(ls, 3);
+static int schedule_alarm(lua_State* ls, absolute_time_t time,
+                          bool fire_if_past, int64_t delay) {
     if (!fire_if_past && time_reached(time)) return 0;
 
     // Start the alarm thread.
     mlua_push_int64(ls, to_us_since_boot(time));  // time
     lua_pushvalue(ls, 2);  // callback
-    lua_pushcclosure(ls, &alarm_thread, 2);
+    mlua_push_int64(ls, delay);  // delay
+    lua_pushcclosure(ls, &alarm_thread, 3);
     mlua_thread_start(ls);
     return 1;
 }
 
 static int mod_add_alarm_at(lua_State* ls) {
     absolute_time_t time = from_us_since_boot(mlua_check_int64(ls, 1));
-    return schedule_alarm(ls, time);
+    bool fire_if_past = mlua_to_cbool(ls, 3);
+    return schedule_alarm(ls, time, fire_if_past, 0);
 }
 
 static int mod_add_alarm_in_us(lua_State* ls) {
     uint64_t delay = mlua_check_int64(ls, 1);
-    return schedule_alarm(ls, delayed_by_us(get_absolute_time(), delay));
+    bool fire_if_past = mlua_to_cbool(ls, 3);
+    return schedule_alarm(ls, make_timeout_time_us(delay), fire_if_past, 0);
 }
 
 static int mod_add_alarm_in_ms(lua_State* ls) {
     uint32_t delay = luaL_checkinteger(ls, 1);
-    return schedule_alarm(ls, delayed_by_ms(get_absolute_time(), delay));
+    bool fire_if_past = mlua_to_cbool(ls, 3);
+    return schedule_alarm(ls, make_timeout_time_ms(delay), fire_if_past, 0);
 }
 
 static int mod_cancel_alarm(lua_State* ls) {
@@ -129,6 +143,20 @@ static int mod_cancel_alarm(lua_State* ls) {
     mlua_thread_kill(ls);
     lua_pushboolean(ls, true);
     return 1;
+}
+
+static int mod_add_repeating_timer_us(lua_State* ls) {
+    int64_t delay = mlua_check_int64(ls, 1);
+    if (delay == 0) delay = 1;
+    return schedule_alarm(
+        ls, make_timeout_time_us(delay >= 0 ? delay : -delay), true, delay);
+}
+
+static int mod_add_repeating_timer_ms(lua_State* ls) {
+    int64_t delay = luaL_checkinteger(ls, 1) * (int64_t)1000;
+    if (delay == 0) delay = 1;
+    return schedule_alarm(
+        ls, make_timeout_time_us(delay >= 0 ? delay : -delay), true, delay);
 }
 
 MLUA_FUNC_1_0(mod_,, get_absolute_time, push_absolute_time)
@@ -149,6 +177,8 @@ MLUA_FUNC_1_1(mod_,, is_at_the_end_of_time, lua_pushboolean,
 MLUA_FUNC_1_1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
 MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
               check_absolute_time)
+
+#define mod_cancel_repeating_timer mod_cancel_alarm
 
 static MLuaSym const module_syms[] = {
     MLUA_SYM_P(at_the_end_of_time, push_),
@@ -180,9 +210,9 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(add_alarm_in_us, mod_),
     MLUA_SYM_F(add_alarm_in_ms, mod_),
     MLUA_SYM_F(cancel_alarm, mod_),
-    // TODO: MLUA_SYM_F(add_repeating_timer_us, mod_),
-    // TODO: MLUA_SYM_F(add_repeating_timer_ms, mod_),
-    // TODO: MLUA_SYM_F(cancel_repeating_timer, mod_),
+    MLUA_SYM_F(add_repeating_timer_us, mod_),
+    MLUA_SYM_F(add_repeating_timer_ms, mod_),
+    MLUA_SYM_F(cancel_repeating_timer, mod_),
 };
 
 int luaopen_pico_time(lua_State* ls) {

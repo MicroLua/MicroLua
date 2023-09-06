@@ -53,8 +53,15 @@ bool mlua_test_int64(lua_State* ls, int arg, int64_t* value);
 // entry is not an int64.
 int64_t mlua_check_int64(lua_State* ls, int arg);
 
+// Get an int64 value at the given stack index. The value must be an integer or
+// an int64, otherwise the function returns zero.
+int64_t mlua_to_int64(lua_State* ls, int arg);
+
 // Push an int64 to the stack.
 void mlua_push_int64(lua_State* ls, int64_t value);
+
+// Push an integer if the value fits, or an int64 otherwise.
+void mlua_push_minint(lua_State* ls, int64_t value);
 
 #ifdef __cplusplus
 }

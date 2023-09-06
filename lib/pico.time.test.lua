@@ -48,8 +48,8 @@ function test_sleep(t)
         time[fn](arg)
         local t2 = time.get_absolute_time()
         if want == 0 then want = t1 + want_delta end
-        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
-                 t1, t2, want)
+        t:expect(t2):label("%s(%s): end time", fn, arg)
+            :gte(want):lt(want + 500)
     end
 end
 
@@ -65,12 +65,11 @@ function test_best_effort_wfe_or_timeout(t)
 end
 
 function test_add_alarm(t)
-    if not time.add_alarm_at then t:skip("Default alarm pool disabled") end
     local start = time.get_absolute_time()
     for _, test in ipairs{
-        {'add_alarm_at', start + 3000, true, start + 3000, 0},
-        {'add_alarm_in_us', 4000, true, 0, 4000},
-        {'add_alarm_in_ms', 6, true, 0, 6000},
+        {'add_alarm_at', start + 1000, true, start + 1000, 0},
+        {'add_alarm_in_us', 1000, true, 0, 1000},
+        {'add_alarm_in_ms', 1, true, 0, 1000},
         {'add_alarm_at', start - 1000, false, nil, nil},
         {'add_alarm_at', start - 1000, true, 0, 0},
     } do
@@ -80,26 +79,27 @@ function test_add_alarm(t)
             t2 = time.get_absolute_time()
             t:expect(a):label("alarm"):eq(alarm)
         end, fip)
-        t:expect(alarm ~= nil):label("alarm set"):eq(want ~= nil)
         if alarm then
             alarm:join()
             if want == 0 then want = t1 + want_delta end
-            t:expect(t2):label("%s(%s): end time", fn, arg):gte(want)
+            t:expect(t2):label("%s(%s): end time", fn, arg)
+                :gte(want):lt(want + 800)
         end
+        t:expect(alarm ~= nil):label("alarm set"):eq(want ~= nil)
     end
 end
 
 function test_alarm_repeat(t)
-    local res, got = {-4000, 3000, 0}, list()
+    local res, got = {-2000, 2000, 0}, list()
     local start = time.get_absolute_time()
-    local alarm = time.add_alarm_at(start + 2000, function()
+    local alarm = time.add_alarm_at(start + 1000, function()
         got:append(time.get_absolute_time())
-        time.sleep_us(2000)
+        time.sleep_us(1000)
         return res[#got]
     end)
     alarm:join()
 
-    local want = {2000, 6000, 11000}
+    local want = {1000, 3000, 6000}
     t:expect(t:expr(got):len()):eq(#want)
     for i = 1, #want do
         t:expect(got[i] - start):label("alarm[%s]", i)
@@ -125,7 +125,7 @@ function test_cancel_alarm(t)
 
     -- Cancel while the callback runs.
     local triggered = false
-    local alarm = time.add_alarm_in_us(1000, function()
+    local alarm = time.add_alarm_in_us(800, function()
         parent:resume()
         thread.yield()
         triggered = true
@@ -140,4 +140,28 @@ function test_cancel_alarm(t)
     alarm:join()
     t:expect(t:expr(time).cancel_alarm(alarm)):eq(false)
     t:expect(triggered):label("triggered"):eq(true)
+end
+
+function test_add_repeating_timer(t)
+    for _, test in ipairs{
+        {'add_repeating_timer_us', 1000},
+        {'add_repeating_timer_ms', 1},
+    } do
+        local fn, fact = table.unpack(test)
+        local res, got = list.pack(nil, true, -3000, 1000, false), list()
+        local start = time.get_absolute_time()
+        local alarm = time[fn](-2 * fact, function()
+            got:append(time.get_absolute_time())
+            time.sleep_us(1000)
+            return res[#got]
+        end)
+        alarm:join()
+
+        local want = {2000, 4000, 6000, 9000, 11000}
+        t:expect(t:expr(got):len()):eq(#want)
+        for i = 1, #want do
+            t:expect(got[i] - start):label("%s: alarm[%s]", fn, i)
+                :gte(want[i]):lt(want[i] + 1000)
+        end
+    end
 end

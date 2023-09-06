@@ -113,6 +113,16 @@ int64_t mlua_check_int64(lua_State* ls, int arg) {
 #endif
 }
 
+int64_t mlua_to_int64(lua_State* ls, int arg) {
+#if IS64INT
+    return lua_tointeger(ls, arg);
+#else
+    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
+    int64_t* v = lua_touserdata(ls, arg);
+    return v != NULL ? *v : 0;
+#endif
+}
+
 void mlua_push_int64(lua_State* ls, int64_t value) {
 #if IS64INT
     lua_pushinteger(ls, value);
@@ -121,6 +131,18 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
     *v = value;
     luaL_getmetatable(ls, int64_name);
     lua_setmetatable(ls, -2);
+#endif
+}
+
+void mlua_push_minint(lua_State* ls, int64_t value) {
+#if IS64INT
+    lua_pushinteger(ls, value);
+#else
+    if (LUA_MININTEGER <= value && value <= LUA_MAXINTEGER) {
+        lua_pushinteger(ls, (lua_Integer)value);
+    } else {
+        mlua_push_int64(ls, value);
+    }
 #endif
 }
 
