@@ -18,6 +18,12 @@ function lte(a, b) return a <= b end
 function gt(a, b) return a > b end
 function gte(a, b) return a >= b end
 
+-- Returns the value associated with the given key, or nil if the lookup fails.
+function get(tab, key)
+    local ok, v = pcall(function() return tab[key] end)
+    if ok then return v end
+end
+
 local escapes = {
     [7] = '\\a', [8] = '\\b', [9] = '\\t', [10] = '\\n', [11] = '\\v',
     [12] = '\\f', [13] = '\\r', [34] = '\\"', [92] = '\\\\',
@@ -68,7 +74,7 @@ end
 
 -- Return a string representation of the given value.
 function repr(v, seen)
-    local ok, r = pcall(function() return getmetatable(v).__repr end)
+    local ok, r = pcall(function() return rawget(getmetatable(v), '__repr') end)
     if ok and r then return r(v, repr) end
     -- TODO: Format numbers to full accuracy
     local typ = type(v)

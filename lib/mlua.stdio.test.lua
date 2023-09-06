@@ -15,7 +15,7 @@ function test_streams_Y(t)
     } do
         local crlf, stream, writes, want = list.unpack(test)
         local wr, got = list(), ''
-        t:expect(pcall(function()
+        t:expect(pcall(function()  -- No output in this block
             local done<close> = testing_stdio.enable_loopback(t, crlf)
             for _, w in ipairs(writes) do wr:append(stream:write(w)) end
             while #got < #want do

@@ -480,7 +480,7 @@ function Test:main(runs)
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
     io.printf("Duration: %.3f s, memory: %d bytes\n", dt / 1e6, mem)
-    io.printf("Result: %s\n\n", self:result())
+    io.printf("Result: %s\n", self:result())
 end
 
 function Test:print_result(indent)
@@ -494,37 +494,89 @@ function Test:print_result(indent)
     for _, t in list.ipairs(self.children) do t:print_result(indent) end
 end
 
-function pmain()
-    local full_output, full_results = false, false
-    local runs = 1
+local reg_exclude = {
+    [1] = true, [2] = true,
+    _CLIBS = true, _LOADED = true, _PRELOAD = true, ['_UBOX*'] = true,
+}
+
+local function print_registry()
+    local reg = debug.getregistry()
+    for k, v in pairs(reg) do
+        if reg_exclude[k] then goto continue end
+        if util.get(v, '__name') ~= k then v = util.repr(v) end
+        io.aprintf("[@{+WHITE}%s@{NORM}] = %s\n", util.repr(k), v)
+        ::continue::
+    end
+end
+
+local Runner = oo.class('Runner')
+
+function Runner:__init()
+    self.runs = 1
+end
+
+function Runner:run()
     while true do
         local t = Test()
-        t._full_output = full_output
-        t._full_results = full_results
-        t:main(runs)
+        t._full_output = self.full_output
+        t._full_results = self.full_results
+        t:main(self.runs)
+        self:prompt()
+    end
+end
 
-        io.printf("(testing) ")
+function Runner:prompt()
+    while true do
+        io.printf("\n(testing) ")
         local line = ''
         while true do
             local c = stdin:read(1)
             if c == '\n' then break end
             line = line .. c
         end
-        -- TODO: Show full results up to level x
-        -- TODO: Terminate on first failure
-        -- TODO: Launch repl on failure
-        if line == 'fo' then full_output = not full_output
-        elseif line == 'fr' then full_results = not full_results
-        elseif line == 'q' then break
-        elseif line:sub(1, 1) == 'r' then
-            runs = math.tointeger(tonumber(line:sub(2))) or 1
+        local cmd, args = nil, list()
+        for t in line:gmatch('[^%s]+') do
+            if not cmd then cmd = t else args:append(t) end
+        end
+        if not cmd then break end
+        local fn = self['cmd_' .. cmd]
+        if fn then
+            if fn(self, args:unpack()) then break end
+        else
+            io.aprintf("@{+RED}ERROR:@{NORM} unknown command: %s\n", cmd)
         end
     end
 end
 
+-- TODO: Show full results up to level x
+-- TODO: Terminate on first failure
+-- TODO: Launch repl on failure
+
+function Runner:cmd_fo()
+    self.full_output = not self.full_output
+    return true
+end
+
+function Runner:cmd_fr()
+    self.full_results = not self.full_results
+    return true
+end
+
+function Runner:cmd_r(count)
+    self.runs = math.tointeger(tonumber(count)) or 1
+    return true
+end
+
+function Runner:cmd_reg() print_registry() end
+
+local function pmain()
+    local runner = Runner()
+    return runner:run()
+end
+
 function main()
     return xpcall(pmain, function(err)
-        io.printf("ERROR: %s\n", debug.traceback(err, 2))
+        io.aprintf("\n@{+RED}ERROR:@{NORM} %s\n", debug.traceback(err, 2))
         return err
     end)
 end
