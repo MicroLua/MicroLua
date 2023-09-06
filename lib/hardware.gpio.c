@@ -45,7 +45,7 @@ io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
         : &iobank0_hw->proc0_irq_ctrl;
 }
 
-static void __time_critical_func(handle_irq)(void) {
+static void __time_critical_func(handle_gpio_irq)(void) {
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
@@ -108,8 +108,11 @@ static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int irq_handler_done(lua_State* ls) {
-    irq_remove_handler(IO_IRQ_BANK0, &handle_irq);
-    mlua_event_unclaim(ls, &irq_state[get_core_num()].irq_event);
+    IRQState* state = &irq_state[get_core_num()];
+    lua_pushnil(ls);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, &state->pending[0]);
+    irq_remove_handler(IO_IRQ_BANK0, &handle_gpio_irq);
+    mlua_event_unclaim(ls, &state->irq_event);
     return 0;
 }
 
@@ -125,7 +128,7 @@ static int mod_set_irq_callback(lua_State* ls) {
     // Set the IRQ handler.
     char const* err = mlua_event_claim(event);
     if (err == NULL) {
-        irq_add_shared_handler(IO_IRQ_BANK0, &handle_irq,
+        irq_add_shared_handler(IO_IRQ_BANK0, &handle_gpio_irq,
                                GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
     } else if (err != mlua_event_err_already_claimed) {
         return luaL_error(ls, "GPIO: %s", err);

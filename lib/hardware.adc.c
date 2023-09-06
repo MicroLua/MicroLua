@@ -13,14 +13,14 @@
 
 static MLuaEvent event = MLUA_EVENT_UNSET;
 
-static void __time_critical_func(handle_irq)(void) {
+static void __time_critical_func(handle_adc_irq)(void) {
     adc_irq_set_enabled(false);
     mlua_event_set(event);
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
     char const* err = mlua_event_enable_irq(ls, &event, ADC_IRQ_FIFO,
-                                            &handle_irq, 1, -1);
+                                            &handle_adc_irq, 1, -1);
     if (err != NULL) return luaL_error(ls, "ADC: %s", err);
     return 0;
 }

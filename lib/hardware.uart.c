@@ -64,7 +64,7 @@ typedef struct UartState {
 
 static UartState uart_state[NUM_UARTS];
 
-static void __time_critical_func(handle_irq)(void) {
+static void __time_critical_func(handle_uart_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - UART0_IRQ;
     uart_hw_t* hu = uart_get_hw(uart_get_instance(num));
     uint32_t mis = hu->mis;
@@ -88,7 +88,7 @@ static int Uart_enable_irq(lua_State* ls) {
     lua_Integer priority = -1;
     if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQ
         irq_set_enabled(irq, false);
-        irq_remove_handler(irq, &handle_irq);
+        irq_remove_handler(irq, &handle_uart_irq);
         mlua_event_unclaim(ls, &state->rx_event);
         mlua_event_unclaim(ls, &state->tx_event);
         return 0;
@@ -104,7 +104,7 @@ static int Uart_enable_irq(lua_State* ls) {
                     (2 << UART_UARTIFLS_RXIFLSEL_LSB)
                     | (2 << UART_UARTIFLS_TXIFLSEL_LSB),
                     UART_UARTIFLS_RXIFLSEL_BITS | UART_UARTMIS_TXMIS_BITS);
-    mlua_event_set_irq_handler(irq, &handle_irq, priority);
+    mlua_event_set_irq_handler(irq, &handle_uart_irq, priority);
     irq_set_enabled(irq, true);
     return 0;
 }

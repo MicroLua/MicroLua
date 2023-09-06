@@ -112,6 +112,13 @@ static int handle_shutdown_event(lua_State* ls) {
     return 0;
 }
 
+static int shutdown_handler_done(lua_State* ls) {
+    lua_pushnil(ls);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX,
+                &core_state[get_core_num() - 1].shutdown);
+    return 0;
+}
+
 static int mod_set_shutdown_handler(lua_State* ls) {
     CoreState* st = &core_state[get_core_num() - 1];
     if (lua_isnone(ls, 1)) {  // No argument, use Thread.shutdown by default
@@ -130,7 +137,7 @@ static int mod_set_shutdown_handler(lua_State* ls) {
     if (!lua_isnil(ls, -1)) return 1;
     lua_pop(ls, 1);
     lua_pushcfunction(ls, &handle_shutdown_event);
-    lua_pushnil(ls);
+    lua_pushcfunction(ls, &shutdown_handler_done);
     return mlua_event_handle(ls, &st->shutdown_event, &mlua_cont_return_ctx, 1);
 }
 

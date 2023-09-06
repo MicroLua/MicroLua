@@ -70,6 +70,12 @@ static int handle_chars_available_event(lua_State* ls) {
     return 0;
 }
 
+static int chars_available_handler_done(lua_State* ls) {
+    lua_pushnil(ls);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
+    return 0;
+}
+
 static int mod_set_chars_available_callback(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) {  // Nil callback, kill the handler thread
         mlua_event_stop_handler(ls, &stdio_state.event);
@@ -92,7 +98,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     if (!lua_isnil(ls, -1)) return 1;
     lua_pop(ls, 1);
     lua_pushcfunction(ls, &handle_chars_available_event);
-    lua_pushnil(ls);
+    lua_pushcfunction(ls, &chars_available_handler_done);
     return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return_ctx, 1);
 }
 
