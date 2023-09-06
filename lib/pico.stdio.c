@@ -83,7 +83,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     // intentionally left enabled when the thread terminates, as it may be used
     // by other functions in this module. It can be disabled manually with
     // enable_chars_available(false).
-    lua_pushvalue(ls, 1);  // handler
+    lua_settop(ls, 1);  // handler
     lua_pushcclosure(ls, &handle_chars_available_event, 1);
     lua_pushnil(ls);
     mlua_event_handle(ls, &stdio_state.event);

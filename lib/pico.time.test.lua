@@ -148,7 +148,7 @@ function test_add_repeating_timer(t)
         {'add_repeating_timer_ms', 1},
     } do
         local fn, fact = table.unpack(test)
-        local res, got = list.pack(nil, true, -3000, 1000, false), list()
+        local res, got = list.pack(nil, -3000, true, 1000, false), list()
         local start = time.get_absolute_time()
         local alarm = time[fn](-2 * fact, function()
             got:append(time.get_absolute_time())
@@ -157,7 +157,7 @@ function test_add_repeating_timer(t)
         end)
         alarm:join()
 
-        local want = {2000, 4000, 6000, 9000, 11000}
+        local want = {2000, 4000, 7000, 10000, 12000}
         t:expect(t:expr(got):len()):eq(#want)
         for i = 1, #want do
             t:expect(got[i] - start):label("%s: alarm[%s]", fn, i)

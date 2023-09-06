@@ -54,32 +54,25 @@ static int mod_sleep_ms(lua_State* ls) {
     return mod_sleep_until(ls);
 }
 
-static int alarm_thread_1(lua_State* ls);
+static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx);
 static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx);
-static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx);
 
 static int alarm_thread(lua_State* ls) {
+    lua_pushcfunction(ls, &mod_sleep_until);
     lua_pushvalue(ls, lua_upvalueindex(1));  // time
-    lua_pushvalue(ls, lua_upvalueindex(3));  // delay
-    return alarm_thread_1(ls);
+    lua_callk(ls, 1, 0, 0, &alarm_thread_1);
+    return alarm_thread_1(ls, LUA_OK, 0);
 }
 
-static int alarm_thread_1(lua_State* ls) {
-    lua_pushcfunction(ls, &mod_sleep_until);
-    lua_pushvalue(ls, 1);
-    lua_callk(ls, 1, 0, 0, &alarm_thread_2);
-    return alarm_thread_2(ls, LUA_OK, 0);
+static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx) {
+    lua_pushvalue(ls, lua_upvalueindex(2));  // callback
+    lua_pushthread(ls);
+    lua_callk(ls, 1, 1, ctx, &alarm_thread_2);
+    return alarm_thread_2(ls, LUA_OK, ctx);
 }
 
 static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx) {
-    lua_pushvalue(ls, lua_upvalueindex(2));  // callback
-    lua_pushthread(ls);
-    lua_callk(ls, 1, 1, ctx, &alarm_thread_3);
-    return alarm_thread_3(ls, LUA_OK, ctx);
-}
-
-static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx) {
-    int64_t delay = mlua_check_int64(ls, 2);  // delay
+    int64_t delay = mlua_check_int64(ls, lua_upvalueindex(3));  // delay
     if (delay == 0) {  // Alarm
         if (lua_isnil(ls, -1)) return 0;
         delay = mlua_check_int64(ls, -1);
@@ -89,14 +82,14 @@ static int alarm_thread_3(lua_State* ls, int status, lua_KContext ctx) {
         lua_pop(ls, 1);
     } else if (!lua_isnil(ls, -1)) {  // Repeating timer, delay update
         delay = mlua_check_int64(ls, -1);
-        lua_replace(ls, 2);
+        lua_replace(ls, lua_upvalueindex(3));
     }
     if (delay == 0) return 0;
     mlua_push_int64(ls, to_us_since_boot(delay < 0 ?
-        delayed_by_us(mlua_to_int64(ls, 1), (uint64_t)-delay) :
-        delayed_by_us(get_absolute_time(), (uint64_t)delay)));
-    lua_replace(ls, 1);
-    return alarm_thread_1(ls);
+        delayed_by_us(mlua_to_int64(ls, lua_upvalueindex(1)), (uint64_t)-delay)
+        : delayed_by_us(get_absolute_time(), (uint64_t)delay)));
+    lua_replace(ls, lua_upvalueindex(1));
+    return alarm_thread(ls);
 }
 
 static int schedule_alarm(lua_State* ls, absolute_time_t time,
