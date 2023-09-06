@@ -89,8 +89,7 @@ static int set_handler(lua_State* ls, lua_Integer priority) {
     lua_pushcclosure(ls, &handle_user_irq_event, 2);
     lua_pushvalue(ls, 1);  // irq
     lua_pushcclosure(ls, &user_irq_handler_done, 1);
-    mlua_event_handle(ls, ev);
-    return 1;
+    return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
 }
 
 static int mod_set_handler(lua_State* ls) {

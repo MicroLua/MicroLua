@@ -79,8 +79,7 @@ static int mod_set_callback(lua_State* ls) {
     lua_pushcclosure(ls, &handle_alarm_event, 2);
     lua_pushvalue(ls, 1);  // alarm
     lua_pushcclosure(ls, &alarm_handler_done, 1);
-    mlua_event_handle(ls, ev);
-    return 1;
+    return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT

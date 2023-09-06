@@ -130,17 +130,24 @@ static int mod_set_irq_callback(lua_State* ls) {
     } else if (err != mlua_event_err_already_claimed) {
         return luaL_error(ls, "GPIO: %s", err);
     }
+
+    // Set the callback handler.
     lua_settop(ls, 1);  // handler
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &state->pending[0]);
 
-    // Start the event handler thread.
+    // Start the event handler thread if it isn't already running.
+    if (err != NULL) {
+        mlua_event_push_handler_thread(ls, event);
+        return 1;
+    }
     lua_pushcfunction(ls, &handle_irq_event);
     lua_pushcfunction(ls, &irq_handler_done);
-    mlua_event_handle(ls, event);
-    return 1;
+    return mlua_event_handle(ls, event, &mlua_cont_return_ctx, 1);
 }
 
-int mod_set_irq_enabled(lua_State* ls);
+static int mod_set_irq_enabled(lua_State* ls);
+static int mod_set_irq_enabled_with_callback_1(lua_State* ls, int status,
+                                               lua_KContext ctx);
 
 static int mod_set_irq_enabled_with_callback(lua_State* ls) {
     lua_pushcfunction(ls, &mod_set_irq_enabled);
@@ -148,21 +155,27 @@ static int mod_set_irq_enabled_with_callback(lua_State* ls) {
     lua_pushvalue(ls, 2);
     lua_pushvalue(ls, 3);
     lua_call(ls, 3, 0);
-    bool has_callback = !lua_isnone(ls, 4);
-    if (has_callback) {
+    lua_KContext ctx = 0;
+    if (!lua_isnone(ls, 4)) {
+        ctx = 1;
         lua_pushcfunction(ls, &mod_set_irq_callback);
         lua_pushvalue(ls, 4);
-        lua_call(ls, 1, 1);
+        lua_callk(ls, 1, 1, ctx, &mod_set_irq_enabled_with_callback_1);
     }
+    return mod_set_irq_enabled_with_callback_1(ls, LUA_OK, ctx);
+}
+
+static int mod_set_irq_enabled_with_callback_1(lua_State* ls, int status,
+                                               lua_KContext ctx) {
     if (mlua_to_cbool(ls, 3)) irq_set_enabled(IO_IRQ_BANK0, true);
-    return has_callback ? 1 : 0;
+    return ctx;
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 typedef void (*IRQEnabler)(uint, uint32_t, bool);
 
-int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
+static int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enabled = mlua_to_cbool(ls, 3);
@@ -186,15 +199,15 @@ int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     return 0;
 }
 
-int mod_set_irq_enabled(lua_State* ls) {
+static int mod_set_irq_enabled(lua_State* ls) {
     return set_irq_enabled(ls, &gpio_set_irq_enabled);
 }
 
-int mod_set_dormant_irq_enabled(lua_State* ls) {
+static int mod_set_dormant_irq_enabled(lua_State* ls) {
     return set_irq_enabled(ls, &gpio_set_dormant_irq_enabled);
 }
 
-int mod_get_irq_event_mask(lua_State* ls) {
+static int mod_get_irq_event_mask(lua_State* ls) {
     uint gpio = check_gpio(ls, 1);
     uint block = gpio / 8;
     uint32_t pending = iobank0_hw->intr[block];  // Raw state
@@ -209,7 +222,7 @@ int mod_get_irq_event_mask(lua_State* ls) {
     return 1;
 }
 
-int mod_acknowledge_irq(lua_State* ls) {
+static int mod_acknowledge_irq(lua_State* ls) {
     uint gpio = check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
 #if LIB_MLUA_MOD_MLUA_EVENT

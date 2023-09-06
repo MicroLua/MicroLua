@@ -64,7 +64,7 @@ static int handle_chars_available_event(lua_State* ls) {
     bool pending = stdio_state.pending;
     mlua_event_unlock(save);
     if (pending) {  // Call the callback
-        lua_pushvalue(ls, lua_upvalueindex(1));
+        lua_rawgetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
         lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
     }
     return 0;
@@ -79,15 +79,21 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     // Set the callback.
     enable_chars_available(ls);
 
-    // Start the event handler thread. The chars_available callback is
-    // intentionally left enabled when the thread terminates, as it may be used
-    // by other functions in this module. It can be disabled manually with
-    // enable_chars_available(false).
+    // Set the callback handler.
     lua_settop(ls, 1);  // handler
-    lua_pushcclosure(ls, &handle_chars_available_event, 1);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
+
+    // Start the event handler thread if it isn't already running.
+    //
+    // The chars_available callback is intentionally left enabled when the
+    // thread terminates, as it may be used by other functions in this module.
+    // It can be disabled manually with enable_chars_available(false).
+    mlua_event_push_handler_thread(ls, &stdio_state.event);
+    if (!lua_isnil(ls, -1)) return 1;
+    lua_pop(ls, 1);
+    lua_pushcfunction(ls, &handle_chars_available_event);
     lua_pushnil(ls);
-    mlua_event_handle(ls, &stdio_state.event);
-    return 1;
+    return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return_ctx, 1);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT

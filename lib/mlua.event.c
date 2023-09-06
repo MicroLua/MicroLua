@@ -218,7 +218,7 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
 int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
                      lua_KContext ctx) {
     lua_yieldk(ls, nresults, ctx, cont);
-    return luaL_error(ls, "unable to yield");
+    return cont(ls, LUA_OK, ctx);
 }
 
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
@@ -321,12 +321,14 @@ static int handler_thread_done(lua_State* ls) {
     return 0;
 }
 
-void mlua_event_handle(lua_State* ls, MLuaEvent* event) {
+int mlua_event_handle(lua_State* ls, MLuaEvent* event, lua_KFunction cont,
+                       lua_KContext ctx) {
     lua_pushlightuserdata(ls, event);
     lua_pushcclosure(ls, &handler_thread, 3);
     mlua_thread_start(ls);
     lua_pushvalue(ls, -1);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, event);
+    return mlua_event_yield(ls, 0, cont, ctx);
 }
 
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event) {
@@ -335,6 +337,10 @@ void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event) {
     } else {
         lua_pop(ls, 1);
     }
+}
+
+int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent* event) {
+    return lua_rawgetp(ls, LUA_REGISTRYINDEX, event);
 }
 
 static int mod_dispatch(lua_State* ls) {

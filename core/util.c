@@ -157,6 +157,7 @@ void mlua_thread_kill(lua_State* ls) {
 }
 
 bool mlua_thread_is_alive(lua_State* thread) {
+    if (thread == NULL) return false;
     switch (lua_status(thread)) {
     case LUA_YIELD:
         return true;

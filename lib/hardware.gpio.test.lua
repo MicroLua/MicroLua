@@ -222,7 +222,6 @@ function test_set_irq_callback(t)
         irq.set_enabled(irq.IO_IRQ_BANK0, false)
         gpio.set_irq_callback(nil)
     end)
-    thread.yield()  -- Let the callback handler start
 
     -- Configure a second pin if available.
     local pin2 = ({pico = 29, pico_w = 29})[pico.board]

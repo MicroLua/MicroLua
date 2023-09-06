@@ -119,11 +119,17 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
 // Start an event handler thread for the given event. The function expects two
 // arguments on the stack: the event handler and the cleanup handler. The former
 // is called from the thread every time the event is triggered. The latter is
-// called when the thread exits. Pops both arguments, and pushes the thread.
-void mlua_event_handle(lua_State* ls, MLuaEvent* event);
+// called when the thread exits. Pops both arguments, pushes the thread, then
+// yields to let the thread start and ensure that the cleanup handler
+// gets called.
+int mlua_event_handle(lua_State* ls, MLuaEvent* event, lua_KFunction cont,
+                      lua_KContext ctx);
 
 // Stop the event handler thread for the given event.
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event);
+
+// Pushes the event handler thread for the given event onto the stack.
+int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent* event);
 
 #ifdef __cplusplus
 }
