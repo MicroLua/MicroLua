@@ -2,7 +2,7 @@
 #include "lauxlib.h"
 #include "mlua/util.h"
 
-static char const list_name[] = "list";
+static char const list_name[] = "mlua.list";
 
 static void new_list(lua_State* ls, int len) {
     lua_createtable(ls, len, 1);
