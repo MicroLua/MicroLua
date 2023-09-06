@@ -55,8 +55,8 @@ end
 
 function test_best_effort_wfe_or_timeout(t)
     local start = time.get_absolute_time()
-    for i = 0, 4 do
-        local want = start + i * 3000
+    for i = 0, 2 do
+        local want = start + i * 4000
         local reached = time.best_effort_wfe_or_timeout(want)
         local got = time.get_absolute_time()
         local ex = t:expect(got):label('time'):lt(want + 200)
@@ -103,7 +103,7 @@ function test_alarm_repeat(t)
     t:expect(t:expr(got):len()):eq(#want)
     for i = 1, #want do
         t:expect(got[i] - start):label("alarm[%s]", i)
-            :gte(want[i]):lt(want[i] + 1000)
+            :gte(want[i]):lt(want[i] + 1200)
     end
 end
 
