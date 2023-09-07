@@ -47,6 +47,12 @@ function Buffer:write(...)
     end
 end
 
+local function format_call(name, args, first)
+    local parts = list()
+    for i = first or 1, list.len(args) do parts:append(util.repr(args[i])) end
+    return ('%s(%s)'):format(name, table.concat(parts, ', '))
+end
+
 local function locals(level)
     level = (level or 1) + 1
     local loc, i = {}, 1
@@ -95,13 +101,12 @@ function Expr:__call(...)
     local args = list.pack(...)
     list.append(rawget(self, ekey), {
         function(s)
-            local parts, n = list(), 1
+            local first = 1
             if rawequal(args[1], self) then
                 s = s:gsub('%.([%a_][%w_]*)$', ':%1')
-                n = 2
+                first = 2
             end
-            for i = n, args:len() do parts:append(util.repr(args[i])) end
-            return ('%s(%s)'):format(s, table.concat(parts, ', '))
+            return format_call(s, args, first)
         end,
         function(pv, v)
             if rawequal(args[1], self) then return v(pv, args:unpack(2)) end
@@ -161,6 +166,11 @@ function Matcher:_fail(format, ...) return self._f(self._t, format, ...) end
 
 function Matcher:label(s, ...)
     self._l = s:format(...)
+    return self
+end
+
+function Matcher:func(name, args)
+    self._l = format_call(name, args)
     return self
 end
 

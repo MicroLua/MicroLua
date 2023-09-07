@@ -97,19 +97,18 @@ end
 
 function test_unpack(t)
     for _, test in ipairs{
-        {{nil}, nil, nil, nil},
-        {{{}}, nil, nil, nil},
-        {{{1, 2, 3}}, 1, 2, 3},
-        {{list.pack(nil, 2, 3)}, nil, 2, 3},
-        -- TODO: Add test cases with index arguments
+        {{nil}, {}},
+        {{{}}, {}},
+        {{{1, 2, 3}}, {1, 2, 3}},
+        {{{nil, 2, 3}}, {nil, 2, 3}},
+        {{{1, 2, 3, 4, 5}, 3}, {3, 4, 5}},
+        {{{1, 2, 3, 4, 5}, nil, 4}, {1, 2, 3, 4}},
+        {{{1, 2, 3, 4, 5}, 2, 3}, {2, 3}},
+        {{{1, 2, 3, 4, 5}, 4, 3}, {}},
     } do
-        local args, wa, wb, wc = table.unpack(test)
-        -- TODO: Test round-tripping instead of using multiple assignment
-        local a, b, c = list.unpack(table.unpack(args))
-        t:expect(a == wa and b == wb and c == wc,
-                 "%s = (%s, %s, %s), want (%s, %s, %s)", t:func('unpack', args),
-                 t:repr(a), t:repr(b), t:repr(c),
-                 t:repr(wa), t:repr(wb), t:repr(wc))
+        local args, want = table.unpack(test)
+        local got = list.pack(list.unpack(table.unpack(args)))
+        t:expect(got):func("unpack", args):eq(want, list.eq)
     end
 end
 
