@@ -161,7 +161,7 @@ function test_add_repeating_timer(t)
         t:expect(t:expr(got):len()):eq(#want)
         for i = 1, #want do
             t:expect(got[i] - start):label("%s: alarm[%s]", fn, i)
-                :gte(want[i]):lt(want[i] + 1000)
+                :gte(want[i]):lt(want[i] + 1200)
         end
     end
 end

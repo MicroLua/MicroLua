@@ -169,12 +169,17 @@ function Matcher:label(s, ...)
     return self
 end
 
-function Matcher:func(name, args)
-    self._l = format_call(name, args)
+function Matcher:func(name, ...)
+    self._l = format_call(name, list.pack(...))
     return self
 end
 
-function Matcher:fix(fn)
+function Matcher:op(op)
+    self._op = op
+    return self
+end
+
+function Matcher:apply(fn)
     self._ev = fn(self:_eval())
     return self
 end
@@ -204,8 +209,9 @@ end
 function Matcher:_compare(want, cmp, fmt)
     local got = self:_eval()
     if not cmp(got, want) then
-        self:_fail("%s = @{+WHITE}%s@{NORM}, want @{+CYAN}%s@{NORM}",
-                   self._l or util.repr(self._v), util.repr(got), fmt)
+        self:_fail("%s %s @{+WHITE}%s@{NORM}, want @{+CYAN}%s@{NORM}",
+                   self._l or util.repr(self._v), self._op or '=',
+                   util.repr(got), fmt)
     end
     return self
 end

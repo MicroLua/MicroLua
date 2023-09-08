@@ -115,8 +115,9 @@ function sort(items, comp)
     return items
 end
 
--- Return true iff the key / value pairs of the given tables compare equal.
+-- Return true iff the (key, value) pairs of the given tables compare equal.
 function table_eq(a, b)
+    if a == nil or b == nil then return rawequal(a, b) end
     for k, v in pairs(a) do
         if rawget(b, k) ~= v then return false end
     end
@@ -124,6 +125,14 @@ function table_eq(a, b)
         if rawget(a, k) == nil then return false end
     end
     return true
+end
+
+-- Return a shallow copy of the given table.
+function table_copy(tab)
+    if not tab then return end
+    local res = {}
+    for k, v in pairs(tab) do rawset(res, k, v) end
+    return setmetatable(res, getmetatable(tab))
 end
 
 -- Return a table comparator comparing table pairs by the elements at the given
@@ -138,3 +147,4 @@ function table_comp(keys)
         return false
     end
 end
+

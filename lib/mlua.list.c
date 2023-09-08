@@ -4,17 +4,19 @@
 
 static char const list_name[] = "mlua.list";
 
-static void new_list(lua_State* ls, int len) {
-    lua_createtable(ls, len, 1);
+#define LEN_IDX 0
+
+static void new_list(lua_State* ls, int cap) {
+    lua_createtable(ls, cap, 1);
     luaL_getmetatable(ls, list_name);
     lua_setmetatable(ls, -2);
 }
 
 static lua_Integer length(lua_State* ls, int index) {
     if (lua_isnoneornil(ls, index)) return 0;
-    if (lua_rawgeti(ls, index, 0) == LUA_TNIL) {
+    if (lua_rawgeti(ls, index, LEN_IDX) == LUA_TNIL) {
         lua_pop(ls, 1);
-        return luaL_len(ls, index);
+        return lua_rawlen(ls, index);
     }
     lua_Integer len = luaL_checkinteger(ls, -1);
     lua_pop(ls, 1);
@@ -24,9 +26,9 @@ static lua_Integer length(lua_State* ls, int index) {
 static int list_len(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) {
         lua_pushinteger(ls, 0);
-    } else if (lua_rawgeti(ls, 1, 0) == LUA_TNIL) {
+    } else if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
         lua_pop(ls, 1);
-        lua_len(ls, 1);
+        lua_pushinteger(ls, lua_rawlen(ls, 1));
     }
     return 1;
 }
@@ -72,17 +74,74 @@ static int list_ipairs(lua_State* ls) {
 }
 
 static int list_append(lua_State* ls) {
+    switch (lua_gettop(ls)) {
+    case 0: lua_pushnil(ls);  // Fall through
+    case 1: return 1;
+    }
     lua_Integer len = 0;
-    if (lua_isnoneornil(ls, 1)) {
+    if (lua_isnil(ls, 1)) {
         new_list(ls, 0);
         lua_replace(ls, 1);
     } else {
         len = length(ls, 1);
     }
     int cnt = lua_gettop(ls) - 1;
-    for (int i = cnt; i > 0; --i) lua_rawseti(ls, 1, len + i);
-    lua_pushinteger(ls, len + cnt);
-    lua_rawseti(ls, 1, 0);
+    for (int i = cnt; i > 0; --i) lua_rawseti(ls, 1, luaL_intop(+, len, i));
+    lua_pushinteger(ls, luaL_intop(+, len, cnt));
+    lua_rawseti(ls, 1, LEN_IDX);
+    return 1;
+}
+
+static int list_insert(lua_State* ls) {
+    lua_Integer len = 0;
+    if (lua_isnil(ls, 1)) {
+        new_list(ls, 0);
+        lua_replace(ls, 1);
+    } else {
+        len = length(ls, 1);
+    }
+    len = luaL_intop(+, len, 1);
+    lua_Integer pos;
+    switch (lua_gettop(ls)) {
+    case 2:
+        pos = len;
+        break;
+    case 3:
+        pos = luaL_checkinteger(ls, 2);
+        luaL_argcheck(ls, (lua_Unsigned)pos - 1u < (lua_Unsigned)len, 2,
+                      "insert: position out of bounds");
+        for (lua_Integer i = len; i > pos; --i) {
+            lua_geti(ls, 1, i - 1);
+            lua_seti(ls, 1, i);
+        }
+        break;
+    default:
+        return luaL_error(ls, "insert: wrong number of arguments");
+    }
+    lua_seti(ls, 1, pos);
+    lua_pushinteger(ls, len);
+    lua_rawseti(ls, 1, LEN_IDX);
+    lua_settop(ls, 1);
+    return 1;
+}
+
+static int list_remove(lua_State* ls) {
+    lua_Integer len = length(ls, 1);
+    lua_Integer pos = luaL_optinteger(ls, 2, len);
+    if (pos != len) {
+        luaL_argcheck(ls, (lua_Unsigned)pos - 1u <= (lua_Unsigned)len, 2,
+                      "remove: position out of bounds");
+    }
+    if (len <= 0) return 0;
+    lua_geti(ls, 1, pos);
+    for (; pos < len; ++pos) {
+        lua_geti(ls, 1, pos + 1);
+        lua_seti(ls, 1, pos);
+    }
+    lua_pushnil(ls);
+    lua_seti(ls, 1, pos);
+    lua_pushinteger(ls, len - 1);
+    lua_rawseti(ls, 1, LEN_IDX);
     return 1;
 }
 
@@ -92,7 +151,7 @@ static int list_pack(lua_State* ls) {
     lua_insert(ls, 1);
     for (lua_Integer i = len; i >= 1; --i) lua_rawseti(ls, 1, i);
     lua_pushinteger(ls, len);
-    lua_rawseti(ls, 1, 0);
+    lua_rawseti(ls, 1, LEN_IDX);
     return 1;
 }
 
@@ -102,7 +161,7 @@ static int list_unpack(lua_State* ls) {
     if (b > e) return 0;
     lua_Integer n = e - b + 1;
     if (luai_unlikely(!lua_checkstack(ls, n))) {
-        return luaL_error(ls, "too many results to unpack");
+        return luaL_error(ls, "unpack: too many results");
     }
     for (lua_Integer i = 0; i < n; ++i) lua_geti(ls, 1, b + i);
     return n;
@@ -111,7 +170,7 @@ static int list_unpack(lua_State* ls) {
 static void add_value(lua_State* ls, luaL_Buffer* buf, lua_Integer i) {
     lua_geti(ls, 1, i);
     if (luai_unlikely(!lua_isstring(ls, -1))) {
-        luaL_error(ls, "list.concat: invalid value (%s) at index %I",
+        luaL_error(ls, "concat: invalid value (%s) at index %I",
                    luaL_typename(ls, -1), (LUAI_UACINT)i);
         return;
     }
@@ -157,14 +216,14 @@ static int list___call(lua_State* ls) {
     if (lua_isnoneornil(ls, 2)) {
         new_list(ls, 0);
         lua_pushinteger(ls, 0);
-        lua_rawseti(ls, -2, 0);
+        lua_rawseti(ls, -2, LEN_IDX);
         return 1;
     }
-    luaL_argexpected(ls, lua_istable(ls, 2), 2, "table");
+    luaL_checktype(ls, 2, LUA_TTABLE);
     lua_settop(ls, 2);
-    if (lua_rawgeti(ls, 2, 0) == LUA_TNIL) {
-        lua_pushinteger(ls, luaL_len(ls, 2));
-        lua_rawseti(ls, 2, 0);
+    if (lua_rawgeti(ls, 2, LEN_IDX) == LUA_TNIL) {
+        lua_pushinteger(ls, lua_rawlen(ls, 2));
+        lua_rawseti(ls, 2, LEN_IDX);
     }
     lua_pop(ls, 1);
     luaL_getmetatable(ls, list_name);
@@ -180,13 +239,17 @@ static MLuaSym const list_syms[] = {
     MLUA_SYM_F(eq, list_),
     MLUA_SYM_F(ipairs, list_),
     MLUA_SYM_F(append, list_),
+    MLUA_SYM_F(insert, list_),
+    MLUA_SYM_F(remove, list_),
+    // TODO: MLUA_SYM_F(slice, list_),
     MLUA_SYM_F(pack, list_),
     MLUA_SYM_F(unpack, list_),
+    // TODO: MLUA_SYM_F(sort, list_),
+    // TODO: MLUA_SYM_F(move, list_),
     MLUA_SYM_F(concat, list_),
     MLUA_SYM_F(__len, list_),
     MLUA_SYM_F(__eq, list_),
     MLUA_SYM_F(__repr, list_),
-    // TODO: insert, move, remove, slice, sort
 };
 
 static MLuaSym const list_meta_syms[] = {

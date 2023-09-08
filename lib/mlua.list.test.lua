@@ -58,27 +58,62 @@ function test_ipairs(t)
             is:append(i)
             vs:append(v)
         end
-        t:expect(is == wis,
-                 "ipairs(%s) indexes %s, want %s", t:repr(arg), t:repr(is),
-                 t:repr(wis))
-        t:expect(vs == wvs,
-                 "ipairs(%s) values %s, want %s", t:repr(arg), t:repr(vs),
-                 t:repr(wvs))
+        t:expect(is):func("ipairs", arg):op("indexes ="):eq(wis)
+        t:expect(vs):func("ipairs", arg):op("values ="):eq(wvs)
     end
+end
+
+local function copy_args(args)
+    local res = util.table_copy(args)
+    res[1] = util.table_copy(args[1])
+    return res
 end
 
 function test_append(t)
     for _, test in ipairs{
-        {nil, {1, 2}, {[0] = 2, 1, 2}},
-        {{}, {3, 4, 5}, {[0] = 3, 3, 4, 5}},
-        {{1, 2}, {3, 4}, {[0] = 4, 1, 2, 3, 4}},
-        {{[0] = 2, 1, 2}, {3}, {[0] = 3, 1, 2, 3}},
-        {nil, {}, {[0] = 0}},
-        {{1, 2}, {}, {[0] = 2, 1, 2}},
+        {{nil, 1, 2}, {[0] = 2, 1, 2}},
+        {{{}, 3, 4, 5}, {[0] = 3, 3, 4, 5}},
+        {{{1, 2}, 3, 4}, {[0] = 4, 1, 2, 3, 4}},
+        {{{[0] = 2, 1, 2}, 3}, {[0] = 3, 1, 2, 3}},
+        {{}, nil},
+        {list.pack(nil), nil},
+        {{{1, 2}}, {1, 2}},
     } do
-        local arg, els, want = table.unpack(test)
-        t:expect(t:expr(list).append(arg, list.unpack(els)))
-            :eq(want, util.table_eq)
+        local args, want = table.unpack(test)
+        local argsc = copy_args(args)
+        t:expect(list.append(list.unpack(args)))
+            :func("append", list.unpack(argsc)):eq(want, util.table_eq)
+    end
+end
+
+function test_insert(t)
+    for _, test in ipairs{
+        {{nil, 1}, {[0] = 1, 1}},
+        {{{}, 2}, {[0] = 1, 2}},
+        {{{1, 2, 3}, 4}, {[0] = 4, 1, 2, 3, 4}},
+        {{{1, 2, 3}, 2, 42}, {[0] = 4, 1, 42, 2, 3}},
+    } do
+        local args, want = table.unpack(test)
+        local argsc = copy_args(args)
+        t:expect(list.insert(list.unpack(args)))
+            :func("insert", list.unpack(argsc)):eq(want, util.table_eq)
+    end
+end
+
+function test_remove(t)
+    for _, test in ipairs{
+        {{nil, 0}, nil, nil},
+        {{{}, 0}, nil, {}},
+        {{{1, 2, 3, 4}, nil}, 4, {[0] = 3, 1, 2, 3}},
+        {{{1, 2, 3, 4}, 2}, 2, {[0] = 3, 1, 3, 4}},
+    } do
+        local args, want_res, want = table.unpack(test)
+        local argsc = copy_args(args)
+        t:expect(list.remove(list.unpack(args)))
+            :func("remove", list.unpack(args)):eq(want_res)
+        local eq = want ~= nil and util.table_eq or nil
+        t:expect(args[1]):func("remove", list.unpack(argsc)):op("->")
+            :eq(want, eq)
     end
 end
 
@@ -108,7 +143,7 @@ function test_unpack(t)
     } do
         local args, want = table.unpack(test)
         local got = list.pack(list.unpack(table.unpack(args)))
-        t:expect(got):func("unpack", args):eq(want, list.eq)
+        t:expect(got):func("unpack", table.unpack(args)):eq(want, list.eq)
     end
 end
 
