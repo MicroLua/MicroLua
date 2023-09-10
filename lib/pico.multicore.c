@@ -10,6 +10,7 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/main.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 typedef struct CoreState {
@@ -141,7 +142,7 @@ static int mod_set_shutdown_handler(lua_State* ls) {
     return mlua_event_handle(ls, &st->shutdown_event, &mlua_cont_return_ctx, 1);
 }
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(reset_core1, mod_),
     MLUA_SYM_F(launch_core1, mod_),
     MLUA_SYM_F(set_shutdown_handler, mod_),
@@ -154,7 +155,7 @@ static __attribute__((constructor)) void init(void) {
     }
 }
 
-int luaopen_pico_multicore(lua_State* ls) {
+MLUA_OPEN_MODULE(pico.multicore) {
     mlua_event_require(ls);
 
     mlua_new_module(ls, 0, module_syms);

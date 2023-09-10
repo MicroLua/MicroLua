@@ -122,10 +122,9 @@ function(mlua_add_core_c_module MOD)
     mlua_register_module("mlua_mod_${MOD}" INTERFACE "${MOD}" C)
 endfunction()
 
-function(mlua_add_c_module TARGET MOD)
+function(mlua_add_c_module TARGET)
     pico_add_library("${TARGET}")
     target_sources("${TARGET}" INTERFACE "${ARGN}")
-    mlua_register_module("${TARGET}" INTERFACE "${MOD}" C)
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)

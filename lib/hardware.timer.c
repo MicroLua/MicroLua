@@ -7,6 +7,7 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/int64.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static uint check_alarm(lua_State* ls, int index) {
@@ -125,7 +126,7 @@ MLUA_FUNC_1_1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
               luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, hardware_alarm_, force_irq, check_alarm)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(time_us_32, mod_),
     MLUA_SYM_F(time_us_64, mod_),
     MLUA_SYM_F(busy_wait_us_32, mod_),
@@ -155,7 +156,7 @@ static __attribute__((constructor)) void init(void) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int luaopen_hardware_timer(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.timer) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 

@@ -4,6 +4,7 @@
 #include "pico/time.h"
 
 #include "mlua/int64.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 // TODO: Add "performance" counters: dispatch cycles, sleeps
@@ -418,7 +419,7 @@ int mod_set_thread_metatable(lua_State* ls) {
     return 0;
 }
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(dispatch, mod_),
     MLUA_SYM_F(set_thread_metatable, mod_),
 };
@@ -427,7 +428,7 @@ static __attribute__((constructor)) void init(void) {
     mlua_event_spinlock = spin_lock_instance(next_striped_spin_lock_num());
 }
 
-int luaopen_mlua_event(lua_State* ls) {
+MLUA_OPEN_MODULE(mlua.event) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the watcher thread table.

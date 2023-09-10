@@ -85,6 +85,7 @@ typedef struct MLuaSym {
     };
 } MLuaSym;
 
+#define MLUA_SYMBOLS(n) static MLuaSym const n[]
 #define MLUA_SYM_P(n, p) {.name=#n, .push=p ## n}
 #define MLUA_SYM_V(n, t, v) {.name=#n, .push=mlua_sym_push_ ## t, .t=(v)}
 #define MLUA_SYM_F(n, p) \

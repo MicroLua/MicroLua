@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static char const int64_name[] = "mlua.int64";
@@ -448,7 +449,7 @@ static int int64___call(lua_State* ls) {
 
 #define int64_eq int64___eq
 
-static MLuaSym const int64_syms[] = {
+MLUA_SYMBOLS(int64_syms) = {
     MLUA_SYM_P(max, int64_),
     MLUA_SYM_P(min, int64_),
     MLUA_SYM_F(ashr, int64_),
@@ -482,12 +483,12 @@ static MLuaSym const int64_syms[] = {
 #endif  // !IS64INT
 };
 
-static MLuaSym const int64_meta_syms[] = {
+MLUA_SYMBOLS(int64_meta_syms) = {
     MLUA_SYM_F(__call, int64_),
     MLUA_SYM_V(__index, function, &mlua_index_undefined),
 };
 
-int luaopen_mlua_int64(lua_State* ls) {
+MLUA_OPEN_MODULE(mlua.int64) {
     // Create the int64 class.
     mlua_new_class(ls, int64_name, int64_syms);
     mlua_new_table(ls, 0, int64_meta_syms);

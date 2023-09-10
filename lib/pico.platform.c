@@ -2,6 +2,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 MLUA_FUNC_1_0(mod_,, rp2040_chip_version, lua_pushinteger)
@@ -9,7 +10,7 @@ MLUA_FUNC_1_0(mod_,, rp2040_rom_version, lua_pushinteger)
 MLUA_FUNC_0_1(mod_,, busy_wait_at_least_cycles, luaL_checkinteger)
 MLUA_FUNC_1_0(mod_,, get_core_num, lua_pushinteger)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NUM_CORES, integer, NUM_CORES),
     MLUA_SYM_V(NUM_DMA_CHANNELS, integer, NUM_DMA_CHANNELS),
     MLUA_SYM_V(NUM_DMA_TIMERS, integer, NUM_DMA_TIMERS),
@@ -40,7 +41,7 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(get_core_num, mod_),
 };
 
-int luaopen_pico_platform(lua_State* ls) {
+MLUA_OPEN_MODULE(pico.platform) {
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

@@ -74,7 +74,7 @@ void mlua_new_table_(lua_State* ls, MLuaSym const* fields, int narr, int nrec) {
 
 static char const Strict_name[] = "mlua.Strict";
 
-static MLuaSym const Strict_syms[] = {
+MLUA_SYMBOLS(Strict_syms) = {
     MLUA_SYM_V(__index, function, &mlua_index_undefined),
 };
 

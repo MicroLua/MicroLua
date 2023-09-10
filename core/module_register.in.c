@@ -11,7 +11,7 @@ static char const data[] = {
 #include "@DATA@"
 };
 
-int luaopen_@SYM@(lua_State* ls) {
+MLUA_OPEN_MODULE(@MOD@) {
     if (luaL_loadbufferx(ls, data, sizeof(data)-1, "@MOD@", "bt") != LUA_OK) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
@@ -26,21 +26,17 @@ int luaopen_@SYM@(lua_State* ls) {
 @INCLUDE@
 #include "mlua/util.h"
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
 #include "@SYMBOLS@"
 };
 
-int luaopen_@SYM@(lua_State* ls) {
+MLUA_OPEN_MODULE(@MOD@) {
     mlua_new_table(ls, 0, module_syms);  // Intentionally non-strict
     return 1;
 }
 
 #else
 
-extern int luaopen_@SYM@(lua_State* ls);
+MLUA_REGISTER_MODULE(@MOD@, luaopen_@SYM@);
 
 #endif
-
-static MLuaModule const module
-    __attribute__((__section__("mlua_module_registry"), __used__))
-    = {.name = "@MOD@", .open = luaopen_@SYM@};

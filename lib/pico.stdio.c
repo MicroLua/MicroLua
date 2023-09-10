@@ -10,6 +10,7 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/int64.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -187,7 +188,7 @@ MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_1_1(mod_,, puts, lua_pushinteger, luaL_checkstring)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_STDIO_ENABLE_CRLF_SUPPORT),
     MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_STDIO_DEFAULT_CRLF),
 
@@ -212,7 +213,7 @@ static MLuaSym const module_syms[] = {
 #endif
 };
 
-int luaopen_pico_stdio(lua_State* ls) {
+MLUA_OPEN_MODULE(pico.stdio) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 

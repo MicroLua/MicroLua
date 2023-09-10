@@ -1,5 +1,6 @@
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static char const list_name[] = "mlua.list";
@@ -234,7 +235,7 @@ static int list___call(lua_State* ls) {
 #define list___len list_len
 #define list___eq list_eq
 
-static MLuaSym const list_syms[] = {
+MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(len, list_),
     MLUA_SYM_F(eq, list_),
     MLUA_SYM_F(ipairs, list_),
@@ -252,11 +253,11 @@ static MLuaSym const list_syms[] = {
     MLUA_SYM_F(__repr, list_),
 };
 
-static MLuaSym const list_meta_syms[] = {
+MLUA_SYMBOLS(list_meta_syms) = {
     MLUA_SYM_F(__call, list_),
 };
 
-int luaopen_mlua_list(lua_State* ls) {
+MLUA_OPEN_MODULE(mlua.list) {
     // Create the list class.
     mlua_new_class(ls, list_name, list_syms);
     mlua_new_table(ls, 0, list_meta_syms);

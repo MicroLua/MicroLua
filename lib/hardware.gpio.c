@@ -8,6 +8,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static uint check_gpio(lua_State* ls, int index) {
@@ -290,7 +291,7 @@ MLUA_FUNC_0_2(mod_, gpio_, set_dir, check_gpio, mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, gpio_, is_dir_out, lua_pushboolean, check_gpio)
 MLUA_FUNC_1_1(mod_, gpio_, get_dir, lua_pushinteger, check_gpio)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(FUNC_XIP, integer, GPIO_FUNC_XIP),
     MLUA_SYM_V(FUNC_SPI, integer, GPIO_FUNC_SPI),
     MLUA_SYM_V(FUNC_UART, integer, GPIO_FUNC_UART),
@@ -385,7 +386,7 @@ static __attribute__((constructor)) void init(void) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int luaopen_hardware_gpio(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.gpio) {
     mlua_event_require(ls);
 
     mlua_new_module(ls, 0, module_syms);

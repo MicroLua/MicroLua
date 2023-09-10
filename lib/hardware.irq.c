@@ -8,6 +8,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static bool is_user_irq(uint irq) {
@@ -176,7 +177,7 @@ MLUA_FUNC_0_1(mod_,, user_irq_claim, check_user_irq)
 MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
 MLUA_FUNC_0_1(mod_,, user_irq_unclaim, check_user_irq)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(TIMER_IRQ_0, integer, TIMER_IRQ_0),
     MLUA_SYM_V(TIMER_IRQ_1, integer, TIMER_IRQ_1),
     MLUA_SYM_V(TIMER_IRQ_2, integer, TIMER_IRQ_2),
@@ -247,7 +248,7 @@ static __attribute__((constructor)) void init(void) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int luaopen_hardware_irq(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.irq) {
     mlua_event_require(ls);
 
     mlua_new_module(ls, 0, module_syms);

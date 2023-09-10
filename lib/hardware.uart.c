@@ -11,6 +11,7 @@
 
 #include "mlua/event.h"
 #include "mlua/int64.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 char const mlua_Uart_name[] = "hardware.uart.Uart";
@@ -284,7 +285,7 @@ MLUA_FUNC_0_2(Uart_, uart_, set_translate_crlf, mlua_check_Uart, mlua_to_cbool)
 MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, mlua_check_Uart,
               mlua_to_cbool)
 
-static MLuaSym const Uart_syms[] = {
+MLUA_SYMBOLS(Uart_syms) = {
     MLUA_SYM_F(get_index, Uart_),
     MLUA_SYM_F(init, Uart_),
     MLUA_SYM_F(deinit, Uart_),
@@ -314,7 +315,7 @@ static MLuaSym const Uart_syms[] = {
 #endif
 };
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_UART_ENABLE_CRLF_SUPPORT),
     //! MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_UART_DEFAULT_CRLF),
     //! MLUA_SYM_V(DEFAULT_BAUD_RATE, boolean, PICO_DEFAULT_UART_BAUD_RATE),
@@ -336,7 +337,7 @@ static __attribute__((constructor)) void init(void) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int luaopen_hardware_uart(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.uart) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 

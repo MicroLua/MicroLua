@@ -2,12 +2,13 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 char const __flash_binary_start;
 char const __flash_binary_end;
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(board, string, PICO_BOARD),
     MLUA_SYM_V(build_type, string, PICO_CMAKE_BUILD_TYPE),
     MLUA_SYM_V(build_target, string, PICO_TARGET_NAME),
@@ -109,7 +110,7 @@ static MLuaSym const module_syms[] = {
 #endif
 };
 
-int luaopen_pico(lua_State* ls) {
+MLUA_OPEN_MODULE(pico) {
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

@@ -10,7 +10,7 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/int64.h"
-#include "mlua/main.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -164,7 +164,7 @@ MLUA_FUNC_1_0(mod_, multicore_fifo_, rvalid, lua_pushboolean)
 MLUA_FUNC_1_0(mod_, multicore_fifo_, wready, lua_pushboolean)
 MLUA_FUNC_0_0(mod_, multicore_fifo_, drain)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(ROE, integer, SIO_FIFO_ST_ROE_BITS),
     MLUA_SYM_V(WOF, integer, SIO_FIFO_ST_WOF_BITS),
     MLUA_SYM_V(RDY, integer, SIO_FIFO_ST_RDY_BITS),
@@ -194,7 +194,7 @@ static __attribute__((constructor)) void init(void) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-int luaopen_pico_multicore_fifo(lua_State* ls) {
+MLUA_OPEN_MODULE(pico.multicore.fifo) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 

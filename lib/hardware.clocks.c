@@ -2,6 +2,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 MLUA_FUNC_1_5(mod_, clock_, configure, lua_pushboolean, luaL_checkinteger,
@@ -20,7 +21,7 @@ MLUA_FUNC_0_3(mod_, clock_, gpio_init, luaL_checkinteger,
 MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(clk_gpout0, integer, clk_gpout0),
     MLUA_SYM_V(clk_gpout1, integer, clk_gpout1),
     MLUA_SYM_V(clk_gpout2, integer, clk_gpout2),
@@ -51,7 +52,7 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(configure_gpin, mod_),
 };
 
-int luaopen_hardware_clocks(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.clocks) {
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

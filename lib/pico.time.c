@@ -7,6 +7,7 @@
 #include "lauxlib.h"
 #include "mlua/event.h"
 #include "mlua/int64.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
@@ -173,7 +174,7 @@ MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
 
 #define mod_cancel_repeating_timer mod_cancel_alarm
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_P(at_the_end_of_time, push_),
     MLUA_SYM_P(nil_time, push_),
     //! MLUA_SYM_V(DEFAULT_ALARM_POOL_DISABLED, boolean, DEFAULT_ALARM_POOL_DISABLED),
@@ -208,7 +209,7 @@ static MLuaSym const module_syms[] = {
     MLUA_SYM_F(cancel_repeating_timer, mod_),
 };
 
-int luaopen_pico_time(lua_State* ls) {
+MLUA_OPEN_MODULE(pico.time) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 

@@ -4,7 +4,7 @@ target_link_libraries(mlua_mod_00_setup_test INTERFACE
     mlua_mod_pico_stdlib
 )
 
-mlua_add_c_module(mlua_mod_hardware_adc hardware.adc hardware.adc.c)
+mlua_add_c_module(mlua_mod_hardware_adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware_adc INTERFACE
     hardware_adc
     hardware_irq
@@ -18,7 +18,7 @@ target_link_libraries(mlua_mod_hardware_adc_test INTERFACE
     mlua_mod_pico_time
 )
 
-mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks hardware.clocks.c)
+mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks.c)
 target_link_libraries(mlua_mod_hardware_clocks INTERFACE
     hardware_clocks
 )
@@ -30,7 +30,7 @@ target_link_libraries(mlua_mod_hardware_clocks_test INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio hardware.gpio.c)
+mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio.c)
 target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
     hardware_structs
@@ -50,7 +50,7 @@ target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
     mlua_mod_string
 )
 
-mlua_add_c_module(mlua_mod_hardware_irq hardware.irq hardware.irq.c)
+mlua_add_c_module(mlua_mod_hardware_irq hardware.irq.c)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
     hardware_structs
@@ -67,7 +67,7 @@ target_link_libraries(mlua_mod_hardware_irq_test INTERFACE
     mlua_mod_string
 )
 
-mlua_add_c_module(mlua_mod_hardware_timer hardware.timer hardware.timer.c)
+mlua_add_c_module(mlua_mod_hardware_timer hardware.timer.c)
 target_link_libraries(mlua_mod_hardware_timer INTERFACE
     hardware_timer
     mlua_mod_mlua_event_headers
@@ -83,7 +83,7 @@ target_link_libraries(mlua_mod_hardware_timer_test INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_hardware_uart hardware.uart hardware.uart.c)
+mlua_add_c_module(mlua_mod_hardware_uart hardware.uart.c)
 target_include_directories(mlua_mod_hardware_uart_headers INTERFACE
     include_hardware.uart)
 target_link_libraries(mlua_mod_hardware_uart INTERFACE
@@ -121,7 +121,7 @@ target_link_libraries(mlua_mod_mlua_test INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
 
-mlua_add_c_module(mlua_mod_mlua_event mlua.event mlua.event.c)
+mlua_add_c_module(mlua_mod_mlua_event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
 target_link_libraries(mlua_mod_mlua_event INTERFACE
@@ -132,7 +132,7 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     pico_time
 )
 
-mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64 mlua.int64.c)
+mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
     include_mlua.int64)
 
@@ -158,7 +158,7 @@ target_link_libraries(mlua_mod_mlua_io_test INTERFACE
     mlua_mod_mlua_oo
 )
 
-mlua_add_c_module(mlua_mod_mlua_list mlua.list mlua.list.c)
+mlua_add_c_module(mlua_mod_mlua_list mlua.list.c)
 
 mlua_add_lua_test_modules(mlua_mod_mlua_list_test mlua.list.test.lua)
 target_link_libraries(mlua_mod_mlua_list_test INTERFACE
@@ -175,7 +175,7 @@ target_link_libraries(mlua_mod_mlua_oo_test INTERFACE
     mlua_mod_string
 )
 
-mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio mlua.stdio.c)
+mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio.c)
 target_link_libraries(mlua_mod_mlua_stdio INTERFACE
     mlua_mod_pico_stdio_headers
     pico_stdio
@@ -257,7 +257,7 @@ target_link_libraries(mlua_mod_mlua_util_test INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_pico pico pico.c)
+mlua_add_c_module(mlua_mod_pico pico.c)
 target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
 )
@@ -278,7 +278,7 @@ target_link_libraries(mlua_mod_pico_board_test INTERFACE
     mlua_mod_pico_board
 )
 
-mlua_add_c_module(mlua_mod_pico_multicore pico.multicore pico.multicore.c)
+mlua_add_c_module(mlua_mod_pico_multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico_multicore INTERFACE
     mlua_mod_mlua_event
     pico_multicore
@@ -290,8 +290,7 @@ target_link_libraries(mlua_mod_pico_multicore_test INTERFACE
     mlua_mod_pico_multicore
 )
 
-mlua_add_c_module(mlua_mod_pico_multicore_fifo pico.multicore.fifo
-    pico.multicore.fifo.c)
+mlua_add_c_module(mlua_mod_pico_multicore_fifo pico.multicore.fifo.c)
 target_link_libraries(mlua_mod_pico_multicore_fifo INTERFACE
     hardware_structs
     mlua_mod_mlua_event_headers
@@ -309,7 +308,7 @@ target_link_libraries(mlua_mod_pico_multicore_fifo_test INTERFACE
     mlua_mod_pico_multicore_fifo
 )
 
-mlua_add_c_module(mlua_mod_pico_platform pico.platform pico.platform.c)
+mlua_add_c_module(mlua_mod_pico_platform pico.platform.c)
 target_link_libraries(mlua_mod_pico_platform INTERFACE
     pico_platform
 )
@@ -322,7 +321,7 @@ target_link_libraries(mlua_mod_pico_platform_test INTERFACE
     mlua_mod_pico_time
 )
 
-mlua_add_c_module(mlua_mod_pico_stdio pico.stdio pico.stdio.c)
+mlua_add_c_module(mlua_mod_pico_stdio pico.stdio.c)
 target_include_directories(mlua_mod_pico_stdio_headers INTERFACE
     include_pico.stdio)
 target_link_libraries(mlua_mod_pico_stdio INTERFACE
@@ -342,14 +341,13 @@ target_link_libraries(mlua_mod_pico_stdio_test INTERFACE
     mlua_mod_string
 )
 
-mlua_add_c_module(mlua_mod_pico_stdio_semihosting pico.stdio.semihosting
-    pico.stdio.semihosting.c)
+mlua_add_c_module(mlua_mod_pico_stdio_semihosting pico.stdio.semihosting.c)
 target_link_libraries(mlua_mod_pico_stdio_semihosting INTERFACE
     hardware_exception
     pico_stdio_semihosting
 )
 
-mlua_add_c_module(mlua_mod_pico_stdio_uart pico.stdio.uart pico.stdio.uart.c)
+mlua_add_c_module(mlua_mod_pico_stdio_uart pico.stdio.uart.c)
 target_link_libraries(mlua_mod_pico_stdio_uart INTERFACE
     mlua_mod_hardware_uart_headers
     pico_stdio_uart
@@ -366,12 +364,12 @@ target_link_libraries(mlua_mod_pico_stdio_uart_test INTERFACE
     mlua_mod_pico_stdio_uart
 )
 
-mlua_add_c_module(mlua_mod_pico_stdio_usb pico.stdio.usb pico.stdio.usb.c)
+mlua_add_c_module(mlua_mod_pico_stdio_usb pico.stdio.usb.c)
 target_link_libraries(mlua_mod_pico_stdio_usb INTERFACE
     pico_stdio_usb
 )
 
-mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib pico.stdlib.c)
+mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib.c)
 target_link_libraries(mlua_mod_pico_stdlib INTERFACE
     pico_stdlib
 )
@@ -383,7 +381,7 @@ target_link_libraries(mlua_mod_pico_stdlib_test INTERFACE
     mlua_mod_pico_stdlib
 )
 
-mlua_add_c_module(mlua_mod_pico_time pico.time pico.time.c)
+mlua_add_c_module(mlua_mod_pico_time pico.time.c)
 target_link_libraries(mlua_mod_pico_time INTERFACE
     hardware_timer
     mlua_mod_mlua_event_headers
@@ -400,7 +398,7 @@ target_link_libraries(mlua_mod_pico_time_test INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_pico_unique_id pico.unique_id pico.unique_id.c)
+mlua_add_c_module(mlua_mod_pico_unique_id pico.unique_id.c)
 target_link_libraries(mlua_mod_pico_unique_id INTERFACE
     pico_unique_id
 )

@@ -7,6 +7,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/module.h"
 #include "mlua/pico.stdio.h"
 #include "mlua/util.h"
 
@@ -32,7 +33,7 @@ static int InStream_read(lua_State* ls) {
 #endif
 }
 
-static MLuaSym const InStream_syms[] = {
+MLUA_SYMBOLS(InStream_syms) = {
     MLUA_SYM_F(read, InStream_),
 };
 
@@ -52,7 +53,7 @@ static int OutStream_write(lua_State* ls) {
 #endif
 }
 
-static MLuaSym const OutStream_syms[] = {
+MLUA_SYMBOLS(OutStream_syms) = {
     MLUA_SYM_F(write, OutStream_),
 };
 
@@ -87,7 +88,7 @@ static int global_print(lua_State* ls) {
     return 0;
 }
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(stderr, boolean, false),
     MLUA_SYM_V(stdin, boolean, false),
     MLUA_SYM_V(stdout, boolean, false),
@@ -135,7 +136,7 @@ static __attribute__((constructor)) void init(void) {
 #endif  // LIB_PICO_STDIO_USB
 }
 
-int luaopen_mlua_stdio(lua_State* ls) {
+MLUA_OPEN_MODULE(mlua.stdio) {
 #if LIB_MLUA_MOD_PICO_STDIO
     mlua_require(ls, "pico.stdio", false);
 #endif

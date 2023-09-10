@@ -7,6 +7,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/event.h"
+#include "mlua/module.h"
 #include "mlua/util.h"
 
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -60,7 +61,7 @@ MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
 MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
 MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
 
-static MLuaSym const module_syms[] = {
+MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(gpio_init, mod_),
     MLUA_SYM_F(select_input, mod_),
@@ -81,7 +82,7 @@ static MLuaSym const module_syms[] = {
 #endif
 };
 
-int luaopen_hardware_adc(lua_State* ls) {
+MLUA_OPEN_MODULE(hardware.adc) {
     mlua_event_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
