@@ -264,8 +264,6 @@ MLUA_OPEN_MODULE(mlua.list) {
     // Create the list class.
     mlua_new_class(ls, list_name, list_syms, false);
     mlua_set_fields(ls, list_syms_nh);
-    lua_getmetatable(ls, -1);
-    mlua_set_fields(ls, list_meta_syms);
-    lua_pop(ls, 1);
+    mlua_set_meta_fields(ls, list_meta_syms);
     return 1;
 }

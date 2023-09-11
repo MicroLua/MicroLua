@@ -494,8 +494,6 @@ MLUA_OPEN_MODULE(mlua.int64) {
     // Create the int64 class.
     mlua_new_class(ls, int64_name, int64_syms, true);
     mlua_set_fields(ls, int64_syms_nh);
-    lua_getmetatable(ls, -1);
-    mlua_set_fields(ls, int64_meta_syms);
-    lua_pop(ls, 1);
+    mlua_set_meta_fields(ls, int64_meta_syms);
     return 1;
 }

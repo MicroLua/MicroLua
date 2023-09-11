@@ -20,7 +20,6 @@ extern "C" {
 #define MLUA_STR(n) #n
 #define MLUA_ESTR(n) MLUA_STR(n)
 #define MLUA_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#define MLUA_DISCARD_ATTRS __section__("mlua_discard"), __unused__
 
 #define MLUA_ARGS_1(a1) \
     a1(ls, 1)
@@ -112,6 +111,9 @@ void mlua_sym_push_lightuserdata(lua_State* ls, MLuaSym const* sym);
 #define mlua_set_fields(ls, fields) \
     mlua_set_fields_((ls), (fields), MLUA_SIZE(fields))
 void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt);
+#define mlua_set_meta_fields(ls, fields) \
+    mlua_set_meta_fields_((ls), (fields), MLUA_SIZE(fields))
+void mlua_set_meta_fields_(lua_State* ls, MLuaSym const* fields, int cnt);
 
 #define mlua_new_table(ls, narr, fields) \
     mlua_new_table_((ls), (fields), (narr), MLUA_SIZE(fields))
@@ -123,41 +125,37 @@ typedef struct MLuaSymHash {
 } MLuaSymHash;
 
 #define MLUA_SYMBOLS_HASH(n, s1, s2, k, g) \
-static MLuaSymHash const __attribute__((MLUA_SYMBOLS_HASH_ATTRS)) \
+static MLuaSymHash const __attribute__((__unused__)) \
     n ## _hash = {.seed1 = s1, .seed2 = s2, .nkeys = k, .ng = g};
 #define MLUA_SYMBOLS_HASH_VALUES(n) \
-static uint8_t const __attribute__((MLUA_SYMBOLS_HASH_ATTRS)) n ## _hash_g[]
+static uint8_t const __attribute__((__unused__)) n ## _hash_g[]
 
-#if MLUA_HASH_SYMBOL_TABLES
-
-#define MLUA_SYMBOLS_HASH_ATTRS __used__
-
-#define mlua_new_module(ls, narr, fields) \
-    mlua_new_module_((ls), (fields), (narr), MLUA_SIZE(fields), \
-                     &fields ## _hash, fields ## _hash_g)
-void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec,
-                      MLuaSymHash const* h, uint8_t const* g);
-
-#define mlua_new_class(ls, name, fields, strict) \
-    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields), \
-                    &fields ## _hash, fields ## _hash_g, (strict))
-void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
-                     int cnt, MLuaSymHash const* h, uint8_t const* g,
-                     bool strict);
-
-#else  // !MLUA_HASH_SYMBOL_TABLES
-
-#define MLUA_SYMBOLS_HASH_ATTRS MLUA_DISCARD_ATTRS
-
-#define mlua_new_module(ls, narr, fields) \
-    mlua_new_module_((ls), (fields), (narr), MLUA_SIZE(fields))
 void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
-
-#define mlua_new_class(ls, name, fields, strict) \
-    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields), (strict))
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
                      int cnt, bool strict);
+void mlua_new_hashed_module_(lua_State* ls, MLuaSym const* fields, int narr,
+                             int nrec, MLuaSymHash const* h, uint8_t const* g);
+void mlua_new_hashed_class_(
+    lua_State* ls, char const* name, MLuaSym const* fields, int cnt,
+    MLuaSymHash const* h, uint8_t const* g, bool strict);
 
+#define mlua_new_unhashed_module(ls, narr, fields) \
+    mlua_new_module_((ls), (fields), (narr), MLUA_SIZE(fields))
+#define mlua_new_unhashed_class(ls, name, fields, strict) \
+    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields), (strict))
+#define mlua_new_hashed_module(ls, narr, fields) \
+    mlua_new_hashed_module_((ls), (fields), (narr), MLUA_SIZE(fields), \
+                            &fields ## _hash, fields ## _hash_g)
+#define mlua_new_hashed_class(ls, name, fields, strict) \
+    mlua_new_hashed_class_((ls), (name), (fields), MLUA_SIZE(fields), \
+                           &fields ## _hash, fields ## _hash_g, (strict))
+
+#if MLUA_HASH_SYMBOL_TABLES
+#define mlua_new_module mlua_new_hashed_module
+#define mlua_new_class mlua_new_hashed_class
+#else  // !MLUA_HASH_SYMBOL_TABLES
+#define mlua_new_module mlua_new_unhashed_module
+#define mlua_new_class mlua_new_unhashed_class
 #endif  // !MLUA_HASH_SYMBOL_TABLES
 
 // Push the thread metatable field with the given name. Returns the type of the
