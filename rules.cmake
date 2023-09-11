@@ -61,10 +61,8 @@ function(mlua_add_core_library TARGET)
 endfunction()
 
 function(mlua_register_module TARGET SCOPE MOD)
-    cmake_parse_arguments(PARSE_ARGV 3 args "C" "CONFIG;HEADER" "")
-    if(args_C)
-        # Nothing to do
-    elseif(DEFINED args_CONFIG)
+    cmake_parse_arguments(PARSE_ARGV 3 args "" "CONFIG;HEADER" "")
+    if(DEFINED args_CONFIG)
         mlua_want_lua()
         set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
         add_custom_command(
@@ -108,7 +106,12 @@ endfunction()
 
 function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg("${MOD}" "${ARGN}")
-    mlua_register_module("mlua_mod_${MOD}" INTERFACE "${MOD}" C)
+    set(template "${MLUA_PATH}/core/module_core.in.c")
+    set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}_reg.c")
+    string(REPLACE "." "_" SYM "${MOD}")
+    configure_file("${template}" "${output}" @ONLY)
+    target_sources("mlua_mod_${MOD}" INTERFACE "${output}")
+    target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_add_c_module TARGET)
@@ -117,17 +120,18 @@ function(mlua_add_c_module TARGET)
     foreach(src IN LISTS ARGN)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src FILENAME name)
-        set(dest "${CMAKE_CURRENT_BINARY_DIR}/${name}")
+        set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}")
         add_custom_command(
-            COMMENT "Pre-processing C module file ${dest}"
+            COMMENT "Pre-processing C module file ${output}"
             DEPENDS "${GEN}" "${src}"
-            OUTPUT "${dest}"
+            OUTPUT "${output}"
             COMMAND Lua "${GEN}"
-                "cmod" "${src}" "${dest}"
+                "cmod" "${src}" "${output}"
             VERBATIM
         )
-        target_sources("${TARGET}" INTERFACE "${dest}")
+        target_sources("${TARGET}" INTERFACE "${output}")
     endforeach()
+    target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
@@ -142,17 +146,18 @@ function(mlua_add_lua_modules TARGET)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src STEM LAST_ONLY mod)
         set(template "${MLUA_PATH}/core/module_lua.in.c")
-        set(dest "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
+        set(output "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
         add_custom_command(
-            COMMENT "Compiling Lua source ${dest}"
+            COMMENT "Compiling Lua source to C module ${output}"
             DEPENDS "${GEN}" "${src}" "${template}"
-            OUTPUT "${dest}"
+            OUTPUT "${output}"
             COMMAND Lua "${GEN}"
-                "luamod" "${mod}" "${src}" "${template}" "${dest}"
+                "luamod" "${mod}" "${src}" "${template}" "${output}"
             VERBATIM
         )
-        target_sources("${TARGET}" INTERFACE "${dest}")
+        target_sources("${TARGET}" INTERFACE "${output}")
     endforeach()
+    target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 # TARGET must be a binary target.

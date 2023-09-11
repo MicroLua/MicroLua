@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+// TODO: Separate switches for modules and classes
 #ifndef MLUA_HASH_SYMBOL_TABLES
 #define MLUA_HASH_SYMBOL_TABLES 1
 #endif

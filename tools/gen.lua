@@ -2,6 +2,7 @@
 -- available:
 --
 --  - cmod: Pre-process a C module source file.
+--  - coremod: Generate a C file that registers a core C module.
 --  - luamod: Generate a C module from a Lua source file.
 
 local io = require 'io'
@@ -159,7 +160,7 @@ local CMod = {}
 CMod.__index = CMod
 
 function CMod:line(line, out)
-    out:write(line)
+    check(out:write(line))
     if self.syms then
         local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
         if sym then
@@ -170,10 +171,10 @@ function CMod:line(line, out)
             end
         elseif line:match('^%s*}%s*;%s*$') then
             local h = find_perfect_hash(self.syms)
-            out:write(('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
-                self.name, h.seed1, h.seed2, #self.syms, #h.g))
-            out:write(('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
-                self.name, table.concat(to_strings(h.g), ",")))
+            check(out:write(('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
+                self.name, h.seed1, h.seed2, #self.syms, #h.g)))
+            check(out:write(('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
+                self.name, table.concat(to_strings(h.g), ","))))
             self.name, self.syms, self.seen = nil, nil, nil
         end
     else
@@ -185,10 +186,20 @@ end
 
 -- Preprocess C a module source file.
 function cmd_cmod(input, output)
-    local fin<close> = check(io.open(input, 'r'))
-    local fout<close> = check(io.open(output, 'w'))
+    local fi<close> = check(io.open(input, 'r'))
+    local fo<close> = check(io.open(output, 'w'))
     local state = setmetatable({}, CMod)
-    for line in fin:lines('L') do state:line(line, fout) end
+    for line in fi:lines('L') do state:line(line, fo) end
+end
+
+-- Generate a C file that registers a core C module.
+function cmd_coremod(mod, template, output)
+    local ft<close> = check(io.open(template, 'r'))
+    local fo<close> = check(io.open(output, 'w'))
+    local sub = {MOD = mod, SYM = mod:gsub('%.', '_')}
+    for line in ft:lines('L') do
+        check(fo:write((line:gsub('@(%u+)@', sub))))
+    end
 end
 
 -- Compile a Lua module and return the generated chunk as C array data.
@@ -221,10 +232,12 @@ end
 -- Generate a C module from a Lua source file.
 function cmd_luamod(mod, input, template, output)
     local data = compile_lua(mod, input)
-    local fin<close> = check(io.open(template, 'r'))
-    local fout<close> = check(io.open(output, 'w'))
+    local ft<close> = check(io.open(template, 'r'))
+    local fo<close> = check(io.open(output, 'w'))
     local sub = {MOD = mod, DATA = data}
-    for line in fin:lines('L') do fout:write((line:gsub('@(%u+)@', sub))) end
+    for line in ft:lines('L') do
+        check(fo:write((line:gsub('@(%u+)@', sub))))
+    end
 end
 
 local function main(cmd, ...)
