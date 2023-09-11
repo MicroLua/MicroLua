@@ -108,8 +108,17 @@ function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg("${MOD}" "${ARGN}")
     set(template "${MLUA_PATH}/core/module_core.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}_reg.c")
-    string(REPLACE "." "_" SYM "${MOD}")
-    configure_file("${template}" "${output}" @ONLY)
+    mlua_want_lua()
+    add_custom_command(
+        COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
+        DEPENDS "${GEN}" "${template}"
+        OUTPUT "${output}"
+        COMMAND Lua "${GEN}"
+            "coremod" "${MOD}" "${template}" "${output}"
+        VERBATIM
+    )
+    add_custom_target("mlua_gen_core_${MOD}_reg.c" DEPENDS "${output}")
+    add_dependencies("mlua_mod_${MOD}" "mlua_gen_core_${MOD}_reg.c")
     target_sources("mlua_mod_${MOD}" INTERFACE "${output}")
     target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core mlua_core_main)
 endfunction()
@@ -122,13 +131,15 @@ function(mlua_add_c_module TARGET)
         cmake_path(GET src FILENAME name)
         set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}")
         add_custom_command(
-            COMMENT "Pre-processing C module file ${output}"
+            COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
             DEPENDS "${GEN}" "${src}"
             OUTPUT "${output}"
             COMMAND Lua "${GEN}"
                 "cmod" "${src}" "${output}"
             VERBATIM
         )
+        add_custom_target("mlua_gen_c_${name}" DEPENDS "${output}")
+        add_dependencies("${TARGET}" "mlua_gen_c_${name}")
         target_sources("${TARGET}" INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
@@ -148,13 +159,15 @@ function(mlua_add_lua_modules TARGET)
         set(template "${MLUA_PATH}/core/module_lua.in.c")
         set(output "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
         add_custom_command(
-            COMMENT "Compiling Lua source to C module ${output}"
+            COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
             DEPENDS "${GEN}" "${src}" "${template}"
             OUTPUT "${output}"
             COMMAND Lua "${GEN}"
                 "luamod" "${mod}" "${src}" "${template}" "${output}"
             VERBATIM
         )
+        add_custom_target("mlua_gen_lua_${mod}.c" DEPENDS "${output}")
+        add_dependencies("${TARGET}" "mlua_gen_lua_${mod}.c")
         target_sources("${TARGET}" INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
