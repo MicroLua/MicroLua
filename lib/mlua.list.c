@@ -248,19 +248,24 @@ MLUA_SYMBOLS(list_syms) = {
     // TODO: MLUA_SYM_F(sort, list_),
     // TODO: MLUA_SYM_F(move, list_),
     MLUA_SYM_F(concat, list_),
+};
+
+MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
     MLUA_SYM_F(__len, list_),
     MLUA_SYM_F(__eq, list_),
     MLUA_SYM_F(__repr, list_),
 };
 
-MLUA_SYMBOLS(list_meta_syms) = {
+MLUA_SYMBOLS_NOHASH(list_meta_syms) = {
     MLUA_SYM_F(__call, list_),
 };
 
 MLUA_OPEN_MODULE(mlua.list) {
     // Create the list class.
-    mlua_new_class(ls, list_name, list_syms);
-    mlua_new_table(ls, 0, list_meta_syms);
-    lua_setmetatable(ls, -2);
+    mlua_new_class(ls, list_name, list_syms, false);
+    mlua_set_fields(ls, list_syms_nh);
+    lua_getmetatable(ls, -1);
+    mlua_set_fields(ls, list_meta_syms);
+    lua_pop(ls, 1);
     return 1;
 }

@@ -149,7 +149,7 @@ end
 
 function Matcher:_value()
     local v = self._v
-    local ok, e = pcall(function() return getmetatable(v).__eval end)
+    local ok, e = pcall(function() return rawget(getmetatable(v), '__eval') end)
     return v, ok and e or nil
 end
 

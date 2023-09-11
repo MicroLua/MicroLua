@@ -458,6 +458,9 @@ MLUA_SYMBOLS(int64_syms) = {
     MLUA_SYM_F(tointeger, int64_),
     MLUA_SYM_F(tonumber, int64_),
     MLUA_SYM_F(ult, int64_),
+};
+
+MLUA_SYMBOLS_NOHASH(int64_syms_nh) = {
 #if !IS64INT
     MLUA_SYM_F(__add, int64_),
     MLUA_SYM_F(__sub, int64_),
@@ -483,15 +486,16 @@ MLUA_SYMBOLS(int64_syms) = {
 #endif  // !IS64INT
 };
 
-MLUA_SYMBOLS(int64_meta_syms) = {
+MLUA_SYMBOLS_NOHASH(int64_meta_syms) = {
     MLUA_SYM_F(__call, int64_),
-    MLUA_SYM_V(__index, function, &mlua_index_undefined),
 };
 
 MLUA_OPEN_MODULE(mlua.int64) {
     // Create the int64 class.
-    mlua_new_class(ls, int64_name, int64_syms);
-    mlua_new_table(ls, 0, int64_meta_syms);
-    lua_setmetatable(ls, -2);
+    mlua_new_class(ls, int64_name, int64_syms, true);
+    mlua_set_fields(ls, int64_syms_nh);
+    lua_getmetatable(ls, -1);
+    mlua_set_fields(ls, int64_meta_syms);
+    lua_pop(ls, 1);
     return 1;
 }

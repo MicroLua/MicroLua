@@ -103,7 +103,7 @@ static uint perfect_hash(char const* key, MLuaSymHash const* h,
             + g[hash(key, h->seed2) % h->ng]) % h->nkeys;
 }
 
-int hashed_index(lua_State* ls) {
+static int hashed_index(lua_State* ls) {
     if (lua_isstring(ls, 2)) {
         MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
         uint8_t const* g = lua_touserdata(ls, lua_upvalueindex(3));
@@ -121,24 +121,41 @@ int hashed_index(lua_State* ls) {
         field->push(ls, field);
         return 1;
     }
-    return mlua_index_undefined(ls);
+    if (lua_toboolean(ls, lua_upvalueindex(4))) return mlua_index_undefined(ls);
+    lua_pushnil(ls);
+    return 1;
+}
+
+static void set_hashed_metatable(lua_State* ls, MLuaSym const* fields, int cnt,
+                          MLuaSymHash const* h, uint8_t const* g, bool strict) {
+    if (cnt != h->nkeys) {
+        luaL_error(ls, "key count mismatch: %d symbols, expected %d", cnt,
+                   h->nkeys);
+        return;
+    }
+    lua_createtable(ls, 0, 0);
+    lua_pushlightuserdata(ls, (void*)fields);
+    lua_pushlightuserdata(ls, (void*)h);
+    lua_pushlightuserdata(ls, (void*)g);
+    lua_pushboolean(ls, strict);
+    lua_pushcclosure(ls, &hashed_index, 4);
+    lua_setfield(ls, -2, "__index");
+    lua_setmetatable(ls, -2);
 }
 
 void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr,
                       int nrec, MLuaSymHash const* h, uint8_t const* g) {
-    if (nrec != h->nkeys) {
-        luaL_error(ls, "key count mismatch: %d symbols, hash computed for %d",
-                   nrec, h->nkeys);
-        return;
-    }
     lua_createtable(ls, narr, 0);
-    lua_createtable(ls, 0, 1);
-    lua_pushlightuserdata(ls, (void*)fields);
-    lua_pushlightuserdata(ls, (void*)h);
-    lua_pushlightuserdata(ls, (void*)g);
-    lua_pushcclosure(ls, &hashed_index, 3);
+    set_hashed_metatable(ls, fields, nrec, h, g, true);
+}
+
+void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
+                     int cnt, MLuaSymHash const* h, uint8_t const* g,
+                     bool strict) {
+    luaL_newmetatable(ls, name);
+    set_hashed_metatable(ls, fields, cnt, h, g, strict);
+    lua_pushvalue(ls, -1);
     lua_setfield(ls, -2, "__index");
-    lua_setmetatable(ls, -2);
 }
 
 #else  // !MLUA_HASH_SYMBOL_TABLES
@@ -150,17 +167,21 @@ void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr,
     lua_setmetatable(ls, -2);
 }
 
-#endif  // !MLUA_HASH_SYMBOL_TABLES
-
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
-                     int cnt) {
+                     int cnt, bool strict) {
     luaL_newmetatable(ls, name);
     mlua_set_fields_(ls, fields, cnt);
     lua_pushvalue(ls, -1);
     lua_setfield(ls, -2, "__index");
-    luaL_getmetatable(ls, Strict_name);
+    lua_createtable(ls, 0, 1);
+    if (strict) {
+        lua_pushcfunction(ls, &mlua_index_undefined);
+        lua_setfield(ls, -2, "__index");
+    }
     lua_setmetatable(ls, -2);
 }
+
+#endif  // !MLUA_HASH_SYMBOL_TABLES
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 

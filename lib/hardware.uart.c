@@ -348,7 +348,7 @@ MLUA_OPEN_MODULE(hardware.uart) {
     int mod_index = lua_gettop(ls);
 
     // Create the Uart class.
-    mlua_new_class(ls, mlua_Uart_name, Uart_syms);
+    mlua_new_class(ls, mlua_Uart_name, Uart_syms, true);
     lua_pop(ls, 1);
 
     // Create Uart instances.

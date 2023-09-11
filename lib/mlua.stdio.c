@@ -144,8 +144,10 @@ MLUA_OPEN_MODULE(mlua.stdio) {
     mlua_new_module(ls, 0, module_syms);
 
     // Create the InStream and OutStream classes.
-    mlua_new_class(ls, InStream_name, InStream_syms);
-    mlua_new_class(ls, OutStream_name, OutStream_syms);
+    mlua_new_class(ls, InStream_name, InStream_syms, true);
+    lua_pop(ls, 1);
+    mlua_new_class(ls, OutStream_name, OutStream_syms, true);
+    lua_pop(ls, 1);
 
     // Create objects for stdin, stdout and stderr. Set them in _G, too.
     create_stream(ls, "stdin", InStream_name, STDIN_FILENO);

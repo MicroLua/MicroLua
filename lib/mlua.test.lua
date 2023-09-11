@@ -41,7 +41,9 @@ function test_variable_access(t)
 
     -- In C module.
     t:expect(has(pico, 'OK'), "OK is not in module")
-    t:expect(not has(pico, 'UNKNOWN'), "UNKNOWN is in module")
+    if config.HASH_SYMBOL_TABLES == 0 then
+        t:expect(not has(pico, 'UNKNOWN'), "UNKNOWN is in module")
+    end
 end
 
 function test_strict(t)
@@ -49,7 +51,7 @@ function test_strict(t)
     for _, test in ipairs{
         {"Lua module", require(module_name), "undefined symbol"},
         {"C module", pico, want_c},
-        {"C class", stderr, "undefined symbol"},
+        {"C class", stderr, want_c},
     } do
         local desc, tab, want = table.unpack(test)
         if want then

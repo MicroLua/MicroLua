@@ -96,10 +96,11 @@ typedef struct MLuaSym {
 } MLuaSym;
 
 #define MLUA_SYMBOLS(n) static MLuaSym const n[]
-#define MLUA_SYM_P(n, p) {.name = #n, .push = p ## n}
-#define MLUA_SYM_V(n, t, v) {.name = #n, .push = mlua_sym_push_ ## t, .t = (v)}
+#define MLUA_SYMBOLS_NOHASH(n) static MLuaSym const n[]
+#define MLUA_SYM_P(n, p) {.name = #n, .push = &p ## n}
+#define MLUA_SYM_V(n, t, v) {.name = #n, .push = &mlua_sym_push_ ## t, .t = (v)}
 #define MLUA_SYM_F(n, p) \
-    {.name = #n, .push = mlua_sym_push_function, .function = &p ## n}
+    {.name = #n, .push = &mlua_sym_push_function, .function = &p ## n}
 
 void mlua_sym_push_boolean(lua_State* ls, MLuaSym const* sym);
 void mlua_sym_push_integer(lua_State* ls, MLuaSym const* sym);
@@ -137,6 +138,13 @@ static uint8_t const __attribute__((MLUA_SYMBOLS_HASH_ATTRS)) n ## _hash_g[]
 void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec,
                       MLuaSymHash const* h, uint8_t const* g);
 
+#define mlua_new_class(ls, name, fields, strict) \
+    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields), \
+                    &fields ## _hash, fields ## _hash_g, (strict))
+void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
+                     int cnt, MLuaSymHash const* h, uint8_t const* g,
+                     bool strict);
+
 #else  // !MLUA_HASH_SYMBOL_TABLES
 
 #define MLUA_SYMBOLS_HASH_ATTRS MLUA_DISCARD_ATTRS
@@ -145,12 +153,12 @@ void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec,
     mlua_new_module_((ls), (fields), (narr), MLUA_SIZE(fields))
 void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
 
-#endif  // !MLUA_HASH_SYMBOL_TABLES
-
-#define mlua_new_class(ls, name, fields) \
-    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields))
+#define mlua_new_class(ls, name, fields, strict) \
+    mlua_new_class_((ls), (name), (fields), MLUA_SIZE(fields), (strict))
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
-                     int cnt);
+                     int cnt, bool strict);
+
+#endif  // !MLUA_HASH_SYMBOL_TABLES
 
 // Push the thread metatable field with the given name. Returns the type of the
 // field, or LUA_TNIL if the metatable doesn't have this field.
