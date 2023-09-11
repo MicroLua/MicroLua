@@ -220,9 +220,9 @@ static int mod_get_irq_event_mask(lua_State* ls) {
     uint32_t save = save_and_disable_interrupts();
     pending |= state->pending[block];  // Mix in stored edge state
     restore_interrupts(save);
+    pending &= state->mask[block];
 #endif
-    lua_pushinteger(ls, ((pending & state->mask[block])
-                         >> 4 * (gpio % 8)) & 0xfu);
+    lua_pushinteger(ls, (pending >> 4 * (gpio % 8)) & 0xfu);
     return 1;
 }
 
