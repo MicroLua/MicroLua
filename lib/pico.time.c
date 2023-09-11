@@ -177,9 +177,6 @@ MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_P(at_the_end_of_time, push_),
     MLUA_SYM_P(nil_time, push_),
-    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_DISABLED, boolean, DEFAULT_ALARM_POOL_DISABLED),
-    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM, integer, DEFAULT_ALARM_POOL_HARDWARE_ALARM_NUM),
-    //! MLUA_SYM_V(DEFAULT_ALARM_POOL_MAX_TIMERS, integer, DEFAULT_ALARM_POOL_MAX_TIMERS),
 
     // to_us_since_boot: not useful in Lua
     // update_us_since_boot: not useful in Lua

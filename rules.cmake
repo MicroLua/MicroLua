@@ -2,6 +2,7 @@ set(MLUA_PATH "${MLUA_PATH}" CACHE PATH "Path to the MicroLua sources SDK")
 message("MLUA_PATH is ${MLUA_PATH}")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua")
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${MLUA_PATH}/tools")
+set(GEN "${MLUA_PATH}/tools/gen.lua")
 
 function(mlua_set NAME DEFAULT)
     if("${${NAME}}" STREQUAL "")
@@ -60,21 +61,9 @@ function(mlua_add_core_library TARGET)
 endfunction()
 
 function(mlua_register_module TARGET SCOPE MOD)
-    cmake_parse_arguments(PARSE_ARGV 3 args "C" "CONFIG;HEADER;LUA" "")
+    cmake_parse_arguments(PARSE_ARGV 3 args "C" "CONFIG;HEADER" "")
     if(args_C)
         # Nothing to do
-    elseif(DEFINED args_LUA)
-        mlua_want_lua()
-        cmake_path(ABSOLUTE_PATH args_LUA OUTPUT_VARIABLE SRC)
-        set(DATA "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.data.h")
-        add_custom_command(
-            COMMENT "Compiling Lua source ${DATA}"
-            OUTPUT "${DATA}"
-            DEPENDS "${SRC}"
-            COMMAND Lua "${MLUA_PATH}/tools/embed_lua.lua" "${SRC}" "${DATA}"
-            VERBATIM
-        )
-        target_sources("${TARGET}" "${SCOPE}" "${DATA}")
     elseif(DEFINED args_CONFIG)
         mlua_want_lua()
         set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
@@ -124,16 +113,17 @@ endfunction()
 
 function(mlua_add_c_module TARGET)
     pico_add_library("${TARGET}")
+    mlua_want_lua()
     foreach(src IN LISTS ARGN)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src FILENAME name)
         set(dest "${CMAKE_CURRENT_BINARY_DIR}/${name}")
-        mlua_want_lua()
         add_custom_command(
             COMMENT "Pre-processing C module file ${dest}"
-            DEPENDS "${src}"
+            DEPENDS "${GEN}" "${src}"
             OUTPUT "${dest}"
-            COMMAND Lua "${MLUA_PATH}/tools/gen.lua" "cmod" "${src}" "${dest}"
+            COMMAND Lua "${GEN}"
+                "cmod" "${src}" "${dest}"
             VERBATIM
         )
         target_sources("${TARGET}" INTERFACE "${dest}")
@@ -147,9 +137,21 @@ endfunction()
 
 function(mlua_add_lua_modules TARGET)
     pico_add_library("${TARGET}")
-    foreach(SRC IN LISTS ARGN)
-        cmake_path(GET SRC STEM LAST_ONLY MOD)
-        mlua_register_module("${TARGET}" INTERFACE "${MOD}" LUA "${SRC}")
+    mlua_want_lua()
+    foreach(src IN LISTS ARGN)
+        cmake_path(ABSOLUTE_PATH src)
+        cmake_path(GET src STEM LAST_ONLY mod)
+        set(template "${MLUA_PATH}/core/module_lua.in.c")
+        set(dest "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
+        add_custom_command(
+            COMMENT "Compiling Lua source ${dest}"
+            DEPENDS "${GEN}" "${src}" "${template}"
+            OUTPUT "${dest}"
+            COMMAND Lua "${GEN}"
+                "luamod" "${mod}" "${src}" "${template}" "${dest}"
+            VERBATIM
+        )
+        target_sources("${TARGET}" INTERFACE "${dest}")
     endforeach()
 endfunction()
 

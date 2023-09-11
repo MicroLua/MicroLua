@@ -2,6 +2,7 @@
 -- available:
 --
 --  - cmod: Pre-process a C module source file.
+--  - luamod: Generate a C module from a Lua source file.
 
 local io = require 'io'
 local os = require 'os'
@@ -172,7 +173,7 @@ function CMod:line(line, out)
             out:write(('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
                 self.name, h.seed1, h.seed2, #self.syms, #h.g))
             out:write(('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
-                self.name, table.concat(to_strings(h.g), ", ")))
+                self.name, table.concat(to_strings(h.g), ",")))
             self.name, self.syms, self.seen = nil, nil, nil
         end
     else
@@ -188,6 +189,42 @@ function cmd_cmod(input, output)
     local fout<close> = check(io.open(output, 'w'))
     local state = setmetatable({}, CMod)
     for line in fin:lines('L') do state:line(line, fout) end
+end
+
+-- Compile a Lua module and return the generated chunk as C array data.
+local function compile_lua(mod, path)
+    -- Load and compile the input file.
+    local f<close> = check(io.open(path, 'r'))
+    local chunk = check(load(function() return f:read(4096) end, '@' .. mod))
+    local bin = string.dump(chunk)
+
+    -- Format the compiled chunk as C array data.
+    local parts, offset = {}, 0
+    while true do
+        if offset >= #bin then break end
+        for i = 1, 16 do
+            local v = bin:byte(offset + i)
+            if v == nil then break end
+            table.insert(parts, ('0x%02x,'):format(v))
+        end
+        table.insert(parts, '\n')
+        offset = offset + 16
+    end
+
+    -- Lua seems to rely on a terminating zero byte when loading chunks in text
+    -- mode, even if it isn't included in the chunk size. This is likely a bug.
+    -- We work around it by appending a zero byte to the output.
+    table.insert(parts, '0x00,')
+    return table.concat(parts)
+end
+
+-- Generate a C module from a Lua source file.
+function cmd_luamod(mod, input, template, output)
+    local data = compile_lua(mod, input)
+    local fin<close> = check(io.open(template, 'r'))
+    local fout<close> = check(io.open(output, 'w'))
+    local sub = {MOD = mod, DATA = data}
+    for line in fin:lines('L') do fout:write((line:gsub('@(%u+)@', sub))) end
 end
 
 local function main(cmd, ...)
