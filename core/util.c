@@ -1,8 +1,14 @@
 #include "mlua/util.h"
 
+#include <string.h>
+
 #include "pico/platform.h"
 
 spin_lock_t* mlua_lock;
+
+int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
+    return ctx;
+}
 
 void mlua_require(lua_State* ls, char const* module, bool keep) {
     lua_getglobal(ls, "require");
@@ -78,12 +84,73 @@ MLUA_SYMBOLS(Strict_syms) = {
     MLUA_SYM_V(__index, function, &mlua_index_undefined),
 };
 
+#if MLUA_HASH_SYMBOL_TABLES
+
+#define HASH_MULT 0x01000193
+
+static uint32_t hash(char const* key, uint32_t seed) {
+    for (;;) {
+        uint32_t c = (uint32_t)*key;
+        if (c == 0) return seed & 0x7fffffff;
+        seed = (seed ^ c) * HASH_MULT;
+        ++key;
+    }
+}
+
+static uint perfect_hash(char const* key, MLuaSymHash const* h,
+                         uint8_t const* g) {
+    return (g[hash(key, h->seed1) % h->ng]
+            + g[hash(key, h->seed2) % h->ng]) % h->nkeys;
+}
+
+int hashed_index(lua_State* ls) {
+    if (lua_isstring(ls, 2)) {
+        MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
+        uint8_t const* g = lua_touserdata(ls, lua_upvalueindex(3));
+        char const* key = lua_tostring(ls, 2);
+        MLuaSym const* field = lua_touserdata(ls, lua_upvalueindex(1));
+        uint kh = perfect_hash(key, h, g);
+        field += kh;
+#if 1
+        char const* name = field->name;
+        if (name[0] == '@' && name[1] == '_') name += 2;
+        if (strcmp(key, field->name) != 0) {
+            return luaL_error(ls, "bad symbol hash: %s -> %d", key, kh);
+        }
+#endif
+        field->push(ls, field);
+        return 1;
+    }
+    return mlua_index_undefined(ls);
+}
+
+void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr,
+                      int nrec, MLuaSymHash const* h, uint8_t const* g) {
+    if (nrec != h->nkeys) {
+        luaL_error(ls, "key count mismatch: %d symbols, hash computed for %d",
+                   nrec, h->nkeys);
+        return;
+    }
+    lua_createtable(ls, narr, 0);
+    lua_createtable(ls, 0, 1);
+    lua_pushlightuserdata(ls, (void*)fields);
+    lua_pushlightuserdata(ls, (void*)h);
+    lua_pushlightuserdata(ls, (void*)g);
+    lua_pushcclosure(ls, &hashed_index, 3);
+    lua_setfield(ls, -2, "__index");
+    lua_setmetatable(ls, -2);
+}
+
+#else  // !MLUA_HASH_SYMBOL_TABLES
+
 void mlua_new_module_(lua_State* ls, MLuaSym const* fields, int narr,
                       int nrec) {
     mlua_new_table_(ls, fields, narr, nrec);
     luaL_getmetatable(ls, Strict_name);
     lua_setmetatable(ls, -2);
 }
+
+#endif  // !MLUA_HASH_SYMBOL_TABLES
 
 void mlua_new_class_(lua_State* ls, char const* name, MLuaSym const* fields,
                      int cnt) {
@@ -114,19 +181,11 @@ static int global_yield_enabled(lua_State* ls) {
     return 1;
 }
 
-static int Function___close_1(lua_State* ls, int status, lua_KContext ctx) {
-    return 0;
-}
-
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.
-    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &Function___close_1);
-    return Function___close_1(ls, LUA_OK, 0);
-}
-
-int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
-    return ctx;
+    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &mlua_cont_return_ctx);
+    return 0;
 }
 
 int mlua_thread_meta(lua_State* ls, char const* name) {

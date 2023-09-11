@@ -65,7 +65,7 @@ function(mlua_register_module TARGET SCOPE MOD)
         # Nothing to do
     elseif(DEFINED args_LUA)
         mlua_want_lua()
-        get_filename_component(SRC "${args_LUA}" ABSOLUTE)
+        cmake_path(ABSOLUTE_PATH args_LUA OUTPUT_VARIABLE SRC)
         set(DATA "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.data.h")
         add_custom_command(
             COMMENT "Compiling Lua source ${DATA}"
@@ -89,7 +89,7 @@ function(mlua_register_module TARGET SCOPE MOD)
         target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
     elseif(DEFINED args_HEADER)
         mlua_want_lua()
-        get_filename_component(SRC "${args_HEADER}" ABSOLUTE)
+        cmake_path(ABSOLUTE_PATH args_HEADER OUTPUT_VARIABLE SRC)
         set(INCLUDE "#include \"${SRC}\"")
         set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
         add_custom_command(
@@ -124,7 +124,20 @@ endfunction()
 
 function(mlua_add_c_module TARGET)
     pico_add_library("${TARGET}")
-    target_sources("${TARGET}" INTERFACE "${ARGN}")
+    foreach(src IN LISTS ARGN)
+        cmake_path(ABSOLUTE_PATH src)
+        cmake_path(GET src FILENAME name)
+        set(dest "${CMAKE_CURRENT_BINARY_DIR}/${name}")
+        mlua_want_lua()
+        add_custom_command(
+            COMMENT "Pre-processing C module file ${dest}"
+            DEPENDS "${src}"
+            OUTPUT "${dest}"
+            COMMAND Lua "${MLUA_PATH}/tools/gen.lua" "cmod" "${src}" "${dest}"
+            VERBATIM
+        )
+        target_sources("${TARGET}" INTERFACE "${dest}")
+    endforeach()
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
@@ -135,7 +148,7 @@ endfunction()
 function(mlua_add_lua_modules TARGET)
     pico_add_library("${TARGET}")
     foreach(SRC IN LISTS ARGN)
-        get_filename_component(MOD "${SRC}" NAME_WLE)
+        cmake_path(GET SRC STEM LAST_ONLY MOD)
         mlua_register_module("${TARGET}" INTERFACE "${MOD}" LUA "${SRC}")
     endforeach()
 endfunction()

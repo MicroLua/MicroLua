@@ -1,5 +1,6 @@
 _ENV = mlua.Module(...)
 
+local config = require 'mlua.config'
 local io = require 'mlua.io'
 local pico = require 'pico'
 local table = require 'table'
@@ -22,10 +23,8 @@ function test_variable_access(t)
     public_var2 = 'public2'
 
     -- Unqualified.
-    local ok, err = pcall(function() return UNKNOWN end)
-    t:assert(not ok, "Lookup succeeded, got: %s", err)
-    t:expect(err:find("undefined symbol: UNKNOWN$"),
-             "Unexpected error: %q", err)
+    t:expect(function() return UNKNOWN end)
+        :label("unqualified symbol lookup"):raises("undefined symbol: UNKNOWN$")
 
     -- In globals.
     t:expect(not has(_G, 'private_var'), "private_var is in _G")
@@ -46,16 +45,17 @@ function test_variable_access(t)
 end
 
 function test_strict(t)
+    local want_c = config.HASH_SYMBOL_TABLES == 0 and "undefined symbol" or nil
     for _, test in ipairs{
-        {"Lua module", require(module_name)},
-        {"C module", pico},
-        {"C class", stderr},
+        {"Lua module", require(module_name), "undefined symbol"},
+        {"C module", pico, want_c},
+        {"C class", stderr, "undefined symbol"},
     } do
-        local desc, tab = table.unpack(test)
-        local ok, err = pcall(function() return tab.UNKNOWN end)
-        t:assert(not ok, "%s: Lookup succeeded, got: %s", desc, err)
-        t:expect(err:find("undefined symbol: UNKNOWN$"),
-                 "Unexpected error: %q", err)
+        local desc, tab, want = table.unpack(test)
+        if want then
+            t:expect(function() return tab.UNKNOWN end)
+                :label("%s attribute access", desc):raises(want)
+        end
     end
 
 end

@@ -79,6 +79,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(fifo_drain, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(fifo_enable_irq, mod_),
+#else
+    MLUA_SYM_V(fifo_enable_irq, boolean, false),
 #endif
 };
 

@@ -181,6 +181,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(get_status, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(enable_irq, mod_),
+#else
+    MLUA_SYM_V(enable_irq, boolean, false),
 #endif
 };
 

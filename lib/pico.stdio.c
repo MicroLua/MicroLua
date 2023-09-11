@@ -205,11 +205,15 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(puts_raw, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(set_chars_available_callback, mod_),
+#else
+    MLUA_SYM_V(set_chars_available_callback, boolean, false),
 #endif
     MLUA_SYM_F(read, mod_),
     MLUA_SYM_F(write, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(enable_chars_available, mod_),
+#else
+    MLUA_SYM_V(enable_chars_available, boolean, false),
 #endif
 };
 

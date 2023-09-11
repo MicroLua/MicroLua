@@ -2,6 +2,7 @@ _ENV = mlua.Module(...)
 
 local uart = require 'hardware.uart'
 local math = require 'math'
+local config = require 'mlua.config'
 local list = require 'mlua.list'
 local testing_uart = require 'mlua.testing.uart'
 local thread = require 'mlua.thread'
@@ -9,10 +10,12 @@ local time = require 'pico.time'
 local string = require 'string'
 
 function test_strict(t)
-    local ok = pcall(function() return uart.UNKNOWN end)
-    t:expect(not ok, "module is non-strict")
-    local ok = pcall(function() return uart[0].UNKNOWN end)
-    t:expect(not ok, "Uart instance is non-strict")
+    if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
+    t:expect(function() return uart.UNKNOWN end)
+        :label("module attribute access"):raises("undefined symbol")
+    local u = uart[0]
+    t:expect(function() return u.UNKNOWN end)
+        :label("Uart instance attribute access"):raises("undefined symbol")
 end
 
 local function setup(t)

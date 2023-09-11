@@ -312,6 +312,8 @@ MLUA_SYMBOLS(Uart_syms) = {
     MLUA_SYM_F(enable_loopback, Uart_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(enable_irq, Uart_),
+#else
+    MLUA_SYM_V(enable_irq, boolean, false),
 #endif
 };
 

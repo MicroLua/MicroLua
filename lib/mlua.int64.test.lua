@@ -1,6 +1,7 @@
 _ENV = mlua.Module(...)
 
 local math = require 'math'
+local config = require 'mlua.config'
 local int64 = require 'mlua.int64'
 local util = require 'mlua.util'
 local string = require 'string'
@@ -16,10 +17,12 @@ function set_up(t)
 end
 
 function test_strict(t)
-    local ok = pcall(function() return int64.UNKNOWN end)
-    t:expect(not ok, "int64 class is non-strict")
-    local ok = pcall(function() return int64(0).UNKNOWN end)
-    t:expect(not ok, "int64 instance is non-strict")
+    if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
+    t:expect(function() return int64.UNKNOWN end)
+        :label("int64 class attribute access"):raises("undefined symbol")
+    local i = int64(0)
+    t:expect(function() return i.UNKNOWN end)
+        :label("int64 instance attribute access"):raises("undefined symbol")
 end
 
 function test_limits(t)

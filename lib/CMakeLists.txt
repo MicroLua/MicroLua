@@ -424,6 +424,7 @@ target_compile_definitions(mlua_tests PRIVATE
     PICO_MAX_SHARED_IRQ_HANDLERS=16
 )
 mlua_target_config(mlua_tests
+    HASH_SYMBOL_TABLES:integer=MLUA_HASH_SYMBOL_TABLES
     a:integer=1
     b:string=\"test\"
 )

@@ -140,6 +140,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(is_claimed, mod_),
 #if LIB_MLUA_MOD_MLUA_EVENT
     MLUA_SYM_F(set_callback, mod_),
+#else
+    MLUA_SYM_V(set_callback, boolean, false),
 #endif
     MLUA_SYM_F(set_target, mod_),
     MLUA_SYM_F(cancel, mod_),
