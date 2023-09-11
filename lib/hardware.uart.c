@@ -324,7 +324,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(PARITY_NONE, integer, UART_PARITY_NONE),
     MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
-    MLUA_SYM_V(@_default, boolean, false),
+    MLUA_SYM_V(_default, boolean, false),
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT

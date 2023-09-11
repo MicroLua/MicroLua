@@ -160,9 +160,9 @@ CMod.__index = CMod
 function CMod:line(line, out)
     out:write(line)
     if self.syms then
-        local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_@][%w_]*)%s*,')
+        local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
         if sym then
-            if sym:sub(1, 2) == '@_' then sym = sym:sub(3) end
+            if sym:match('^_[^_]') then sym = sym:sub(2) end
             if not self.seen[sym] then
                 table.insert(self.syms, sym)
                 self.seen[sym] = true

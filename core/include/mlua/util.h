@@ -81,6 +81,8 @@ int mlua_index_undefined(lua_State* ls);
 
 extern spin_lock_t* mlua_lock;
 
+// TODO: Remove the "name" field for hashed tables
+
 typedef struct MLuaSym {
     char const* name;
     void (*push)(lua_State*, struct MLuaSym const*);

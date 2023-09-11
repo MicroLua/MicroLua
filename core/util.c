@@ -68,7 +68,7 @@ void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
     for (; cnt > 0; --cnt, ++fields) {
         fields->push(ls, fields);
         char const* name = fields->name;
-        if (name[0] == '@' && name[1] == '_') name += 2;
+        if (name[0] == '_' && name[1] != '_') ++name;
         lua_setfield(ls, -2, name);
     }
 }
@@ -136,9 +136,10 @@ static int hashed_index(lua_State* ls) {
         MLuaSym const* field = lua_touserdata(ls, lua_upvalueindex(1));
         uint kh = perfect_hash(key, h, g);
         field += kh;
+        // TODO: Allow disabling the name check
 #if 1
         char const* name = field->name;
-        if (name[0] == '@' && name[1] == '_') name += 2;
+        if (name[0] == '_' && name[1] != '_') ++name;
         if (strcmp(key, field->name) != 0) {
             return luaL_error(ls, "bad symbol hash: %s -> %d", key, kh);
         }
