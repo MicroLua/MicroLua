@@ -7,6 +7,6 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(@MOD@) {
-    mlua_new_table(ls, 0, module_syms);  // Intentionally non-strict
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }

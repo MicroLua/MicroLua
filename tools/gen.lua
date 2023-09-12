@@ -244,7 +244,7 @@ function cmd_configmod(mod, template, output, ...)
     end
     local tmpl = read_file(template)
     local sub = {MOD = mod, SYMBOLS = table.concat(syms, '\n')}
-    write_file(output, tmpl:gsub('@(%u+)@', sub))
+    write_file(output, preprocess_cmod(tmpl:gsub('@(%u+)@', sub)))
 end
 
 -- Generate a C file that registers a core C module.
@@ -284,8 +284,7 @@ function cmd_headermod(mod, include, defines, template, output)
     local sub = {
         MOD = mod, INCLUDE = include, SYMBOLS = table.concat(symdefs, '\n'),
     }
-    write_file(output, tmpl:gsub('@(%u+)@', sub))
-
+    write_file(output, preprocess_cmod(tmpl:gsub('@(%u+)@', sub)))
 end
 
 -- Compile a Lua module and return the generated chunk as C array data.
