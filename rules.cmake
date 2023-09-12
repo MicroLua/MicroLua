@@ -79,33 +79,6 @@ function(mlua_add_core_library TARGET)
     endforeach()
 endfunction()
 
-function(mlua_register_module TARGET SCOPE MOD)
-    cmake_parse_arguments(PARSE_ARGV 3 args "" "HEADER" "")
-    if(DEFINED args_HEADER)
-        mlua_want_lua()
-        cmake_path(ABSOLUTE_PATH args_HEADER OUTPUT_VARIABLE SRC)
-        set(INCLUDE "#include \"${SRC}\"")
-        set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
-        add_custom_command(
-            COMMENT "Generating symbols for header ${SYMBOLS}"
-            OUTPUT "${SYMBOLS}"
-            DEPENDS "${SRC}"
-            COMMAND "${CMAKE_C_COMPILER}" -E -dD -o "${SYMBOLS}.names" "${SRC}"
-            COMMAND Lua "${MLUA_PATH}/tools/embed_header.lua"
-                "${SYMBOLS}.names" "${SYMBOLS}"
-            VERBATIM
-        )
-        target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
-    else()
-        message(FATAL_ERROR "No module type found")
-    endif()
-    string(REPLACE "." "_" SYM "${MOD}")
-    set(REG_C "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.c")
-    configure_file("${MLUA_PATH}/core/module_register.in.c" "${REG_C}")
-    target_sources("${TARGET}" "${SCOPE}" "${REG_C}")
-    target_link_libraries("${TARGET}" "${SCOPE}" mlua_core mlua_core_main)
-endfunction()
-
 function(mlua_add_core_c_module_noreg MOD)
     mlua_add_core_library("mlua_mod_${MOD}" "${ARGN}")
     target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core)
@@ -150,7 +123,22 @@ endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
     pico_add_library("${TARGET}")
-    mlua_register_module("${TARGET}" INTERFACE "${MOD}" HEADER "${SRC}")
+    mlua_want_lua()
+    cmake_path(ABSOLUTE_PATH SRC)
+    set(template "${MLUA_PATH}/core/module_header.in.c")
+    set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}.c")
+    add_custom_command(
+        COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
+        DEPENDS "${GEN}" "${SRC}" "${template}"
+        OUTPUT "${output}"
+        COMMAND "${CMAKE_C_COMPILER}" -E -dD -o "${output}.syms" "${SRC}"
+        COMMAND Lua "${GEN}"
+            "headermod" "${MOD}" "${SRC}" "${output}.syms" "${template}"
+            "${output}"
+        VERBATIM
+    )
+    mlua_add_gen_target("${TARGET}" mlua_gen_header INTERFACE "${output}")
+    target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_add_lua_modules TARGET)

@@ -1,10 +1,11 @@
 #include "mlua/module.h"
 
-@INCLUDE@
+#include "@INCLUDE@"
+
 #include "mlua/util.h"
 
 MLUA_SYMBOLS(module_syms) = {
-#include "@SYMBOLS@"
+@SYMBOLS@
 };
 
 MLUA_OPEN_MODULE(@MOD@) {

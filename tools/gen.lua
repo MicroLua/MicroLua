@@ -2,7 +2,11 @@
 -- available:
 --
 --  - cmod: Pre-process a C module source file.
+--  - configmod: Generate a C module providing symbols defined in the build
+--    system.
 --  - coremod: Generate a C file that registers a core C module.
+--  - headermod: Generate a C module providing the preprocessor symbols defined
+--    by a header file.
 --  - luamod: Generate a C module from a Lua source file.
 
 local io = require 'io'
@@ -224,11 +228,12 @@ local function preprocess_cmod(text)
     return table.concat(out)
 end
 
--- Preprocess C a module source file.
+-- Preprocess a C module source file.
 function cmd_cmod(input, output)
     write_file(output, preprocess_cmod(read_file(input)))
 end
 
+-- Generate a C module providing symbols defined in the build system.
 function cmd_configmod(mod, template, output, ...)
     local syms = {}
     for _, sym in ipairs(table.pack(...)) do
@@ -247,6 +252,40 @@ function cmd_coremod(mod, template, output)
     local tmpl = read_file(template)
     local sub = {MOD = mod, SYM = mod:gsub('%.', '_')}
     write_file(output, tmpl:gsub('@(%u+)@', sub))
+end
+
+-- Parse preprocessor symbols that define values.
+function parse_defines(text)
+    local syms = {}
+    for line in lines(text) do
+        local sym = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) .+\n$')
+        if sym then syms[sym] = true end
+    end
+    local res = {}
+    for sym in pairs(syms) do table.insert(res, sym) end
+    table.sort(res)
+    return res
+end
+
+-- Generate a C module providing the preprocessor symbols defined by a header
+-- file.
+function cmd_headermod(mod, include, defines, template, output)
+    local symdefs = {}
+    for _, sym in ipairs(parse_defines(read_file(defines))) do
+        table.insert(symdefs, ('#ifdef %s'):format(sym))
+        table.insert(symdefs,
+            ('    MLUA_SYM_V(%s, integer, %s),'):format(sym, sym))
+        table.insert(symdefs, '#else')
+        table.insert(symdefs,
+            ('    MLUA_SYM_V(%s, boolean, false),'):format(sym))
+        table.insert(symdefs, '#endif')
+    end
+    local tmpl = read_file(template)
+    local sub = {
+        MOD = mod, INCLUDE = include, SYMBOLS = table.concat(symdefs, '\n'),
+    }
+    write_file(output, tmpl:gsub('@(%u+)@', sub))
+
 end
 
 -- Compile a Lua module and return the generated chunk as C array data.
