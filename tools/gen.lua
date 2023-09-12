@@ -11,13 +11,15 @@ local string = require 'string'
 local table = require 'table'
 
 -- Raise an error without position information.
-local function raise(msg) return error(msg, 0) end
+local function raise(format, format, ...)
+    return error(format:format(...), 0)
+end
 
 -- Raise an error if the first argument is false, otherwise return all
 -- arguments.
 local function assert(...)
     local ok, msg = ...
-    if not ok then return raise(msg) end
+    if not ok then return error(msg, 0) end
     return ...
 end
 
@@ -48,7 +50,7 @@ local function write_file(path, data)
         if ok then ok, err = os.rename(tmp, path) end
         if not ok then
             os.remove(tmp)
-            raise(err)
+            error(err, 0)
         end
     end)
     local f<close> = assert(io.open(tmp, 'w'))
@@ -225,6 +227,19 @@ end
 -- Preprocess C a module source file.
 function cmd_cmod(input, output)
     write_file(output, preprocess_cmod(read_file(input)))
+end
+
+function cmd_configmod(mod, template, output, ...)
+    local syms = {}
+    for _, sym in ipairs(table.pack(...)) do
+        local name, typ, value = sym:match('^([^:]+):([^=]+)=(.*)$')
+        if not name then raise("invalid symbol definition: %s", sym) end
+        table.insert(syms,
+            ('    MLUA_SYM_V(%s, %s, %s),'):format(name, typ, value))
+    end
+    local tmpl = read_file(template)
+    local sub = {MOD = mod, SYMBOLS = table.concat(syms, '\n')}
+    write_file(output, tmpl:gsub('@(%u+)@', sub))
 end
 
 -- Generate a C file that registers a core C module.

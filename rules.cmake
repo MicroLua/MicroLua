@@ -73,20 +73,8 @@ function(mlua_add_core_library TARGET)
 endfunction()
 
 function(mlua_register_module TARGET SCOPE MOD)
-    cmake_parse_arguments(PARSE_ARGV 3 args "" "CONFIG;HEADER" "")
-    if(DEFINED args_CONFIG)
-        mlua_want_lua()
-        set(SYMBOLS "${CMAKE_CURRENT_BINARY_DIR}/module_register_${MOD}.syms.h")
-        add_custom_command(
-            COMMENT "Generating symbols for config ${SYMBOLS}"
-            OUTPUT "${SYMBOLS}"
-            COMMAND Lua "${MLUA_PATH}/tools/embed_config.lua"
-                "${SYMBOLS}" "${args_CONFIG}"
-            COMMAND_EXPAND_LISTS
-            VERBATIM
-        )
-        target_sources("${TARGET}" "${SCOPE}" "${SYMBOLS}")
-    elseif(DEFINED args_HEADER)
+    cmake_parse_arguments(PARSE_ARGV 3 args "" "HEADER" "")
+    if(DEFINED args_HEADER)
         mlua_want_lua()
         cmake_path(ABSOLUTE_PATH args_HEADER OUTPUT_VARIABLE SRC)
         set(INCLUDE "#include \"${SRC}\"")
@@ -190,8 +178,24 @@ endfunction()
 
 # TARGET must be a binary target.
 function(mlua_add_config_module TARGET)
-    mlua_register_module("${TARGET}" PRIVATE mlua.config CONFIG
-                         "$<TARGET_PROPERTY:${TARGET},mlua_config_symbols>")
+    mlua_want_lua()
+    set(template "${MLUA_PATH}/core/module_config.in.c")
+    set(output "${CMAKE_CURRENT_BINARY_DIR}/mlua.config_${TARGET}.c")
+    add_custom_command(
+        COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
+        DEPENDS "${GEN}" "${template}"
+        OUTPUT "${output}"
+        COMMAND Lua "${GEN}"
+            "configmod" "mlua.config" "${template}" "${output}"
+            "$<TARGET_PROPERTY:${TARGET},mlua_config_symbols>"
+        COMMAND_EXPAND_LISTS
+        VERBATIM
+    )
+    mlua_num_target(gtarget mlua_gen_config)
+    add_custom_target("${gtarget}" DEPENDS "${output}")
+    add_dependencies("${TARGET}" "${gtarget}")
+    target_sources("${TARGET}" PRIVATE "${output}")
+    target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
 function(mlua_target_config TARGET)
