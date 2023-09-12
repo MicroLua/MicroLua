@@ -29,11 +29,11 @@ function(mlua_num_target VAR PREFIX)
     set_property(GLOBAL PROPERTY "${prop}" "${id}")
 endfunction()
 
-function(mlua_add_gen_target TARGET PREFIX)
+function(mlua_add_gen_target TARGET PREFIX SCOPE)
     mlua_num_target(gtarget "${PREFIX}")
     add_custom_target("${gtarget}" DEPENDS "${ARGN}")
     add_dependencies("${TARGET}" "${gtarget}")
-    target_sources("${TARGET}" INTERFACE "${ARGN}")
+    target_sources("${TARGET}" "${SCOPE}" "${ARGN}")
 endfunction()
 
 function(mlua_core_filenames VAR GLOB)
@@ -124,7 +124,7 @@ function(mlua_add_core_c_module MOD)
             "coremod" "${MOD}" "${template}" "${output}"
         VERBATIM
     )
-    mlua_add_gen_target("mlua_mod_${MOD}" mlua_gen_core "${output}")
+    mlua_add_gen_target("mlua_mod_${MOD}" mlua_gen_core INTERFACE "${output}")
     target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
@@ -143,7 +143,7 @@ function(mlua_add_c_module TARGET)
                 "cmod" "${src}" "${output}"
             VERBATIM
         )
-        mlua_add_gen_target("${TARGET}" mlua_gen_core "${output}")
+        mlua_add_gen_target("${TARGET}" mlua_gen_core INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
@@ -169,7 +169,7 @@ function(mlua_add_lua_modules TARGET)
                 "luamod" "${mod}" "${src}" "${template}" "${output}"
             VERBATIM
         )
-        mlua_add_gen_target("${TARGET}" mlua_gen_lua "${output}")
+        mlua_add_gen_target("${TARGET}" mlua_gen_lua INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
@@ -189,7 +189,7 @@ function(mlua_add_config_module TARGET)
         COMMAND_EXPAND_LISTS
         VERBATIM
     )
-    mlua_add_gen_target("${TARGET}" mlua_gen_config "${output}")
+    mlua_add_gen_target("${TARGET}" mlua_gen_config PRIVATE "${output}")
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
 
