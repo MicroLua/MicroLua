@@ -10,12 +10,22 @@ local os = require 'os'
 local string = require 'string'
 local table = require 'table'
 
--- Same as assert(), but without adding error position information.
-local function check(...)
-    local cond, msg = ...
-    if cond then return ... end
-    error(msg, 0)
+-- Raise an error without position information.
+local function raise(msg) return error(msg, 0) end
+
+-- Raise an error if the first argument is false, otherwise return all
+-- arguments.
+local function assert(...)
+    local ok, msg = ...
+    if not ok then return raise(msg) end
+    return ...
 end
+
+-- Print to stdout.
+local function printf(format, ...) io.stdout:write(format:format(...)) end
+
+-- Return a table that calls the given function when it is closed.
+local function defer(fn) return setmetatable({}, {__close = fn}) end
 
 -- Convert a list of values to a list of strings.
 local function to_strings(values)
@@ -23,6 +33,30 @@ local function to_strings(values)
     for _, v in ipairs(values) do table.insert(res, tostring(v)) end
     return res
 end
+
+-- Read a file and return its content.
+local function read_file(path)
+    local f<close> = assert(io.open(path, 'r'))
+    return f:read('a')
+end
+
+-- Write a file atomically.
+local function write_file(path, data)
+    local tmp = path .. '.tmp'
+    local commit<close> = defer(function(_, err)
+        local ok = not err
+        if ok then ok, err = os.rename(tmp, path) end
+        if not ok then
+            os.remove(tmp)
+            raise(err)
+        end
+    end)
+    local f<close> = assert(io.open(tmp, 'w'))
+    assert(f:write(data))
+end
+
+-- Iterate over the lines of the given string.
+local function lines(text) return text:gmatch('[^\n]*\n?') end
 
 local Graph = {}
 Graph.__index = Graph
@@ -156,57 +190,54 @@ local function find_perfect_hash(keys)
     return h
 end
 
-local CMod = {}
-CMod.__index = CMod
-
-function CMod:line(line, out)
-    check(out:write(line))
-    if self.syms then
-        local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
-        if sym then
-            if sym:match('^_[^_]') then sym = sym:sub(2) end
-            if not self.seen[sym] then
-                table.insert(self.syms, sym)
-                self.seen[sym] = true
+-- Preprocess C a module source.
+local function preprocess_cmod(text)
+    local out, name, syms, seen = {}
+    for line in lines(text) do
+        table.insert(out, line)
+        if syms then
+            local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
+            if sym then
+                if sym:match('^_[^_]') then sym = sym:sub(2) end
+                if not seen[sym] then
+                    table.insert(syms, sym)
+                    seen[sym] = true
+                end
+            elseif line:match('^%s*}%s*;%s*$') then
+                local h = find_perfect_hash(syms)
+                table.insert(out,
+                    ('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
+                        name, h.seed1, h.seed2, #syms, #h.g))
+                table.insert(out,
+                    ('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
+                        name, table.concat(to_strings(h.g), ",")))
+                name, syms, seen = nil, nil, nil
             end
-        elseif line:match('^%s*}%s*;%s*$') then
-            local h = find_perfect_hash(self.syms)
-            check(out:write(('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
-                self.name, h.seed1, h.seed2, #self.syms, #h.g)))
-            check(out:write(('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
-                self.name, table.concat(to_strings(h.g), ","))))
-            self.name, self.syms, self.seen = nil, nil, nil
+        else
+            local n = line:match(
+                '^%s*MLUA_SYMBOLS%(%s*([%a_][%w_]*)%s*%)%s*=%s*{%s*$')
+            if n then name, syms, seen = n, {}, {} end
         end
-    else
-        local name = line:match(
-            '^%s*MLUA_SYMBOLS%(%s*([%a_][%w_]*)%s*%)%s*=%s*{%s*$')
-        if name then self.name, self.syms, self.seen = name, {}, {} end
     end
+    return table.concat(out)
 end
 
 -- Preprocess C a module source file.
 function cmd_cmod(input, output)
-    local fi<close> = check(io.open(input, 'r'))
-    local fo<close> = check(io.open(output, 'w'))
-    local state = setmetatable({}, CMod)
-    for line in fi:lines('L') do state:line(line, fo) end
+    write_file(output, preprocess_cmod(read_file(input)))
 end
 
 -- Generate a C file that registers a core C module.
 function cmd_coremod(mod, template, output)
-    local ft<close> = check(io.open(template, 'r'))
-    local fo<close> = check(io.open(output, 'w'))
+    local tmpl = read_file(template)
     local sub = {MOD = mod, SYM = mod:gsub('%.', '_')}
-    for line in ft:lines('L') do
-        check(fo:write((line:gsub('@(%u+)@', sub))))
-    end
+    write_file(output, tmpl:gsub('@(%u+)@', sub))
 end
 
 -- Compile a Lua module and return the generated chunk as C array data.
-local function compile_lua(mod, path)
-    -- Load and compile the input file.
-    local f<close> = check(io.open(path, 'r'))
-    local chunk = check(load(function() return f:read(4096) end, '@' .. mod))
+local function compile_lua(mod, src)
+    -- Compile the input file.
+    local chunk = assert(load(src, '@' .. mod))
     local bin = string.dump(chunk)
 
     -- Format the compiled chunk as C array data.
@@ -230,16 +261,14 @@ local function compile_lua(mod, path)
 end
 
 -- Generate a C module from a Lua source file.
-function cmd_luamod(mod, input, template, output)
-    local data = compile_lua(mod, input)
-    local ft<close> = check(io.open(template, 'r'))
-    local fo<close> = check(io.open(output, 'w'))
+function cmd_luamod(mod, src, template, output)
+    local data = compile_lua(mod, read_file(src))
+    local tmpl = read_file(template)
     local sub = {MOD = mod, DATA = data}
-    for line in ft:lines('L') do
-        check(fo:write((line:gsub('@(%u+)@', sub))))
-    end
+    write_file(output, tmpl:gsub('@(%u+)@', sub))
 end
 
+-- Dispatch to the selected sub-command.
 local function main(cmd, ...)
     local fn = _ENV['cmd_' .. cmd]
     if not fn then error(("unknown command: %s"):format(cmd), 0) end
@@ -249,5 +278,5 @@ end
 local ok, err = pcall(main, ...)
 if not ok then
     io.stderr:write(("ERROR: %s\n"):format(err))
-    os.exit(1, true)
+    os.exit(false, true)
 end
