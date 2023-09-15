@@ -189,7 +189,7 @@ MLUA_FUNC_1_1(mod_,, puts, lua_pushinteger, luaL_checkstring)
 MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
 MLUA_SYMBOLS(module_syms) = {
-    //! MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_STDIO_ENABLE_CRLF_SUPPORT),
+    MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_STDIO_ENABLE_CRLF_SUPPORT),
     MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_STDIO_DEFAULT_CRLF),
 
     MLUA_SYM_F(init_all, mod_),
