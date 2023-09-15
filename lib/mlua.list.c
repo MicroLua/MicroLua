@@ -1,7 +1,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 static char const list_name[] = "mlua.list";
 

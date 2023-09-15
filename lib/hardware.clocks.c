@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 MLUA_FUNC_1_5(mod_, clock_, configure, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger,

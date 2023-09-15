@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 MLUA_FUNC_0_0(mod_, stdio_semihosting_, init)
 

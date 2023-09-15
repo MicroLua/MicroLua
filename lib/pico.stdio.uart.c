@@ -4,7 +4,6 @@
 #include "lauxlib.h"
 #include "mlua/hardware.uart.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 MLUA_FUNC_0_0(mod_, stdio_uart_, init)
 MLUA_FUNC_0_0(mod_init_stdout, stdout_uart_init,)

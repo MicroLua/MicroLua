@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 char const __flash_binary_start;
 char const __flash_binary_end;

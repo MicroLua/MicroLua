@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 static int mod_get_unique_board_id(lua_State* ls) {
     pico_unique_board_id_t id;

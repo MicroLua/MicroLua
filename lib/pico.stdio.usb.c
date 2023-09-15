@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 MLUA_FUNC_1_0(mod_, stdio_usb_, init, lua_pushboolean)
 MLUA_FUNC_1_0(mod_, stdio_usb_, connected, lua_pushboolean)

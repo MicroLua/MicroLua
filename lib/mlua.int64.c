@@ -9,7 +9,6 @@
 #include <stdio.h>
 
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 static char const int64_name[] = "mlua.int64";
 
