@@ -80,7 +80,7 @@ void mlua_new_class_nohash_(lua_State* ls, char const* name,
     lua_setmetatable(ls, -2);
 }
 
-#define HASH_MULT 0x01000193
+#define HASH_MULT 0x13
 
 static uint32_t hash(char const* key, uint32_t seed) {
     for (;;) {

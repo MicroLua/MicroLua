@@ -132,10 +132,11 @@ function Graph:assign()
     return true
 end
 
--- TODO: Tune the hash multiplier
-local hash_mult = 0x01000193
+-- FNV-1a defines 0x01000193 as the hash multiplier for 32 bits, but this works
+-- just as well and is faster to compute (fewer 1 bits).
+local hash_mult = 0x13
 
--- Compute an FNV-1a hash of the given key, with a specific seed value.
+-- Compute an FNV-1a style hash of the given key, with a specific seed value.
 local function hash(key, seed)
     for i = 1, #key do
         seed = (seed ~ key:byte(i)) * hash_mult
