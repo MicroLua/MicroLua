@@ -122,19 +122,24 @@ function(mlua_add_c_module TARGET)
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
+    cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE")
     pico_add_library("${TARGET}")
     mlua_want_lua()
     cmake_path(ABSOLUTE_PATH SRC)
     set(template "${MLUA_PATH}/core/module_header.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}.c")
+    set(incdirs "$<TARGET_PROPERTY:${TARGET},INTERFACE_INCLUDE_DIRECTORIES>")
     add_custom_command(
         COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
         DEPENDS "${GEN}" "${SRC}" "${template}"
         OUTPUT "${output}"
-        COMMAND "${CMAKE_C_COMPILER}" -E -dD -o "${output}.syms" "${SRC}"
+        COMMAND "${CMAKE_C_COMPILER}" -E -dD
+            "$<$<BOOL:${incdirs}>:-I$<JOIN:${incdirs},;-I>>"
+            -o "${output}.syms" "${SRC}"
         COMMAND Lua "${GEN}"
             "headermod" "${MOD}" "${SRC}" "${output}.syms" "${template}"
-            "${output}"
+            "${output}" "${args_EXCLUDE}"
+        COMMAND_EXPAND_LISTS
         VERBATIM
     )
     mlua_add_gen_target("${TARGET}" mlua_gen_header INTERFACE "${output}")

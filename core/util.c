@@ -122,19 +122,34 @@ static uint32_t hash(char const* key, uint32_t seed) {
     }
 }
 
-static uint perfect_hash(char const* key, MLuaSymHash const* h,
-                         uint8_t const* g) {
-    return (g[hash(key, h->seed1) % h->ng]
-            + g[hash(key, h->seed2) % h->ng]) % h->nkeys;
+static uint32_t lookup_g(uint8_t const* g, uint32_t index, int bits) {
+    if (bits == 0) return 0;
+    uint32_t bi = index * bits;
+    g += bi / 8;
+    uint32_t value = (uint32_t)g[0];
+    int shift = bi % 8;
+    int be = bits + shift;
+    if (be > 8) {
+        value |= ((uint32_t)g[1] << 8);
+        if (be > 16) value |= ((uint32_t)g[2] << 16);
+    }
+    return (value >> shift) & ((1u << bits) - 1);
+}
+
+static uint32_t perfect_hash(char const* key, MLuaSymHash const* h,
+                             uint8_t const* g, int bits) {
+    return (lookup_g(g, hash(key, h->seed1) % h->ng, bits)
+            + lookup_g(g, hash(key, h->seed2) % h->ng, bits)) % h->nkeys;
 }
 
 static int hashed_index(lua_State* ls) {
     if (lua_isstring(ls, 2)) {
         MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
         uint8_t const* g = lua_touserdata(ls, lua_upvalueindex(3));
+        int bits = lua_tointeger(ls, lua_upvalueindex(4));
         char const* key = lua_tostring(ls, 2);
         MLuaSym const* field = lua_touserdata(ls, lua_upvalueindex(1));
-        uint kh = perfect_hash(key, h, g);
+        uint32_t kh = perfect_hash(key, h, g, bits);
         field += kh;
         // TODO: Allow disabling the name check
 #if 1
@@ -147,9 +162,15 @@ static int hashed_index(lua_State* ls) {
         field->push(ls, field);
         return 1;
     }
-    if (lua_toboolean(ls, lua_upvalueindex(4))) return mlua_index_undefined(ls);
+    if (lua_toboolean(ls, lua_upvalueindex(5))) return mlua_index_undefined(ls);
     lua_pushnil(ls);
     return 1;
+}
+
+static int key_bits(uint16_t nkeys) {
+    for (int i = 0; ; ++i) {
+        if (nkeys <= ((uint32_t)1u << i)) return i;
+    }
 }
 
 static void set_hashed_metatable(lua_State* ls, MLuaSym const* fields, int cnt,
@@ -163,8 +184,9 @@ static void set_hashed_metatable(lua_State* ls, MLuaSym const* fields, int cnt,
     lua_pushlightuserdata(ls, (void*)fields);
     lua_pushlightuserdata(ls, (void*)h);
     lua_pushlightuserdata(ls, (void*)g);
+    lua_pushinteger(ls, key_bits(h->nkeys));
     lua_pushboolean(ls, strict);
-    lua_pushcclosure(ls, &hashed_index, 4);
+    lua_pushcclosure(ls, &hashed_index, 5);
     lua_setfield(ls, -2, "__index");
     lua_setmetatable(ls, -2);
 }

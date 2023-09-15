@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-// TODO: Separate switches for modules and classes
+// TODO: Use separate switches for modules and classes
 #ifndef MLUA_HASH_SYMBOL_TABLES
 #define MLUA_HASH_SYMBOL_TABLES 1
 #endif
@@ -83,6 +83,7 @@ int mlua_index_undefined(lua_State* ls);
 extern spin_lock_t* mlua_lock;
 
 // TODO: Remove the "name" field for hashed tables
+// TODO: Move symbol registration stuff to module.[hc]
 
 typedef struct MLuaSym {
     char const* name;

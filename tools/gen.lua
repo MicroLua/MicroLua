@@ -10,12 +10,13 @@
 --  - luamod: Generate a C module from a Lua source file.
 
 local io = require 'io'
+local math = require 'math'
 local os = require 'os'
 local string = require 'string'
 local table = require 'table'
 
 -- Raise an error without position information.
-local function raise(format, format, ...)
+local function raise(format, ...)
     return error(format:format(...), 0)
 end
 
@@ -131,6 +132,7 @@ function Graph:assign()
     return true
 end
 
+-- TODO: Tune the hash multiplier
 local hash_mult = 0x01000193
 
 -- Compute an FNV-1a hash of the given key, with a specific seed value.
@@ -161,15 +163,18 @@ local function find_perfect_hash(keys)
     --  - c <= 2: The probability of finding an acyclic graph tends towards
     --            zero as the number of keys tends towards infinity.
     --  - c > 2: The probability tends towards sqrt((c - 2) / 2).
-    local nv = nk + 1  -- Number of vertices
+    -- For small key counts, we start at the minimum number of vertices and
+    -- increase if too many attempts are needed. And for large key counts, we
+    -- use the lowest number for which the probability is finite.
+    local nvmax = 2 * nk + 1
+    local nv = nk < 100 and nk + 1 or nvmax  -- Number of vertices
     local seed1, seed2 = 1, 2  -- Hash seeds
 
     -- Generate graphs from hash pairs until the assignment step succeeds, i.e.
-    -- the graph is acyclic. We start with the minimum number of vertices, and
-    -- increase it if too many attempts are required.
+    -- the graph is acyclic.
     local h, attempt = nil, 1
     while true do
-        if attempt % 100 == 0 then nv = nv + 1 end
+        if attempt % 100 == 0 and nv < nvmax then nv = nv + 1 end
         local g = new_graph(nv, nk)
         for i, key in ipairs(keys) do
             local v1, v2 = hash(key, seed1) % nv + 1, hash(key, seed2) % nv + 1
@@ -196,6 +201,77 @@ local function find_perfect_hash(keys)
     return h
 end
 
+-- Return the number of bits necessary to represent key indices for the given
+-- number of keys.
+local function key_bits(nkeys)
+    for i = 0, 32 do
+        if nkeys <= 1 << i then return i end
+    end
+end
+
+-- Pack the vertex values of a hash as a byte array, using the minimum number of
+-- bits per value.
+local function pack_hash(h)
+    local bits = key_bits(h.nkeys)
+    local data = {}
+    if bits == 0 then return data end
+    for i = 1, (#h.g * bits + 7) // 8 do data[i] = 0 end
+    for i, v in ipairs(h.g) do
+        local bi = (i - 1) * bits
+        v = v << bi % 8
+        local index = bi // 8 + 1
+        while v ~= 0 do
+            data[index] = data[index] | (v & 0xff)
+            v = v >> 8
+            index = index + 1
+        end
+    end
+    return data
+end
+
+-- Check that the packed vertex values unpack to the original values.
+local function check_packed_hash(h, data)
+    local bits = key_bits(h.nkeys)
+    local mask = (1 << bits) - 1
+    for i, gv in ipairs(h.g) do
+        local value = 0
+        if bits > 0 then
+            local bi = (i - 1) * bits
+            local index, shift = bi // 8 + 1, bi % 8
+            value = data[index]
+            local be = bits + shift
+            if be > 8 then
+                value = value | (data[index + 1] << 8)
+                if be > 16 then value = value | (data[index + 2] << 16) end
+            end
+            value = (value >> shift) & mask
+        end
+        if value ~= gv then
+            raise("packed hash inconsistency: index=%s, value=%s, gv=%s", i - 1,
+                  value, gv)
+        end
+    end
+end
+
+-- Format a perfect hash for embedding into a C file.
+local function format_hash(name, h, out)
+    local data = pack_hash(h)
+    check_packed_hash(h, data)
+    table.insert(out,
+        ('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
+            name, h.seed1, h.seed2, h.nkeys, #h.g))
+    table.insert(out,
+        ('MLUA_SYMBOLS_HASH_VALUES(%s) = {\n'):format(name))
+    for i = 0, #data - 1 do
+        table.insert(out, ('0x%02x,'):format(data[i + 1] or 0))
+        if (i + 1) % 16 == 0 then table.insert(out, '\n') end
+    end
+    if #data % 16 > 0 then table.insert(out, '\n') end
+    table.insert(out, '};\n')
+end
+
+local max_syms = 1 << 16
+
 -- Preprocess C a module source.
 local function preprocess_cmod(text)
     local out, name, syms, seen = {}
@@ -210,13 +286,11 @@ local function preprocess_cmod(text)
                     seen[sym] = true
                 end
             elseif line:match('^%s*}%s*;%s*$') then
+                if #syms > max_syms then
+                    raise("too many symbols: got %s, max %s", #syms, max_syms)
+                end
                 local h = find_perfect_hash(syms)
-                table.insert(out,
-                    ('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
-                        name, h.seed1, h.seed2, #syms, #h.g))
-                table.insert(out,
-                    ('MLUA_SYMBOLS_HASH_VALUES(%s) = {%s};\n'):format(
-                        name, table.concat(to_strings(h.g), ",")))
+                format_hash(name, h, out)
                 name, syms, seen = nil, nil, nil
             end
         else
@@ -255,29 +329,35 @@ function cmd_coremod(mod, template, output)
 end
 
 -- Parse preprocessor symbols that define values.
-function parse_defines(text)
+function parse_defines(text, excludes)
     local syms = {}
     for line in lines(text) do
-        local sym = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) .+\n$')
-        if sym then syms[sym] = true end
+        local sym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
+        if not sym then goto continue end
+        for _, exclude in ipairs(excludes) do
+            if sym:match(exclude) then goto continue end
+        end
+        syms[sym] = val:sub(1, 1) == '"' and 'string' or 'integer'
+        ::continue::
     end
-    local res = {}
-    for sym in pairs(syms) do table.insert(res, sym) end
-    table.sort(res)
-    return res
+    return syms
 end
 
 -- Generate a C module providing the preprocessor symbols defined by a header
 -- file.
-function cmd_headermod(mod, include, defines, template, output)
+function cmd_headermod(mod, include, defines, template, output, ...)
+    local syms = parse_defines(read_file(defines), table.pack(...))
+    local names = {}
+    for sym in pairs(syms) do table.insert(names, sym) end
+    table.sort(names)
     local symdefs = {}
-    for _, sym in ipairs(parse_defines(read_file(defines))) do
-        table.insert(symdefs, ('#ifdef %s'):format(sym))
+    for _, name in ipairs(names) do
+        table.insert(symdefs, ('#ifdef %s'):format(name))
         table.insert(symdefs,
-            ('    MLUA_SYM_V(%s, integer, %s),'):format(sym, sym))
+            ('    MLUA_SYM_V(%s, %s, %s),'):format(name, syms[name], name))
         table.insert(symdefs, '#else')
         table.insert(symdefs,
-            ('    MLUA_SYM_V(%s, boolean, false),'):format(sym))
+            ('    MLUA_SYM_V(%s, boolean, false),'):format(name))
         table.insert(symdefs, '#endif')
     end
     local tmpl = read_file(template)
