@@ -9,6 +9,7 @@ local oo = require 'mlua.oo'
 local util = require 'mlua.util'
 local math = require 'math'
 local package = require 'package'
+local pico = require 'pico'
 local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
@@ -495,7 +496,8 @@ function Test:main(runs)
     io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
-    io.printf("Duration: %.3f s, memory: %d bytes\n", dt / 1e6, mem)
+    io.printf("Duration: %.3f s, memory: %d bytes, flash: %d bytes\n",
+              dt / 1e6, mem, pico.flash_binary_end - pico.flash_binary_start)
     io.printf("Result: %s\n", self:result())
 end
 

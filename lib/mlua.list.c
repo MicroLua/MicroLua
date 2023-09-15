@@ -251,13 +251,13 @@ MLUA_SYMBOLS(list_syms) = {
 };
 
 MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
-    MLUA_SYM_F(__len, list_),
-    MLUA_SYM_F(__eq, list_),
-    MLUA_SYM_F(__repr, list_),
+    MLUA_SYM_F_NH(__len, list_),
+    MLUA_SYM_F_NH(__eq, list_),
+    MLUA_SYM_F_NH(__repr, list_),
 };
 
 MLUA_SYMBOLS_NOHASH(list_meta_syms) = {
-    MLUA_SYM_F(__call, list_),
+    MLUA_SYM_F_NH(__call, list_),
 };
 
 MLUA_OPEN_MODULE(mlua.list) {

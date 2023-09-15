@@ -4,7 +4,7 @@
 
 #include "mlua/util.h"
 
-MLUA_SYMBOLS(module_syms) = {
+MLUA_SYMBOLS_HASH(module_syms) = {
 @SYMBOLS@
 };
 

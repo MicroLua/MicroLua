@@ -18,11 +18,11 @@ static void push_absolute_time(lua_State* ls, absolute_time_t t) {
     mlua_push_int64(ls, to_us_since_boot(t));
 }
 
-static void push_at_the_end_of_time(lua_State* ls, MLuaSym const* sym) {
+static void push_at_the_end_of_time(lua_State* ls, MLuaSymVal const* value) {
     push_absolute_time(ls, at_the_end_of_time);
 }
 
-static void push_nil_time(lua_State* ls, MLuaSym const* sym) {
+static void push_nil_time(lua_State* ls, MLuaSymVal const* value) {
     push_absolute_time(ls, nil_time);
 }
 

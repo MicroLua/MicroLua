@@ -147,11 +147,11 @@ void mlua_push_minint(lua_State* ls, int64_t value) {
 #endif
 }
 
-static void int64_max(lua_State* ls, MLuaSym const* sym) {
+static void int64_max(lua_State* ls, MLuaSymVal const* value) {
     mlua_push_int64(ls, INT64_MAX);
 }
 
-static void int64_min(lua_State* ls, MLuaSym const* sym) {
+static void int64_min(lua_State* ls, MLuaSymVal const* value) {
     mlua_push_int64(ls, INT64_MIN);
 }
 
@@ -462,32 +462,32 @@ MLUA_SYMBOLS(int64_syms) = {
 
 MLUA_SYMBOLS_NOHASH(int64_syms_nh) = {
 #if !IS64INT
-    MLUA_SYM_F(__add, int64_),
-    MLUA_SYM_F(__sub, int64_),
-    MLUA_SYM_F(__mul, int64_),
-    MLUA_SYM_F(__idiv, int64_),
-    MLUA_SYM_F(__mod, int64_),
-    MLUA_SYM_F(__unm, int64_),
-    MLUA_SYM_F(__div, int64_),
-    MLUA_SYM_F(__pow, int64_),
-    MLUA_SYM_F(__band, int64_),
-    MLUA_SYM_F(__bor, int64_),
-    MLUA_SYM_F(__bxor, int64_),
-    MLUA_SYM_F(__bnot, int64_),
-    MLUA_SYM_F(__shl, int64_),
-    MLUA_SYM_F(__shr, int64_),
-    MLUA_SYM_F(__eq, int64_),
-    MLUA_SYM_F(__lt, int64_),
-    MLUA_SYM_F(__le, int64_),
-    MLUA_SYM_F(__tostring, int64_),
+    MLUA_SYM_F_NH(__add, int64_),
+    MLUA_SYM_F_NH(__sub, int64_),
+    MLUA_SYM_F_NH(__mul, int64_),
+    MLUA_SYM_F_NH(__idiv, int64_),
+    MLUA_SYM_F_NH(__mod, int64_),
+    MLUA_SYM_F_NH(__unm, int64_),
+    MLUA_SYM_F_NH(__div, int64_),
+    MLUA_SYM_F_NH(__pow, int64_),
+    MLUA_SYM_F_NH(__band, int64_),
+    MLUA_SYM_F_NH(__bor, int64_),
+    MLUA_SYM_F_NH(__bxor, int64_),
+    MLUA_SYM_F_NH(__bnot, int64_),
+    MLUA_SYM_F_NH(__shl, int64_),
+    MLUA_SYM_F_NH(__shr, int64_),
+    MLUA_SYM_F_NH(__eq, int64_),
+    MLUA_SYM_F_NH(__lt, int64_),
+    MLUA_SYM_F_NH(__le, int64_),
+    MLUA_SYM_F_NH(__tostring, int64_),
 #ifndef LUA_NOCVTN2S
-    MLUA_SYM_F(__concat, int64_),
+    MLUA_SYM_F_NH(__concat, int64_),
 #endif  // LUA_NOCVTN2S
 #endif  // !IS64INT
 };
 
 MLUA_SYMBOLS_NOHASH(int64_meta_syms) = {
-    MLUA_SYM_F(__call, int64_),
+    MLUA_SYM_F_NH(__call, int64_),
 };
 
 MLUA_OPEN_MODULE(mlua.int64) {

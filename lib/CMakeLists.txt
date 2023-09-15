@@ -77,8 +77,7 @@ foreach(path IN LISTS paths)
     mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
                            EXCLUDE "_ACCESS$" "^isr_")
     target_link_libraries("${target}" INTERFACE hardware_regs)
-    # TODO: Make the following conditional on a flag
-    # target_link_libraries(mlua_mod_hardware_regs_test INTERFACE "${target}")
+    target_link_libraries(mlua_mod_hardware_regs_test INTERFACE "${target}")
 endforeach()
 
 target_link_libraries(mlua_mod_hardware_regs_test INTERFACE
@@ -440,6 +439,7 @@ add_executable(mlua_tests)
 mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_MAIN_MODULE=mlua.testing
+    MLUA_SYMBOL_HASH_DEBUG=0
     PICO_MAX_SHARED_IRQ_HANDLERS=16
 )
 mlua_target_config(mlua_tests

@@ -258,7 +258,7 @@ local function format_hash(name, h, out)
     local data = pack_hash(h)
     check_packed_hash(h, data)
     table.insert(out,
-        ('MLUA_SYMBOLS_HASH(%s, %s, %s, %s, %s);\n'):format(
+        ('MLUA_SYMBOLS_HASH_PARAMS(%s, %s, %s, %s, %s);\n'):format(
             name, h.seed1, h.seed2, h.nkeys, #h.g))
     table.insert(out,
         ('MLUA_SYMBOLS_HASH_VALUES(%s) = {\n'):format(name))
@@ -294,9 +294,11 @@ local function preprocess_cmod(text)
                 name, syms, seen = nil, nil, nil
             end
         else
-            local n = line:match(
-                '^%s*MLUA_SYMBOLS%(%s*([%a_][%w_]*)%s*%)%s*=%s*{%s*$')
-            if n then name, syms, seen = n, {}, {} end
+            local suffix, n = line:match(
+                '^%s*MLUA_SYMBOLS([%u_]*)%(%s*([%a_][%w_]*)%s*%)%s*=%s*{%s*$')
+            if suffix == '' or suffix == '_HASH' then
+                name, syms, seen = n, {}, {}
+            end
         end
     end
     return table.concat(out)
@@ -314,7 +316,7 @@ function cmd_configmod(mod, template, output, ...)
         local name, typ, value = sym:match('^([^:]+):([^=]+)=(.*)$')
         if not name then raise("invalid symbol definition: %s", sym) end
         table.insert(syms,
-            ('    MLUA_SYM_V(%s, %s, %s),'):format(name, typ, value))
+            ('    MLUA_SYM_V_H(%s, %s, %s),'):format(name, typ, value))
     end
     local tmpl = read_file(template)
     local sub = {MOD = mod, SYMBOLS = table.concat(syms, '\n')}
@@ -354,10 +356,10 @@ function cmd_headermod(mod, include, defines, template, output, ...)
     for _, name in ipairs(names) do
         table.insert(symdefs, ('#ifdef %s'):format(name))
         table.insert(symdefs,
-            ('    MLUA_SYM_V(%s, %s, %s),'):format(name, syms[name], name))
+            ('    MLUA_SYM_V_H(%s, %s, %s),'):format(name, syms[name], name))
         table.insert(symdefs, '#else')
         table.insert(symdefs,
-            ('    MLUA_SYM_V(%s, boolean, false),'):format(name))
+            ('    MLUA_SYM_V_H(%s, boolean, false),'):format(name))
         table.insert(symdefs, '#endif')
     end
     local tmpl = read_file(template)
