@@ -98,7 +98,6 @@ function Expr:__index(k)
 end
 
 function Expr:__call(...)
-    -- TODO: Add support for calls returning multiple values
     local args = list.pack(...)
     list.append(rawget(self, ekey), {
         function(s)

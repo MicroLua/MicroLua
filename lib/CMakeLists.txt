@@ -18,6 +18,20 @@ target_link_libraries(mlua_mod_hardware_adc_test INTERFACE
     mlua_mod_pico_time
 )
 
+mlua_add_c_module(mlua_mod_hardware_base hardware.base.c)
+target_link_libraries(mlua_mod_hardware_base INTERFACE
+    hardware_base
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_base_test
+    hardware.base.test.lua)
+target_link_libraries(mlua_mod_hardware_base_test INTERFACE
+    mlua_mod_hardware_base
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_watchdog
+    mlua_mod_mlua_list
+)
+
 mlua_add_c_module(mlua_mod_hardware_clocks hardware.clocks.c)
 target_link_libraries(mlua_mod_hardware_clocks INTERFACE
     hardware_clocks
