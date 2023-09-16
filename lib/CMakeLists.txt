@@ -152,6 +152,19 @@ target_link_libraries(mlua_mod_hardware_uart_test INTERFACE
     mlua_mod_string
 )
 
+mlua_add_c_module(mlua_mod_hardware_vreg hardware.vreg.c)
+target_link_libraries(mlua_mod_hardware_vreg INTERFACE
+    hardware_vreg
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_vreg_test hardware.vreg.test.lua)
+target_link_libraries(mlua_mod_hardware_vreg_test INTERFACE
+    mlua_mod_hardware_base
+    mlua_mod_hardware_vreg
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_vreg_and_chip_reset
+)
+
 mlua_add_lua_modules(mlua_mod_mlua mlua.lua)
 target_link_libraries(mlua_mod_mlua INTERFACE
     mlua_mod_package
