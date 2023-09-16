@@ -100,6 +100,18 @@ target_link_libraries(mlua_mod_hardware_regs_test INTERFACE
     mlua_mod_hardware_regs_intctrl
 )
 
+mlua_add_c_module(mlua_mod_hardware_sync hardware.sync.c)
+target_link_libraries(mlua_mod_hardware_sync INTERFACE
+    hardware_sync
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_sync_test hardware.sync.test.lua)
+target_link_libraries(mlua_mod_hardware_sync_test INTERFACE
+    mlua_mod_hardware_irq
+    mlua_mod_hardware_sync
+    mlua_mod_mlua_thread
+)
+
 mlua_add_c_module(mlua_mod_hardware_timer hardware.timer.c)
 target_link_libraries(mlua_mod_hardware_timer INTERFACE
     hardware_timer
