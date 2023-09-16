@@ -168,6 +168,16 @@ target_link_libraries(mlua_mod_hardware_vreg_test INTERFACE
     mlua_mod_hardware_regs_vreg_and_chip_reset
 )
 
+mlua_add_c_module(mlua_mod_hardware_xosc hardware.xosc.c)
+target_link_libraries(mlua_mod_hardware_xosc INTERFACE
+    hardware_xosc
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_xosc_test hardware.xosc.test.lua)
+target_link_libraries(mlua_mod_hardware_xosc_test INTERFACE
+    mlua_mod_hardware_xosc
+)
+
 mlua_add_lua_modules(mlua_mod_mlua mlua.lua)
 target_link_libraries(mlua_mod_mlua INTERFACE
     mlua_mod_package
