@@ -65,6 +65,20 @@ end
 -- Iterate over the lines of the given string.
 local function lines(text) return text:gmatch('[^\n]*\n?') end
 
+-- Parse cmake-style keyword arguments.
+local function parse_kwargs(keys, args)
+    local kwargs = {}
+    for _, k in ipairs(keys) do kwargs[k] = {} end
+    local cur
+    for _, a in ipairs(args) do
+        local as = kwargs[a]
+        if as then cur = as
+        elseif cur then table.insert(cur, a)
+        else raise("missing keyword argument") end
+    end
+    return kwargs
+end
+
 local Graph = {}
 Graph.__index = Graph
 
@@ -332,16 +346,25 @@ function cmd_coremod(mod, template, output)
 end
 
 -- Parse preprocessor symbols that define values.
-function parse_defines(text, excludes)
+function parse_defines(text, excludes, strip)
     local syms = {}
     for line in lines(text) do
-        local sym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
-        if not sym then goto continue end
-        local sv = ('%s:%s'):format(sym, val)
+        local csym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
+        if not csym then goto continue end
+        local sv = ('%s:%s'):format(csym, val)
         for _, exclude in ipairs(excludes) do
             if sv:match(exclude) then goto continue end
         end
-        syms[sym] = val:sub(1, 1) == '"' and 'string' or 'integer'
+        local sym = csym
+        for _, strip in ipairs(strip) do
+            local s, e, cs, ce = sym:find(strip)
+            if cs and ce then s, e = cs, ce end
+            if s and e then
+                sym = sym:sub(1, s - 1) .. sym:sub(e + 1)
+                break
+            end
+        end
+        syms[sym] = {val:sub(1, 1) == '"' and 'string' or 'integer', csym}
         ::continue::
     end
     return syms
@@ -350,15 +373,17 @@ end
 -- Generate a C module providing the preprocessor symbols defined by a header
 -- file.
 function cmd_headermod(mod, include, defines, template, output, ...)
-    local syms = parse_defines(read_file(defines), table.pack(...))
+    local kwargs = parse_kwargs({'EXCLUDE', 'STRIP'}, table.pack(...))
+    local syms = parse_defines(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP)
     local names = {}
     for sym in pairs(syms) do table.insert(names, sym) end
     table.sort(names)
     local symdefs = {}
     for _, name in ipairs(names) do
-        table.insert(symdefs, ('#ifdef %s'):format(name))
+        local typ, csym = table.unpack(syms[name])
+        table.insert(symdefs, ('#ifdef %s'):format(csym))
         table.insert(symdefs,
-            ('    MLUA_SYM_V_H(%s, %s, %s),'):format(name, syms[name], name))
+            ('    MLUA_SYM_V_H(%s, %s, %s),'):format(name, typ, csym))
         table.insert(symdefs, '#else')
         table.insert(symdefs,
             ('    MLUA_SYM_V_H(%s, boolean, false),'):format(name))

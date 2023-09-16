@@ -87,9 +87,11 @@ file(GLOB paths LIST_DIRECTORIES false CONFIGURE_DEPENDS
     "${PICO_SDK_PATH}/src/rp2040/hardware_regs/include/hardware/regs/*.h")
 foreach(path IN LISTS paths)
     cmake_path(GET path STEM LAST_ONLY name)
+    string(TOUPPER "${name}" uname)
     set(target "mlua_mod_hardware_regs_${name}")
     mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
-        EXCLUDE "_ACCESS:\"...?\"$" "_RESET:\"-\"$" "^isr_"
+        EXCLUDE "_ACCESS:\"...?\"$" "_RESET:\"%-\"$" "^isr_"
+        STRIP "^(${uname}_)"
     )
     target_link_libraries("${target}" INTERFACE hardware_regs)
     target_link_libraries(mlua_mod_hardware_regs_test INTERFACE "${target}")
@@ -98,6 +100,7 @@ endforeach()
 target_link_libraries(mlua_mod_hardware_regs_test INTERFACE
     mlua_mod_hardware_regs_addressmap
     mlua_mod_hardware_regs_intctrl
+    mlua_mod_hardware_regs_vreg_and_chip_reset
 )
 
 mlua_add_c_module(mlua_mod_hardware_sync hardware.sync.c)

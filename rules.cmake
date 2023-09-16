@@ -122,7 +122,7 @@ function(mlua_add_c_module TARGET)
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
-    cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE")
+    cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE;STRIP")
     pico_add_library("${TARGET}")
     mlua_want_lua()
     cmake_path(ABSOLUTE_PATH SRC)
@@ -138,7 +138,7 @@ function(mlua_add_header_module TARGET MOD SRC)
             -o "${output}.syms" "${SRC}"
         COMMAND Lua "${GEN}"
             "headermod" "${MOD}" "${SRC}" "${output}.syms" "${template}"
-            "${output}" "${args_EXCLUDE}"
+            "${output}" EXCLUDE "${args_EXCLUDE}" STRIP "${args_STRIP}"
         COMMAND_EXPAND_LISTS
         VERBATIM
     )

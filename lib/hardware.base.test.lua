@@ -5,7 +5,7 @@ local addressmap = require 'hardware.regs.addressmap'
 local watchdog = require 'hardware.regs.watchdog'
 local list = require 'mlua.list'
 
-local scratch = addressmap.WATCHDOG_BASE + watchdog.WATCHDOG_SCRATCH0_OFFSET
+local scratch = addressmap.WATCHDOG_BASE + watchdog.SCRATCH0_OFFSET
 
 function test_read32_write32(t)
     for _, test in ipairs{
