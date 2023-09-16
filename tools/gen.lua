@@ -337,8 +337,9 @@ function parse_defines(text, excludes)
     for line in lines(text) do
         local sym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
         if not sym then goto continue end
+        local sv = ('%s:%s'):format(sym, val)
         for _, exclude in ipairs(excludes) do
-            if sym:match(exclude) then goto continue end
+            if sv:match(exclude) then goto continue end
         end
         syms[sym] = val:sub(1, 1) == '"' and 'string' or 'integer'
         ::continue::

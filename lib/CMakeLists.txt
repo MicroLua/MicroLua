@@ -89,7 +89,8 @@ foreach(path IN LISTS paths)
     cmake_path(GET path STEM LAST_ONLY name)
     set(target "mlua_mod_hardware_regs_${name}")
     mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
-                           EXCLUDE "_ACCESS$" "^isr_")
+        EXCLUDE "_ACCESS:\"...?\"$" "_RESET:\"-\"$" "^isr_"
+    )
     target_link_libraries("${target}" INTERFACE hardware_regs)
     target_link_libraries(mlua_mod_hardware_regs_test INTERFACE "${target}")
 endforeach()
