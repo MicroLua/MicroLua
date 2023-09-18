@@ -168,6 +168,22 @@ target_link_libraries(mlua_mod_hardware_vreg_test INTERFACE
     mlua_mod_hardware_regs_vreg_and_chip_reset
 )
 
+mlua_add_c_module(mlua_mod_hardware_watchdog hardware.watchdog.c)
+target_link_libraries(mlua_mod_hardware_watchdog INTERFACE
+    hardware_watchdog
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_watchdog_test
+    hardware.watchdog.test.lua)
+target_link_libraries(mlua_mod_hardware_watchdog_test INTERFACE
+    mlua_mod_hardware_base
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_psm
+    mlua_mod_hardware_regs_watchdog
+    mlua_mod_hardware_watchdog
+    mlua_mod_pico_time
+)
+
 mlua_add_c_module(mlua_mod_hardware_xosc hardware.xosc.c)
 target_link_libraries(mlua_mod_hardware_xosc INTERFACE
     hardware_xosc
