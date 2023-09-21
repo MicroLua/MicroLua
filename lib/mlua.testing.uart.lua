@@ -24,8 +24,9 @@ end
 
 -- Returns the first UART that isn't the default UART, and its index.
 function non_default(t)
-    for i, u in ipairs(uart) do
-        if u ~= uart.default then return u, i end
+    for i = 0, uart.NUM - 1 do
+        local inst = uart[i]
+        if inst ~= uart.default then return inst, i end
     end
     t:fatal("No non-default UART found")
 end
