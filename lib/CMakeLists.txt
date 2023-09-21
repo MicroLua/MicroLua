@@ -44,6 +44,23 @@ target_link_libraries(mlua_mod_hardware_clocks_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_hardware_flash hardware.flash.c)
+target_link_libraries(mlua_mod_hardware_flash INTERFACE
+    hardware_flash
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_flash_test
+    hardware.flash.test.lua)
+target_link_libraries(mlua_mod_hardware_flash_test INTERFACE
+    mlua_mod_hardware_flash
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_sync
+    mlua_mod_mlua_mem
+    mlua_mod_pico
+    mlua_mod_pico_unique_id
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio.c)
 target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
