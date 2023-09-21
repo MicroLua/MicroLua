@@ -254,6 +254,15 @@ target_link_libraries(mlua_mod_mlua_list_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_mlua_mem mlua.mem.c)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_mem_test
+    mlua.mem.test.lua)
+target_link_libraries(mlua_mod_mlua_mem_test INTERFACE
+    mlua_mod_mlua_mem
+    mlua_mod_string
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_oo mlua.oo.lua)
 
 mlua_add_lua_test_modules(mlua_mod_mlua_oo_test mlua.oo.test.lua)
