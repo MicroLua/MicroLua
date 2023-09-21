@@ -104,8 +104,7 @@ target_link_libraries(mlua_mod_hardware_pll INTERFACE
     hardware_pll
 )
 
-mlua_add_lua_test_modules(mlua_mod_hardware_pll_test
-    hardware.pll.test.lua)
+mlua_add_lua_test_modules(mlua_mod_hardware_pll_test hardware.pll.test.lua)
 target_link_libraries(mlua_mod_hardware_pll_test INTERFACE
     mlua_mod_hardware_clocks
     mlua_mod_hardware_regs_clocks
@@ -134,6 +133,21 @@ target_link_libraries(mlua_mod_hardware_regs_test INTERFACE
     mlua_mod_hardware_regs_addressmap
     mlua_mod_hardware_regs_intctrl
     mlua_mod_hardware_regs_vreg_and_chip_reset
+)
+
+mlua_add_c_module(mlua_mod_hardware_resets hardware.resets.c)
+target_link_libraries(mlua_mod_hardware_resets INTERFACE
+    hardware_resets
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_resets_test
+    hardware.resets.test.lua)
+target_link_libraries(mlua_mod_hardware_resets_test INTERFACE
+    mlua_mod_hardware_base
+    mlua_mod_hardware_regs_adc
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_resets
+    mlua_mod_hardware_resets
 )
 
 mlua_add_c_module(mlua_mod_hardware_sync hardware.sync.c)
