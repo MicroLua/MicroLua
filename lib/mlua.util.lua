@@ -58,6 +58,11 @@ local function repr_list(v, len, seen)
     return ('{%s}'):format(parts:concat(', '))
 end
 
+local function repr_key(k, seen)
+    if type(k) == 'string' and k:match('^[%a_][%w_]*$') then return k end
+    return ('[%s]'):format(repr(k, seen))
+end
+
 local function repr_table(v, seen)
     if rawget(seen, v) then return '...' end
     rawset(seen, v, true)
@@ -66,7 +71,7 @@ local function repr_table(v, seen)
     if ok then return repr_list(v, len, seen) end
     local parts = list()
     for k, vk in pairs(v) do
-        parts:append(('[%s] = %s'):format(repr(k, seen), repr(vk, seen)))
+        parts:append(('%s = %s'):format(repr_key(k, seen), repr(vk, seen)))
     end
     table.sort(parts)
     return ('{%s}'):format(table.concat(parts, ', '))
