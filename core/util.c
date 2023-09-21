@@ -116,6 +116,7 @@ void mlua_util_init(lua_State* ls) {
     lua_setglobal(ls, "_RELEASE");
     lua_pushcfunction(ls, &global_yield_enabled);
     lua_setglobal(ls, "yield_enabled");
+    // TODO: Add ipairs0() => iterate integer indexes from 0
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do
