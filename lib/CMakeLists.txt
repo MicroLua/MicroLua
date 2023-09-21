@@ -99,6 +99,21 @@ target_link_libraries(mlua_mod_hardware_irq_test INTERFACE
     mlua_mod_string
 )
 
+mlua_add_c_module(mlua_mod_hardware_pll hardware.pll.c)
+target_link_libraries(mlua_mod_hardware_pll INTERFACE
+    hardware_pll
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_pll_test
+    hardware.pll.test.lua)
+target_link_libraries(mlua_mod_hardware_pll_test INTERFACE
+    mlua_mod_hardware_clocks
+    mlua_mod_hardware_regs_clocks
+    mlua_mod_hardware_pll
+    mlua_mod_mlua_testing_clocks
+    mlua_mod_pico_stdlib
+)
+
 mlua_add_lua_test_modules(mlua_mod_hardware_regs_test hardware.regs.test.lua)
 
 file(GLOB paths LIST_DIRECTORIES false CONFIGURE_DEPENDS
@@ -325,6 +340,14 @@ target_link_libraries(mlua_mod_mlua_testing_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_lua_modules(mlua_mod_mlua_testing_clocks mlua.testing.clocks.lua)
+target_link_libraries(mlua_mod_mlua_testing_clocks INTERFACE
+    mlua_mod_hardware_clocks
+    mlua_mod_hardware_uart
+    mlua_mod_pico_stdio
+    mlua_mod_pico_stdlib
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_testing_stdio mlua.testing.stdio.lua)
 target_link_libraries(mlua_mod_mlua_testing_stdio INTERFACE
     mlua_mod_hardware_gpio
@@ -491,7 +514,7 @@ target_link_libraries(mlua_mod_pico_stdlib INTERFACE
 mlua_add_lua_test_modules(mlua_mod_pico_stdlib_test pico.stdlib.test.lua)
 target_link_libraries(mlua_mod_pico_stdlib_test INTERFACE
     mlua_mod_hardware_clocks
-    mlua_mod_hardware_uart
+    mlua_mod_mlua_testing_clocks
     mlua_mod_pico_stdlib
 )
 
