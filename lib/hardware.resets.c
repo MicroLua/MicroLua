@@ -3,7 +3,6 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#include "mlua/util.h"
 
 MLUA_FUNC_0_1(mod_,, reset_block, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_,, unreset_block, luaL_checkinteger)

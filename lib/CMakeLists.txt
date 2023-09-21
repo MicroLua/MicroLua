@@ -150,6 +150,19 @@ target_link_libraries(mlua_mod_hardware_resets_test INTERFACE
     mlua_mod_hardware_resets
 )
 
+mlua_add_c_module(mlua_mod_hardware_rtc hardware.rtc.c)
+target_link_libraries(mlua_mod_hardware_rtc INTERFACE
+    hardware_rtc
+    mlua_mod_mlua_event_headers
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_rtc_test hardware.rtc.test.lua)
+target_link_libraries(mlua_mod_hardware_rtc_test INTERFACE
+    mlua_mod_hardware_rtc
+    mlua_mod_mlua_thread
+    mlua_mod_mlua_util
+)
+
 mlua_add_c_module(mlua_mod_hardware_sync hardware.sync.c)
 target_link_libraries(mlua_mod_hardware_sync INTERFACE
     hardware_sync
