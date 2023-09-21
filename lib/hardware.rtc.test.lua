@@ -4,6 +4,8 @@ local rtc = require 'hardware.rtc'
 local thread = require 'mlua.thread'
 local util = require 'mlua.util'
 
+-- The RTC is started and set in 00_setup.test.
+
 function test_get_datetime(t)
     t:expect(t:expr(rtc).running()):eq(true)
     local dt = rtc.get_datetime()
