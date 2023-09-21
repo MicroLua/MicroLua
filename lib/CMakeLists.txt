@@ -41,6 +41,7 @@ mlua_add_lua_test_modules(mlua_mod_hardware_clocks_test
     hardware.clocks.test.lua)
 target_link_libraries(mlua_mod_hardware_clocks_test INTERFACE
     mlua_mod_hardware_clocks
+    mlua_mod_hardware_regs_clocks
     mlua_mod_table
 )
 

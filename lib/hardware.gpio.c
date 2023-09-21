@@ -353,10 +353,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(acknowledge_irq, mod_),
     // gpio_add_raw_irq_handler_with_order_priority_masked: Not useful with thread-based handlers
     // gpio_add_raw_irq_handler_with_order_priority: Not useful with thread-based handlers
-    // MLUA_SYM_F(add_raw_irq_handler_masked, mod_),
-    // MLUA_SYM_F(add_raw_irq_handler, mod_),
-    // MLUA_SYM_F(remove_raw_irq_handler_masked, mod_),
-    // MLUA_SYM_F(remove_raw_irq_handler, mod_),
+    // TODO: MLUA_SYM_F(add_raw_irq_handler_masked, mod_),
+    // TODO: MLUA_SYM_F(add_raw_irq_handler, mod_),
+    // TODO: MLUA_SYM_F(remove_raw_irq_handler_masked, mod_),
+    // TODO: MLUA_SYM_F(remove_raw_irq_handler, mod_),
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),
     MLUA_SYM_F(init_mask, mod_),
