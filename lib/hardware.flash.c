@@ -14,9 +14,10 @@ int mod_range_program(lua_State* ls) {
 
 int mod_get_unique_id(lua_State* ls) {
     luaL_Buffer buf;
-    uint8_t* dest = (uint8_t*)luaL_buffinitsize(ls, &buf, 8);
+    uint8_t* dest = (uint8_t*)luaL_buffinitsize(ls, &buf,
+                                                FLASH_UNIQUE_ID_SIZE_BYTES);
     flash_get_unique_id(dest);
-    luaL_pushresultsize(&buf, 8);
+    luaL_pushresultsize(&buf, FLASH_UNIQUE_ID_SIZE_BYTES);
     return 1;
 }
 

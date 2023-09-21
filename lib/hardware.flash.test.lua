@@ -40,7 +40,7 @@ end
 function test_do_cmd(t)
     -- Issue a RUID command.
     local save = sync.save_and_disable_interrupts()
-    local rx = flash.do_cmd('\x4b123412345678')
+    local rx = flash.do_cmd('\x4b1234' .. ('_'):rep(flash.UNIQUE_ID_SIZE_BYTES))
     sync.restore_interrupts(save)
     t:expect(rx:sub(6)):label("do_cmd()"):eq(unique_id.get_unique_board_id())
 end
