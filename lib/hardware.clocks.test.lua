@@ -4,7 +4,7 @@ local clocks = require 'hardware.clocks'
 local regs = require 'hardware.regs.clocks'
 local table = require 'table'
 
-function _test_frequency_count_khz(t)
+function test_frequency_count_khz(t)
     for _, test in ipairs{
         {'PLL_SYS_CLKSRC_PRIMARY', 'clk_sys', 0.0001},
         {'PLL_USB_CLKSRC_PRIMARY', 'clk_usb', 0.0001},
