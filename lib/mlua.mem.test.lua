@@ -8,7 +8,7 @@ function test_Buffer(t)
     t:expect(buf:addr() ~= 0, "buffer address is 0")
     t:expect(#buf):label("#buf"):eq(10)
     t:expect(tostring(buf)):label("tostring(buf)")
-        :eq(('mlua.mem.Buffer: %08x'):format(buf:addr()))
+        :eq(('mlua.mem.Buffer: %08X'):format(buf:addr()))
 
     buf:clear()
     t:expect(t:expr(buf):read()):eq('\0\0\0\0\0\0\0\0\0\0')
