@@ -173,6 +173,8 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.rtc) {
+    mlua_event_require(ls);
+
     mlua_new_module(ls, 0, module_syms);
     return 1;
 }

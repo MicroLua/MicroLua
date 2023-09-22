@@ -158,6 +158,9 @@ target_link_libraries(mlua_mod_hardware_rtc INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_hardware_rtc_test hardware.rtc.test.lua)
 target_link_libraries(mlua_mod_hardware_rtc_test INTERFACE
+    mlua_mod_hardware_clocks
+    mlua_mod_hardware_regs_resets
+    mlua_mod_hardware_resets
     mlua_mod_hardware_rtc
     mlua_mod_mlua_thread
     mlua_mod_mlua_util
