@@ -82,6 +82,24 @@ target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
     mlua_mod_string
 )
 
+mlua_add_c_module(mlua_mod_hardware_i2c hardware.i2c.c)
+target_link_libraries(mlua_mod_hardware_i2c INTERFACE
+    hardware_i2c
+    mlua_mod_mlua_event_headers
+    mlua_mod_mlua_int64
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_i2c_test hardware.i2c.test.lua)
+target_link_libraries(mlua_mod_hardware_i2c_test INTERFACE
+    mlua_mod_hardware_base
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_i2c
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_i2c
+    mlua_mod_mlua_thread
+    mlua_mod_pico_multicore
+)
+
 mlua_add_c_module(mlua_mod_hardware_irq hardware.irq.c)
 target_link_libraries(mlua_mod_hardware_irq INTERFACE
     hardware_irq
@@ -594,6 +612,10 @@ target_compile_definitions(mlua_tests PRIVATE
 )
 mlua_target_config(mlua_tests
     HASH_SYMBOL_TABLES:integer=MLUA_HASH_SYMBOL_TABLES
+    I2C_MASTER_SCL:integer=5
+    I2C_MASTER_SDA:integer=4
+    I2C_SLAVE_SCL:integer=7
+    I2C_SLAVE_SDA:integer=6
     a:integer=1
     b:string=\"test\"
 )
