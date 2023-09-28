@@ -27,6 +27,11 @@ static inline uart_inst_t* to_Uart(lua_State* ls, int arg) {
     return *((uart_inst_t**)lua_touserdata(ls, arg));
 }
 
+static int Uart_regs_base(lua_State* ls) {
+    lua_pushinteger(ls, (uintptr_t)uart_get_hw(mlua_check_Uart(ls, 1)));
+    return 1;
+}
+
 static int Uart_is_tx_busy(lua_State* ls) {
     uart_inst_t* inst = mlua_check_Uart(ls, 1);
     lua_pushboolean(ls, (uart_get_hw(inst)->fr & UART_UARTFR_BUSY_BITS) != 0);
@@ -287,6 +292,7 @@ MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, mlua_check_Uart,
 
 MLUA_SYMBOLS(Uart_syms) = {
     MLUA_SYM_F(get_index, Uart_),
+    MLUA_SYM_F(regs_base, Uart_),
     MLUA_SYM_F(init, Uart_),
     MLUA_SYM_F(deinit, Uart_),
     MLUA_SYM_F(set_baudrate, Uart_),

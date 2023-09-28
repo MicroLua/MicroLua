@@ -1,5 +1,6 @@
 _ENV = mlua.Module(...)
 
+local addressmap = require 'hardware.regs.addressmap'
 local uart = require 'hardware.uart'
 local math = require 'math'
 local config = require 'mlua.config'
@@ -18,8 +19,17 @@ function test_strict(t)
         :label("Uart instance attribute access"):raises("undefined symbol")
 end
 
+function test_index_base(t)
+    for i = 0, uart.NUM - 1 do
+        local inst = uart[i]
+        t:expect(t:expr(inst):get_index()):eq(i)
+        t:expect(t:expr(inst):regs_base())
+            :eq(addressmap[('UART%s_BASE'):format(i)])
+    end
+end
+
 local function setup(t)
-    local inst, idx = testing_uart.non_default(t)
+    local inst = testing_uart.non_default(t)
     local baud = 1000000
     t:expect(t:expr(inst):init(baud)):close_to_rel(baud, 0.05)
     t:cleanup(function() inst:deinit() end)
@@ -27,12 +37,11 @@ local function setup(t)
     inst:enable_irq()
     inst:tx_wait_blocking()
     while inst:is_readable() do inst:read_blocking(1) end
-    return inst, idx
+    return inst
 end
 
 function test_configuration(t)
-    local inst, idx = setup(t)
-    t:expect(t:expr(inst):get_index()):eq(idx)
+    local inst = setup(t)
     inst:enable_irq(false)
     local baud = 460800
     t:expect(t:expr(inst):set_baudrate(baud)):close_to_rel(baud, 0.05)

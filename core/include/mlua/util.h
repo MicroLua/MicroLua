@@ -28,6 +28,8 @@ int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
 #if LIB_MLUA_MOD_MLUA_EVENT
 // Return true iff yielding is enabled.
 bool mlua_yield_enabled(void);
+// TODO: Allow force-enabling yielding => eliminate blocking code
+// TODO: Make yield status per-thread
 #else
 __force_inline static bool mlua_yield_enabled(void) { return false; }
 #endif

@@ -26,7 +26,7 @@ end
 function non_default(t)
     for i = 0, uart.NUM - 1 do
         local inst = uart[i]
-        if inst ~= uart.default then return inst, i end
+        if inst ~= uart.default then return inst end
     end
     t:fatal("No non-default UART found")
 end

@@ -182,6 +182,8 @@ void mlua_new_class_hash_(
     lua_State* ls, char const* name, MLuaSymH const* fields, int cnt,
     MLuaSymHash const* h, uint8_t const* g, bool strict);
 
+// TODO: Add nrec argument to mlua_new_module_*()
+
 // Create a new module and populated it from the given unhashed symbol table.
 #define mlua_new_module_nohash(ls, narr, fields) \
     mlua_new_module_nohash_((ls), (fields), (narr), MLUA_SYMCNT(fields))
