@@ -101,10 +101,11 @@ local function slave_handlers()
     end
 end
 
-function test_master_slave(t)
+function test_master_slave_Y(t)
     -- Start the slave on core 1.
     multicore.launch_core1(module_name, 'core1_slave')
     t:cleanup(multicore.reset_core1)
+    if yield_enabled() then master:enable_irq(true) end
 
     -- Write some data, then read it back.
     local data = 'abcdefghijklmnopqrstuvwxyz'
