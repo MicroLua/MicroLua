@@ -221,7 +221,7 @@ function main()
 
     while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
-        event.dispatch((thread ~= nil or head ~= tail) and nil_time
+        event.dispatch((thread or head ~= tail) and nil_time
                        or waiting[timers[1]] or at_the_end_of_time)
 
         -- Resume threads whose deadline has elapsed.
@@ -239,19 +239,22 @@ function main()
                 thread = active[head]
                 active[head] = nil
                 head = head + 1
-            until co_status(thread) ~= 'dead'
+                if co_status(thread) == 'dead' then thread = nil end
+            until thread or head == tail
         end
 
         -- Resume the next thread, then close it if it's dead, or move it to the
         -- wait list if it's suspended.
-        local _, deadline = co_resume(thread)
-        if co_status(thread) == 'dead' then
-            thread:kill()
-            thread = nil
-        elseif deadline then
-            waiting[thread] = deadline
-            if deadline ~= true then add_timer(thread, deadline) end;
-            thread = nil
+        if thread then
+            local _, deadline = co_resume(thread)
+            if co_status(thread) == 'dead' then
+                thread:kill()
+                thread = nil
+            elseif deadline then
+                waiting[thread] = deadline
+                if deadline ~= true then add_timer(thread, deadline) end;
+                thread = nil
+            end
         end
     end
 end
