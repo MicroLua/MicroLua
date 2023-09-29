@@ -50,7 +50,7 @@ static void __time_critical_func(handle_i2c_irq)(void) {
 }
 
 static int I2C_enable_irq(lua_State* ls) {
-    i2c_inst_t* inst = to_I2C(ls, 1);
+    i2c_inst_t* inst = check_I2C(ls, 1);
     uint num = i2c_hw_index(inst);
     uint irq = I2C0_IRQ + num;
     I2CState* state = &i2c_state[num];
@@ -63,7 +63,7 @@ static int I2C_enable_irq(lua_State* ls) {
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 static int I2C_deinit(lua_State* ls) {
-    i2c_inst_t* inst = to_I2C(ls, 1);
+    i2c_inst_t* inst = check_I2C(ls, 1);
 #if LIB_MLUA_MOD_MLUA_EVENT
     lua_pushcfunction(ls, &I2C_enable_irq);
     lua_pushvalue(ls, 1);
