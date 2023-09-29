@@ -14,6 +14,8 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Accept and return mutable buffers when writing and reading
+
 char const mlua_Uart_name[] = "hardware.uart.Uart";
 
 static uart_inst_t** new_Uart(lua_State* ls) {
@@ -159,7 +161,7 @@ static int Uart_write_blocking(lua_State* ls) {
     MLuaEvent* event = &uart_state[uart_get_index(inst)].tx_event;
     if (mlua_event_can_wait(event)) {
         lua_settop(ls, 2);
-        lua_pushinteger(ls, 0);  // offset = 0
+        lua_pushinteger(ls, 0);  // offset
         return mlua_event_wait(ls, *event, &try_write, 0);
     }
     uart_write_blocking(inst, src, len);
@@ -203,7 +205,7 @@ static int Uart_read_blocking(lua_State* ls) {
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(event)) {
         lua_settop(ls, 2);
-        lua_pushinteger(ls, 0);  // offset = 0
+        lua_pushinteger(ls, 0);  // offset
         return mlua_event_wait(ls, *event, &try_read, 0);
     }
     luaL_Buffer buf;

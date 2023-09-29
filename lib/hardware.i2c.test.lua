@@ -90,31 +90,44 @@ local function slave_handlers()
     local mem, addr = {}, nil
     return function(inst, data_cmd)
         if data_cmd > 0xff then  -- FIRST_DATA_BYTE is set
-            addr = data_cmd & 0xff
+            addr = data_cmd & 0x1f
         else
             mem[addr] = data_cmd
-            addr = (addr + 1) & 0xff
+            addr = (addr + 1) & 0x1f
         end
     end, function(inst)
         inst:write_byte_raw(mem[addr] or 0)
-        addr = (addr + 1) & 0xff
+        addr = (addr + 1) & 0x1f
     end
 end
 
 function test_master_slave_Y(t)
-    -- Start the slave on core 1.
-    multicore.launch_core1(module_name, 'core1_slave')
-    t:cleanup(multicore.reset_core1)
-    if yield_enabled() then master:enable_irq(true) end
+    -- Start the slave as a thread if yielding is enabled, or on core 1.
+    if yield_enabled() then
+        local th = thread.start(function()
+            run_slave(slave, slave_handlers())
+        end)
+        t:cleanup(function() th:kill() end)
+        master:enable_irq()
+        t:cleanup(function() master:enable_irq(false) end)
+    else
+        multicore.launch_core1(module_name, 'core1_slave')
+        t:cleanup(multicore.reset_core1)
+    end
 
     -- Write some data, then read it back.
-    local data = 'abcdefghijklmnopqrstuvwxyz'
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x42' .. data, false))
+    local data = 'abcdefghijklmnopqrstuvwxyz012345'
+    t:expect(t:expr(master):write_blocking(slave_addr, '\x00' .. data, false))
         :eq(1 + #data)
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x42', true)):eq(1)
-    t:expect(t:expr(master):read_blocking(slave_addr, 7, true)):eq('abcdefg')
-    t:expect(t:expr(master):read_blocking(slave_addr, 19, false))
-        :eq('hijklmnopqrstuvwxyz')
+    t:expect(t:expr(master):write_blocking(slave_addr, '\x07', true)):eq(1)
+    t:expect(t:expr(master):read_blocking(slave_addr, 25, true))
+        :eq('hijklmnopqrstuvwxyz012345')
+    t:expect(t:expr(master):read_blocking(slave_addr, 7, false)):eq('abcdefg')
+
+    -- Perform a large read.
+    t:expect(t:expr(master):write_blocking(slave_addr, '\x00', true)):eq(1)
+    t:expect(t:expr(master):read_blocking(slave_addr, 10 * #data, false))
+        :eq(data:rep(10))
 end
 
 function core1_slave()

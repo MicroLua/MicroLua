@@ -26,6 +26,8 @@ static void launch_core(void) {
     CoreState* st = &core_state[get_core_num() - 1];
     lua_State* ls = st->ls;
     mlua_run_main(ls);
+    // TODO: The event should be unclaimed after closing the lua_State,
+    //       otherwise the core could be reset before the state can be closed.
     mlua_event_unclaim(ls, &st->shutdown_event);
     lua_close(ls);
     uint32_t save = mlua_event_lock();
@@ -95,6 +97,8 @@ static int mod_reset_core1(lua_State* ls) {
     }
 
     // Wait for the interpreter to terminate.
+    // TODO: This is racy. Core 1 could terminate before stopped_event is
+    //       claimed. Then the wait below will get stuck.
     char const* err = mlua_event_claim(&st->stopped_event);
     if (err != NULL) return luaL_error(ls, "multicore: %s", err);
     lua_pushlightuserdata(ls, st);
