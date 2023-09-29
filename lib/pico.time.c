@@ -44,14 +44,16 @@ static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int mod_sleep_us(lua_State* ls) {
-    push_absolute_time(ls, make_timeout_time_us(mlua_check_int64(ls, 1)));
-    lua_replace(ls, 1);
+    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 1));
+    lua_settop(ls, 0);
+    push_absolute_time(ls, deadline);
     return mod_sleep_until(ls);
 }
 
 static int mod_sleep_ms(lua_State* ls) {
-    push_absolute_time(ls, make_timeout_time_ms(luaL_checkinteger(ls, 1)));
-    lua_replace(ls, 1);
+    absolute_time_t deadline = make_timeout_time_ms(luaL_checkinteger(ls, 1));
+    lua_settop(ls, 0);
+    push_absolute_time(ls, deadline);
     return mod_sleep_until(ls);
 }
 

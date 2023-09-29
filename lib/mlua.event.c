@@ -251,6 +251,13 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
     if (event >= NUM_EVENTS) return luaL_error(ls, "wait for unclaimed event");
     int res = try_get(ls, false);
     if (res >= 0) return res;
+    if (index != 0) {
+        if (lua_isnoneornil(ls, index)) {
+            index = 0;
+        } else {
+            mlua_check_int64(ls, index);
+        }
+    }
     mlua_event_watch(ls, event);
     return mlua_event_wait_1(ls, event, try_get, index);
 }
@@ -268,7 +275,7 @@ static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
     lua_pop(ls, 2);  // Restore the stack for try_get
     int res = try_get(ls, false);
     if (res < 0) {
-        if (index == 0 || !time_reached(mlua_check_int64(ls, index))) {
+        if (index == 0 || !time_reached(mlua_to_int64(ls, index))) {
             return mlua_event_wait_1(ls, (MLuaEvent)ctx, try_get, index);
         }
         res = try_get(ls, true);

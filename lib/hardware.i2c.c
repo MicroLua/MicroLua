@@ -3,6 +3,7 @@
 
 #include "hardware/i2c.h"
 #include "pico.h"
+#include "pico/time.h"
 
 #include "mlua/event.h"
 #include "mlua/int64.h"
@@ -80,8 +81,8 @@ static int try_write(lua_State* ls, bool timeout) {
     }
     i2c_inst_t* inst = to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
-    uint32_t abort_reason = lua_tointeger(ls, 5);
-    size_t offset = lua_tointeger(ls, 6);
+    uint32_t abort_reason = lua_tointeger(ls, 6);
+    size_t offset = lua_tointeger(ls, 7);
     lua_pop(ls, 1);
 
     // Initialize the transfer.
@@ -112,10 +113,10 @@ static int try_write(lua_State* ls, bool timeout) {
                 return -1;
             }
             hw->data_cmd = bool_to_bit(offset == 0 && inst->restart_on_next)
-                             << I2C_IC_DATA_CMD_RESTART_LSB
-                         | bool_to_bit(offset == len - 1 && !nostop)
-                             << I2C_IC_DATA_CMD_STOP_LSB
-                         | src[offset];
+                               << I2C_IC_DATA_CMD_RESTART_LSB
+                           | bool_to_bit(offset == len - 1 && !nostop)
+                               << I2C_IC_DATA_CMD_STOP_LSB
+                           | src[offset];
             ++offset;
         }
     }
@@ -153,14 +154,29 @@ static int I2C_write_blocking(lua_State* ls) {
 
     MLuaEvent* event = &i2c_state[i2c_hw_index(inst)].event;
     if (mlua_event_can_wait(event)) {
-        lua_settop(ls, 4);
+        lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_wait(ls, *event, &try_write, 0);
+        return mlua_event_wait(ls, *event, &try_write, 5);
     }
 
-    lua_pushinteger(ls, i2c_write_blocking(inst, addr, src, len, nostop));
+    int res;
+    if (lua_isnoneornil(ls, 5)) {
+        res = i2c_write_blocking(inst, addr, src, len, nostop);
+    } else {
+        res = i2c_write_blocking_until(
+            inst, addr, src, len, nostop,
+            from_us_since_boot(mlua_check_int64(ls, 5)));
+    }
+    lua_pushinteger(ls, res);
     return 1;
+}
+
+static int I2C_write_timeout_us(lua_State* ls) {
+    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 5));
+    lua_settop(ls, 4);
+    mlua_push_int64(ls, to_us_since_boot(deadline));
+    return I2C_write_blocking(ls);
 }
 
 static int try_read(lua_State* ls, bool timeout) {
@@ -170,7 +186,6 @@ static int try_read(lua_State* ls, bool timeout) {
     }
     i2c_inst_t* inst = to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
-    uint32_t abort_reason = lua_tointeger(ls, 5);
     size_t wcnt = lua_tointeger(ls, 6);
     size_t offset = lua_tointeger(ls, 7);
 
@@ -183,55 +198,53 @@ static int try_read(lua_State* ls, bool timeout) {
     }
 
     // Receive data.
+    uint32_t abort_reason = 0;
     bool nostop = mlua_to_cbool(ls, 4);
-    if (abort_reason == 0) {
-        size_t len = lua_tointeger(ls, 3);
-        while (offset < len) {
-            // Check for an aborted transaction.
-            abort_reason = hw->tx_abrt_source;
-            if (abort_reason != 0) {
-                hw->clr_tx_abrt;
-                break;
-            }
+    size_t len = lua_tointeger(ls, 3);
+    while (offset < len) {
+        // Check for an aborted transaction.
+        abort_reason = hw->tx_abrt_source;
+        if (abort_reason != 0) {
+            hw->clr_tx_abrt;
+            break;
+        }
 
-            // Check if there is work to do, and suspend if not.
-            size_t rend = offset + i2c_get_read_available(inst);
-            if (rend > len) rend = len;
-            size_t wend = wcnt + i2c_get_write_available(inst);
-            if (wend > len) wend = len;
-            if (offset >= rend && wcnt >= wend) {
-                hw_set_bits(&hw->intr_mask,
-                    bool_to_bit(wcnt < len) << I2C_IC_INTR_MASK_M_TX_EMPTY_LSB
-                    | I2C_IC_INTR_MASK_M_RX_FULL_BITS
-                    | I2C_IC_INTR_MASK_M_TX_ABRT_BITS);
-                lua_pushinteger(ls, wcnt);
-                lua_replace(ls, 6);
-                lua_pushinteger(ls, offset);
-                lua_replace(ls, 7);
-                return -1;
-            }
+        // Check if there is work to do, and suspend if not.
+        size_t rend = offset + i2c_get_read_available(inst);
+        if (rend > len) rend = len;
+        size_t wend = wcnt + i2c_get_write_available(inst);
+        if (wend > len) wend = len;
+        if (offset >= rend && wcnt >= wend) {
+            hw_set_bits(&hw->intr_mask,
+                bool_to_bit(wcnt < len) << I2C_IC_INTR_MASK_M_TX_EMPTY_LSB
+                | I2C_IC_INTR_MASK_M_RX_FULL_BITS
+                | I2C_IC_INTR_MASK_M_TX_ABRT_BITS);
+            lua_pushinteger(ls, wcnt);
+            lua_replace(ls, 6);
+            lua_pushinteger(ls, offset);
+            lua_replace(ls, 7);
+            return -1;
+        }
 
-            // Read received data.
-            if (offset < rend) {
-                size_t cnt = rend - offset;
-                luaL_Buffer buf;
-                uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, cnt);
-                uint8_t* end = dst + cnt;
-                while (dst != end) *dst++ = hw->data_cmd;
-                luaL_pushresultsize(&buf, cnt);
-                offset = rend;
-            }
+        // Read received data.
+        if (offset < rend) {
+            size_t cnt = rend - offset;
+            luaL_Buffer buf;
+            uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, cnt);
+            uint8_t* end = dst + cnt;
+            while (dst != end) *dst++ = hw->data_cmd;
+            luaL_pushresultsize(&buf, cnt);
+            offset = rend;
+        }
 
-            // Fill the Tx FIFO.
-            while (wcnt < wend) {
-                hw->data_cmd =
-                    bool_to_bit(wcnt == 0 && inst->restart_on_next)
-                        << I2C_IC_DATA_CMD_RESTART_LSB
-                    | bool_to_bit(wcnt == len - 1 && !nostop)
-                        << I2C_IC_DATA_CMD_STOP_LSB
-                    | I2C_IC_DATA_CMD_CMD_BITS;
-                ++wcnt;
-            }
+        // Fill the Tx FIFO.
+        while (wcnt < wend) {
+            hw->data_cmd = bool_to_bit(wcnt == 0 && inst->restart_on_next)
+                               << I2C_IC_DATA_CMD_RESTART_LSB
+                           | bool_to_bit(wcnt == len - 1 && !nostop)
+                               << I2C_IC_DATA_CMD_STOP_LSB
+                           | I2C_IC_DATA_CMD_CMD_BITS;
+            ++wcnt;
         }
     }
     inst->restart_on_next = nostop;
@@ -254,22 +267,36 @@ static int I2C_read_blocking(lua_State* ls) {
 
     MLuaEvent* event = &i2c_state[i2c_hw_index(inst)].event;
     if (mlua_event_can_wait(event)) {
-        lua_settop(ls, 4);
-        lua_pushinteger(ls, 0);  // abort_reason
+        lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_wait(ls, *event, &try_read, 0);
+        return mlua_event_wait(ls, *event, &try_read, 5);
     }
 
+    bool no_deadline = lua_isnoneornil(ls, 5);
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
-    int count = i2c_read_blocking(inst, addr, dst, len, nostop);
+    int count;
+    if (no_deadline) {
+        count = i2c_read_blocking(inst, addr, dst, len, nostop);
+    } else {
+        count = i2c_read_blocking_until(
+            inst, addr, dst, len, nostop,
+            from_us_since_boot(mlua_check_int64(ls, 5)));
+    }
     if (count >= 0) {
         luaL_pushresultsize(&buf, count);
     } else {
         lua_pushinteger(ls, count);
     }
     return 1;
+}
+
+static int I2C_read_timeout_us(lua_State* ls) {
+    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 5));
+    lua_settop(ls, 4);
+    mlua_push_int64(ls, to_us_since_boot(deadline));
+    return I2C_read_blocking(ls);
 }
 
 static int I2C_read_data_cmd(lua_State* ls) {
@@ -291,6 +318,9 @@ MLUA_FUNC_1_1(I2C_, i2c_, read_byte_raw, lua_pushinteger, check_I2C)
 MLUA_FUNC_0_2(I2C_, i2c_, write_byte_raw, check_I2C, luaL_checkinteger)
 MLUA_FUNC_1_2(I2C_, i2c_, get_dreq, lua_pushinteger, check_I2C, mlua_to_cbool)
 
+#define I2C_write_blocking_until I2C_write_blocking
+#define I2C_read_blocking_until I2C_read_blocking
+
 MLUA_SYMBOLS(I2C_syms) = {
     MLUA_SYM_F(init, I2C_),
     MLUA_SYM_F(deinit, I2C_),
@@ -298,11 +328,11 @@ MLUA_SYMBOLS(I2C_syms) = {
     MLUA_SYM_F(set_slave_mode, I2C_),
     MLUA_SYM_F(hw_index, I2C_),
     MLUA_SYM_F(regs_base, I2C_),
-    // TODO: MLUA_SYM_F(write_blocking_until, I2C_),
-    // TODO: MLUA_SYM_F(read_blocking_until, I2C_),
-    // TODO: MLUA_SYM_F(write_timeout_us, I2C_),
+    MLUA_SYM_F(write_blocking_until, I2C_),
+    MLUA_SYM_F(read_blocking_until, I2C_),
+    MLUA_SYM_F(write_timeout_us, I2C_),
     // TODO: MLUA_SYM_F(write_timeout_per_char_us, I2C_),
-    // TODO: MLUA_SYM_F(read_timeout_us, I2C_),
+    MLUA_SYM_F(read_timeout_us, I2C_),
     // TODO: MLUA_SYM_F(read_timeout_per_char_us, I2C_),
     MLUA_SYM_F(write_blocking, I2C_),
     MLUA_SYM_F(read_blocking, I2C_),

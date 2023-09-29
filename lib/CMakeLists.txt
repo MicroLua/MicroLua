@@ -88,6 +88,7 @@ target_link_libraries(mlua_mod_hardware_i2c INTERFACE
     mlua_mod_mlua_event_headers
     mlua_mod_mlua_int64
     pico_base
+    pico_time
 )
 
 mlua_add_lua_test_modules(mlua_mod_hardware_i2c_test hardware.i2c.test.lua)
