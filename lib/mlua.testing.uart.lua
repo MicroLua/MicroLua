@@ -5,21 +5,23 @@ local uart = require 'hardware.uart'
 local list = require 'mlua.list'
 
 pins = {
-    [0] = {{0, 1, 2, 3}, {12, 13, 14, 15}, {16, 17, 18, 19}, {28, 29}},
-    [1] = {{4, 5, 6, 7}, {8, 9, 10, 11}, {20, 21, 22, 23}, {24, 25, 26, 27}},
+    [0] = {tx = {0, 12, 16, 28}, rx = {1, 13, 17, 29},
+           cts = {2, 14, 18}, rts = {3, 15, 19}},
+    [1] = {tx = {4, 8, 20, 24}, rx = {5, 9, 21, 25},
+           cts = {6, 10, 22, 26}, rts = {7, 11, 23, 27}},
 }
+
+local function find_enabled(pins)
+    for _, pin in ipairs(pins) do
+        if gpio.get_function(pin) == gpio.FUNC_UART then return pin end
+    end
+end
 
 -- Returns the pins enabled for the given UART, as (TX, RX, CTS, RTS).
 function find_pins(uart)
-    local res = list.pack(nil, nil, nil, nil)
-    for _, ps in ipairs(pins[uart:get_index()]) do
-        for i, p in ipairs(ps) do
-            if not res[i] and gpio.get_function(p) == gpio.FUNC_UART then
-                res[i] = p
-            end
-        end
-    end
-    return res:unpack()
+    local ps = pins[uart:get_index()]
+    return find_enabled(ps.tx), find_enabled(ps.rx),
+           find_enabled(ps.cts), find_enabled(ps.rts)
 end
 
 -- Returns the first UART that isn't the default UART, and its index.

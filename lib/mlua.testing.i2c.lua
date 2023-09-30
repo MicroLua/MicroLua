@@ -5,14 +5,18 @@ local i2c = require 'hardware.i2c'
 local list = require 'mlua.list'
 
 pins = {
-    [0] = {{0, 4, 8, 12, 16, 20, 24, 28}, {1, 5, 9, 13, 17, 21, 25, 29}},
-    [1] = {{2, 6, 10, 14, 18, 22, 26}, {3, 7, 11, 15, 19, 23, 17}},
+    [0] = {sda = {0, 4, 8, 12, 16, 20, 24, 28},
+           scl = {1, 5, 9, 13, 17, 21, 25, 29}},
+    [1] = {sda = {2, 6, 10, 14, 18, 22, 26},
+           scl = {3, 7, 11, 15, 19, 23, 27}},
 }
 
 -- Returns the I2C instance for the given pin.
 function find_instance(pin)
     for i, ps in pairs(pins) do
-        if list.find(ps[1], pin) or list.find(ps[2], pin) then return i2c[i] end
+        if list.find(ps.sda, pin) or list.find(ps.scl, pin) then
+            return i2c[i]
+        end
     end
 end
 

@@ -44,7 +44,8 @@ function test_init(t)
     -- Test init_full().
     uart.default:tx_wait_blocking()
     local u = testing_uart.non_default(t)
-    local tx, rx = list.unpack(testing_uart.pins[u:get_index()][1])
+    local pins = testing_uart.pins[u:get_index()]
+    local tx, rx = pins.tx[1], pins.rx[1]
     local got_tx, got_rx
     do  -- No output in this block
         local done<close> = function()
