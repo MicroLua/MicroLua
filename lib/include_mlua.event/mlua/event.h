@@ -107,6 +107,7 @@ bool mlua_event_can_wait(MLuaEvent* event);
 
 // Wait for an event, suspending as long as try_get returns a negative value.
 // The index is passed to mlua_event_suspend as a deadline index.
+// TODO: Find a better name for this function
 int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
                     int index);
 

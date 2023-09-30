@@ -4,6 +4,7 @@ mlua_add_lua_modules(mlua_examples_adc_onboard_temperature_main
 target_link_libraries(mlua_examples_adc_onboard_temperature_main INTERFACE
     mlua_mod_hardware_adc
     mlua_mod_hardware_gpio
+    mlua_mod_mlua_stdio
     mlua_mod_pico
     mlua_mod_pico_time
     mlua_mod_string
@@ -25,6 +26,7 @@ mlua_add_lua_modules(mlua_examples_adc_onboard_temperature_irq_main
 target_link_libraries(mlua_examples_adc_onboard_temperature_irq_main INTERFACE
     mlua_mod_hardware_adc
     mlua_mod_hardware_gpio
+    mlua_mod_mlua_stdio
     mlua_mod_mlua_thread
     mlua_mod_pico
     mlua_mod_string
