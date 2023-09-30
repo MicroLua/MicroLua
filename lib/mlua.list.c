@@ -195,6 +195,22 @@ static int list_concat(lua_State* ls) {
     return 1;
 }
 
+static int list_find(lua_State* ls) {
+    lua_Integer len = length(ls, 1);
+    lua_Integer i = luaL_optinteger(ls, 3, 1);
+    if (i <= -len) i = 1;
+    else if (i < 0) i = len + i + 1;
+    else if (i == 0) i = 1;
+    for (; i <= len; ++i) {
+        lua_geti(ls, 1, i);
+        if (lua_compare(ls, 2, -1, LUA_OPEQ)) {
+            lua_pushinteger(ls, i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int list___repr(lua_State* ls) {
     luaL_Buffer buf;
     luaL_buffinit(ls, &buf);
@@ -247,6 +263,7 @@ MLUA_SYMBOLS(list_syms) = {
     // TODO: MLUA_SYM_F(sort, list_),
     // TODO: MLUA_SYM_F(move, list_),
     MLUA_SYM_F(concat, list_),
+    MLUA_SYM_F(find, list_),
 };
 
 MLUA_SYMBOLS_NOHASH(list_syms_nh) = {

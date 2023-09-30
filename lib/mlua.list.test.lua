@@ -162,6 +162,25 @@ function test_concat(t)
     end
 end
 
+function test_find(t)
+    for _, test in ipairs{
+        {{nil, 1}, nil},
+        {{{}, 1}, nil},
+        {{{1, 2, 3, 1, 2}, 4}, nil},
+        {{{1, 2, 3, 1, 2}, 2}, 2},
+        {{{1, 2, 3, 1, 2}, 2, 0}, 2},
+        {{{1, 2, 3, 1, 2}, 2, 3}, 5},
+        {{{1, 2, 3, 1, 2}, 2, 10}, nil},
+        {{{1, 2, 3, 1, 2}, 2, -2}, 5},
+        {{{1, 2, 3, 1, 2}, 2, -4}, 2},
+        {{{1, 2, 3, 1, 2}, 2, -10}, 2},
+        {{{[0] = 7, [5] = 'a'}, 'a'}, 5},
+    } do
+        local args, want = table.unpack(test)
+        t:expect(t:expr(list).find(table.unpack(args))):eq(want)
+    end
+end
+
 function test_repr(t)
     for _, test in ipairs{
         {list.pack(), '{}'},
