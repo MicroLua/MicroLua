@@ -24,6 +24,5 @@ add_compile_options(
 include(rules.cmake)
 
 add_subdirectory(core)
-add_subdirectory(examples)
 add_subdirectory(lib)
 add_subdirectory(tools)
