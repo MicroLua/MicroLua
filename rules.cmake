@@ -1,8 +1,6 @@
-set(MLUA_PATH "${MLUA_PATH}" CACHE PATH "Path to the MicroLua sources SDK")
 message("MLUA_PATH is ${MLUA_PATH}")
-set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua")
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${MLUA_PATH}/tools")
-set(GEN "${MLUA_PATH}/tools/gen.lua")
+set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
+set(GEN "${MLUA_PATH}/tools/gen.lua" CACHE INTERNAL "")
 
 function(mlua_set NAME DEFAULT)
     if("${${NAME}}" STREQUAL "")
@@ -13,6 +11,7 @@ endfunction()
 
 function(mlua_want_lua)
     if(NOT Lua_FOUND)
+        set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${MLUA_PATH}/tools")
         find_package(Lua REQUIRED)
     endif()
 endfunction()
