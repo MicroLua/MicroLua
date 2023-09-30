@@ -1,15 +1,4 @@
 syntax: regexp
-.*\.capnp\.(h|cpp)$
-.*\.lc$
-.*\.o$
-.*\.o\.d$
-.*\.pb\.(h|cpp)$
-.*\.py[co]$
-.*\.so$
 .*\.sublime-(project|workspace)$
-^[^/]+\.egg-info/
-^Makefile.local$
 ^build/
-^dist/
 ^tmp/
-^venv.*/
