@@ -1,59 +1,47 @@
+#include "mlua/hardware.i2c.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "hardware/i2c.h"
 #include "pico.h"
 #include "pico/time.h"
 
-#include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
 
 // TODO: Accept and return mutable buffers when writing and reading
 
-static char const I2C_name[] = "hardware.i2c.I2C";
+char const mlua_I2C_name[] = "hardware.i2c.I2C";
 
 static i2c_inst_t** new_I2C(lua_State* ls) {
     i2c_inst_t** v = lua_newuserdatauv(ls, sizeof(i2c_inst_t*), 0);
-    luaL_getmetatable(ls, I2C_name);
+    luaL_getmetatable(ls, mlua_I2C_name);
     lua_setmetatable(ls, -2);
     return v;
 }
 
-static inline i2c_inst_t* check_I2C(lua_State* ls, int arg) {
-    return *((i2c_inst_t**)luaL_checkudata(ls, arg, I2C_name));
-}
-
-static inline i2c_inst_t* to_I2C(lua_State* ls, int arg) {
-    return *((i2c_inst_t**)lua_touserdata(ls, arg));
-}
-
 static int I2C_regs_base(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)i2c_get_hw(check_I2C(ls, 1)));
+    lua_pushinteger(ls, (uintptr_t)i2c_get_hw(mlua_check_I2C(ls, 1)));
     return 1;
 }
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-typedef struct I2CState {
-    MLuaEvent event;
-} I2CState;
-
-static I2CState i2c_state[NUM_I2CS];
+MLuaI2CState mlua_i2c_state[NUM_I2CS];
 
 static void __time_critical_func(handle_i2c_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - I2C0_IRQ;
     i2c_hw_t* hw = i2c_get_hw(i2c_get_instance(num));
     hw->intr_mask = 0;
-    mlua_event_set(i2c_state[num].event);
+    mlua_event_set(mlua_i2c_state[num].event);
 }
 
 static int I2C_enable_irq(lua_State* ls) {
-    i2c_inst_t* inst = check_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_check_I2C(ls, 1);
     uint num = i2c_hw_index(inst);
     uint irq = I2C0_IRQ + num;
-    I2CState* state = &i2c_state[num];
+    MLuaI2CState* state = &mlua_i2c_state[num];
     char const* err = mlua_event_enable_irq(ls, &state->event, irq,
                                             &handle_i2c_irq, 2, -1);
     if (err != NULL) return luaL_error(ls, "I2C%d: %s", num, err);
@@ -63,7 +51,7 @@ static int I2C_enable_irq(lua_State* ls) {
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 static int I2C_deinit(lua_State* ls) {
-    i2c_inst_t* inst = check_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_check_I2C(ls, 1);
 #if LIB_MLUA_MOD_MLUA_EVENT
     lua_pushcfunction(ls, &I2C_enable_irq);
     lua_pushvalue(ls, 1);
@@ -79,7 +67,7 @@ static int try_write(lua_State* ls, bool timeout) {
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
         return 1;
     }
-    i2c_inst_t* inst = to_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
     uint32_t abort_reason = lua_tointeger(ls, 6);
     size_t offset = lua_tointeger(ls, 7);
@@ -146,13 +134,13 @@ static int try_write(lua_State* ls, bool timeout) {
 }
 
 static int I2C_write_blocking(lua_State* ls) {
-    i2c_inst_t* inst = check_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_check_I2C(ls, 1);
     uint16_t addr = luaL_checkinteger(ls, 2);
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 3, &len);
     bool nostop = mlua_to_cbool(ls, 4);
 
-    MLuaEvent* event = &i2c_state[i2c_hw_index(inst)].event;
+    MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
     if (mlua_event_can_wait(event)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
@@ -184,7 +172,7 @@ static int try_read(lua_State* ls, bool timeout) {
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
         return 1;
     }
-    i2c_inst_t* inst = to_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
     size_t wcnt = lua_tointeger(ls, 6);
     size_t offset = lua_tointeger(ls, 7);
@@ -260,12 +248,12 @@ static int try_read(lua_State* ls, bool timeout) {
 }
 
 static int I2C_read_blocking(lua_State* ls) {
-    i2c_inst_t* inst = check_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_check_I2C(ls, 1);
     uint16_t addr = luaL_checkinteger(ls, 2);
     size_t len = luaL_checkinteger(ls, 3);
     bool nostop = mlua_to_cbool(ls, 4);
 
-    MLuaEvent* event = &i2c_state[i2c_hw_index(inst)].event;
+    MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
     if (mlua_event_can_wait(event)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
@@ -300,23 +288,25 @@ static int I2C_read_timeout_us(lua_State* ls) {
 }
 
 static int I2C_read_data_cmd(lua_State* ls) {
-    i2c_inst_t* inst = check_I2C(ls, 1);
+    i2c_inst_t* inst = mlua_check_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
     lua_pushinteger(ls, hw->data_cmd);
     return 1;
 }
 
-MLUA_FUNC_1_2(I2C_, i2c_, init, lua_pushinteger, check_I2C, luaL_checkinteger)
-MLUA_FUNC_1_2(I2C_, i2c_, set_baudrate, lua_pushinteger, check_I2C,
+MLUA_FUNC_1_2(I2C_, i2c_, init, lua_pushinteger, mlua_check_I2C,
               luaL_checkinteger)
-MLUA_FUNC_0_3(I2C_, i2c_, set_slave_mode, check_I2C, mlua_to_cbool,
+MLUA_FUNC_1_2(I2C_, i2c_, set_baudrate, lua_pushinteger, mlua_check_I2C,
               luaL_checkinteger)
-MLUA_FUNC_1_1(I2C_, i2c_, hw_index, lua_pushinteger, check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, get_write_available, lua_pushinteger, check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, get_read_available, lua_pushinteger, check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, read_byte_raw, lua_pushinteger, check_I2C)
-MLUA_FUNC_0_2(I2C_, i2c_, write_byte_raw, check_I2C, luaL_checkinteger)
-MLUA_FUNC_1_2(I2C_, i2c_, get_dreq, lua_pushinteger, check_I2C, mlua_to_cbool)
+MLUA_FUNC_0_3(I2C_, i2c_, set_slave_mode, mlua_check_I2C, mlua_to_cbool,
+              luaL_checkinteger)
+MLUA_FUNC_1_1(I2C_, i2c_, hw_index, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_1_1(I2C_, i2c_, get_write_available, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_1_1(I2C_, i2c_, get_read_available, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_1_1(I2C_, i2c_, read_byte_raw, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_0_2(I2C_, i2c_, write_byte_raw, mlua_check_I2C, luaL_checkinteger)
+MLUA_FUNC_1_2(I2C_, i2c_, get_dreq, lua_pushinteger, mlua_check_I2C,
+              mlua_to_cbool)
 
 #define I2C_write_blocking_until I2C_write_blocking
 #define I2C_read_blocking_until I2C_read_blocking
@@ -360,7 +350,7 @@ MLUA_SYMBOLS(module_syms) = {
 
 static __attribute__((constructor)) void init(void) {
     for (uint i = 0; i < NUM_I2CS; ++i) {
-        I2CState* state = &i2c_state[i];
+        MLuaI2CState* state = &mlua_i2c_state[i];
         state->event = MLUA_EVENT_UNSET;
     }
 }
@@ -376,7 +366,7 @@ MLUA_OPEN_MODULE(hardware.i2c) {
     int mod_index = lua_gettop(ls);
 
     // Create the I2C class.
-    mlua_new_class(ls, I2C_name, I2C_syms, true);
+    mlua_new_class(ls, mlua_I2C_name, I2C_syms, true);
     lua_pop(ls, 1);
 
     // Create I2C instances.

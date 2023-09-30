@@ -330,7 +330,7 @@ static int handler_thread_done(lua_State* ls) {
 }
 
 int mlua_event_handle(lua_State* ls, MLuaEvent* event, lua_KFunction cont,
-                       lua_KContext ctx) {
+                      lua_KContext ctx) {
     lua_pushlightuserdata(ls, event);
     lua_pushcclosure(ls, &handler_thread, 3);
     mlua_thread_start(ls);

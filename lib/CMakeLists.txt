@@ -83,6 +83,8 @@ target_link_libraries(mlua_mod_hardware_gpio_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_hardware_i2c hardware.i2c.c)
+target_include_directories(mlua_mod_hardware_i2c_headers INTERFACE
+    include_hardware.i2c)
 target_link_libraries(mlua_mod_hardware_i2c INTERFACE
     hardware_i2c
     mlua_mod_mlua_event_headers
@@ -94,10 +96,10 @@ target_link_libraries(mlua_mod_hardware_i2c INTERFACE
 mlua_add_lua_test_modules(mlua_mod_hardware_i2c_test hardware.i2c.test.lua)
 target_link_libraries(mlua_mod_hardware_i2c_test INTERFACE
     mlua_mod_hardware_base
-    mlua_mod_hardware_gpio
     mlua_mod_hardware_i2c
     mlua_mod_hardware_regs_addressmap
     mlua_mod_hardware_regs_i2c
+    mlua_mod_mlua_testing_i2c
     mlua_mod_mlua_thread
     mlua_mod_pico_multicore
 )
@@ -399,6 +401,13 @@ target_link_libraries(mlua_mod_mlua_testing_clocks INTERFACE
     mlua_mod_pico_stdlib
 )
 
+mlua_add_lua_modules(mlua_mod_mlua_testing_i2c mlua.testing.i2c.lua)
+target_link_libraries(mlua_mod_mlua_testing_i2c INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_i2c
+    mlua_mod_mlua_list
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_testing_stdio mlua.testing.stdio.lua)
 target_link_libraries(mlua_mod_mlua_testing_stdio INTERFACE
     mlua_mod_hardware_gpio
@@ -464,6 +473,19 @@ target_link_libraries(mlua_mod_pico INTERFACE
 mlua_add_lua_test_modules(mlua_mod_pico_board_test pico.board.test.lua)
 target_link_libraries(mlua_mod_pico_board_test INTERFACE
     mlua_mod_pico_board
+)
+
+mlua_add_c_module(mlua_mod_pico_i2c_slave pico.i2c_slave.c)
+target_link_libraries(mlua_mod_pico_i2c_slave INTERFACE
+    hardware_i2c
+    mlua_mod_hardware_i2c
+    mlua_mod_mlua_event
+)
+
+mlua_add_lua_test_modules(mlua_mod_pico_i2c_slave_test pico.i2c_slave.test.lua)
+target_link_libraries(mlua_mod_pico_i2c_slave_test INTERFACE
+    mlua_mod_mlua_testing_i2c
+    mlua_mod_pico_i2c_slave
 )
 
 mlua_add_c_module(mlua_mod_pico_multicore pico.multicore.c)

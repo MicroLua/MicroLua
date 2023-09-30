@@ -1,57 +1,15 @@
 _ENV = mlua.Module(...)
 
 local base = require 'hardware.base'
-local gpio = require 'hardware.gpio'
 local i2c = require 'hardware.i2c'
 local addressmap = require 'hardware.regs.addressmap'
 local regs = require 'hardware.regs.i2c'
 local config = require 'mlua.config'
+local testing_i2c = require 'mlua.testing.i2c'
 local thread = require 'mlua.thread'
 local multicore = require 'pico.multicore'
 
 local module_name = ...
-local baudrate = 1000000
-local slave_addr = 0x17
-
-local master, slave = i2c[0], i2c[1]
-local all_pins = {
-    config.I2C_MASTER_SDA, config.I2C_MASTER_SCL,
-    config.I2C_SLAVE_SDA, config.I2C_SLAVE_SCL,
-}
-
-function set_up(t)
-    t:cleanup(function()
-        for _, pin in ipairs(all_pins) do gpio.deinit(pin) end
-        master:deinit()
-        slave:deinit()
-    end)
-    for _, pin in ipairs(all_pins) do
-        gpio.init(pin)
-        gpio.pull_up(pin)
-        t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
-    end
-
-    for _, n in ipairs{'SDA', 'SCL'} do
-        local mpin, spin = config['I2C_MASTER_' .. n], config['I2C_SLAVE_' .. n]
-        local done<close> = function()
-            gpio.set_oeover(mpin, gpio.OVERRIDE_NORMAL)
-        end
-        gpio.set_oeover(mpin, gpio.OVERRIDE_HIGH)
-        t:assert(not gpio.get_pad(spin),
-                 "Pin %s must be connected to pin %s", mpin, spin)
-    end
-
-    t:expect(t:expr(master):init(baudrate)):close_to_rel(baudrate, 0.01)
-    gpio.set_function(config.I2C_MASTER_SDA, gpio.FUNC_I2C)
-    gpio.set_function(config.I2C_MASTER_SCL, gpio.FUNC_I2C)
-
-    t:expect(t:expr(slave):init(baudrate)):close_to_rel(baudrate, 0.01)
-    slave:set_slave_mode(true, slave_addr)
-    base.write32(slave:regs_base() + regs.IC_INTR_MASK_OFFSET,
-                 regs.IC_INTR_MASK_M_RD_REQ_BITS)
-    gpio.set_function(config.I2C_SLAVE_SDA, gpio.FUNC_I2C)
-    gpio.set_function(config.I2C_SLAVE_SCL, gpio.FUNC_I2C)
-end
 
 function test_strict(t)
     if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
@@ -72,10 +30,11 @@ function test_index_base(t)
 end
 
 local function run_slave(inst, on_receive, on_request)
-    local i2c_base, in_progress = inst:regs_base(), false
+    local i2c_base = inst:regs_base()
     while true do
         while inst:get_read_available() > 0 do
-            on_receive(inst, inst:read_data_cmd())
+            local dc = inst:read_data_cmd()
+            on_receive(inst, dc & 0xff, dc > 0xff)
         end
         local intr_stat = base.read32(i2c_base + regs.IC_INTR_STAT_OFFSET)
         if intr_stat & regs.IC_INTR_STAT_R_RD_REQ_BITS ~= 0 then
@@ -86,26 +45,19 @@ local function run_slave(inst, on_receive, on_request)
     end
 end
 
-local function slave_handlers()
-    local mem, addr = {}, nil
-    return function(inst, data_cmd)
-        if data_cmd > 0xff then  -- FIRST_DATA_BYTE is set
-            addr = data_cmd & 0x1f
-        else
-            mem[addr] = data_cmd
-            addr = (addr + 1) & 0x1f
-        end
-    end, function(inst)
-        inst:write_byte_raw(mem[addr] or 0)
-        addr = (addr + 1) & 0x1f
-    end
-end
+function test_master_Y(t)
+    local slave_addr = 0x17
+    local master, slave = testing_i2c.set_up(
+        t, 1000000, config.I2C_MASTER_SDA, config.I2C_MASTER_SCL,
+        config.I2C_SLAVE_SDA, config.I2C_SLAVE_SCL)
+    slave:set_slave_mode(true, slave_addr)
+    base.write32(slave:regs_base() + regs.IC_INTR_MASK_OFFSET,
+                 regs.IC_INTR_MASK_M_RD_REQ_BITS)
 
-function test_master_slave_Y(t)
     -- Start the slave as a thread if yielding is enabled, or on core 1.
     if yield_enabled() then
         local th = thread.start(function()
-            run_slave(slave, slave_handlers())
+            run_slave(slave, testing_i2c.mem_slave(32))
         end)
         t:cleanup(function() th:kill() end)
         master:enable_irq()
@@ -132,5 +84,6 @@ end
 
 function core1_slave()
     multicore.set_shutdown_handler()
-    run_slave(slave, slave_handlers())
+    local slave = testing_i2c.find_instance(config.I2C_SLAVE_SDA)
+    run_slave(slave, testing_i2c.mem_slave(32))
 end
