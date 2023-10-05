@@ -177,23 +177,55 @@ void mlua_new_class_hash_(
     lua_setfield(ls, -2, "__index");
 }
 
+extern MLuaModule const __start_mlua_module_registry;
+extern MLuaModule const __stop_mlua_module_registry;
+
+static int preload___index(lua_State* ls) {
+    char const* name = luaL_checkstring(ls, 2);
+    for (MLuaModule const* m = &__start_mlua_module_registry;
+            m != &__stop_mlua_module_registry; ++m) {
+        if (strcmp(m->name, name) == 0) {
+            lua_pushcfunction(ls, m->open);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int preload_next(lua_State* ls) {
+    MLuaModule const* m = &__start_mlua_module_registry;
+    if (!lua_isnil(ls, 2)) {
+        char const* name = lua_tostring(ls, 2);
+        while (m != &__stop_mlua_module_registry) {
+            if (strcmp(m->name, name) == 0) {
+                ++m;
+                break;
+            }
+            ++m;
+        }
+    }
+    if (m == &__stop_mlua_module_registry) return 0;
+    lua_pushstring(ls, m->name);
+    lua_pushcfunction(ls, m->open);
+    return 2;
+}
+
+static int preload___pairs(lua_State* ls) {
+    lua_pushcfunction(ls, &preload_next);
+    return 1;
+}
+
+static char const Preload_name[] = "mlua.Preload";
+
+MLUA_SYMBOLS_NOHASH(Preload_syms) = {
+    MLUA_SYM_V_NH(__index, function, &preload___index),
+    MLUA_SYM_V_NH(__pairs, function, &preload___pairs),
+};
+
 void mlua_register_modules(lua_State* ls) {
     // Require library "base".
     luaL_requiref(ls, "_G", luaopen_base, 1);
     lua_pop(ls, 1);
-
-    // Register compiled-in modules with package.preload.
-    luaL_requiref(ls, "package", luaopen_package, 0);
-    lua_getfield(ls, -1, "preload");
-    lua_remove(ls, -2);  // Remove package
-    extern MLuaModule const __start_mlua_module_registry;
-    extern MLuaModule const __stop_mlua_module_registry;
-    for (MLuaModule const* m = &__start_mlua_module_registry;
-            m < &__stop_mlua_module_registry; ++m) {
-        lua_pushcfunction(ls, m->open);
-        lua_setfield(ls, -2, m->name);
-    }
-    lua_pop(ls, 1);  // Remove preload
 
     // Create the Strict metatable, and set it on _G.
     lua_pushglobaltable(ls);
@@ -201,4 +233,13 @@ void mlua_register_modules(lua_State* ls) {
     mlua_set_fields(ls, Strict_syms);
     lua_setmetatable(ls, -2);
     lua_pop(ls, 1);
+
+    // Create the Preload metatable, and set it on package.preload to load
+    // compiled-in modules.
+    luaL_requiref(ls, "package", luaopen_package, 0);
+    lua_getfield(ls, -1, "preload");
+    luaL_newmetatable(ls, Preload_name);
+    mlua_set_fields(ls, Preload_syms);
+    lua_setmetatable(ls, -2);
+    lua_pop(ls, 2);
 }
