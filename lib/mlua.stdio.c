@@ -1,8 +1,14 @@
 #include <unistd.h>
 
 #include "pico/stdio.h"
+#if LIB_PICO_STDIO_SEMIHOSTING
+#include "pico/stdio_semihosting.h"
+#endif
 #if LIB_PICO_STDIO_UART
 #include "pico/stdio_uart.h"
+#endif
+#if LIB_PICO_STDIO_USB
+#include "pico/stdio_usb.h"
 #endif
 
 #include "lua.h"
@@ -131,7 +137,7 @@ static __attribute__((constructor)) void init(void) {
 #endif  // LIB_PICO_STDIO_UART
 #if LIB_PICO_STDIO_USB
 #if MLUA_STDIO_INIT_USB
-    stdout_usb_init();
+    stdio_usb_init();
 #endif
 #endif  // LIB_PICO_STDIO_USB
 }
