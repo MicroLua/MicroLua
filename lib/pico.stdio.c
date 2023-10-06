@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "pico.h"
 #include "pico/stdio.h"
 #include "pico/time.h"
 
@@ -107,7 +108,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
 
 static int try_getchar(lua_State* ls, bool timeout) {
     if (timeout) {
-        lua_pushinteger(ls, -1);
+        lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
         return 1;
     }
     if (!chars_available_reset()) return -1;
