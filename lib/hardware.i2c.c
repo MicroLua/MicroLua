@@ -64,8 +64,9 @@ static int I2C_deinit(lua_State* ls) {
 
 static int try_write(lua_State* ls, bool timeout) {
     if (timeout) {
+        luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
-        return 1;
+        return 2;
     }
     i2c_inst_t* inst = mlua_to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
@@ -169,8 +170,9 @@ static int I2C_write_timeout_us(lua_State* ls) {
 
 static int try_read(lua_State* ls, bool timeout) {
     if (timeout) {
+        luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
-        return 1;
+        return 2;
     }
     i2c_inst_t* inst = mlua_to_I2C(ls, 1);
     i2c_hw_t* hw = i2c_get_hw(inst);
@@ -240,10 +242,11 @@ static int try_read(lua_State* ls, bool timeout) {
     // Compute the call result.
     if ((abort_reason & (I2C_IC_TX_ABRT_SOURCE_ABRT_7B_ADDR_NOACK_BITS |
                          I2C_IC_TX_ABRT_SOURCE_ABRT_TXDATA_NOACK_BITS)) != 0) {
+        luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_GENERIC);
-    } else {
-        lua_concat(ls, lua_gettop(ls) - 7);
+        return 2;
     }
+    lua_concat(ls, lua_gettop(ls) - 7);
     return 1;
 }
 
