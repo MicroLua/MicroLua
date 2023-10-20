@@ -1,4 +1,3 @@
 syntax: regexp
-.*\.sublime-(project|workspace)$
 ^build/
 ^tmp/
