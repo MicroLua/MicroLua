@@ -8,21 +8,21 @@ interpreter with bindings for the
 
 MicroLua is licensed under the [MIT](LICENSE.md) license.
 
- - Mailing list:
-   [microlua@freelists.org](https://www.freelists.org/list/microlua)
+- Mailing list:
+  [microlua@freelists.org](https://www.freelists.org/list/microlua)
 
 ## Why
 
- - Lua is a small, embeddable language. It is easy to learn and reasonably fast.
+- Lua is a small, embeddable language. It is easy to learn and reasonably fast.
 
- - The RP2040 is a small, powerful microcontroller with a nice set of
-   peripherals and an active developer community. Besides the official
-   [Pico](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html#technical-specification)
-   and
-   [Pico W](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html#raspberry-pi-pico-w-and-pico-wh)
-   boards from
-   [Raspberry Pi](https://www.raspberrypi.com/), a variety of cheap modules in
-   various shapes and configurations are readily available for purchase.
+- The RP2040 is a small, powerful microcontroller with a nice set of
+  peripherals and an active developer community. Besides the official
+  [Pico](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html#technical-specification)
+  and
+  [Pico W](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html#raspberry-pi-pico-w-and-pico-wh)
+  boards from
+  [Raspberry Pi](https://www.raspberrypi.com/), a variety of cheap modules in
+  various shapes and configurations are readily available for purchase.
 
 I had been wanting to play with Lua for a very long time, without having a
 concrete use case for it. Similarly, I wanted to explore the RP2040 but didn't
@@ -31,21 +31,21 @@ both.
 
 ## Features
 
- - **Pristine, unpatched Lua interpreter:** MicroLua runs the latest, unmodified
-   Lua 5.4.x interpreter, imported as a git submodule. All customization is done
-   through [`luaconf.h`](core/luaconf.in.h).
- - **Per-core interpreter instances:** MicroLua runs a separate Lua interpreter
-   in each core. They don't share state except through C libraries.
- - **Cooperative multithreading through Lua coroutines:** MicroLua implements
-   cooperative threads as coroutines. This enables multitasking without the need
-   for locks. Blocking library calls (e.g. `pico.time.sleep_us()`) yield to
-   other threads.
- - **Thin bindings to C libraries:** MicroLua exposes a growing subset of the
-   functionality provided by the pico-sdk. The bindings are designed with a
-   direct and consistent [mapping](#binding-conventions) to their underlying C
-   implementation.
- - **Comprehensive suite of unit tests:** They not only test the binding layer,
-   but when possible also the underlying functionality of the pico-sdk.
+- **Pristine, unpatched Lua interpreter:** MicroLua runs the latest,
+  unmodified Lua 5.4.x interpreter, imported as a git submodule. All
+  customization is done through [`luaconf.h`](core/luaconf.in.h).
+- **Per-core interpreter instances:** MicroLua runs a separate Lua interpreter
+  in each core. They don't share state except through C libraries.
+- **Cooperative multithreading through Lua coroutines:** MicroLua implements
+  cooperative threads as coroutines. This enables multitasking without the need
+  for locks. Blocking library calls (e.g. `pico.time.sleep_us()`) yield to
+  other threads.
+- **Thin bindings to C libraries:** MicroLua exposes a growing subset of the
+  functionality provided by the pico-sdk. The bindings are designed with a
+  direct and consistent [mapping](#binding-conventions) to their underlying C
+  implementation.
+- **Comprehensive suite of unit tests:** They not only test the binding layer,
+  but when possible also the underlying functionality of the pico-sdk.
 
 ## Building
 
@@ -103,23 +103,6 @@ function main()
 end
 ```
 
-```cmake
-# CMakeLists.txt
-mlua_add_lua_modules(mlua_examples_blink_main main.lua)
-target_link_libraries(mlua_examples_blink_main INTERFACE
-    mlua_mod_hardware_gpio
-    mlua_mod_pico
-    mlua_mod_pico_time
-)
-
-add_executable(mlua_examples_blink)
-target_link_libraries(mlua_examples_blink PRIVATE
-    mlua_examples_blink_main
-    pico_stdlib
-)
-pico_add_extra_outputs(mlua_examples_blink)
-```
-
 To build the example:
 
 ```shell
@@ -142,46 +125,15 @@ $ "${MLUA_PATH}/tools/flash" build/blink/mlua_examples_blink.elf
 
 ## Documentation
 
-### Binding conventions
+- [Common functionality](docs/common.md) across modules.
+- [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
+  the pico-sdk.
+- [`mlua.*`](docs/mlua.md): MicroLua libraries.
+- [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the pico-sdk.
 
-There is a fairly obvious mapping from the C library name to the corresponding
-Lua module. For example, the `hardware_i2c` library is wrapped by the
-`hardware.i2c` module.
-
-The constants and functions exported by C libraries are exposed as module- or
-class-level symbols with the same names, with obvious prefixes stripped when
-they would cause stuttering. For example:
-
- - `PICO_UART_ENABLE_CRLF_SUPPORT` => `hardware.uart.ENABLE_CRLF_SUPPORT`
- - `UART_PARITY_NONE` => `hardware.uart.PARITY_NONE`
- - `uart_set_baudrate()` => `hardware.uart.Uart.set_baudrate()`
-
-Function arguments are kept in the same order as their C counterpart, except for
-out arguments, which map to multiple return values. Function argument types are
-mapped as follows:
-
-| C type                | Lua type     |
-| --------------------- | ------------ |
-| `bool`                | `boolean`    |
-| integers (<=32 bits)  | `integer`    |
-| `int64_t`, `uint64_t` | `mlua.int64` |
-| `float`, `double`     | `number`     |
-| `char*`               | `string`     |
-| pointers              | `userdata`   |
-
-As a convenience, `bool` function arguments accept `0` as `false`.
-
-### Modules
-
- - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries
-   of the pico-sdk.
- - [`mlua.*`](docs/mlua.md): MicroLua libraries.
- - [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the
-   pico-sdk.
-
+<!-- TODO: Document how to set up a project, using mlua_import.cmake -->
 <!-- TODO: Document how to embed MicroLua into a C application -->
 <!-- TODO: Document how to write a MicroLua module in C -->
-<!-- TODO: Document ROM-based tables -->
 <!-- TODO: Document config knobs -->
 
 ## Contributing
@@ -224,10 +176,10 @@ until then, the RP2040 is the only supported target.
 
 ### How does MicroLua compare to other Lua projects for the Pico?
 
- - [picolua](https://github.com/kevinboone/luapico) is based on a patched Lua
-   5.4 interpreter, and aims to provide a full embedded development environment,
-   including a shell and an editor. It exposes a limited subset of Pico-specific functionality.
+- [picolua](https://github.com/kevinboone/luapico) is based on a patched Lua 5.4
+  interpreter, and aims to provide a full embedded development environment,
+  including a shell and an editor. It exposes a limited subset of Pico-specific functionality.
 
-   MicroLua uses an unpatched Lua interpreter at the latest stable version, and
-   aims to expose most of the functionality provided by the pico-sdk through a
-   thin binding layer.
+  MicroLua uses an unpatched Lua interpreter at the latest stable version, and
+  aims to expose most of the functionality provided by the pico-sdk through a
+  thin binding layer.
