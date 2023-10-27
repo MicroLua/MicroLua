@@ -108,7 +108,8 @@ default I2C peripheral, if defined, can be accessed as `default`.
 > Blocking writes and reads with per-char timeouts, as well as raw blocking
 > writes and reads, aren't supported yet.
 
-- `[0]: I2C`, `[1]: I2C`\
+- `[0]: I2C`\
+  `[1]: I2C`\
   The `I2C` instances.
 
 - `NUM: integer`\
@@ -189,7 +190,8 @@ The class is instantiated once for each UART peripheral of the target, and the
 instances can be accessed by indexing the module with the instance index. The
 default UART peripheral, if defined, can be accessed as `default`.
 
-- `[0]: UART`, `[1]: UART`\
+- `[0]: UART`\
+  `[1]: UART`\
   The `UART` instances.
 
 - `NUM: integer`\

@@ -31,6 +31,10 @@ pointer to struct     | `userdata`
 
 As a convenience, `bool` function arguments accept `0` as `false`.
 
+## Function metatable
+
+TODO: Document
+
 ## Read-only tables
 
 TODO: Document
