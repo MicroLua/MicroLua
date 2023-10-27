@@ -190,6 +190,65 @@ tests: [`hardware.pll.test`](../lib/hardware.pll.test.lua)
 
 ## `hardware.regs.*`
 
+**Library:** `hardware_regs`,
+tests: [`hardware.regs.test`](../lib/hardware.regs.test.lua)
+
+The `hardware.regs.*` modules expose constants defined in the
+[`hardware/regs/*.h`](https://github.com/raspberrypi/pico-sdk/tree/master/src/rp2040/hardware_regs/include/hardware/regs)
+headers. Each module is auto-generated from the correponding header. Thanks
+to [read-only tables](common.md#read-only-tables), they use very little RAM and
+a reasonable amount of flash, despite some of the headers being huge.
+
+The constants have the prefix corresponding to the header file name stripped.
+For example, all constants in `uart.h` have a `UART_` prefix, and
+`UART_UARTDR_PE_BITS` becomes `UARTDR_PE_BITS`. The following constants are
+excluded:
+
+- String constants whose name ends with `_ACCESS` and whose value has a length
+  of 2 or 3. These describe register access (read, write, etc.) and aren't
+  useful at runtime.
+- String constants whose name ends with `_RESET` and whose value is `"-"`. These
+  are register fields whose reset value isn't known.
+- Constants whose name starts with `isr_`. These are aliases for IRQ handler
+  slots defined in `intctrl.h`, which aren't useful in Lua.
+
+Here's the list of modules and their source header for reference:
+
+- `hardware.regs.adc`: [`adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/adc.h)
+- `hardware.regs.addressmap`: [`addressmap.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h)
+- `hardware.regs.busctrl`: [`busctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/busctrl.h)
+- `hardware.regs.clocks`: [`clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/clocks.h)
+- `hardware.regs.dma`: [`dma.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dma.h)
+- `hardware.regs.dreq`: [`dreq.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dreq.h)
+- `hardware.regs.i2c`: [`i2c.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/i2c.h)
+- `hardware.regs.intctrl`: [`intctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/intctrl.h)
+- `hardware.regs.io_bank0`: [`io_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_bank0.h)
+- `hardware.regs.io_qspi`: [`io_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_qspi.h)
+- `hardware.regs.m0plus`: [`m0plus.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/m0plus.h)
+- `hardware.regs.pads_bank0`: [`pads_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_bank0.h)
+- `hardware.regs.pads_qspi`: [`pads_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_qspi.h)
+- `hardware.regs.pio`: [`pio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pio.h)
+- `hardware.regs.pll`: [`pll.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pll.h)
+- `hardware.regs.psm`: [`psm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/psm.h)
+- `hardware.regs.pwm`: [`pwm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pwm.h)
+- `hardware.regs.resets`: [`resets.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/resets.h)
+- `hardware.regs.rosc`: [`rosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rosc.h)
+- `hardware.regs.rtc`: [`rtc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rtc.h)
+- `hardware.regs.sio`: [`sio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sio.h)
+- `hardware.regs.spi`: [`spi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/spi.h)
+- `hardware.regs.ssi`: [`ssi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/ssi.h)
+- `hardware.regs.syscfg`: [`syscfg.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/syscfg.h)
+- `hardware.regs.sysinfo`: [`sysinfo.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sysinfo.h)
+- `hardware.regs.tbman`: [`tbman.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/tbman.h)
+- `hardware.regs.timer`: [`timer.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/timer.h)
+- `hardware.regs.uart`: [`uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/uart.h)
+- `hardware.regs.usb`: [`usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb.h)
+- `hardware.regs.usb_device_dpram`: [`usb_device_dpram.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb_device_dpram.h)
+- `hardware.regs.vreg_and_chip_reset`: [`vreg_and_chip_reset.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/vreg_and_chip_reset.h)
+- `hardware.regs.watchdog`: [`watchdog.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/watchdog.h)
+- `hardware.regs.xip`: [`xip.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xip.h)
+- `hardware.regs.xosc`: [`xosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xosc.h)
+
 ## `hardware.resets`
 
 **Library:** [`hardware_resets`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_resets),
