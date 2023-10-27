@@ -145,6 +145,27 @@ default I2C peripheral, if defined, can be accessed as `default`.
 module: [`hardware.irq`](../lib/hardware.irq.c),
 tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
 
+> [!NOTE]
+> IRQ handlers can only be set for user IRQs (`FIRST_USER_IRQ` ..
+> `FIRST_USER_IRQ` + `NUM_USER_IRQS`).
+
+- `set_handler(num, handler, priority = nil) -> Thread`\
+  Set a handler for the user IRQ `num`. When `priority` is missing, `nil` or
+  negative, an exclusive IRQ handler is set. Otherwise, a shared handler with
+  the given priority is set. Returns the
+  [event handler thread](common.md#callbacks).
+
+- `set_exclusive_handler(num, handler) -> Thread`\
+  Set an exclusive handler for the user IRQ `num`. Returns the
+  [event handler thread](common.md#callbacks).
+
+- `add_shared_handler(num, handler, priority) -> Thread`\
+  Add a shared handler for the user IRQ `num`. Returns the
+  [event handler thread](common.md#callbacks).
+
+- `remove_handler(num)`\
+  Remove the IRQ handler for the user IRQ `num`.
+
 ## `hardware.pll`
 
 **Library:** [`hardware_pll`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pll),
