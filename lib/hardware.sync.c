@@ -7,6 +7,11 @@
 MLUA_FUNC_0_0(mod_, __, sev)
 MLUA_FUNC_0_0(mod_, __, wfe)
 MLUA_FUNC_0_0(mod_, __, wfi)
+MLUA_FUNC_0_0(mod_, __, dmb)
+MLUA_FUNC_0_0(mod_, __, dsb)
+MLUA_FUNC_0_0(mod_, __, isb)
+MLUA_FUNC_0_0(mod_, __, mem_fence_acquire)
+MLUA_FUNC_0_0(mod_, __, mem_fence_release)
 MLUA_FUNC_1_0(mod_,, save_and_disable_interrupts, lua_pushinteger)
 MLUA_FUNC_0_1(mod_,, restore_interrupts, luaL_checkinteger)
 
@@ -14,6 +19,11 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(sev, mod_),
     MLUA_SYM_F(wfe, mod_),
     MLUA_SYM_F(wfi, mod_),
+    MLUA_SYM_F(dmb, mod_),
+    MLUA_SYM_F(dsb, mod_),
+    MLUA_SYM_F(isb, mod_),
+    MLUA_SYM_F(mem_fence_acquire, mod_),
+    MLUA_SYM_F(mem_fence_release, mod_),
     MLUA_SYM_F(save_and_disable_interrupts, mod_),
     MLUA_SYM_F(restore_interrupts, mod_),
 };
