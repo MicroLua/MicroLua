@@ -309,6 +309,7 @@ MLUA_SYMBOLS(Uart_syms) = {
     MLUA_SYM_F(is_readable, Uart_),
     MLUA_SYM_F(write_blocking, Uart_),
     MLUA_SYM_F(read_blocking, Uart_),
+    // TODO: Make put*() non-blocking
     MLUA_SYM_F(putc_raw, Uart_),
     MLUA_SYM_F(putc, Uart_),
     MLUA_SYM_F(puts, Uart_),
@@ -334,6 +335,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
     MLUA_SYM_V(NUM, integer, NUM_UARTS),
     MLUA_SYM_V(_default, boolean, false),
+    // uart_default_tx_wait_blocking: Use default.tx_wait_blocking() instead
 };
 
 #if LIB_MLUA_MOD_MLUA_EVENT

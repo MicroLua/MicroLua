@@ -33,11 +33,13 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(clk_rtc, integer, clk_rtc),
     MLUA_SYM_V(CLK_COUNT, integer, CLK_COUNT),
 
+    // clocks_init: Not useful in Lua (called by runtime)
     MLUA_SYM_F(configure, mod_),
     MLUA_SYM_F(stop, mod_),
     MLUA_SYM_F(get_hz, mod_),
     MLUA_SYM_F(frequency_count_khz, mod_),
     MLUA_SYM_F(set_reported_hz, mod_),
+    // TODO: MLUA_SYM_F(enable_resus, mod_),
     MLUA_SYM_F(gpio_init_int_frac, mod_),
     MLUA_SYM_F(gpio_init, mod_),
     MLUA_SYM_F(configure_gpin, mod_),

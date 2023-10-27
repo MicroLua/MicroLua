@@ -125,12 +125,13 @@ static int try_write(lua_State* ls, bool timeout) {
     inst->restart_on_next = nostop;
 
     // Compute the call result.
-    int res = offset;
     if ((abort_reason & (I2C_IC_TX_ABRT_SOURCE_ABRT_7B_ADDR_NOACK_BITS |
                          I2C_IC_TX_ABRT_SOURCE_ABRT_TXDATA_NOACK_BITS)) != 0) {
-        res = PICO_ERROR_GENERIC;
+        luaL_pushfail(ls);
+        lua_pushinteger(ls, PICO_ERROR_GENERIC);
+        return 2;
     }
-    lua_pushinteger(ls, res);
+    lua_pushinteger(ls, offset);
     return 1;
 }
 
@@ -156,6 +157,11 @@ static int I2C_write_blocking(lua_State* ls) {
         res = i2c_write_blocking_until(
             inst, addr, src, len, nostop,
             from_us_since_boot(mlua_check_int64(ls, 5)));
+    }
+    if (res < 0) {
+        luaL_pushfail(ls);
+        lua_pushinteger(ls, res);
+        return 2;
     }
     lua_pushinteger(ls, res);
     return 1;
@@ -275,11 +281,12 @@ static int I2C_read_blocking(lua_State* ls) {
             inst, addr, dst, len, nostop,
             from_us_since_boot(mlua_check_int64(ls, 5)));
     }
-    if (count >= 0) {
-        luaL_pushresultsize(&buf, count);
-    } else {
+    if (count < 0) {
+        luaL_pushfail(ls);
         lua_pushinteger(ls, count);
+        return 2;
     }
+    luaL_pushresultsize(&buf, count);
     return 1;
 }
 
