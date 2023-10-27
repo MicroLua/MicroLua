@@ -220,6 +220,10 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
 module: [`hardware.sync`](../lib/hardware.sync.c),
 tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
 
+> [!NOTE]
+> Spin lock functionality isn't exposed to Lua, because spin locks are supposed
+> to be held for a short duration only, but this can't be achieved from Lua.
+
 ## `hardware.timer`
 
 **Library:** [`hardware_timer`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_timer),
