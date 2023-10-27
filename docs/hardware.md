@@ -180,6 +180,12 @@ tests: [`hardware.pll.test`](../lib/hardware.pll.test.lua)
 module: [`hardware.resets`](../lib/hardware.resets.c),
 tests: [`hardware.resets.test`](../lib/hardware.resets.test.lua)
 
+The reset bitmasks are avaialble in the `hardware.regs.resets` module as
+`RESET_*_BITS`.
+
+- `unreset_block_wait(bits)`\
+  This function blocks without yielding.
+
 ## `hardware.rtc`
 
 **Library:** [`hardware_rtc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_rtc),
@@ -241,8 +247,8 @@ default UART peripheral, if defined, can be accessed as `default`.
 - `UART:putc_raw(c)`\
   `UART:putc(c)`\
   `UART:puts(c)`\
-  These functions always block if the TX FIFO is full, and do not yield. This
-  will be fixed eventually.
+  These functions block without yielding if the TX FIFO is full. This will be
+  fixed eventually.
 
 - `UART:is_readable_within_us(us) -> boolean`\
   Wait until the RX FIFO is non-empty, or until the timeout elapses. Yields if
