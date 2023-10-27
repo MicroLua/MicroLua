@@ -86,6 +86,9 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
   Set the generic callback used for GPIO IRQ events, or remove the callback if
   `callback` is `nil`. Returns the [event handler thread](common.md#callbacks).
 
+  The callback can be removed either by killing the returned thread, or by
+  calling `set_irq_callback()` with a `nil` callback.
+
 - `set_irq_enabled_with_callback(gpio, event_mask, enabled, callback) -> Thread`\
   Update the event mask for a GPIO, set the generic callback used for GPIO IRQ
   events, and enable GPIO IRQs (`IO_IRQ_BANK0`). Returns the
@@ -164,7 +167,8 @@ tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
   [event handler thread](common.md#callbacks).
 
 - `remove_handler(num)`\
-  Remove the IRQ handler for the user IRQ `num`.
+  Remove the IRQ handler for the user IRQ `num`. Alternatively, the thread
+  returned when setting the handler can be killed.
 
 ## `hardware.pll`
 
@@ -191,6 +195,24 @@ The reset bitmasks are avaialble in the `hardware.regs.resets` module as
 **Library:** [`hardware_rtc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_rtc),
 module: [`hardware.rtc`](../lib/hardware.rtc.c),
 tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
+
+- `set_datetime(t) -> boolean`\
+  Set the RTC to the specified time. `t` is a table containing the fields of
+  [`datetime_t`](https://www.raspberrypi.com/documentation/pico-sdk/structdatetime__t.html).
+
+- `get_datetime() -> table`\
+  Get the current time from the RTC. Returns a table containing the fields of
+  [`datetime_t`](https://www.raspberrypi.com/documentation/pico-sdk/structdatetime__t.html).
+
+- `set_alarm(t, callback) -> Thread`\
+  Set a callback to be called at specific times in the future. `t` is a table
+  containing a subset of the fields of
+  [`datetime_t`](https://www.raspberrypi.com/documentation/pico-sdk/structdatetime__t.html).
+  Unset fields will not be matched on. Returns the
+  [event handler thread](common.md#callbacks).
+
+  The callback can be removed either by killing the returned thread, or by
+  calling `set_alarm()` with a `nil` callback.
 
 ## `hardware.sync`
 
