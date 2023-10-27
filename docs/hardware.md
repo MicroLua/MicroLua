@@ -86,6 +86,9 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
   Set the generic callback used for GPIO IRQ events, or remove the callback if
   `callback` is `nil`. Returns the [event handler thread](common.md#callbacks).
 
+  - `callback(gpio, event_mask)`\
+    The callback to be called on GPIO IRQ events.
+
   The callback can be removed either by killing the returned thread, or by
   calling `set_irq_callback()` with a `nil` callback.
 
@@ -158,13 +161,22 @@ tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
   the given priority is set. Returns the
   [event handler thread](common.md#callbacks).
 
+  - `handler(num)`\
+    The handler to be called when the user IRQ is triggered.
+
 - `set_exclusive_handler(num, handler) -> Thread`\
   Set an exclusive handler for the user IRQ `num`. Returns the
   [event handler thread](common.md#callbacks).
 
+  - `handler(num)`\
+    The handler to be called when the user IRQ is triggered.
+
 - `add_shared_handler(num, handler, priority) -> Thread`\
   Add a shared handler for the user IRQ `num`. Returns the
   [event handler thread](common.md#callbacks).
+
+  - `handler(num)`\
+    The handler to be called when the user IRQ is triggered.
 
 - `remove_handler(num)`\
   Remove the IRQ handler for the user IRQ `num`. Alternatively, the thread
@@ -211,6 +223,9 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
   Unset fields will not be matched on. Returns the
   [event handler thread](common.md#callbacks).
 
+  - `callback()`\
+    The callback to be called when the RTC time matches `t`.
+
   The callback can be removed either by killing the returned thread, or by
   calling `set_alarm()` with a `nil` callback.
 
@@ -229,6 +244,17 @@ tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
 **Library:** [`hardware_timer`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_timer),
 module: [`hardware.timer`](../lib/hardware.timer.c),
 tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
+
+- `set_callback(alarm_num, callback) -> Thread`\
+  Set the callback for the hardware timer `alarm_num`. The callback is called
+  with the arguments `(alarm_num)`. Returns the
+  [event handler thread](common.md#callbacks).
+
+  - `callback(alarm_num)`\
+    The callback to be called when the timer triggers.
+
+  The callback can be removed either by killing the returned thread, or by
+  calling `set_callback()` with a `nil` callback.
 
 ## `hardware.uart`
 

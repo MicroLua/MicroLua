@@ -47,7 +47,7 @@ static int handle_alarm_event(lua_State* ls) {
     alarm_state.pending &= ~mask;
     mlua_event_unlock(save);
     if ((pending & mask) != 0) {  // Call the callback
-        lua_pushvalue(ls, lua_upvalueindex(2));
+        lua_pushvalue(ls, lua_upvalueindex(2));  // handler
         lua_pushinteger(ls, alarm);
         lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
     }
