@@ -205,7 +205,45 @@ tests: [`pico.stdlib.test`](../lib/pico.stdlib.test.lua)
 module: [`pico.time`](../lib/pico.time.c),
 tests: [`pico.time.test`](../lib/pico.time.test.lua)
 
-TODO
+Alarms and repeating timers are implemented using threads and thread timers.
+This allows for unlimited timers, without using alarm pools. Alarm pool
+functionality is therefore not exposed to Lua and left for use by C code.
+
+- `best_effort_wfe_or_timeout(deadline) -> boolean`\
+  This function blocks with a `WFE` without yielding.
+
+- `add_alarm_at(time, callback, fire_if_past) -> Thread`\
+  `add_alarm_in_us(delay_us, callback, fire_if_past) -> Thread`\
+  `add_alarm_in_ms(delay_ms, callback, fire_if_past) -> Thread`\
+  Add an alarm callback to be called at a specific time or after a delay.
+
+  - `callback(thread) -> integer | nil`\
+    The callback to be called when the alarm fires. The return value determines
+    if the alarm should be re-scheduled.
+
+    - `<0`: Re-schedule the alarm this many microseconds from the time the alarm
+      was previously scheduled to fire.
+    - `>0`: Re-schedule the alarm this many microseconds from the time the
+      callback returns.
+    - `0` or `nil`: Do not re-schedule the alarm.
+
+- `cancel_alarm(thread) -> boolean`\
+  Cancel an alarm.
+
+- `add_repeating_timer_us(delay_us, callback) -> Thread`\
+  `add_repeating_timer_ms(delay_ms, callback) -> Thread`\
+  Add a repeating timer that calls the callback at a specific interval.
+
+  - `callback(thread) -> integer | boolean | nil`\
+    The callback to be called when the timer fires. The return value determines
+    if the timer should be re-scheduled.
+
+    - `true` or `nil`: Re-schedule the timer, keeping the same interval.
+    - `false` or `0`: Do not re-schedule the timer.
+    - `integer`: Update the interval and re-schedule the timer.
+
+- `cancel_repeating_timer(thread) -> boolean`\
+  Cancel a repeating timer.
 
 ## `pico.unique_id`
 
