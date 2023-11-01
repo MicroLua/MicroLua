@@ -437,6 +437,13 @@ static int int64___call(lua_State* ls) {
         }
         break;
 
+    case LUA_TUSERDATA:
+        if (mlua_test_int64(ls, 1, &value)) {
+            lua_settop(ls, 1);
+            return 1;
+        }
+        __attribute__((fallthrough));
+
     default:
         luaL_checkany(ls, 1);
         luaL_pushfail(ls);
@@ -451,6 +458,7 @@ static int int64___call(lua_State* ls) {
 MLUA_SYMBOLS(int64_syms) = {
     MLUA_SYM_P(max, int64_),
     MLUA_SYM_P(min, int64_),
+
     MLUA_SYM_F(ashr, int64_),
     MLUA_SYM_F(eq, int64_),
     MLUA_SYM_F(hex, int64_),

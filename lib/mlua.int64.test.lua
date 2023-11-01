@@ -85,13 +85,20 @@ end
 function test_cast_to_int64(t)
     local skip = {}
     for _, test in ipairs{
+        -- No-op conversion from int64
+        {{int64(1234)}, int64(1234)},
         -- Conversion from boolean
         {{false}, int64(0)},
         {{true}, int64(1)},
         -- Conversion from integer
         {{0x12345678}, int64('0x12345678')},
+        {{0xabcdef01},                              -- Sign extension
+         integer_bits >= 64 and int64('0xabcdef01')
+                            or int64('0xffffffffabcdef01')},
         integer_bits >= 64 and skip or
             {{0x12345678, 0x9abcdef0}, int64('0x9abcdef012345678')},
+        integer_bits >= 64 and skip or
+            {{0xabcdef01, 0}, int64('0xabcdef01')},
         integer_bits >= 64 and skip or {{-1, 0x123}, int64('0x123ffffffff')},
         -- Conversion from float
         {{12345678.0}, int64('12345678')},

@@ -31,6 +31,10 @@ pointer to struct     | `userdata`
 
 As a convenience, `bool` function arguments accept `0` as `false`.
 
+## Lua modules
+
+TODO: Document
+
 ## Function metatable
 
 TODO: Document

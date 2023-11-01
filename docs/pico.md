@@ -231,7 +231,7 @@ Alarms and repeating timers are implemented using threads and thread timers.
 This allows for unlimited timers, without using alarm pools. Alarm pool
 functionality is therefore not exposed to Lua and left for use by C code.
 
-- `best_effort_wfe_or_timeout(deadline) -> boolean`\
+- `best_effort_wfe_or_timeout(time) -> boolean`\
   This function blocks with a `WFE` without yielding.
 
 - `add_alarm_at(time, callback, fire_if_past) -> Thread`\
