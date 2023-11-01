@@ -114,6 +114,53 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 **Module:** [`mlua.io`](../lib/mlua.io.lua),
 tests: [`mlua.io.test`](../lib/mlua.io.test.lua)
 
+This module provides helpers for input / output processing.
+
+> [!IMPORTANT]
+> Output functions block without yielding if the output buffer for `stdout` is
+> full.
+
+- `read(count) -> string | nil`\
+  Read at least one and at most `count` characters from `stdin`. Uses
+  `pico.stdio.read()` if the module is available, or blocks without yielding
+  if no data is available.
+
+- `write(data) -> integer | nil`\
+  Write data to `stdout`, and return the number of characters written.
+
+- `printf(format, ...) -> integer | nil`\
+  Format the arguments with `string:format()` and write the result to `stdout`.
+
+- `fprintf(out, format, ...) -> integer | nil`\
+  Format the arguments with `string:format()` and write the result to `out`.
+
+- `ansi(s) -> string`\
+  Substitute tags of the form `@{...}` with the corresponding ANSI escape codes.
+  See the module for supported tags.
+
+- `aprintf(format, ...) -> integer | nil`\
+  Substitute tags in `format`, format the arguments with `string:format()` and
+  output the result to `stdout`.
+
+- `afprintf(out, format, ...) -> integer | nil`\
+  Substitute tags in `format`, format the arguments with `string:format()` and
+  output the result to `out`.
+
+ - `Buffer`\
+   A class that records writes and allows replaying them on another stream.
+
+- `Buffer:is_empty() -> boolean`\
+  Return true iff the buffer holds no data.
+
+- `Buffer:write(data)`\
+  Write data to the buffer.
+
+- `Buffer:replay(w)`\
+  Replay the recorded writes to `w`.
+
+- `tostring(Buffer) -> string`\
+  Return the content of the buffer as a string.
+
 ## `mlua.mem`
 
 **Module:** [`mlua.mem`](../lib/mlua.mem.c),
