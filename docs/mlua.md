@@ -162,6 +162,11 @@ The `Buffer` type records writes and allows replaying them on another stream.
 - `tostring(Buffer) -> string`\
   Return the content of the buffer as a string.
 
+## `mlua.list`
+
+**Module:** [`mlua.list`](../lib/mlua.list.c),
+tests: [`mlua.list.test`](../lib/mlua.list.test.lua)
+
 ## `mlua.mem`
 
 **Module:** [`mlua.mem`](../lib/mlua.mem.c),
@@ -284,3 +289,44 @@ tests: [`mlua.thread.test`](../lib/mlua.thread.test.lua)
 
 **Module:** [`mlua.util`](../lib/mlua.util.lua),
 tests: [`mlua.util.test`](../lib/mlua.util.test.lua)
+
+This module provides various utilities.
+
+- `ident(...) -> ...`\
+  Return the arguments unchanged.
+
+- `eq(a, b) -> boolean`\
+  `neq(a, b) -> boolean`\
+  `lt(a, b) -> boolean`\
+  `lte(a, b) -> boolean`\
+  `gt(a, b) -> boolean`\
+  `gte(a, b) -> boolean`\
+  Wrapper functions for binary comparisons.
+
+- `get(tab, key) -> any`\
+  Return `tab[key]`, or `nil` if the lookup throws an error.
+
+- `repr(v) -> string`\
+  Return a human-readable string representation of `v`. Calls the `__repr`
+  metamethod of `v` if it is defined.
+
+- `keys(tab, filter) -> list`\
+  Return the keys of `tab`. If `filter` is provided, only the keys of entries
+  where `filter(key, value)` returns true are included.
+
+- `values(tab, filter) -> list`\
+  Return the values of `tab`. If `filter` is provided, only the values of
+  entries where `filter(key, value)` returns true are included.
+
+- `sort(items, comp) -> items`\
+  Sort `items` and return it.
+
+- `table_eq(a, b) -> boolean`\
+  Return true iff the `(key, value)` pairs of the given tables compare equal.
+
+- `table_copy(tab) -> table`\
+  Return a shallow copy of `tab`.
+
+- `table_comp(keys) -> function(a, b)`\
+  Return a comparison function comparing table pairs by the elements at the
+  given keys.

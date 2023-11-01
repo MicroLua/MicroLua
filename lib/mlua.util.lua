@@ -18,7 +18,7 @@ function lte(a, b) return a <= b end
 function gt(a, b) return a > b end
 function gte(a, b) return a >= b end
 
--- Returns the value associated with the given key, or nil if the lookup fails.
+-- Return the value associated with the given key, or nil if the lookup fails.
 function get(tab, key)
     local ok, v = pcall(function() return tab[key] end)
     if ok then return v end
@@ -140,8 +140,8 @@ function table_copy(tab)
     return setmetatable(res, getmetatable(tab))
 end
 
--- Return a table comparator comparing table pairs by the elements at the given
--- keys.
+-- Return a comparison function comparing table pairs by the elements at the
+-- given keys.
 function table_comp(keys)
     return function(a, b)
         for _, k in list.ipairs(keys) do
