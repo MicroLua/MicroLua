@@ -60,11 +60,31 @@ are serviced very quickly, and there are potential race conditions.
 module: [`pico.multicore`](../lib/pico.multicore.c),
 tests: [`pico.multicore.test`](../lib/pico.multicore.test.lua)
 
+This module allows launching a separate Lua interpreter in core 1. The
+interpreters in both cores are independent and don't share state. When resetting
+core 1, its interpreter is requested to shut down, and all its resources are
+released. Launching and resetting core 1 repeatedly therefore doesn't cause
+a memory leak.
+
+- `reset_core1()`\
+  If core 1 is running a Lua interpreter, signal that it should terminate, then
+  wait for it to do so. Then, reset core 1.
+
+- `launch_core1(module: string, fn = 'main')`\
+  Launch a Lua interpreter in core 1, load `module`, then call `module.fn()`.
+
+- `set_shutdown_handler(handler = Thread.shutdown) -> Thread`\
+  Start a thread that will call the given function when the core is reset. This
+  function must be called in core 1. The shutdown handler can be removed by
+  killing the thread or calling the function with a `nil` handler.
+
 ### `pico.multicore.fifo`
 
 **Library:** [`pico_multicore_fifo`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#multicore_fifo),
 module: [`pico.multicore.fifo`](../lib/pico.multicore.fifo.c),
 tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
+
+TODO
 
 ## `pico.platform`
 
@@ -72,16 +92,22 @@ tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
 module: [`pico.platform`](../lib/pico.platform.c),
 tests: [`pico.platform.test`](../lib/pico.platform.test.lua)
 
+TODO
+
 ## `pico.stdio`
 
 **Library:** [`pico_stdio`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio),
 module: [`pico.stdio`](../lib/pico.stdio.c),
 tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
 
+TODO
+
 ### `pico.stdio.semihosting`
 
 **Library:** [`pico_stdio_semihosting`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_semihosting),
 module: [`pico.stdio.semihosting`](../lib/pico.stdio.semihosting.c)
+
+TODO
 
 ### `pico.stdio.uart`
 
@@ -89,10 +115,14 @@ module: [`pico.stdio.semihosting`](../lib/pico.stdio.semihosting.c)
 module: [`pico.stdio.uart`](../lib/pico.stdio.uart.c),
 tests: [`pico.stdio.uart.test`](../lib/pico.stdio.uart.test.lua)
 
+TODO
+
 ### `pico.stdio.usb`
 
 **Library:** [`pico_stdio_usb`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_usb),
 module: [`pico.stdio.usb`](../lib/pico.stdio.usb.c)
+
+TODO
 
 ## `pico.stdlib`
 
@@ -100,14 +130,20 @@ module: [`pico.stdio.usb`](../lib/pico.stdio.usb.c)
 module: [`pico.stdlib`](../lib/pico.stdlib.c),
 tests: [`pico.stdlib.test`](../lib/pico.stdlib.test.lua)
 
+TODO
+
 ## `pico.time`
 
 **Library:** [`pico_time`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_time),
 module: [`pico.time`](../lib/pico.time.c),
 tests: [`pico.time.test`](../lib/pico.time.test.lua)
 
+TODO
+
 ## `pico.unique_id`
 
 **Library:** [`pico_unique_id`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_unique_id),
 module: [`pico.unique_id`](../lib/pico.unique_id.c),
 tests: [`pico.unique_id.test`](../lib/pico.unique_id.test.lua)
+
+TODO

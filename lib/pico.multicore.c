@@ -125,7 +125,11 @@ static int shutdown_handler_done(lua_State* ls) {
 }
 
 static int mod_set_shutdown_handler(lua_State* ls) {
-    CoreState* st = &core_state[get_core_num() - 1];
+    uint core = get_core_num();
+    if (core == 0) {
+        return luaL_error(ls, "cannot set a shutdown handler on core %d", core);
+    }
+    CoreState* st = &core_state[core - 1];
     if (lua_isnone(ls, 1)) {  // No argument, use Thread.shutdown by default
         mlua_thread_meta(ls, "shutdown");
     } else if (lua_isnil(ls, 1)) {  // Nil handler, kill the handler thread
@@ -149,6 +153,8 @@ static int mod_set_shutdown_handler(lua_State* ls) {
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(reset_core1, mod_),
     MLUA_SYM_F(launch_core1, mod_),
+    // multicore_launch_core1_with_stack: Not useful in Lua
+    // multicore_launch_core1_raw: Not useful in Lua
     MLUA_SYM_F(set_shutdown_handler, mod_),
 };
 

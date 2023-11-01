@@ -47,6 +47,8 @@ both.
 - **Comprehensive suite of unit tests:** They not only test the binding layer,
   but when possible also the underlying functionality of the pico-sdk.
 
+<!-- TODO: Describe performance -->
+
 ## Building
 
 ```shell
@@ -123,6 +125,8 @@ $ make -j9 -C build/blink
 $ "${MLUA_PATH}/tools/flash" build/blink/mlua_examples_blink.elf
 ```
 
+<!-- TODO: Flash using picotool -->
+
 ## Documentation
 
 - [Common functionality](docs/common.md) across modules.
@@ -183,3 +187,12 @@ until then, the RP2040 is the only supported target.
   MicroLua uses an unpatched Lua interpreter at the latest stable version, and
   aims to expose most of the functionality provided by the pico-sdk through a
   thin binding layer.
+
+### What's the relationship with MicroLua DS?
+
+[MicroLua DS](https://sourceforge.net/projects/microlua/) was a development
+environment allowing to build apps for the Nintendo DS in Lua. It was last
+released in January 2014. MicroLua has no relationship with MicroLua DS.
+
+While the naming conflict is unfortunate, I felt that almost 10 years of
+inactivity was long enough that it was fair game to re-use the name.
