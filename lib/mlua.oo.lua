@@ -2,7 +2,7 @@
 --
 -- Classes are created with class, providing a name and optionally a base class.
 -- Instances are created by calling the class, optionally with arguments. The
--- later are passed to the instance initializer __init, if it is defined.
+-- latter are passed to the instance initializer __init, if it is defined.
 --
 -- Metamethods can be defined on classes, and have the expected effect. They are
 -- copied from the base class to the subclass at class creation time. This is

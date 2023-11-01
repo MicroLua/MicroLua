@@ -206,6 +206,23 @@ The `Buffer` type holds a fixed-size memory buffer.
 **Module:** [`mlua.oo`](../lib/mlua.oo.lua),
 tests: [`mlua.oo.test`](../lib/mlua.oo.test.lua)
 
+This module provides a simple object model for object-oriented programming.
+Classes are created with `class`, providing a name and optionally a base class.
+Instances are created by calling the class, optionally with arguments. The
+latter are passed to the instance initializer `__init`, if it is defined.
+Metamethods can be defined on classes, and have the expected effect. They are
+copied from the base class to the subclass at class creation time. This is
+necessary because Lua gets metamethods using a raw access.
+
+- `class(name, base) -> Class`\
+  Create a class with the given name, optionally inheriting from `base`.
+
+- `issubclass(cls, base) -> boolean`\
+  Return true iff `cls` is a subclass of `base`.
+
+- `isinstance(obj, cls) -> boolean`\
+  Return true iff `obj` is an instance of `cls`.
+
 ## `mlua.stdio`
 
 **Module:** [`mlua.stdio`](../lib/mlua.stdio.c),
