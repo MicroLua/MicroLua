@@ -121,14 +121,46 @@ This module exposes the constants defined in
 module: [`pico.stdio`](../lib/pico.stdio.c),
 tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
 
-TODO
+- `EOF: integer`
+
+- `getchar() -> integer`\
+  `getchar_timeout_us(timeout) -> integer`\
+  These functions yield if no data is currently available on `stdin` and
+  the "characters available" event is enabled.
+
+- `putchar(c) -> integer`\
+  `putchar_raw(c) -> integer`\
+  `puts(s) -> integer` \
+  `puts_raw(s) -> integer` \
+  These functions block without yielding if the output buffer for `stdout` is
+  full. This cannot currently be fixed, because the `pico_stdio` library doesn't
+  expose functionality for non-blocking output.
+
+- `set_chars_available_callback(fn) -> Thread`\
+  Set a handler to be called when characters are available for reading from
+  `stdin`. The handler can be removed by killing the thread or calling the
+  function with a `nil` handler. This function also enables the "characters
+  available" event.
+
+- `read(count) -> string | nil`\
+  Read at least one and at most `count` characters from `stdin`. Yields if no
+  input is available and the "characters avaible" event is enabled.
+
+- `write(data) -> integer | nil`\
+  Write data to `stdout`, and return the number of characters written. This
+  function blocks without yielding if the output buffer for `stdout` is full.
+
+- `enable_chars_available(enable)`\
+  Enable the "characters available" event if `enable` is true, or disable it
+  otherwise.
 
 ### `pico.stdio.semihosting`
 
 **Library:** [`pico_stdio_semihosting`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_semihosting),
 module: [`pico.stdio.semihosting`](../lib/pico.stdio.semihosting.c)
 
-TODO
+- `driver: userdata`\
+  The semihosting stdio driver, for use in `pico.stdio` functions.
 
 ### `pico.stdio.uart`
 
@@ -136,14 +168,24 @@ TODO
 module: [`pico.stdio.uart`](../lib/pico.stdio.uart.c),
 tests: [`pico.stdio.uart.test`](../lib/pico.stdio.uart.test.lua)
 
-TODO
+- `driver: userdata`\
+  The UART stdio driver, for use in `pico.stdio` functions.
+
+- `init_stdout()`\
+  Initialize the UART driver for output only, and add it to the current set of
+  stdio drivers.
+
+- `init_stdin()`\
+  Initialize the UART driver for input only, and add it to the current set of
+  stdio drivers.
 
 ### `pico.stdio.usb`
 
 **Library:** [`pico_stdio_usb`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_usb),
 module: [`pico.stdio.usb`](../lib/pico.stdio.usb.c)
 
-TODO
+- `driver: userdata`\
+  The USB stdio driver, for use in `pico.stdio` functions.
 
 ## `pico.stdlib`
 
