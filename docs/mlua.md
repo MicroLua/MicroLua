@@ -146,8 +146,9 @@ This module provides helpers for input / output processing.
   Substitute tags in `format`, format the arguments with `string:format()` and
   output the result to `out`.
 
- - `Buffer`\
-   A class that records writes and allows replaying them on another stream.
+### `Buffer`
+
+The `Buffer` type records writes and allows replaying them on another stream.
 
 - `Buffer:is_empty() -> boolean`\
   Return true iff the buffer holds no data.
@@ -165,6 +166,40 @@ This module provides helpers for input / output processing.
 
 **Module:** [`mlua.mem`](../lib/mlua.mem.c),
 tests: [`mlua.mem.test`](../lib/mlua.mem.test.lua)
+
+This module provides functionality to access raw memory (ROM, RAM).
+
+> [!IMPORTANT]
+> This module must not be used to access hardware registers. Use the
+> [`hardware.base`](hardware.md#hardwarebase) module instead.
+
+- `read(address, size) -> string`\
+  Read `size` bytes in memory starting at `address`.
+
+- `write(address, data)`\
+  Write `data` to memory starting at `address`.
+
+- `alloc(size) -> Buffer`\
+  Allocate a memory buffer of the given size.
+
+### `Buffer`
+
+The `Buffer` type holds a fixed-size memory buffer.
+
+- `#Buffer -> integer`\
+  Return the size of the buffer.
+
+- `Buffer:addr() -> integer`\
+  Return the address of the buffer in memory.
+
+- `Buffer:clear(value = 0)`\
+  Clear the buffer by setting all bytes to `value`.
+
+- `Buffer:read(offset = 0, len = size - offset) -> string`\
+  Read `len` bytes from the buffer, starting at `offset`.
+
+- `Buffer:write(data, offset = 0)`\
+  Write `data` to the buffer, starting at `offset`.
 
 ## `mlua.oo`
 
