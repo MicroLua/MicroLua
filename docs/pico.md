@@ -78,13 +78,30 @@ a memory leak.
   function must be called in core 1. The shutdown handler can be removed by
   killing the thread or calling the function with a `nil` handler.
 
-### `pico.multicore.fifo`
+## `pico.multicore.fifo`
 
 **Library:** [`pico_multicore_fifo`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#multicore_fifo),
 module: [`pico.multicore.fifo`](../lib/pico.multicore.fifo.c),
 tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
 
-TODO
+- `ROE: integer = hardware.regs.FIFO_ST_ROE_BITS`\
+  `WOF: integer = hardware.regs.FIFO_ST_WOF_BITS`\
+  `RDY: integer = hardware.regs.FIFO_ST_RDY_BITS`\
+  `VLD: integer = hardware.regs.FIFO_ST_VLD_BITS`\
+  Useful constants for `get_status()`.
+
+- `push_blocking(data)`\
+  `push_timeout_us(data, timeout) -> boolean`\
+  These functions yield if the FIFO is full and threading is enabled. They are
+  implemented as busy loops, because there is no IRQ for the `RDY` flag.
+
+- `pop_blocking() -> integer`\
+  `pop_timeout_us(timeout) -> integer | nil`\
+  These functions yield if the FIFO is empty and the IRQ handler is enabled.
+
+- `enable_irq(enable) -> Thread`\
+  [Enable or disable](common.md#irq-enablers) the SIO IRQ handler
+  (`SIO_IRQ_PROCx`).
 
 ## `pico.platform`
 
