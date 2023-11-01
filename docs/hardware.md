@@ -11,7 +11,9 @@ The test modules can be useful as usage examples.
 ## `hardware.adc`
 
 **Library:** [`hardware_adc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_adc),
-module: [`hardware.adc`](../lib/hardware.adc.c),
+header: [`hardware/adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_adc/include/hardware/adc.h),
+sources: [`hardware_adc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_adc)\
+**Module:** [`hardware.adc`](../lib/hardware.adc.c),
 tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
 
 - `fifo_get_blocking() -> integer`\
@@ -25,7 +27,9 @@ tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
 ## `hardware.base`
 
 **Library:** [`hardware_base`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_base),
-module: [`hardware.base`](../lib/hardware.base.c),
+header: [`hardware/address_mapped.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_base/include/hardware/address_mapped.h),
+sources: [`hardware_base`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_base)\
+**Module:** [`hardware.base`](../lib/hardware.base.c),
 tests: [`hardware.base.test`](../lib/hardware.base.test.lua)
 
 The [`hardware.regs.*`](#hardwareregs) modules provide constants for peripheral
@@ -56,7 +60,9 @@ block addresses (`hardware.regs.addressmap`), register offsets and bit masks.
 ## `hardware.clocks`
 
 **Library:** [`hardware_clocks`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_clocks),
-module: [`hardware.clocks`](../lib/hardware.clocks.c),
+header: [`hardware/clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_clocks/include/hardware/clocks.h),
+sources: [`hardware_clocks`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_clocks)\
+**Module:** [`hardware.clocks`](../lib/hardware.clocks.c),
 tests: [`hardware.clocks.test`](../lib/hardware.clocks.test.lua)
 
 > [!NOTE]
@@ -65,13 +71,17 @@ tests: [`hardware.clocks.test`](../lib/hardware.clocks.test.lua)
 ## `hardware.flash`
 
 **Library:** [`hardware_flash`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_flash),
-module: [`hardware.flash`](../lib/hardware.flash.c),
+header: [`hardware/flash.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_flash/include/hardware/flash.h),
+sources: [`hardware_flash`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_flash)\
+**Module:** [`hardware.flash`](../lib/hardware.flash.c),
 tests: [`hardware.flash.test`](../lib/hardware.flash.test.lua)
 
 ## `hardware.gpio`
 
 **Library:** [`hardware_gpio`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_gpio),
-module: [`hardware.gpio`](../lib/hardware.gpio.c),
+header: [`hardware/gpio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_gpio/include/hardware/gpio.h),
+sources: [`hardware_gpio`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_gpio)\
+**Module:** [`hardware.gpio`](../lib/hardware.gpio.c),
 tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
 
 > [!NOTE]
@@ -100,7 +110,9 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
 ## `hardware.i2c`
 
 **Library:** [`hardware_i2c`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_i2c),
-module: [`hardware.i2c`](../lib/hardware.i2c.c),
+header: [`hardware/i2c.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_i2c/include/hardware/i2c.h),
+sources: [`hardware_i2c`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_i2c)\
+**Module:** [`hardware.i2c`](../lib/hardware.i2c.c),
 tests: [`hardware.i2c.test`](../lib/hardware.i2c.test.lua)
 
 This module defines the `hardware.i2c.I2C` class, which exposes the
@@ -127,15 +139,15 @@ default I2C peripheral, if defined, can be accessed as `default`.
 - `I2C:regs_base() -> integer`\
   Return the base address of the peripheral registers (`I2Cx_BASE`).
 
-- `I2C:write_blocking_until(addr, src, nostop, until) -> integer`\
-  `I2C:write_timeout_us(addr, src, nostop, timeout_us) -> integer`\
-  `I2C:write_blocking(addr, src, nostop) -> integer`\
+- `I2C:write_blocking_until(addr, src, nostop, until) -> integer | nil`\
+  `I2C:write_timeout_us(addr, src, nostop, timeout_us) -> integer | nil`\
+  `I2C:write_blocking(addr, src, nostop) -> integer | nil`\
   If the write fails, returns `fail` and an error code. Yields until the write
   completes if the IRQ handler is enabled.
 
-- `I2C:read_blocking_until(addr, len, nostop, until) -> string`\
-  `I2C:read_timeout_us(addr, len, nostop, until) -> string`\
-  `I2C:read_blocking(addr, len, nostop) -> string`\
+- `I2C:read_blocking_until(addr, len, nostop, until) -> string | nil`\
+  `I2C:read_timeout_us(addr, len, nostop, until) -> string | nil`\
+  `I2C:read_blocking(addr, len, nostop) -> string | nil`\
   If the read fails, returns `fail` and an error code. Yields until the read completes if the IRQ handler is enabled.
 
 - `I2C:read_data_cmd() -> integer`\
@@ -148,7 +160,9 @@ default I2C peripheral, if defined, can be accessed as `default`.
 ## `hardware.irq`
 
 **Library:** [`hardware_irq`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_irq),
-module: [`hardware.irq`](../lib/hardware.irq.c),
+header: [`hardware/irq.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_irq/include/hardware/irq.h),
+sources: [`hardware_irq`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_irq)\
+**Module:** [`hardware.irq`](../lib/hardware.irq.c),
 tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
 
 > [!NOTE]
@@ -185,7 +199,9 @@ tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
 ## `hardware.pll`
 
 **Library:** [`hardware_pll`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pll),
-module: [`hardware.pll`](../lib/hardware.pll.c),
+header: [`hardware/pll.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pll/include/hardware/pll.h),
+sources: [`hardware_pll`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pll)\
+**Module:** [`hardware.pll`](../lib/hardware.pll.c),
 tests: [`hardware.pll.test`](../lib/hardware.pll.test.lua)
 
 ## `hardware.regs.*`
@@ -214,45 +230,47 @@ excluded:
 
 Here's the list of modules and their source header for reference:
 
-- `hardware.regs.adc`: [`adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/adc.h)
-- `hardware.regs.addressmap`: [`addressmap.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h)
-- `hardware.regs.busctrl`: [`busctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/busctrl.h)
-- `hardware.regs.clocks`: [`clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/clocks.h)
-- `hardware.regs.dma`: [`dma.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dma.h)
-- `hardware.regs.dreq`: [`dreq.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dreq.h)
-- `hardware.regs.i2c`: [`i2c.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/i2c.h)
-- `hardware.regs.intctrl`: [`intctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/intctrl.h)
-- `hardware.regs.io_bank0`: [`io_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_bank0.h)
-- `hardware.regs.io_qspi`: [`io_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_qspi.h)
-- `hardware.regs.m0plus`: [`m0plus.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/m0plus.h)
-- `hardware.regs.pads_bank0`: [`pads_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_bank0.h)
-- `hardware.regs.pads_qspi`: [`pads_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_qspi.h)
-- `hardware.regs.pio`: [`pio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pio.h)
-- `hardware.regs.pll`: [`pll.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pll.h)
-- `hardware.regs.psm`: [`psm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/psm.h)
-- `hardware.regs.pwm`: [`pwm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pwm.h)
-- `hardware.regs.resets`: [`resets.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/resets.h)
-- `hardware.regs.rosc`: [`rosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rosc.h)
-- `hardware.regs.rtc`: [`rtc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rtc.h)
-- `hardware.regs.sio`: [`sio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sio.h)
-- `hardware.regs.spi`: [`spi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/spi.h)
-- `hardware.regs.ssi`: [`ssi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/ssi.h)
-- `hardware.regs.syscfg`: [`syscfg.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/syscfg.h)
-- `hardware.regs.sysinfo`: [`sysinfo.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sysinfo.h)
-- `hardware.regs.tbman`: [`tbman.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/tbman.h)
-- `hardware.regs.timer`: [`timer.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/timer.h)
-- `hardware.regs.uart`: [`uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/uart.h)
-- `hardware.regs.usb`: [`usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb.h)
-- `hardware.regs.usb_device_dpram`: [`usb_device_dpram.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb_device_dpram.h)
-- `hardware.regs.vreg_and_chip_reset`: [`vreg_and_chip_reset.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/vreg_and_chip_reset.h)
-- `hardware.regs.watchdog`: [`watchdog.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/watchdog.h)
-- `hardware.regs.xip`: [`xip.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xip.h)
-- `hardware.regs.xosc`: [`xosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xosc.h)
+- `hardware.regs.adc`: [`hardware/regs/adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/adc.h)
+- `hardware.regs.addressmap`: [`hardware/regs/addressmap.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h)
+- `hardware.regs.busctrl`: [`hardware/regs/busctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/busctrl.h)
+- `hardware.regs.clocks`: [`hardware/regs/clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/clocks.h)
+- `hardware.regs.dma`: [`hardware/regs/dma.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dma.h)
+- `hardware.regs.dreq`: [`hardware/regs/dreq.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dreq.h)
+- `hardware.regs.i2c`: [`hardware/regs/i2c.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/i2c.h)
+- `hardware.regs.intctrl`: [`hardware/regs/intctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/intctrl.h)
+- `hardware.regs.io_bank0`: [`hardware/regs/io_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_bank0.h)
+- `hardware.regs.io_qspi`: [`hardware/regs/io_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/io_qspi.h)
+- `hardware.regs.m0plus`: [`hardware/regs/m0plus.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/m0plus.h)
+- `hardware.regs.pads_bank0`: [`hardware/regs/pads_bank0.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_bank0.h)
+- `hardware.regs.pads_qspi`: [`hardware/regs/pads_qspi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pads_qspi.h)
+- `hardware.regs.pio`: [`hardware/regs/pio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pio.h)
+- `hardware.regs.pll`: [`hardware/regs/pll.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pll.h)
+- `hardware.regs.psm`: [`hardware/regs/psm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/psm.h)
+- `hardware.regs.pwm`: [`hardware/regs/pwm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/pwm.h)
+- `hardware.regs.resets`: [`hardware/regs/resets.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/resets.h)
+- `hardware.regs.rosc`: [`hardware/regs/rosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rosc.h)
+- `hardware.regs.rtc`: [`hardware/regs/rtc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/rtc.h)
+- `hardware.regs.sio`: [`hardware/regs/sio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sio.h)
+- `hardware.regs.spi`: [`hardware/regs/spi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/spi.h)
+- `hardware.regs.ssi`: [`hardware/regs/ssi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/ssi.h)
+- `hardware.regs.syscfg`: [`hardware/regs/syscfg.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/syscfg.h)
+- `hardware.regs.sysinfo`: [`hardware/regs/sysinfo.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/sysinfo.h)
+- `hardware.regs.tbman`: [`hardware/regs/tbman.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/tbman.h)
+- `hardware.regs.timer`: [`hardware/regs/timer.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/timer.h)
+- `hardware.regs.uart`: [`hardware/regs/uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/uart.h)
+- `hardware.regs.usb`: [`hardware/regs/usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb.h)
+- `hardware.regs.usb_device_dpram`: [`hardware/regs/usb_device_dpram.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/usb_device_dpram.h)
+- `hardware.regs.vreg_and_chip_reset`: [`hardware/regs/vreg_and_chip_reset.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/vreg_and_chip_reset.h)
+- `hardware.regs.watchdog`: [`hardware/regs/watchdog.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/watchdog.h)
+- `hardware.regs.xip`: [`hardware/regs/xip.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xip.h)
+- `hardware.regs.xosc`: [`hardware/regs/xosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/xosc.h)
 
 ## `hardware.resets`
 
 **Library:** [`hardware_resets`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_resets),
-module: [`hardware.resets`](../lib/hardware.resets.c),
+header: [`hardware/resets.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_resets/include/hardware/resets.h),
+sources: [`hardware_resets`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_resets)\
+**Module:** [`hardware.resets`](../lib/hardware.resets.c),
 tests: [`hardware.resets.test`](../lib/hardware.resets.test.lua)
 
 The reset bitmasks are avaialble in the `hardware.regs.resets` module as
@@ -264,7 +282,9 @@ The reset bitmasks are avaialble in the `hardware.regs.resets` module as
 ## `hardware.rtc`
 
 **Library:** [`hardware_rtc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_rtc),
-module: [`hardware.rtc`](../lib/hardware.rtc.c),
+header: [`hardware/rtc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_rtc/include/hardware/rtc.h),
+sources: [`hardware_rtc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_rtc)\
+**Module:** [`hardware.rtc`](../lib/hardware.rtc.c),
 tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
 
 - `set_datetime(t) -> boolean`\
@@ -291,7 +311,9 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
 ## `hardware.sync`
 
 **Library:** [`hardware_sync`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_sync),
-module: [`hardware.sync`](../lib/hardware.sync.c),
+header: [`hardware/sync.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_sync/include/hardware/sync.h),
+sources: [`hardware_sync`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_sync)\
+**Module:** [`hardware.sync`](../lib/hardware.sync.c),
 tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
 
 > [!NOTE]
@@ -301,7 +323,9 @@ tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
 ## `hardware.timer`
 
 **Library:** [`hardware_timer`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_timer),
-module: [`hardware.timer`](../lib/hardware.timer.c),
+header: [`hardware/timer.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_timer/include/hardware/timer.h),
+sources: [`hardware_timer`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_timer)\
+**Module:** [`hardware.timer`](../lib/hardware.timer.c),
 tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
 
 - `set_callback(alarm_num, callback) -> Thread`\
@@ -318,7 +342,9 @@ tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
 ## `hardware.uart`
 
 **Library:** [`hardware_uart`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_uart),
-module: [`hardware.uart`](../lib/hardware.uart.c),
+header: [`hardware/uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_uart/include/hardware/uart.h),
+sources: [`hardware_uart`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_uart)\
+**Module:** [`hardware.uart`](../lib/hardware.uart.c),
 tests: [`hardware.uart.test`](../lib/hardware.uart.test.lua)
 
 This module defines the `hardware.uart.UART` class, which exposes the
@@ -375,17 +401,23 @@ default UART peripheral, if defined, can be accessed as `default`.
 ## `hardware.vreg`
 
 **Library:** [`hardware_vreg`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_vreg),
-module: [`hardware.vreg`](../lib/hardware.vreg.c),
+header: [`hardware/vreg.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_vreg/include/hardware/vreg.h),
+sources: [`hardware_vreg`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_vreg)\
+**Module:** [`hardware.vreg`](../lib/hardware.vreg.c),
 tests: [`hardware.vreg.test`](../lib/hardware.vreg.test.lua)
 
 ## `hardware.watchdog`
 
 **Library:** [`hardware_watchdog`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_watchdog),
-module: [`hardware.watchdog`](../lib/hardware.watchdog.c),
+header: [`hardware/watchdog.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_watchdog/include/hardware/watchdog.h),
+sources: [`hardware_watchdog`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_watchdog)\
+**Module:** [`hardware.watchdog`](../lib/hardware.watchdog.c),
 tests: [`hardware.watchdog.test`](../lib/hardware.watchdog.test.lua)
 
 ## `hardware.xosc`
 
 **Library:** [`hardware_xosc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_xosc),
-module: [`hardware.xosc`](../lib/hardware.xosc.c),
+header: [`hardware/xosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_xosc/include/hardware/xosc.h),
+sources: [`hardware_xosc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_xosc)\
+**Module:** [`hardware.xosc`](../lib/hardware.xosc.c),
 tests: [`hardware.xosc.test`](../lib/hardware.xosc.test.lua)
