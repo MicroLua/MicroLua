@@ -8,10 +8,7 @@
 static int mod_check_sys_clock_khz(lua_State* ls) {
     lua_Integer freq = luaL_checkinteger(ls, 1);
     uint vco_freq, post_div1, post_div2;
-    if (!check_sys_clock_khz(freq, &vco_freq, &post_div1, &post_div2)) {
-        lua_pushboolean(ls, false);
-        return 1;
-    }
+    if (!check_sys_clock_khz(freq, &vco_freq, &post_div1, &post_div2)) return 0;
     lua_pushinteger(ls, vco_freq);
     lua_pushinteger(ls, post_div1);
     lua_pushinteger(ls, post_div2);

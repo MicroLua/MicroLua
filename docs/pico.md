@@ -78,7 +78,7 @@ a memory leak.
   function must be called in core 1. The shutdown handler can be removed by
   killing the thread or calling the function with a `nil` handler.
 
-## `pico.multicore.fifo`
+### `pico.multicore.fifo`
 
 **Library:** [`pico_multicore_fifo`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#multicore_fifo),
 module: [`pico.multicore.fifo`](../lib/pico.multicore.fifo.c),
@@ -193,7 +193,11 @@ module: [`pico.stdio.usb`](../lib/pico.stdio.usb.c)
 module: [`pico.stdlib`](../lib/pico.stdlib.c),
 tests: [`pico.stdlib.test`](../lib/pico.stdlib.test.lua)
 
-TODO
+- `DEFAULT_LED_PIN_INVERTED: boolean`\
+  `DEFAULT_WS2812_PIN: integer | boolean`\
+  `DEFAULT_WS2812_POWER_PIN: integer | boolean`
+
+- `check_sys_clock_khz(freq_khz) -> (integer, integer, integer) | nil`
 
 ## `pico.time`
 
