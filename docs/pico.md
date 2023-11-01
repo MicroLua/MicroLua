@@ -84,10 +84,10 @@ a memory leak.
 module: [`pico.multicore.fifo`](../lib/pico.multicore.fifo.c),
 tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
 
-- `ROE: integer = hardware.regs.FIFO_ST_ROE_BITS`\
-  `WOF: integer = hardware.regs.FIFO_ST_WOF_BITS`\
-  `RDY: integer = hardware.regs.FIFO_ST_RDY_BITS`\
-  `VLD: integer = hardware.regs.FIFO_ST_VLD_BITS`\
+- `ROE: integer = SIO_FIFO_ST_ROE_BITS`\
+  `WOF: integer = SIO_FIFO_ST_WOF_BITS`\
+  `RDY: integer = SIO_FIFO_ST_RDY_BITS`\
+  `VLD: integer = SIO_FIFO_ST_VLD_BITS`\
   Useful constants for `get_status()`.
 
 - `push_blocking(data)`\
@@ -251,4 +251,10 @@ functionality is therefore not exposed to Lua and left for use by C code.
 module: [`pico.unique_id`](../lib/pico.unique_id.c),
 tests: [`pico.unique_id.test`](../lib/pico.unique_id.test.lua)
 
-TODO
+- `BOARD_ID_SIZE: integer = PICO_UNIQUE_BOARD_ID_SIZE_BYTES`
+
+- `get_unique_board_id() -> string`\
+  Get the unique ID as a binary string.
+
+- `get_unique_board_id_string() -> string`\
+  Get the unique ID as a hex string.
