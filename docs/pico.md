@@ -109,7 +109,11 @@ tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
 module: [`pico.platform`](../lib/pico.platform.c),
 tests: [`pico.platform.test`](../lib/pico.platform.test.lua)
 
-TODO
+This module exposes the constants defined in
+[`hardware/platform_defs.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/platform_defs.h).
+
+- `busy_wait_at_least_cycles(cycles)`\
+  This function doesn't yield.
 
 ## `pico.stdio`
 

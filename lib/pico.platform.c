@@ -27,15 +27,20 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NUM_BANK0_GPIOS, integer, NUM_BANK0_GPIOS),
     MLUA_SYM_V(NUM_QSPI_GPIOS, integer, NUM_QSPI_GPIOS),
     MLUA_SYM_V(PIO_INSTRUCTION_COUNT, integer, PIO_INSTRUCTION_COUNT),
+    MLUA_SYM_V(XOSC_MHZ, integer, XOSC_MHZ),
     MLUA_SYM_V(FIRST_USER_IRQ, integer, FIRST_USER_IRQ),
+    MLUA_SYM_V(VTABLE_FIRST_IRQ, integer, VTABLE_FIRST_IRQ),
 #ifdef PICO_RP2040
     MLUA_SYM_V(RP2040, integer, PICO_RP2040),
 #else
     MLUA_SYM_V(RP2040, boolean, false),
 #endif
 
+    // panic_unsupported: Not useful in Lua
+    // panic: Not useful in Lua
     MLUA_SYM_F(rp2040_chip_version, mod_),
     MLUA_SYM_F(rp2040_rom_version, mod_),
+    // tight_loop_contents: Not useful in Lua
     MLUA_SYM_F(busy_wait_at_least_cycles, mod_),
     MLUA_SYM_F(get_core_num, mod_),
 };
