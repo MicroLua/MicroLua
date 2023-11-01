@@ -122,8 +122,8 @@ This module provides helpers for input / output processing.
 
 - `read(count) -> string | nil`\
   Read at least one and at most `count` characters from `stdin`. Uses
-  `pico.stdio.read()` if the module is available, or blocks without yielding
-  if no data is available.
+  [`pico.stdio`](pico.md#picostdio) if the module is available, or blocks
+  without yielding if no data is available.
 
 - `write(data) -> integer | nil`\
   Write data to `stdout`, and return the number of characters written.
@@ -184,7 +184,7 @@ This module provides functionality to access raw memory (ROM, RAM).
 
 ### `Buffer`
 
-The `Buffer` type holds a fixed-size memory buffer.
+The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
 
 - `#Buffer -> integer`\
   Return the size of the buffer.
@@ -227,6 +227,39 @@ necessary because Lua gets metamethods using a raw access.
 
 **Module:** [`mlua.stdio`](../lib/mlua.stdio.c),
 tests: [`mlua.stdio.test`](../lib/mlua.stdio.test.lua)
+
+This module manages stdio input and output. When linked in, it is automatically
+loaded during interpreter startup. It defines input and output stream types, and
+initializes the stdio libraries as defined in the compile-time configuration.
+
+> [!IMPORTANT]
+> Output functions block without yielding if the output buffer for the stream is
+> full.
+
+- `_G.stdin: InStream`\
+  `_G.stdout: OutStream`\
+  `_G.stderr: OutStream`\
+  The standard input and output streams. They are set in globals when the module
+  is loaded.
+
+- `_G.print(...)`\
+  Print the given arguments on `stdout`.
+
+### `InStream`
+
+The `InStream` type (`mlua.InStream`) represents an input stream.
+
+- `read(count) -> string | nil`\
+  Read at least one and at most `count` characters from the stream. Uses
+  [`pico.stdio`](pico.md#picostdio) if the module is available, or blocks
+  without yielding if no data is available.
+
+### `OutStream`
+
+The `OutStream` type (`mlua.OutStream`) represents an output stream.
+
+- `write(data) -> integer | nil`\
+  Write data to the stream, and return the number of characters written.
 
 ## `mlua.testing`
 
