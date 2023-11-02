@@ -2,9 +2,8 @@
 
 MicroLua allows **programming the
 [RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/rp2040.html)
-in [Lua](https://www.lua.org/)**. It packages the latest, pristine Lua
-interpreter with bindings for the
-[pico-sdk](https://github.com/raspberrypi/pico-sdk).
+in [Lua](https://www.lua.org/)**. It packages the latest Lua interpreter with
+bindings for the [pico-sdk](https://github.com/raspberrypi/pico-sdk).
 
 MicroLua is licensed under the [MIT](LICENSE.md) license.
 

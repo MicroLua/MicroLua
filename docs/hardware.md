@@ -16,7 +16,7 @@ sources: [`hardware_adc`](https://github.com/raspberrypi/pico-sdk/blob/master/sr
 **Module:** [`hardware.adc`](../lib/hardware.adc.c),
 tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
 
-- `fifo_get_blocking() -> integer`\
+- `fifo_get_blocking() -> integer` *[yields]*\
   Wait for data in the ADC FIFO, then pop and return a value. Yields if the FIFO
   is empty and the IRQ handler is enabled.
 
@@ -139,15 +139,15 @@ default I2C peripheral, if defined, can be accessed as `default`.
 - `I2C:regs_base() -> integer`\
   Return the base address of the peripheral registers (`I2Cx_BASE`).
 
-- `I2C:write_blocking_until(addr, src, nostop, until) -> integer | nil`\
-  `I2C:write_timeout_us(addr, src, nostop, timeout_us) -> integer | nil`\
-  `I2C:write_blocking(addr, src, nostop) -> integer | nil`\
+- `I2C:write_blocking_until(addr, src, nostop, until) -> integer | nil` *[yields]*\
+  `I2C:write_timeout_us(addr, src, nostop, timeout_us) -> integer | nil` *[yields]*\
+  `I2C:write_blocking(addr, src, nostop) -> integer | nil` *[yields]*\
   If the write fails, returns `fail` and an error code. Yields until the write
   completes if the IRQ handler is enabled.
 
-- `I2C:read_blocking_until(addr, len, nostop, until) -> string | nil`\
-  `I2C:read_timeout_us(addr, len, nostop, until) -> string | nil`\
-  `I2C:read_blocking(addr, len, nostop) -> string | nil`\
+- `I2C:read_blocking_until(addr, len, nostop, until) -> string | nil` *[yields]*\
+  `I2C:read_timeout_us(addr, len, nostop, until) -> string | nil` *[yields]*\
+  `I2C:read_blocking(addr, len, nostop) -> string | nil` *[yields]*\
   If the read fails, returns `fail` and an error code. Yields until the read completes if the IRQ handler is enabled.
 
 - `I2C:read_data_cmd() -> integer`\
@@ -370,24 +370,23 @@ default UART peripheral, if defined, can be accessed as `default`.
 - `UART:is_tx_busy() -> boolean`\
   Return `true` iff the TX FIFO is busy.
 
-- `UART:tx_wait_blocking()`\
+- `UART:tx_wait_blocking()` *[yields]*\
   Wait until the TX FIFO is empty. Yields if the FIFO isn't empty. This function
   is implemented with polling, because there is no IRQ for "TX FIFO empty".
 
-- `UART:write_blocking(src)`\
+- `UART:write_blocking(src)` *[yields]*\
   Yields until the write completes if the IRQ handler is enabled.
 
-- `UART:read_blocking(len) -> string`\
-  `UART:getc() -> integer`\
+- `UART:read_blocking(len) -> string` *[yields]*\
+  `UART:getc() -> integer` *[yields]*\
   Yields until the read completes if the IRQ handler is enabled.
 
 - `UART:putc_raw(c)`\
   `UART:putc(c)`\
   `UART:puts(c)`\
-  These functions block without yielding if the TX FIFO is full. This will be
-  fixed eventually.
+  These functions block without yielding if the TX FIFO is full.
 
-- `UART:is_readable_within_us(us) -> boolean`\
+- `UART:is_readable_within_us(us) -> boolean` *[yields]*\
   Wait until the RX FIFO is non-empty, or until the timeout elapses. Yields if
   the FIFO is empty and the IRQ handler is enabled.
 

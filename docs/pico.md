@@ -98,13 +98,13 @@ tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
   `VLD: integer = SIO_FIFO_ST_VLD_BITS`\
   Useful constants for `get_status()`.
 
-- `push_blocking(data)`\
-  `push_timeout_us(data, timeout) -> boolean`\
+- `push_blocking(data)` *[yields]*\
+  `push_timeout_us(data, timeout) -> boolean` *[yields]*\
   These functions yield if the FIFO is full and threading is enabled. They are
   implemented as busy loops, because there is no IRQ for the `RDY` flag.
 
-- `pop_blocking() -> integer`\
-  `pop_timeout_us(timeout) -> integer | nil`\
+- `pop_blocking() -> integer` *[yields]*\
+  `pop_timeout_us(timeout) -> integer | nil` *[yields]*\
   These functions yield if the FIFO is empty and the IRQ handler is enabled.
 
 - `enable_irq(enable) -> Thread`\
@@ -135,8 +135,8 @@ tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
 
 - `EOF: integer`
 
-- `getchar() -> integer`\
-  `getchar_timeout_us(timeout) -> integer`\
+- `getchar() -> integer` *[yields]*\
+  `getchar_timeout_us(timeout) -> integer` *[yields]*\
   These functions yield if no data is currently available on `stdin` and
   the "characters available" event is enabled.
 
@@ -154,7 +154,7 @@ tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
   function with a `nil` handler. This function also enables the "characters
   available" event.
 
-- `read(count) -> string | nil`\
+- `read(count) -> string | nil` *[yields]*\
   Read at least one and at most `count` characters from `stdin`. Yields if no
   input is available and the "characters avaible" event is enabled.
 
@@ -230,6 +230,11 @@ tests: [`pico.time.test`](../lib/pico.time.test.lua)
 Alarms and repeating timers are implemented using threads and thread timers.
 This allows for unlimited timers, without using alarm pools. Alarm pool
 functionality is therefore not exposed to Lua and left for use by C code.
+
+- `sleep_until(time)` *[yields]*\
+  `sleep_us(duration)` *[yields]*\
+  `sleep_ms(duration)` *[yields]*\
+  These functions yield until the sleep completes.
 
 - `best_effort_wfe_or_timeout(time) -> boolean`\
   This function blocks with a `WFE` without yielding.
