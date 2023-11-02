@@ -330,6 +330,107 @@ tests: [`mlua.testing.test`](../lib/mlua.testing.test.lua)
 **Module:** [`mlua.thread`](../lib/mlua.thread.lua),
 tests: [`mlua.thread.test`](../lib/mlua.thread.test.lua)
 
+This module provides cooperative threading functionality based on coroutines.
+It sets the metaclass of the `coroutine` type to `Thread`, so coroutines are
+effectively threads, and `Thread` methods can be called on coroutines. Thread
+scheduling is based on an active queue and a wait list. Threads on the active
+queue are run round-robin until they yield or terminate. Threads on the wait
+list are resumed either explicitly or due to their deadline expiring.
+
+When this module is linked in, the interpreter setup code creates a new thread
+to run the configured main function, then runs `main()`.
+
+- `start(fn) -> Thread`\
+  Start a new thread that runs `fn()`.
+
+- `shutdown()`\
+  Shut down the thread scheduler. This function yields and therefore never
+  returns. During shutdown, all threads are killed and their resources are
+  freed.
+
+- `yield(time)`\
+  Yield from the current thread. If `time` is `nil`, the thread remains in the
+  active queue and is resumed after other active threads have run and yielded.
+  Otherwise it is moved to the wait list. If `time` is `false`, the thread can
+  only be resumed by a call to `resume()`. Otherwise, the thread is resumed when
+  the given time has passed, or by a call to `resume()`.
+
+- `running() -> Thread`\
+  Return the currently-running thread.
+
+- `now() -> Int64`\
+  Return the current time in microseconds.
+
+- `sleep_until(time)`\
+  Suspend the current thread until `time` has passed.
+
+- `sleep_us(duration)`\
+  Suspend the current thread for the given duration in microseconds.
+
+- `main()`\
+  Run the thread scheduler loop.
+
+### `Thread`
+
+This type represents an independent thread of execution. Threads are implemented
+as coroutines, so they have to yield explicitly to allow other threads to run.
+Many blocking library functions can yield when they have to wait, and their
+documentation mentions it explicitly.
+
+- `Thread.start(fn) -> Thread`\
+  Start a new thread that runs `fn()`.
+
+- `Thread.shutdown()`\
+  Shut down the thread scheduler. This function yields and therefore never
+  returns. During shutdown, all threads are killed and their resources are
+  freed.
+
+- `Thread:name() -> string`\
+  Return the name of the thread, or a generated name if none was set.
+
+- `Thread:set_name(n) -> Thread`\
+  Set the name of the thread.
+
+- `Thread:is_alive() -> boolean`\
+  Return true iff the thread is alive, i.e. the status of its coroutine isn't
+  "dead".
+
+- `Thread:is_waiting() -> boolean`\
+  Return true iff the thread is waiting to be resumed, either by a call to
+  `resume()` or by a deadline given to `yield()`.
+
+- `Thread:resume() -> boolean`\
+  Resume the thread if it is on the wait list. Returns true iff the thread was
+  on the wait list.
+
+- `Thread:kill()`\
+  Kill the thread. This causes the coroutine to unwind the stack and close all
+  to-be-closed variables, then resumes any other threads waiting in a call to
+  `join()`.
+
+- `Thread:join()`\
+  `Thread:__close()`\
+  Wait for the thread to terminate. If the thread terminates with an error, the
+  function re-throws the error. If the thread is assigned to a to-be-closed
+  variable, it is joined when the variable is closed.
+
+### `Group`
+
+This type represents a set of threads that have a common lifetime. It allows
+adding threads to the group and waiting for them to terminate. Threads that
+terminate automatically get removed from the group.
+
+- `Group() -> Group`\
+  Create a new thread group.
+
+- `Group:start(fn) -> Thread`\
+  Start a new thread that runs `fn()` and add it to the group.
+
+- `Group:join()`\
+  `Group:__close()`\
+  Join the threads in the group. If the group is assigned to a to-be-closed
+  variable, it is joined when the variable is closed.
+
 ## `mlua.util`
 
 **Module:** [`mlua.util`](../lib/mlua.util.lua),

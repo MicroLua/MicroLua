@@ -78,6 +78,16 @@ end
 
 start = Thread.start
 
+local _shutdown = false
+
+-- Shut down the scheduler.
+function Thread.shutdown()
+    _shutdown = true
+    yield()
+end
+
+shutdown = Thread.shutdown
+
 local names = setmetatable({}, weak_keys)
 
 -- Return the name of the thread.
@@ -145,16 +155,6 @@ end
 -- Join the thread on closure.
 Thread.__close = Thread.join
 
-local _shutdown = false
-
--- Shut down the scheduler.
-function Thread.shutdown()
-    _shutdown = true
-    yield()
-end
-
-shutdown = Thread.shutdown
-
 -- A group of threads managed together.
 Group = oo.class('Group')
 Group.__mode = 'k'
@@ -168,6 +168,8 @@ end
 
 -- Join all threads in the group.
 function Group:join()
+    -- TODO: Allow adding new threads while the group is being joined
+    -- TODO: Wait for all threads even if one of them throws
     for thread in pairs(self) do thread:join() end
 end
 
@@ -181,7 +183,7 @@ now = time.get_absolute_time
 sleep_until = time.sleep_until
 
 -- Suspend the running thread for the given duration (in microseconds).
-sleep_for = time.sleep_us
+sleep_us = time.sleep_us
 
 -- Resume the threads whose deadline has elapsed.
 local function resume_deadlined()
