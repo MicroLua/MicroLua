@@ -316,6 +316,140 @@ The `OutStream` type (`mlua.OutStream`) represents an output stream.
 **Module:** [`mlua.testing`](../lib/mlua.testing.lua),
 tests: [`mlua.testing.test`](../lib/mlua.testing.test.lua)
 
+This module is a unit-testing library inspired by the Go
+[`testing`](https://pkg.go.dev/testing) package. The best way to understand how
+the library works is by looking at the test suite included with MicroLua.
+
+- `main()`\
+  This function can be configured as a main function to execute tests from all
+  linked-in modules. Modules whose name ends with `.test` are considered test
+  modules, and functions in those modules whose name starts with `test_`  are
+  considered test cases.
+
+<!-- TODO: Document ExprFactory and Expr -->
+
+### `Test`
+
+The `Test` class represents a single unit test.
+
+- `Test.helper`\
+  A value that can be assigned to a local variable of a test helper to skip it
+  when determining the location of a test failure.
+
+- `Test.expr: ExprFactory`\
+  An expression factory.
+
+- `Test:cleanup(fn)`\
+  Registers the function `fn` to be called after the test completes. Cleanup
+  functions are executed in the reverse order of registration.
+
+- `Test:patch(tab, name, value)`\
+  Set `tab[name]` to `value`, and restore the previous value at the end of the
+  test.
+
+- `Test:repr(v) -> function`\
+  Return a function that calls `util.repr(v)` when called.
+
+- `Test:func(name, args) -> function`\
+  Return a function that returns a string representation of a function call when
+  called.
+
+- `Test:printf(format, ...)`\
+  Format a string and print it as part of the test output.
+
+- `Test:log(format, ...)`\
+  Format and log a message, together with the location of the log statement.
+  Arguments of type `function` are called, and the return value is used for
+  formatting.
+
+- `Test:skip(format, ...)`\
+  Abort the test and mark it as skipped. Arguments of type `function` are
+  called, and the return value is used for formatting.
+
+- `Test:error(format, ...)`\
+  Log a test failure. The current test continues to execute. Arguments of type
+  `function` are called, and the return value is used for formatting.
+
+- `Test:fatal(format, ...)`\
+  Log a test failure. The current test is aborted. Arguments of type `function`
+  are called, and the return value is used for formatting.
+
+- `Test:expect(cond, format, ...)`\
+  `Test:expect(value) -> Matcher`\
+  Declare a test expectation. The first form logs a test failure if `cond` is
+  false. Arguments of type `function` are called, and the return value is used
+  for formatting. The second form returns a `Matcher` on which further
+  expectations can be declared. The current test continues to execute regardless
+  of the outcome.
+
+- `Test:assert(cond, format, ...)`\
+  `Test:assert(value) -> Matcher`\
+  Declare a test expectation. The first form logs a test failure if `cond` is
+  false. Arguments of type `function` are called, and the return value is used
+  for formatting. The second form returns a `Matcher` on which further
+  expectations can be declared. If the expectation fails, the current test is
+  aborted.
+
+- `Test:failed() -> boolean`\
+  Return true iff the test has failed.
+
+- `Test:run(name, fn)`\
+  Run the function `fn` as a sub-test. A new `Test` instance is provided as an
+  argument.
+
+- `Test:enable_output()`\
+  Normally, test output is inhibited until a failure is logged. This function
+  enables test output even if no failure has been logged.
+
+- `Test:run_module(name, pat = '^test_')`\
+  Import the module `name` and run all functions whose name matches the string
+  pattern `pat` as sub-tests. Unload the module at the end of the test. If the
+  module contains a function named `set_up`, it is called before the first test
+  function.
+
+- `Test:run_modules(mod_pat = '%.test$', func_pat = '^test_')`\
+  Run tests from all linked-in modules whose names match the string pattern
+  `mod_pat` as sub-tests.
+
+### `Matcher`
+
+A `Matcher` instance holds a value and allows declaring expectations against
+that value.
+
+- `Matcher:label(format, ...) -> self`\
+  Set the label as which the value should be reported in test failures.
+
+- `Matcher:func(name, ...) -> self`\
+  Set the label as which the value should be reported in test failures as a
+  text representation of the function `name` called with the given arguments.
+
+- `Matcher:op(op = '=') -> self`\
+  Set a label for the operation that is used to check an expectation.
+
+- `Matcher:apply(fn) -> self`\
+  Apply the function `fn` to the value, and set it as the new value.
+
+- `Matcher:eq(want, cmp = mlua.util.eq) -> self`\
+  `Matcher:lt(want) -> self`\
+  `Matcher:lte(want) -> self`\
+  `Matcher:gt(want) -> self`\
+  `Matcher:gte(want) -> self`\
+  Declare an expectation that the value is equal, less than, less than or
+  equal, greater than, or greater than or equal to `want`. Equality comparison
+  accepts an optional comparison function.
+
+- `Matcher:close_to(want, eps) -> self`\
+  Declare an expectation that the value is within `eps` of `want`.
+
+- `Matcher:close_to_rel(want, fact) -> self`\
+  Declare an expectation that the value is within `want * fact` of `want`.
+
+- `Matcher:raises(want)`\
+  Declare an expectations that calling the value raises an error whose value
+  matches the string pattern `want`.
+
+### Test helper modules
+
 - [`mlua.testing.clocks`](../lib/mlua.testing.clocks.lua): Helpers for testing
   clock-related functionality.
 - [`mlua.testing.i2c`](../lib/mlua.testing.i2c.lua): Helpers for testing I2C

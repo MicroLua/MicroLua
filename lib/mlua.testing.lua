@@ -164,8 +164,8 @@ end
 
 function Matcher:_fail(format, ...) return self._f(self._t, format, ...) end
 
-function Matcher:label(s, ...)
-    self._l = s:format(...)
+function Matcher:label(format, ...)
+    self._l = format:format(...)
     return self
 end
 
@@ -337,7 +337,7 @@ function Test:failed()
     return false
 end
 
-function Test:result()
+function Test:_result()
     return io.ansi(self._error and ERROR or self:failed() and FAIL
                    or self._skip and SKIP or PASS)
 end
@@ -475,7 +475,7 @@ function Test:run_modules(mod_pat, func_pat)
     end
 end
 
-function Test:main(runs)
+function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._progress = stdout
     local start = time.get_absolute_time()
@@ -490,25 +490,25 @@ function Test:main(runs)
     local mem = collectgarbage('count') * 1024
     self:_progress_end()
     io.write("\n")
-    self:print_result()
+    self:_print_result()
     if list.len(self.children) > 0 then io.write("\n") end
     io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
     io.printf("Duration: %.3f s, memory: %d bytes, flash: %d bytes\n",
               dt / 1e6, mem, pico.flash_binary_end - pico.flash_binary_start)
-    io.printf("Result: %s\n", self:result())
+    io.printf("Result: %s\n", self:_result())
 end
 
-function Test:print_result(indent)
+function Test:_print_result(indent)
     indent = indent or ''
     if self.name then
-        local left = ('%s%s: %s'):format(indent, self:result(), self.name)
+        local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
         local right = ('(%.3f s)'):format(self.duration / 1e6)
         io.printf("%s%s %s\n", left, (' '):rep(78 - #left - #right), right)
         indent = indent .. '  '
     end
-    for _, t in list.ipairs(self.children) do t:print_result(indent) end
+    for _, t in list.ipairs(self.children) do t:_print_result(indent) end
 end
 
 local reg_exclude = {
@@ -537,7 +537,7 @@ function Runner:run()
         local t = Test()
         t._full_output = self.full_output
         t._full_results = self.full_results
-        t:main(self.runs)
+        t:_main(self.runs)
         self:prompt()
     end
 end
