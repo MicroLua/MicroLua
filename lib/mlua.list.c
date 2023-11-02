@@ -2,7 +2,7 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-static char const list_name[] = "mlua.list";
+static char const list_name[] = "mlua.List";
 
 #define LEN_IDX 0
 

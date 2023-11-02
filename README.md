@@ -48,6 +48,7 @@ both.
   but when possible also the underlying functionality of the pico-sdk.
 
 <!-- TODO: Describe performance -->
+<!-- TODO: Add roadmap -->
 
 ## Building
 

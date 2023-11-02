@@ -57,36 +57,36 @@ This module provides the core event handling and dispatch functionality.
 **Module:** [`mlua.int64`](../lib/mlua.int64.c),
 tests: [`mlua.int64.test`](../lib/mlua.int64.test.lua)
 
-This module provides a 64-bit signed integer type (`mlua.int64`). When
-`lua_Integer` is a 32-bit integer, `int64` is a full userdata with all the
+This module provides a 64-bit signed integer type (`mlua.Int64`). When
+`lua_Integer` is a 32-bit integer, `Int64` is a full userdata with all the
 relevant metamethods, supporting mixed-type operations with `integer` (but no
 automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
-`int64` is an alias for `integer`.
+`Int64` is an alias for `integer`.
 
 > [!IMPORTANT]
-> Mixed-type equality comparisons (`==`, `~=`) involving `int64` values do not
+> Mixed-type equality comparisons (`==`, `~=`) involving `Int64` values do not
 > work correctly, because Lua only calls the `__eq` metamethod if both values
 > are either tables or full userdata. Use `eq()` instead if the arguments may
 > be primitive types.
 
-- `int64(value) -> int64 | nil`\
-  Cast `value` to an `int64`. `value` can have the following types:
+- `int64(value) -> Int64 | nil`\
+  Cast `value` to an `Int64`. `value` can have the following types:
 
   - `boolean`: `false -> 0`, `true -> 1`
-  - `integer`: Sign-extends `value` to an `int64`. When `lua_Integer` is a
+  - `integer`: Sign-extends `value` to an `Int64`. When `lua_Integer` is a
     32-bit integer, an optional second argument provides the high-order 32 bits.
-  - `number`: Fails if `value` cannot be represented exactly as an `int64`.
+  - `number`: Fails if `value` cannot be represented exactly as an `Int64`.
   - `string`: Parse the value from a string. Accepts an optional `base` argument
     (default: 0). When the base is 0, it is inferred from the value prefix
     (`0x`, `0X`: 16, `0o`: 8, `0b`: 2, otherwise: 10).
 
-- `max: int64`\
-  The maximum value that an `int64` can hold (`2^63-1`)
+- `max: Int64`\
+  The maximum value that an `Int64` can hold (`2^63-1`)
 
-- `min: int64`\
-  The minimum value that an `int64` can hold (`-2^63`).
+- `min: Int64`\
+  The minimum value that an `Int64` can hold (`-2^63`).
 
-- `ashr(value, num) -> int64`\
+- `ashr(value, num) -> Int64`\
   Returns the result of performing an arithmetic (i.e. sign-extending) right
   shift of `value` by `num` bits.
 
@@ -166,6 +166,51 @@ The `Buffer` type records writes and allows replaying them on another stream.
 
 **Module:** [`mlua.list`](../lib/mlua.list.c),
 tests: [`mlua.list.test`](../lib/mlua.list.test.lua)
+
+This module provides functions to operate on lists that can contain `nil`
+values. Such lists track the length of the list at index `[0]`. The module
+itself is a metatable (`mlua.List`) that can be set on tables to expose the
+functions as methods.
+
+- `list(list) -> List`\
+  Convert `list` to a `List` by setting its length at index `[0]` and its
+  metatable. If `list` is nil or missing, return an empty `List`.
+
+- `len(list) -> integer`\
+  Return the number of elements in `list`.
+
+- `eq(lhs, rhs) -> boolean`\
+  Return true iff the elements of `lhs` and `rhs` compare pairwise equal.
+
+- `ipairs(list) -> function, list, 0`\
+  Return an iterator over the elements of `list`.
+
+- `append(list, value, ...) -> List`\
+  Append one or more values to `list`, and return the resulting list. `list` can
+  be `nil`, in which case the function creates a new empty list before appending
+  the values.
+
+- `insert(list, pos = #list + 1, value) -> list`\
+  Insert `value` at position `pos` in `list`, shifting the following elements
+  up by one position.
+
+- `remove(list, pos = #list) -> any`\
+  Remove the element at position `pos` from `list`, shifting the following
+  elements down by one position, and return the removed value.
+
+- `pack(...) -> List`\
+  Return a new `List` containing the given arguments.
+
+- `unpack(list, i = 1, j = #list) -> ...`\
+  Return the elements at positions `i` to `j` in `list`.
+
+- `concat(list, sep = '', i = 1, j = #list) -> string`\
+  Return the concatenation of the elements of `list` at positions `i` to `j`,
+  separated by `sep`.
+
+- `find(list, value, start = 1) -> integer`\
+  Return the index of the first value in `list` that compares equal to `value`,
+  starting at index `start`, or `nil` if no such value is found.
 
 ## `mlua.mem`
 
