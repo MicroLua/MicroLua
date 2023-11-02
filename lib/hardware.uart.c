@@ -309,7 +309,6 @@ MLUA_SYMBOLS(Uart_syms) = {
     MLUA_SYM_F(is_readable, Uart_),
     MLUA_SYM_F(write_blocking, Uart_),
     MLUA_SYM_F(read_blocking, Uart_),
-    // TODO: Make put*() non-blocking
     MLUA_SYM_F(putc_raw, Uart_),
     MLUA_SYM_F(putc, Uart_),
     MLUA_SYM_F(puts, Uart_),

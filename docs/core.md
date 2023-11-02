@@ -1,4 +1,4 @@
-# Common functionality
+# Core functionality
 
 ## Binding conventions
 

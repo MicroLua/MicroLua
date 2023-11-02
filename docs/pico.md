@@ -108,7 +108,7 @@ tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
   These functions yield if the FIFO is empty and the IRQ handler is enabled.
 
 - `enable_irq(enable) -> Thread`\
-  [Enable or disable](common.md#irq-enablers) the SIO IRQ handler
+  [Enable or disable](core.md#irq-enablers) the SIO IRQ handler
   (`SIO_IRQ_PROCx`).
 
 ## `pico.platform`

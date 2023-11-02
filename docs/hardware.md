@@ -21,7 +21,7 @@ tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
   is empty and the IRQ handler is enabled.
 
 - `fifo_enable_irq(enable)`\
-  [Enable or disable](common.md#irq-enablers) the ADC FIFO IRQ handler
+  [Enable or disable](core.md#irq-enablers) the ADC FIFO IRQ handler
   (`ADC_IRQ_FIFO`).
 
 ## `hardware.base`
@@ -94,7 +94,7 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
 
 - `set_irq_callback(callback) -> Thread`\
   Set the generic callback used for GPIO IRQ events, or remove the callback if
-  `callback` is `nil`. Returns the [event handler thread](common.md#callbacks).
+  `callback` is `nil`. Returns the [event handler thread](core.md#callbacks).
 
   - `callback(gpio, event_mask)`\
     The callback to be called on GPIO IRQ events.
@@ -105,7 +105,7 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
 - `set_irq_enabled_with_callback(gpio, event_mask, enabled, callback) -> Thread`\
   Update the event mask for a GPIO, set the generic callback used for GPIO IRQ
   events, and enable GPIO IRQs (`IO_IRQ_BANK0`). Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
 ## `hardware.i2c`
 
@@ -155,7 +155,7 @@ default I2C peripheral, if defined, can be accessed as `default`.
   but also returns the `FIRST_DATA_BYTE` flag.
 
 - `I2C:enable_irq(enable)`\
-  [Enable or disable](common.md#irq-enablers) the I2C IRQ handler (`I2Cx_IRQ`).
+  [Enable or disable](core.md#irq-enablers) the I2C IRQ handler (`I2Cx_IRQ`).
 
 ## `hardware.irq`
 
@@ -173,21 +173,21 @@ tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
   Set a handler for the user IRQ `num`. When `priority` is missing, `nil` or
   negative, an exclusive IRQ handler is set. Otherwise, a shared handler with
   the given priority is set. Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
   - `handler(num)`\
     The handler to be called when the user IRQ is triggered.
 
 - `set_exclusive_handler(num, handler) -> Thread`\
   Set an exclusive handler for the user IRQ `num`. Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
   - `handler(num)`\
     The handler to be called when the user IRQ is triggered.
 
 - `add_shared_handler(num, handler, priority) -> Thread`\
   Add a shared handler for the user IRQ `num`. Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
   - `handler(num)`\
     The handler to be called when the user IRQ is triggered.
@@ -212,7 +212,7 @@ tests: [`hardware.regs.test`](../lib/hardware.regs.test.lua)
 The `hardware.regs.*` modules expose constants defined in the
 [`hardware/regs/*.h`](https://github.com/raspberrypi/pico-sdk/tree/master/src/rp2040/hardware_regs/include/hardware/regs)
 headers. Each module is auto-generated from the correponding header. Thanks
-to [read-only tables](common.md#read-only-tables), they use very little RAM and
+to [read-only tables](core.md#read-only-tables), they use very little RAM and
 a reasonable amount of flash, despite some of the headers being huge.
 
 The constants have the prefix corresponding to the header file name stripped.
@@ -300,7 +300,7 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
   containing a subset of the fields of
   [`datetime_t`](https://www.raspberrypi.com/documentation/pico-sdk/structdatetime__t.html).
   Unset fields will not be matched on. Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
   - `callback()`\
     The callback to be called when the RTC time matches `t`.
@@ -331,7 +331,7 @@ tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
 - `set_callback(alarm_num, callback) -> Thread`\
   Set the callback for the hardware timer `alarm_num`. The callback is called
   with the arguments `(alarm_num)`. Returns the
-  [event handler thread](common.md#callbacks).
+  [event handler thread](core.md#callbacks).
 
   - `callback(alarm_num)`\
     The callback to be called when the timer triggers.
@@ -395,8 +395,7 @@ default UART peripheral, if defined, can be accessed as `default`.
   Enable or disable the loopback mode of the UART (`LBE` in `UARTCR`).
 
 - `UART:enable_irq(enable)`\
-  [Enable or disable](common.md#irq-enablers) the UART IRQ handler
-  (`UARTx_IRQ`).
+  [Enable or disable](core.md#irq-enablers) the UART IRQ handler (`UARTx_IRQ`).
 
 ## `hardware.vreg`
 

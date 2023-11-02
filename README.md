@@ -130,11 +130,11 @@ $ "${MLUA_PATH}/tools/flash" build/blink/mlua_examples_blink.elf
 
 ## Documentation
 
-- [Common functionality](docs/common.md) across modules.
+- [Core functionality](docs/core.md) of MicroLua.
 - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
   the pico-sdk.
-- [`mlua.*`](docs/mlua.md): MicroLua libraries.
 - [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the pico-sdk.
+- [`mlua.*`](docs/mlua.md): MicroLua libraries.
 
 <!-- TODO: Document how to set up a project, using mlua_import.cmake -->
 <!-- TODO: Document how to embed MicroLua into a C application -->
