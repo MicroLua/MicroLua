@@ -1,4 +1,4 @@
-# MicroLua
+# MicroLua - Lua for the RP2040 microcontroller
 
 <!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
 <!-- SPDX-License-Identifier: MIT -->
