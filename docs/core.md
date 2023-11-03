@@ -3,10 +3,71 @@
 <!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
 <!-- SPDX-License-Identifier: MIT -->
 
-<!-- TODO: Document how to set up a project, using mlua_import.cmake -->
+<!-- TODO: Document config knobs -->
 <!-- TODO: Document how to embed MicroLua into a C application -->
 <!-- TODO: Document how to write a MicroLua module in C -->
-<!-- TODO: Document config knobs -->
+
+## MicroLua project
+
+Here's how to get started with a new project based on MicroLua:
+
+1. Create a file `main.lua` containing a `main()` function.
+
+    ```lua
+    _ENV = mlua.Module(...)
+
+    function main()
+      print("Hello, world!")
+    end
+    ```
+
+2.  Create a top-level `CMakeLists.txt` for the project.
+
+    ```cmake
+    # Define the project and initialize MicroLua.
+    cmake_minimum_required(VERSION 3.20)
+
+    include(mlua_import.cmake)
+
+    project(my_project C CXX ASM)
+    set(CMAKE_C_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 17)
+
+    mlua_init()
+
+    # Add a library for the main module.
+    mlua_add_lua_modules(my_project_main main.lua)
+    target_link_libraries(my_project_main INTERFACE
+        mlua_mod_mlua_stdio
+    )
+
+    # Add the executable.
+    add_executable(my_project_hello)
+    target_link_libraries(my_project_hello PRIVATE
+        my_project_main
+        pico_stdlib
+    )
+    pico_add_extra_outputs(my_project_hello)
+    ```
+
+3.  Copy the file [`mlua_import.cmake`](../mlua_import.cmake) from the MicroLua
+    repository to the same directory as the top-level `CMakeLists.txt` of the
+    project.
+
+4.  Build the project.
+
+    ```shell
+    # Adjust the paths for your setup.
+    $ export PICO_SDK_PATH="${HOME}/pico-sdk"
+    $ export MLUA_PATH="${HOME}/MicroLua"
+
+    # Build the executable.
+    $ cmake -s . -B build -DPICO_BOARD=pico
+    $ make -j9 -C build
+
+    # This generates the executable files build/my_project_hello.elf and
+    # build/my_project_hello.uf2, which can be flashed onto a target.
+    ```
 
 ## Lua modules
 

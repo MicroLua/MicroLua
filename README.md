@@ -92,7 +92,7 @@ interface to C code.
 Here's how to build and run the test suite on a Raspberry Pi Pico module.
 
 ```shell
-# Configure the location of the Pico SDK. Adjust to your setup.
+# Configure the location of the Pico SDK. Adjust for your setup.
 $ export PICO_SDK_PATH="${HOME}/pico-sdk"
 
 # Clone the repository and initialize submodules.
