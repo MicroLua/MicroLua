@@ -102,6 +102,7 @@ $ git submodule update --init
 
 # Connect a Picoprobe to the target, on the UART and optionally on the debug
 # port. Then view the Picoprobe's UART connection in a separate terminal.
+# The "term" script uses socat.
 $ tools/term /dev/ttyACM0
 
 # Build the unit tests.
