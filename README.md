@@ -46,8 +46,37 @@ both.
 - **Comprehensive suite of unit tests:** They not only test the binding layer,
   but when possible also the underlying functionality of the Pico SDK.
 
-<!-- TODO: Describe performance -->
-<!-- TODO: Add roadmap -->
+### Performance
+
+Performance is adequate for applications that don't require very low latency,
+but it could be better. Event dispatch latency is currently in the hundreds of
+microseconds, which is fairly slow. This is mainly due to a naive threading
+implementation, and it can be improved.
+
+So it probably isn't realistic to try bit-banging high-speed serial protocols
+or PWM in Lua, but that's what the PIO and PWM peripherals are for. Anything
+that requires precise timings should probably be implemented in C. But Lua is
+a great glue language for the non timing-critical logic, and very easy to
+interface to C code.
+
+### Roadmap
+
+- **Add more bindings for the Pico SDK.** SPI and PIO are high on the list,
+  followed by USB, Wifi and Bluetooth. Eventually, most SDK libraries should
+  have a binding.
+- **Improve threading performance.** A C implementation of the
+  [`mlua.thread`](docs/mlua.md#mluathread) module, with a less naive timer list,
+  could significantly improve event dispatch latency.
+- **Tune garbage collection.** Garbage collection parameters are currently left
+  at their default value, which may not be ideal for a memory-constrained
+  target.
+- **Improve cross-core communication.** Each core runs its own Lua interpreter,
+  so they cannot communicate directly through shared Lua state. Currently, the
+  only way for the cores to communicate is the SIO FIFOs, which is fairly
+  limited. A form of memory-based cross-core channel would be useful.
+- **Add multi-chip communication.** As an extension of cross-core channels,
+  cross-chip channels could enable fast communication between multiple RP2040
+  chips.
 
 ## Building
 
@@ -78,8 +107,8 @@ $ tools/flash build/lib/mlua_tests.elf
 ## Examples
 
 The [MicroLua-examples](https://github.com/MicroLua/MicroLua-examples)
-repository contains example programs that demonstrate how to use the various
-features of the RP2040 from Lua.
+repository contains example programs that demonstrate how to use the features of
+the RP2040 from Lua.
 
 Here's the `blink` example in MicroLua, a translation of the
 [`blink`](https://github.com/raspberrypi/pico-examples/tree/master/blink)
