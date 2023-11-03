@@ -64,8 +64,8 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 `Int64` is an alias for `integer`.
 
 > [!IMPORTANT]
-> Mixed-type equality comparisons (`==`, `~=`) involving `Int64` values do not
-> work correctly, because Lua only calls the `__eq` metamethod if both values
+> **Mixed-type equality comparisons (`==`, `~=`) involving `Int64` values do not
+> work correctly**, because Lua only calls the `__eq` metamethod if both values
 > are either tables or full userdata. Use `eq()` instead if the arguments may
 > be primitive types.
 
@@ -283,8 +283,8 @@ loaded during interpreter startup. It defines input and output stream types, and
 initializes the stdio libraries as defined in the compile-time configuration.
 
 > [!IMPORTANT]
-> Output functions block without yielding if the output buffer for the stream is
-> full.
+> **Output functions block without yielding** if the output buffer for the
+> stream is full.
 
 - `_G.stdin: InStream`\
   `_G.stdout: OutStream`\
@@ -545,7 +545,7 @@ documentation mentions it explicitly.
 - `Thread:join()`\
   `Thread:__close()`\
   Wait for the thread to terminate. If the thread terminates with an error, the
-  function re-throws the error. If the thread is assigned to a to-be-closed
+  function re-raises the error. If the thread is assigned to a to-be-closed
   variable, it is joined when the variable is closed.
 
 ### `Group`
@@ -584,7 +584,7 @@ This module provides various utilities.
   Wrapper functions for binary comparisons.
 
 - `get(tab, key) -> any`\
-  Return `tab[key]`, or `nil` if the lookup throws an error.
+  Return `tab[key]`, or `nil` if the lookup raises an error.
 
 - `repr(v) -> string`\
   Return a human-readable string representation of `v`. Calls the `__repr`

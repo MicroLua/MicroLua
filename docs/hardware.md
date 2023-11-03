@@ -1,9 +1,9 @@
 # `hardware.*` modules
 
 This page describes the modules that wrap the `hardware_*` libraries of the
-pico-sdk. It only documents the functions that aren't part of the pico-sdk, or
+Pico SDK. It only documents the functions that aren't part of the Pico SDK, or
 that significantly deviate from the underlying C function. For the others, the
-[pico-sdk documentation](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html)
+[Pico SDK documentation](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html)
 is authoritative.
 
 The test modules can be useful as usage examples.

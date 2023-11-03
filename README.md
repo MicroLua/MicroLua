@@ -3,7 +3,7 @@
 MicroLua allows **programming the
 [RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/rp2040.html)
 in [Lua](https://www.lua.org/)**. It packages the latest Lua interpreter with
-bindings for the [pico-sdk](https://github.com/raspberrypi/pico-sdk).
+bindings for the [Pico SDK](https://github.com/raspberrypi/pico-sdk).
 
 MicroLua is licensed under the [MIT](LICENSE.md) license.
 
@@ -40,11 +40,11 @@ both.
   for locks. Blocking library calls (e.g. `pico.time.sleep_us()`) yield to
   other threads.
 - **Thin bindings to C libraries:** MicroLua exposes a growing subset of the
-  functionality provided by the pico-sdk. The bindings are designed with a
+  functionality provided by the Pico SDK. The bindings are designed with a
   direct and consistent [mapping](#binding-conventions) to their underlying C
   implementation.
 - **Comprehensive suite of unit tests:** They not only test the binding layer,
-  but when possible also the underlying functionality of the pico-sdk.
+  but when possible also the underlying functionality of the Pico SDK.
 
 <!-- TODO: Describe performance -->
 <!-- TODO: Add roadmap -->
@@ -52,7 +52,7 @@ both.
 ## Building
 
 ```shell
-# Configure the location of the pico-sdk. Adjust to your setup.
+# Configure the location of the Pico SDK. Adjust to your setup.
 $ export PICO_SDK_PATH="${HOME}/pico-sdk"
 
 # Clone the repository and initialize submodules.
@@ -72,6 +72,8 @@ $ make -j9 -C build/lib
 # mode and copy build/lib/mlua_tests.uf2 to its drive.
 $ tools/flash build/lib/mlua_tests.elf
 ```
+
+<!-- TODO: Flash using picotool -->
 
 ## Examples
 
@@ -108,7 +110,7 @@ end
 To build the example:
 
 ```shell
-# Configure the locations of the pico-sdk and MicroLua. Adjust to your setup.
+# Configure the locations of the Pico SDK and MicroLua. Adjust to your setup.
 $ export PICO_SDK_PATH="${HOME}/pico-sdk"
 $ export MLUA_PATH="${HOME}/MicroLua"
 
@@ -125,20 +127,13 @@ $ make -j9 -C build/blink
 $ "${MLUA_PATH}/tools/flash" build/blink/mlua_examples_blink.elf
 ```
 
-<!-- TODO: Flash using picotool -->
-
 ## Documentation
 
 - [Core functionality](docs/core.md) of MicroLua.
 - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
-  the pico-sdk.
-- [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the pico-sdk.
+  the Pico SDK.
+- [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the Pico SDK.
 - [`mlua.*`](docs/mlua.md): MicroLua libraries.
-
-<!-- TODO: Document how to set up a project, using mlua_import.cmake -->
-<!-- TODO: Document how to embed MicroLua into a C application -->
-<!-- TODO: Document how to write a MicroLua module in C -->
-<!-- TODO: Document config knobs -->
 
 ## Contributing
 
@@ -171,7 +166,7 @@ No, that's an explicit non-goal. Supporting multiple microcontroller families
 inevitably leads to either limiting features to the common denominator, or
 introducing a complex configuration system.
 
-Moreover, MicroLua integrates directly with the build system of the pico-sdk,
+Moreover, MicroLua integrates directly with the build system of the Pico SDK,
 which is strongly tied to the RP2040. Supporting other microcontrollers would
 require a different build system.
 
@@ -185,7 +180,7 @@ until then, the RP2040 is the only supported target.
   including a shell and an editor. It exposes a limited subset of Pico-specific functionality.
 
   MicroLua uses an unpatched Lua interpreter at the latest stable version, and
-  aims to expose most of the functionality provided by the pico-sdk through a
+  aims to expose most of the functionality provided by the Pico SDK through a
   thin binding layer.
 
 ### What's the relationship with MicroLua DS?
