@@ -41,8 +41,8 @@ both.
   other threads.
 - **Thin bindings to C libraries:** MicroLua exposes a growing subset of the
   functionality provided by the Pico SDK. The bindings are designed with a
-  direct and consistent [mapping](#binding-conventions) to their underlying C
-  implementation.
+  straightforward and consistent [mapping](docs/core.md#binding-conventions) to
+  their underlying C implementation.
 - **Comprehensive suite of unit tests:** They not only test the binding layer,
   but when possible also the underlying functionality of the Pico SDK.
 
