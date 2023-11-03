@@ -42,6 +42,7 @@ function test_watchdog(t)
     watchdog.enable(1, true)
     inhibit_reset()
     t:expect(is_enabled()):label("watchdog enabled"):eq(true)
+    -- TODO: Fix test failure in next line when flashing with picotool
     t:expect(t:expr(watchdog).get_count()):eq(1000)
     t:expect(scratch4()):label("SCRATCH4"):eq(0x6ab73121)
     watchdog.update()

@@ -3,7 +3,8 @@
 MicroLua allows **programming the
 [RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/rp2040.html)
 in [Lua](https://www.lua.org/)**. It packages the latest Lua interpreter with
-bindings for the [Pico SDK](https://github.com/raspberrypi/pico-sdk).
+bindings for the [Pico SDK](https://github.com/raspberrypi/pico-sdk) and a
+cooperative threading library.
 
 MicroLua is licensed under the [MIT](LICENSE.md) license.
 
@@ -67,6 +68,11 @@ interface to C code.
 - **Improve threading performance.** A C implementation of the
   [`mlua.thread`](docs/mlua.md#mluathread) module, with a less naive timer list,
   could significantly improve event dispatch latency.
+- **Add a filesystem** (probably
+  [littlefs](https://github.com/littlefs-project/littlefs)) with support for
+  loading Lua modules and updating them over USB. This will enable simpler
+  development workflows similar to e.g. [MicroPython](https://micropython.org/)
+  & [Thonny](https://thonny.org/).
 - **Tune garbage collection.** Garbage collection parameters are currently left
   at their default value, which may not be ideal for a memory-constrained
   target.
@@ -79,6 +85,8 @@ interface to C code.
   chips.
 
 ## Building
+
+Here's how to build and run the test suite on a Raspberry Pi Pico module.
 
 ```shell
 # Configure the location of the Pico SDK. Adjust to your setup.
@@ -97,12 +105,12 @@ $ tools/term /dev/ttyACM0
 $ cmake -s . -B build -DPICO_BOARD=pico
 $ make -j9 -C build/lib
 
-# Flash the target with a Picoprobe. Alternatively, start the target in BOOTSEL
-# mode and copy build/lib/mlua_tests.uf2 to its drive.
-$ tools/flash build/lib/mlua_tests.elf
-```
+# Start the target in BOOTSEL mode and flash it with picotool.
+$ picotool load -v -x build/lib/mlua_tests.elf
 
-<!-- TODO: Flash using picotool -->
+# Alternatively, start the target in BOOTSEL mode and copy to its boot drive.
+$ cp build/lib/mlua_tests.uf2 /mnt/RPI-RP2/
+```
 
 ## Examples
 
@@ -116,7 +124,6 @@ example from the [`pico-examples`](https://github.com/raspberrypi/pico-examples)
 repository.
 
 ```lua
--- main.lua
 _ENV = mlua.Module(...)
 
 local gpio = require 'hardware.gpio'
@@ -134,26 +141,6 @@ function main()
         time.sleep_ms(250)
     end
 end
-```
-
-To build the example:
-
-```shell
-# Configure the locations of the Pico SDK and MicroLua. Adjust to your setup.
-$ export PICO_SDK_PATH="${HOME}/pico-sdk"
-$ export MLUA_PATH="${HOME}/MicroLua"
-
-# Clone the MicroLua-examples repository.
-$ git clone https://github.com/MicroLua/MicroLua-examples.git
-$ cd MicroLua-examples
-
-# Build the "blink" example.
-$ cmake -s . -B build -DPICO_BOARD=pico
-$ make -j9 -C build/blink
-
-# Flash the target with a Picoprobe. Alternatively, start the target in BOOTSEL
-# mode and copy build/blink/mlua_examples_blink.uf2 to its drive.
-$ "${MLUA_PATH}/tools/flash" build/blink/mlua_examples_blink.elf
 ```
 
 ## Documentation
@@ -215,8 +202,8 @@ until then, the RP2040 is the only supported target.
 ### What's the relationship with MicroLua DS?
 
 [MicroLua DS](https://sourceforge.net/projects/microlua/) was a development
-environment allowing to build apps for the Nintendo DS in Lua. It was last
-released in January 2014. MicroLua has no relationship with MicroLua DS.
+environment for building apps for the Nintendo DS in Lua. It was last released
+in January 2014. MicroLua has no relationship with MicroLua DS.
 
 While the naming conflict is unfortunate, I felt that almost 10 years of
 inactivity was long enough that it was fair game to re-use the name.
