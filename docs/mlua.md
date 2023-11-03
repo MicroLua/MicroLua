@@ -14,12 +14,14 @@ The test modules can be useful as usage examples.
 
 - `mlua`\
   The `mlua` module is auto-loaded on startup and made available as a global.
-  This simplifies module definitions.
 
 ## `mlua`
 
 **Module:** [`mlua`](../lib/mlua.lua),
 tests: [`mlua.test`](../lib/mlua.test.lua)
+
+The `mlua` module is auto-loaded on startup and made available as a global. This
+simplifies [module definitions](core.md#lua-modules).
 
 - `Module()`\
   Create a new empty module.
@@ -47,7 +49,8 @@ mlua_target_config(example_target
 
 ## `mlua.event`
 
-**Module:** [`mlua.event`](../lib/mlua.event.c)
+**Module:** [`mlua.event`](../lib/mlua.event.c),
+build target: `mlua_mod_mlua_event`
 
 This module provides the core event handling and dispatch functionality.
 
@@ -58,6 +61,7 @@ This module provides the core event handling and dispatch functionality.
 ## `mlua.int64`
 
 **Module:** [`mlua.int64`](../lib/mlua.int64.c),
+build target: `mlua_mod_mlua_int64`,
 tests: [`mlua.int64.test`](../lib/mlua.int64.test.lua)
 
 This module provides a 64-bit signed integer type (`mlua.Int64`). When
@@ -115,6 +119,7 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 ## `mlua.io`
 
 **Module:** [`mlua.io`](../lib/mlua.io.lua),
+build target: `mlua_mod_mlua_io`,
 tests: [`mlua.io.test`](../lib/mlua.io.test.lua)
 
 This module provides helpers for input / output processing.
@@ -168,6 +173,7 @@ The `Buffer` type records writes and allows replaying them on another stream.
 ## `mlua.list`
 
 **Module:** [`mlua.list`](../lib/mlua.list.c),
+build target: `mlua_mod_mlua_list`,
 tests: [`mlua.list.test`](../lib/mlua.list.test.lua)
 
 This module provides functions to operate on lists that can contain `nil`
@@ -218,6 +224,7 @@ functions as methods.
 ## `mlua.mem`
 
 **Module:** [`mlua.mem`](../lib/mlua.mem.c),
+build target: `mlua_mod_mlua_mem`,
 tests: [`mlua.mem.test`](../lib/mlua.mem.test.lua)
 
 This module provides functionality to access raw memory (ROM, RAM).
@@ -257,6 +264,7 @@ The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
 ## `mlua.oo`
 
 **Module:** [`mlua.oo`](../lib/mlua.oo.lua),
+build target: `mlua_mod_mlua_oo`,
 tests: [`mlua.oo.test`](../lib/mlua.oo.test.lua)
 
 This module provides a simple object model for object-oriented programming.
@@ -279,6 +287,7 @@ necessary because Lua gets metamethods using a raw access.
 ## `mlua.stdio`
 
 **Module:** [`mlua.stdio`](../lib/mlua.stdio.c),
+build target: `mlua_mod_mlua_stdio`,
 tests: [`mlua.stdio.test`](../lib/mlua.stdio.test.lua)
 
 This module manages stdio input and output. When linked in, it is automatically
@@ -317,6 +326,7 @@ The `OutStream` type (`mlua.OutStream`) represents an output stream.
 ## `mlua.testing`
 
 **Module:** [`mlua.testing`](../lib/mlua.testing.lua),
+build target: `mlua_mod_mlua_testing`,
 tests: [`mlua.testing.test`](../lib/mlua.testing.test.lua)
 
 This module is a unit-testing library inspired by the Go
@@ -465,6 +475,7 @@ that value.
 ## `mlua.thread`
 
 **Module:** [`mlua.thread`](../lib/mlua.thread.lua),
+build target: `mlua_mod_mlua_thread`,
 tests: [`mlua.thread.test`](../lib/mlua.thread.test.lua)
 
 This module provides cooperative threading functionality based on coroutines.
@@ -571,6 +582,7 @@ terminate automatically get removed from the group.
 ## `mlua.util`
 
 **Module:** [`mlua.util`](../lib/mlua.util.lua),
+build target: `mlua_mod_mlua_util`,
 tests: [`mlua.util.test`](../lib/mlua.util.test.lua)
 
 This module provides various utilities.
