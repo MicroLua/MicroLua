@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 cmake_minimum_required(VERSION 3.20)
 
 include(pico_sdk_import.cmake)

@@ -1,3 +1,6 @@
+// Copyright 2023 Remy Blank <remy@c-space.org>
+// SPDX-License-Identifier: MIT
+
 #ifndef _MLUA_CORE_MODULE_H
 #define _MLUA_CORE_MODULE_H
 

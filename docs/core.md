@@ -1,5 +1,8 @@
 # Core functionality
 
+<!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
+<!-- SPDX-License-Identifier: MIT -->
+
 <!-- TODO: Document how to set up a project, using mlua_import.cmake -->
 <!-- TODO: Document how to embed MicroLua into a C application -->
 <!-- TODO: Document how to write a MicroLua module in C -->

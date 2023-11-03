@@ -1,3 +1,6 @@
+-- Copyright 2023 Remy Blank <remy@c-space.org>
+-- SPDX-License-Identifier: MIT
+
 -- A simple object model for object-oriented programming.
 --
 -- Classes are created with class, providing a name and optionally a base class.

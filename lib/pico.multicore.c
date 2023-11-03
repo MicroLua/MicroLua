@@ -1,3 +1,6 @@
+// Copyright 2023 Remy Blank <remy@c-space.org>
+// SPDX-License-Identifier: MIT
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

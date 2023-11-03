@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 mlua_add_lua_test_modules(mlua_mod_00_setup_test 00_setup.test.lua)
 target_link_libraries(mlua_mod_00_setup_test INTERFACE
     mlua_mod_hardware_uart

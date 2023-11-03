@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 # This is a copy of ${MLUA_PATH}/mlua_import.cmake. It can be dropped into an
 # external project to locate MicroLua. It should be include()ed prior to
 # project().

@@ -1,3 +1,6 @@
+// Copyright 2023 Remy Blank <remy@c-space.org>
+// SPDX-License-Identifier: MIT
+
 #ifndef _MLUA_LIB_INT64_H
 #define _MLUA_LIB_INT64_H
 

@@ -1,5 +1,8 @@
 # `hardware.*` modules
 
+<!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
+<!-- SPDX-License-Identifier: MIT -->
+
 This page describes the modules that wrap the `hardware_*` libraries of the
 Pico SDK. It only documents the functions that aren't part of the Pico SDK, or
 that significantly deviate from the underlying C function. For the others, the

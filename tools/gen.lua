@@ -1,3 +1,6 @@
+-- Copyright 2023 Remy Blank <remy@c-space.org>
+-- SPDX-License-Identifier: MIT
+
 -- Perform code generation build steps. The following sub-commands are
 -- available:
 --

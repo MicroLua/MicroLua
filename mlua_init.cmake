@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 include("${MLUA_PATH}/pico_sdk_import.cmake")
 
 macro(mlua_init)

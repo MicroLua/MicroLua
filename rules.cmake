@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 message("MLUA_PATH is ${MLUA_PATH}")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
 set(GEN "${MLUA_PATH}/tools/gen.lua" CACHE INTERNAL "")

@@ -1,3 +1,6 @@
+# Copyright 2023 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
 # Copy Lua headers and generate luaconf.h.
 mlua_core_filenames(lua_h *.h)
 list(FILTER lua_h EXCLUDE REGEX ^luaconf\\.h$)

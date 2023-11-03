@@ -1,5 +1,8 @@
 # `mlua.*` modules
 
+<!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
+<!-- SPDX-License-Identifier: MIT -->
+
 This page describes the modules specific to MicroLua.
 
 The test modules can be useful as usage examples.
