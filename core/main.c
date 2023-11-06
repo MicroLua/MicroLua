@@ -133,8 +133,7 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
 // handling hardfaults, so semihosting requests halt the core and the handler
 // never gets called.
 static __attribute__((naked)) void hardfault_handler(void) {
-    __asm volatile (
-        ".syntax unified\n"
+    pico_default_asm_volatile(
         "movs r0, #4\n"         // r0 = SP (from MSP or PSP)
         "mov r1, lr\n"
         "tst r0, r1\n"

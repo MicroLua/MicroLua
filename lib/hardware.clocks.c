@@ -24,6 +24,8 @@ MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_V(KHZ, integer, KHZ),
+    MLUA_SYM_V(MHZ, integer, MHZ),
     MLUA_SYM_V(clk_gpout0, integer, clk_gpout0),
     MLUA_SYM_V(clk_gpout1, integer, clk_gpout1),
     MLUA_SYM_V(clk_gpout2, integer, clk_gpout2),

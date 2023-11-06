@@ -11,8 +11,8 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-// This module doesn't use the pico_i2c_slave library, because its
-// implementation is flaky (it only works if IRQs are serviced very quickly,
+// BUG(pico-sdk): This module doesn't use the pico_i2c_slave library, because
+// its implementation is flaky (it only works if IRQs are serviced very quickly,
 // and there are potential race conditions). Instead, it implements a different
 // API that works correctly even with slow handlers.
 
