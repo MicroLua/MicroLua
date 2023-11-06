@@ -19,6 +19,39 @@ function(mlua_want_lua)
     endif()
 endfunction()
 
+if(NOT FENNEL)
+    if(DEFINED ENV{FENNEL})
+        set(FENNEL "$ENV{FENNEL}")
+        message("Using FENNEL from environment ('${FENNEL}')")
+    else()
+        set(FENNEL "fennel")
+    endif()
+endif()
+set(FENNEL "${FENNEL}" CACHE PATH "Path to the fennel compiler" FORCE)
+
+function(mlua_fennel_version VERSION)
+    execute_process(
+        COMMAND "${FENNEL}" "--version"
+        OUTPUT_VARIABLE version
+        RESULT_VARIABLE result
+    )
+    if("${result}" EQUAL 0)
+        string(STRIP "${version}" version)
+        set("${VERSION}" "${version}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+function(mlua_want_fennel)
+    if(NOT Fennel_FOUND)
+        mlua_fennel_version(version)
+        if(version STREQUAL "")
+            message(FATAL_ERROR "Fennel compiler not found: ${FENNEL}")
+        endif()
+        message("Fennel compiler is ${FENNEL} (${version})")
+        set(Fennel_FOUND 1)
+    endif()
+endfunction()
+
 function(mlua_num_target VAR PREFIX)
     set(prop "${PREFIX}_id")
     get_property(set GLOBAL PROPERTY "${prop}" SET)
@@ -167,6 +200,25 @@ function(mlua_add_lua_modules TARGET)
         mlua_add_gen_target("${TARGET}" mlua_gen_lua INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
+endfunction()
+
+function(mlua_add_fnl_modules TARGET)
+    mlua_want_fennel()
+    foreach(src IN LISTS ARGN)
+        cmake_path(ABSOLUTE_PATH src)
+        cmake_path(GET src STEM LAST_ONLY mod)
+        set(output "${CMAKE_CURRENT_BINARY_DIR}/${mod}.lua")
+        add_custom_command(
+            COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
+            DEPENDS "${src}"
+            OUTPUT "${output}"
+            COMMAND "${FENNEL}"
+                "--compile" "--correlate" "${src}" > "${output}"
+            VERBATIM
+        )
+        list(APPEND srcs "${output}")
+    endforeach()
+    mlua_add_lua_modules("${TARGET}" "${srcs}")
 endfunction()
 
 # TARGET must be a binary target.

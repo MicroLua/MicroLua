@@ -97,6 +97,14 @@ target_link_libraries(mod_example INTERFACE
 )
 ```
 
+### Fennel
+
+MicroLua supports writing modules in [Fennel](https://fennel-lang.org/), by
+transpiling Fennel sources to Lua. Simply use `mlua_add_fnl_modules()` instead
+of `mlua_add_lua_modules()`. There are a few examples in the
+[MicroLua-examples](https://github.com/MicroLua/MicroLua-examples/blob/master/fennel)
+repository.
+
 ## Function metatable
 
 The MicroLua runtime sets a metatable on the `function` type with a `__close`
