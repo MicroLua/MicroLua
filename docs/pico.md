@@ -33,6 +33,18 @@ tests: [`pico.test`](../lib/pico.test.lua)
   `flash_binary_end, integer`\
   The start and end address of the binary in flash memory.
 
+## `pico.board`
+
+**Library:** [`pico_base`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_base),
+headers: [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)\
+**Module:** `pico.board` (auto-generated),
+build target: `mlua_mod_pico_board`,
+tests: [`pico.board.test`](../lib/pico.board.test.lua)
+
+This module exposes the constants defined in the
+[`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)
+header for the target platform. It is auto-generated.
+
 ## `pico.i2c_slave`
 
 **Library:** [`pico_i2c_slave`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_i2c_slave),
