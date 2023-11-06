@@ -47,6 +47,8 @@ both.
   functionality provided by the Pico SDK. The bindings are designed with a
   straightforward and consistent [mapping](docs/core.md#binding-conventions) to
   their underlying C implementation.
+- **Support for [Fennel](https://fennel-lang.org/):** Fennel sources are
+  transpiled to Lua.
 - **Comprehensive suite of unit tests:** They not only test the binding layer,
   but when possible also the underlying functionality of the Pico SDK.
 
