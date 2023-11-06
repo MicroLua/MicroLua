@@ -9,8 +9,8 @@ project(microlua C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-if(PICO_SDK_VERSION_STRING VERSION_LESS "1.5.0")
-    message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.5.0 (or later) required, found ${PICO_SDK_VERSION_STRING}.")
+if(PICO_SDK_VERSION_STRING VERSION_LESS "1.5.1")
+    message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.5.1 (or later) required, found ${PICO_SDK_VERSION_STRING}.")
 endif()
 pico_sdk_init()
 
