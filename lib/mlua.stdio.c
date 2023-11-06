@@ -126,7 +126,7 @@ MLUA_SYMBOLS(module_syms) = {
 static __attribute__((constructor)) void init(void) {
 #if LIB_PICO_STDIO_SEMIHOSTING
 #if MLUA_STDIO_INIT_SEMIHOSTING
-    stdout_usb_init();
+    stdio_semihosting_init();
 #endif
 #endif  // LIB_PICO_STDIO_SEMIHOSTING
 #if LIB_PICO_STDIO_UART
