@@ -276,15 +276,11 @@ local function format_hash(name, h, out)
     local data = pack_hash(h)
     check_packed_hash(h, data)
     table.insert(out,
-        ('MLUA_SYMBOLS_HASH_PARAMS(%s, %s, %s, %s, %s);\n'):format(
+        ('}; MLUA_SYMBOLS_HASH_FN(%s, %s, %s, %s, %s) = {'):format(
             name, h.seed1, h.seed2, h.nkeys, #h.g))
-    table.insert(out,
-        ('MLUA_SYMBOLS_HASH_VALUES(%s) = {\n'):format(name))
     for i = 0, #data - 1 do
         table.insert(out, ('0x%02x,'):format(data[i + 1] or 0))
-        if (i + 1) % 16 == 0 then table.insert(out, '\n') end
     end
-    if #data % 16 > 0 then table.insert(out, '\n') end
     table.insert(out, '};\n')
 end
 
@@ -296,7 +292,8 @@ local function preprocess_cmod(text)
     for line in lines(text) do
         table.insert(out, line)
         if syms then
-            local sym = line:match('^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
+            local sym = line:match(
+                '^%s*MLUA_SYM_[%u%d_]+%(%s*([%a_][%w_]*)%s*,')
             if sym then
                 if sym:match('^_[^_]') then sym = sym:sub(2) end
                 if not seen[sym] then
@@ -308,6 +305,7 @@ local function preprocess_cmod(text)
                     raise("too many symbols: got %s, max %s", #syms, max_syms)
                 end
                 local h = find_perfect_hash(syms)
+                table.remove(out)
                 format_hash(name, h, out)
                 name, syms, seen = nil, nil, nil
             end

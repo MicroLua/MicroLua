@@ -168,13 +168,10 @@ typedef struct MLuaSymHash {
     uint16_t nkeys, ng;
 } MLuaSymHash;
 
-// Define symbol hash parameters for a symbol table.
-#define MLUA_SYMBOLS_HASH_PARAMS(n, s1, s2, k, g) \
+// Define a symbol hash for a symbol table.
+#define MLUA_SYMBOLS_HASH_FN(n, s1, s2, k, g) \
 static MLuaSymHash const __attribute__((__unused__)) \
-    n ## _hash = {.seed1 = s1, .seed2 = s2, .nkeys = k, .ng = g};
-
-// Define symbol hash values for a symbol table.
-#define MLUA_SYMBOLS_HASH_VALUES(n) \
+    n ## _hash = {.seed1 = s1, .seed2 = s2, .nkeys = k, .ng = g}; \
 static uint8_t const __attribute__((__unused__)) n ## _hash_g[]
 
 void mlua_new_class_nohash_(lua_State* ls, char const* name,
