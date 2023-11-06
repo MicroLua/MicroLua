@@ -560,6 +560,13 @@ target_link_libraries(mlua_mod_pico_stdio_semihosting INTERFACE
     pico_stdio_semihosting
 )
 
+mlua_add_lua_test_modules(mlua_mod_pico_stdio_semihosting_test
+    pico.stdio.semihosting.test.lua)
+target_link_libraries(mlua_mod_pico_stdio_semihosting_test INTERFACE
+    mlua_mod_pico_stdio
+    mlua_mod_pico_stdio_semihosting
+)
+
 mlua_add_c_module(mlua_mod_pico_stdio_uart pico.stdio.uart.c)
 target_link_libraries(mlua_mod_pico_stdio_uart INTERFACE
     mlua_mod_hardware_uart_headers

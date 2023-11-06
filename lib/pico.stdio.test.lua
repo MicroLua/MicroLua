@@ -10,11 +10,6 @@ local util = require 'mlua.util'
 local stdio = require 'pico.stdio'
 local string = require 'string'
 
--- We don't test the pico.stdio.semihosting module, because it requires a
--- debugger to be attached. Attempts to catch bkpt instructions through the
--- hardfault handler have failed; the handler doesn't seem to be called, and
--- the core just locks up.
-
 -- We don't test the pico.stdio.usb module, because it sometimes causes the
 -- xhci_hcd driver to lock up and terminate, thereby disconnecting all USB
 -- devices and requiring a reboot.
