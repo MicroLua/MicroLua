@@ -12,4 +12,5 @@ openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg \
     -c "program $1 verify" \
     -c "arm semihosting enable" \
     -c "reset run" \
-    -c "exit"
+    -c "targets" \
+    -c "shutdown"

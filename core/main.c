@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "hardware/exception.h"
 #include "hardware/timer.h"
 #include "pico/platform.h"
 
@@ -123,7 +124,44 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
     lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
 }
 
-lua_State* mlua_new_interpreter() {
+// This HardFault exception handler catches semihosting calls when no debugger
+// is attached, and makes them silently succeed. For anything else, it does the
+// same as the default handler, i.e. hang with a "bkpt 0".
+//
+// Note that this doesn't work if the target was reset from openocd, even if
+// the latter has terminated, because the probe seems to keep watching for and
+// handling hardfaults, so semihosting requests halt the core and the handler
+// never gets called.
+static __attribute__((naked)) void hardfault_handler(void) {
+    __asm volatile (
+        ".syntax unified\n"
+        "movs r0, #4\n"         // r0 = SP (from MSP or PSP)
+        "mov r1, lr\n"
+        "tst r0, r1\n"
+        "beq 1f\n"
+        "mrs r0, psp\n"
+        "b 2f\n"
+    "1:\n"
+        "mrs r0, msp\n"
+    "2:\n"
+        "ldr r1, [r0, #24]\n"   // r1 = PC
+        "ldrh r2, [r1]\n"       // Check if the instruction is "bkpt 0xab"
+        "ldr r3, =0xbeab\n"     // (semihosting)
+        "cmp r2, r3\n"
+        "beq 3f\n"
+        "bkpt 0x00\n"           // Not semihosting, panic
+    "3:\n"
+        "adds r1, #2\n"         // Semihosting, skip the bkpt instruction
+        "str r1, [r0, #24]\n"
+        "movs r1, #0\n"         // Set the result of the semihosting call to 0
+        "str r1, [r0, #0]\n"
+        "bx lr\n"               // Return to the caller
+    );
+}
+
+void isr_hardfault(void);
+
+lua_State* mlua_new_interpreter(void) {
     lua_State* ls = lua_newstate(allocate, NULL);
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
@@ -131,6 +169,14 @@ lua_State* mlua_new_interpreter() {
 }
 
 void mlua_run_main(lua_State* ls) {
+    // Set the HardFault exception handler if none was set before.
+    exception_handler_t handler =
+        exception_get_vtable_handler(HARDFAULT_EXCEPTION);
+    if (handler == &isr_hardfault) {
+        exception_set_exclusive_handler(HARDFAULT_EXCEPTION,
+                                        &hardfault_handler);
+    }
+
     lua_pushcfunction(ls, pmain);
     lua_rotate(ls, 1, 1);
     int err = lua_pcall(ls, 2, 0, 0);
@@ -148,7 +194,7 @@ void mlua_run_main(lua_State* ls) {
 #define MLUA_MAIN_FUNCTION main
 #endif
 
-void mlua_main_core0() {
+void mlua_main_core0(void) {
     // Ensure that the system timer is ticking. This seems to take some time
     // after a reset.
     busy_wait_us(1);
@@ -161,7 +207,7 @@ void mlua_main_core0() {
     lua_close(ls);
 }
 
-__attribute__((weak)) int main() {
+__attribute__((weak)) int main(void) {
     mlua_main_core0();
     return 0;
 }

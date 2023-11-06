@@ -77,6 +77,7 @@ target_include_directories(mlua_core_main INTERFACE
     "${CMAKE_CURRENT_LIST_DIR}/include"
 )
 target_link_libraries(mlua_core_main INTERFACE
+    hardware_exception
     hardware_sync
     hardware_timer
     mlua_core
