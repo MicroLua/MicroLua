@@ -191,6 +191,23 @@ target_link_libraries(mlua_mod_hardware_rtc_test INTERFACE
     mlua_mod_mlua_util
 )
 
+mlua_add_c_module(mlua_mod_hardware_spi hardware.spi.c)
+target_link_libraries(mlua_mod_hardware_spi INTERFACE
+    hardware_base
+    hardware_irq
+    hardware_regs
+    hardware_spi
+    mlua_mod_mlua_event_headers
+    pico_platform
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_spi_test hardware.spi.test.lua)
+target_link_libraries(mlua_mod_hardware_spi_test INTERFACE
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_spi
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_hardware_sync hardware.sync.c)
 target_link_libraries(mlua_mod_hardware_sync INTERFACE
     hardware_sync
@@ -223,6 +240,7 @@ mlua_add_c_module(mlua_mod_hardware_uart hardware.uart.c)
 target_include_directories(mlua_mod_hardware_uart_headers INTERFACE
     include_hardware.uart)
 target_link_libraries(mlua_mod_hardware_uart INTERFACE
+    hardware_base
     hardware_irq
     hardware_regs
     hardware_uart
@@ -424,7 +442,6 @@ mlua_add_lua_modules(mlua_mod_mlua_testing_uart mlua.testing.uart.lua)
 target_link_libraries(mlua_mod_mlua_testing_uart INTERFACE
     mlua_mod_hardware_gpio
     mlua_mod_hardware_uart
-    mlua_mod_mlua_list
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)

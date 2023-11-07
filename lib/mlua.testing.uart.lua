@@ -5,7 +5,6 @@ _ENV = mlua.Module(...)
 
 local gpio = require 'hardware.gpio'
 local uart = require 'hardware.uart'
-local list = require 'mlua.list'
 
 pins = {
     [0] = {tx = {0, 12, 16, 28}, rx = {1, 13, 17, 29},
@@ -21,13 +20,13 @@ local function find_enabled(pins)
 end
 
 -- Returns the pins enabled for the given UART, as (TX, RX, CTS, RTS).
-function find_pins(uart)
-    local ps = pins[uart:get_index()]
+function find_pins(inst)
+    local ps = pins[inst:get_index()]
     return find_enabled(ps.tx), find_enabled(ps.rx),
            find_enabled(ps.cts), find_enabled(ps.rts)
 end
 
--- Returns the first UART that isn't the default UART, and its index.
+-- Returns the first UART that isn't the default UART.
 function non_default(t)
     for i = 0, uart.NUM - 1 do
         local inst = uart[i]

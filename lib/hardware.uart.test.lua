@@ -58,7 +58,7 @@ end
 
 function test_blocking_write_read_Y(t)
     local inst = setup(t)
-    local data = "0123456789abcdefghijklmnopqrstuv"  -- Fits the FIFO
+    local data = '0123456789abcdefghijklmnopqrstuv'  -- Fits the FIFO
     t:expect(t:expr(inst):is_enabled()):eq(true)
     t:expect(t:expr(inst):is_writable()):eq(true)
     t:expect(t:expr(inst):is_tx_busy()):eq(false)
@@ -88,7 +88,7 @@ end
 
 function test_threaded_write_read(t)
     local inst = setup(t)
-    local cnt, data = 50, "0123456"
+    local cnt, data = 50, '0123456'
     inst:set_hw_flow(true, true)
     local writer<close> = thread.start(function()
         for i = 1, cnt do inst:write_blocking(data) end
