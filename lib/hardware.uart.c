@@ -19,36 +19,36 @@
 
 // TODO: Accept and return mutable buffers when writing and reading
 
-char const mlua_Uart_name[] = "hardware.uart.Uart";
+char const mlua_UART_name[] = "hardware.uart.UART";
 
-static uart_inst_t** new_Uart(lua_State* ls) {
+static uart_inst_t** new_UART(lua_State* ls) {
     uart_inst_t** v = lua_newuserdatauv(ls, sizeof(uart_inst_t*), 0);
-    luaL_getmetatable(ls, mlua_Uart_name);
+    luaL_getmetatable(ls, mlua_UART_name);
     lua_setmetatable(ls, -2);
     return v;
 }
 
-static inline uart_inst_t* to_Uart(lua_State* ls, int arg) {
+static inline uart_inst_t* to_UART(lua_State* ls, int arg) {
     return *((uart_inst_t**)lua_touserdata(ls, arg));
 }
 
-static int Uart_regs_base(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)uart_get_hw(mlua_check_Uart(ls, 1)));
+static int UART_regs_base(lua_State* ls) {
+    lua_pushinteger(ls, (uintptr_t)uart_get_hw(mlua_check_UART(ls, 1)));
     return 1;
 }
 
-static int Uart_is_tx_busy(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_is_tx_busy(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     lua_pushboolean(ls, (uart_get_hw(inst)->fr & UART_UARTFR_BUSY_BITS) != 0);
     return 1;
 }
 
-static int Uart_tx_wait_blocking_1(lua_State* ls, int status, lua_KContext ctx);
+static int UART_tx_wait_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
-static int Uart_tx_wait_blocking(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_tx_wait_blocking(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     if (mlua_yield_enabled()) {
-        return Uart_tx_wait_blocking_1(ls, 0, (lua_KContext)inst);
+        return UART_tx_wait_blocking_1(ls, 0, (lua_KContext)inst);
     }
     uart_tx_wait_blocking(inst);
     return 0;
@@ -56,24 +56,24 @@ static int Uart_tx_wait_blocking(lua_State* ls) {
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-static int Uart_tx_wait_blocking_1(lua_State* ls, int status,
+static int UART_tx_wait_blocking_1(lua_State* ls, int status,
                                    lua_KContext ctx) {
     uart_inst_t* inst = (uart_inst_t*)ctx;
     // Busy loop, same as uart_tx_wait_blocking.
     if ((uart_get_hw(inst)->fr & UART_UARTFR_BUSY_BITS) == 0) return 0;
-    return mlua_event_yield(ls, 0, &Uart_tx_wait_blocking_1, ctx);
+    return mlua_event_yield(ls, 0, &UART_tx_wait_blocking_1, ctx);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-typedef struct UartState {
+typedef struct UARTState {
     MLuaEvent rx_event;
     MLuaEvent tx_event;
-} UartState;
+} UARTState;
 
-static UartState uart_state[NUM_UARTS];
+static UARTState uart_state[NUM_UARTS];
 
 static void __time_critical_func(handle_uart_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - UART0_IRQ;
@@ -82,7 +82,7 @@ static void __time_critical_func(handle_uart_irq)(void) {
     hw_clear_bits(&hu->imsc, mis & (
         UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS
         | UART_UARTMIS_TXMIS_BITS));
-    UartState* state = &uart_state[num];
+    UARTState* state = &uart_state[num];
     if (mis & (UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS)) {
         mlua_event_set(state->rx_event);
     }
@@ -91,11 +91,11 @@ static void __time_critical_func(handle_uart_irq)(void) {
     }
 }
 
-static int Uart_enable_irq(lua_State* ls) {
-    uart_inst_t* inst = to_Uart(ls, 1);
+static int UART_enable_irq(lua_State* ls) {
+    uart_inst_t* inst = to_UART(ls, 1);
     uint num = uart_get_index(inst);
     uint irq = UART0_IRQ + num;
-    UartState* state = &uart_state[num];
+    UARTState* state = &uart_state[num];
     lua_Integer priority = -1;
     if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQ
         irq_set_enabled(irq, false);
@@ -122,10 +122,10 @@ static int Uart_enable_irq(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-static int Uart_deinit(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_deinit(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
 #if LIB_MLUA_MOD_MLUA_EVENT
-    lua_pushcfunction(ls, &Uart_enable_irq);
+    lua_pushcfunction(ls, &UART_enable_irq);
     lua_pushvalue(ls, 1);
     lua_pushboolean(ls, false);
     lua_call(ls, 2, 0);
@@ -139,7 +139,7 @@ static inline void enable_tx_irq(uart_inst_t* inst) {
 }
 
 static int try_write(lua_State* ls, bool timeout) {
-    uart_inst_t* inst = to_Uart(ls, 1);
+    uart_inst_t* inst = to_UART(ls, 1);
     size_t len;
     uint8_t const* src = (uint8_t const*)lua_tolstring(ls, 2, &len);
     size_t offset = lua_tointeger(ls, 3);
@@ -156,8 +156,8 @@ static int try_write(lua_State* ls, bool timeout) {
     return 0;
 }
 
-static int Uart_write_blocking(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_write_blocking(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 2, &len);
     if (len == 0) return 0;
@@ -177,7 +177,7 @@ static inline void enable_rx_irq(uart_inst_t* inst) {
 }
 
 static int try_read(lua_State* ls, bool timeout) {
-    uart_inst_t* inst = to_Uart(ls, 1);
+    uart_inst_t* inst = to_UART(ls, 1);
     size_t len = lua_tointeger(ls, 2);
     size_t offset = lua_tointeger(ls, 3);
     luaL_Buffer buf;
@@ -198,8 +198,8 @@ static int try_read(lua_State* ls, bool timeout) {
     return 1;
 }
 
-static int Uart_read_blocking(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_read_blocking(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     lua_Integer len = luaL_checkinteger(ls, 2);
     if (len <= 0) {
         lua_pushliteral(ls, "");
@@ -219,14 +219,14 @@ static int Uart_read_blocking(lua_State* ls) {
 }
 
 static int try_getc(lua_State* ls, bool timeout) {
-    uart_inst_t* inst = to_Uart(ls, 1);
+    uart_inst_t* inst = to_UART(ls, 1);
     if (!uart_is_readable(inst)) return -1;
     lua_pushinteger(ls, uart_getc(inst));
     return 1;
 }
 
-static int Uart_getc(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_getc(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(event)) {
         return mlua_event_wait(ls, *event, &try_getc, 0);
@@ -240,14 +240,14 @@ static int try_is_readable(lua_State* ls, bool timeout) {
         lua_pushboolean(ls, false);
         return 1;
     }
-    uart_inst_t* inst = to_Uart(ls, 1);
+    uart_inst_t* inst = to_UART(ls, 1);
     if (!uart_is_readable(inst)) return -1;
     lua_pushboolean(ls, true);
     return 1;
 }
 
-static int Uart_is_readable_within_us(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_is_readable_within_us(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     uint32_t timeout = luaL_checkinteger(ls, 2);
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(event)) {
@@ -259,8 +259,8 @@ static int Uart_is_readable_within_us(lua_State* ls) {
     return 1;
 }
 
-static int Uart_enable_loopback(lua_State* ls) {
-    uart_inst_t* inst = mlua_check_Uart(ls, 1);
+static int UART_enable_loopback(lua_State* ls) {
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     if (mlua_to_cbool(ls, 2)) {
         hw_set_bits(&uart_get_hw(inst)->cr, UART_UARTCR_LBE_BITS);
         // Switching the loopback mode on causes an error to be pushed to the
@@ -272,57 +272,57 @@ static int Uart_enable_loopback(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_1_1(Uart_, uart_, get_index, lua_pushinteger, mlua_check_Uart)
-MLUA_FUNC_1_2(Uart_, uart_, init, lua_pushinteger, mlua_check_Uart,
+MLUA_FUNC_1_1(UART_, uart_, get_index, lua_pushinteger, mlua_check_UART)
+MLUA_FUNC_1_2(UART_, uart_, init, lua_pushinteger, mlua_check_UART,
               luaL_checkinteger)
-MLUA_FUNC_1_2(Uart_, uart_, set_baudrate, lua_pushinteger, mlua_check_Uart,
+MLUA_FUNC_1_2(UART_, uart_, set_baudrate, lua_pushinteger, mlua_check_UART,
               luaL_checkinteger)
-MLUA_FUNC_0_3(Uart_, uart_, set_hw_flow, mlua_check_Uart, mlua_to_cbool,
+MLUA_FUNC_0_3(UART_, uart_, set_hw_flow, mlua_check_UART, mlua_to_cbool,
               mlua_to_cbool)
-MLUA_FUNC_0_4(Uart_, uart_, set_format, mlua_check_Uart, luaL_checkinteger,
+MLUA_FUNC_0_4(UART_, uart_, set_format, mlua_check_UART, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_3(Uart_, uart_, set_irq_enables, mlua_check_Uart, mlua_to_cbool,
+MLUA_FUNC_0_3(UART_, uart_, set_irq_enables, mlua_check_UART, mlua_to_cbool,
               mlua_to_cbool)
-MLUA_FUNC_1_1(Uart_, uart_, is_enabled, lua_pushboolean, mlua_check_Uart)
-MLUA_FUNC_0_2(Uart_, uart_, set_fifo_enabled, mlua_check_Uart, mlua_to_cbool)
-MLUA_FUNC_1_1(Uart_, uart_, is_writable, lua_pushboolean, mlua_check_Uart)
-MLUA_FUNC_1_1(Uart_, uart_, is_readable, lua_pushboolean, mlua_check_Uart)
-MLUA_FUNC_0_2(Uart_, uart_, putc_raw, mlua_check_Uart, luaL_checkinteger)
-MLUA_FUNC_0_2(Uart_, uart_, putc, mlua_check_Uart, luaL_checkinteger)
-MLUA_FUNC_0_2(Uart_, uart_, puts, mlua_check_Uart, luaL_checkstring)
-MLUA_FUNC_0_2(Uart_, uart_, set_break, mlua_check_Uart, mlua_to_cbool)
-MLUA_FUNC_0_2(Uart_, uart_, set_translate_crlf, mlua_check_Uart, mlua_to_cbool)
-MLUA_FUNC_1_2(Uart_, uart_, get_dreq, lua_pushinteger, mlua_check_Uart,
+MLUA_FUNC_1_1(UART_, uart_, is_enabled, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_0_2(UART_, uart_, set_fifo_enabled, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_1_1(UART_, uart_, is_writable, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_1_1(UART_, uart_, is_readable, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_0_2(UART_, uart_, putc_raw, mlua_check_UART, luaL_checkinteger)
+MLUA_FUNC_0_2(UART_, uart_, putc, mlua_check_UART, luaL_checkinteger)
+MLUA_FUNC_0_2(UART_, uart_, puts, mlua_check_UART, luaL_checkstring)
+MLUA_FUNC_0_2(UART_, uart_, set_break, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_0_2(UART_, uart_, set_translate_crlf, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_1_2(UART_, uart_, get_dreq, lua_pushinteger, mlua_check_UART,
               mlua_to_cbool)
 
-MLUA_SYMBOLS(Uart_syms) = {
-    MLUA_SYM_F(get_index, Uart_),
-    MLUA_SYM_F(regs_base, Uart_),
-    MLUA_SYM_F(init, Uart_),
-    MLUA_SYM_F(deinit, Uart_),
-    MLUA_SYM_F(set_baudrate, Uart_),
-    MLUA_SYM_F(set_hw_flow, Uart_),
-    MLUA_SYM_F(set_format, Uart_),
-    MLUA_SYM_F(set_irq_enables, Uart_),
-    MLUA_SYM_F(is_enabled, Uart_),
-    MLUA_SYM_F(set_fifo_enabled, Uart_),
-    MLUA_SYM_F(is_writable, Uart_),
-    MLUA_SYM_F(is_tx_busy, Uart_),
-    MLUA_SYM_F(tx_wait_blocking, Uart_),
-    MLUA_SYM_F(is_readable, Uart_),
-    MLUA_SYM_F(write_blocking, Uart_),
-    MLUA_SYM_F(read_blocking, Uart_),
-    MLUA_SYM_F(putc_raw, Uart_),
-    MLUA_SYM_F(putc, Uart_),
-    MLUA_SYM_F(puts, Uart_),
-    MLUA_SYM_F(getc, Uart_),
-    MLUA_SYM_F(set_break, Uart_),
-    MLUA_SYM_F(set_translate_crlf, Uart_),
-    MLUA_SYM_F(is_readable_within_us, Uart_),
-    MLUA_SYM_F(get_dreq, Uart_),
-    MLUA_SYM_F(enable_loopback, Uart_),
+MLUA_SYMBOLS(UART_syms) = {
+    MLUA_SYM_F(get_index, UART_),
+    MLUA_SYM_F(regs_base, UART_),
+    MLUA_SYM_F(init, UART_),
+    MLUA_SYM_F(deinit, UART_),
+    MLUA_SYM_F(set_baudrate, UART_),
+    MLUA_SYM_F(set_hw_flow, UART_),
+    MLUA_SYM_F(set_format, UART_),
+    MLUA_SYM_F(set_irq_enables, UART_),
+    MLUA_SYM_F(is_enabled, UART_),
+    MLUA_SYM_F(set_fifo_enabled, UART_),
+    MLUA_SYM_F(is_writable, UART_),
+    MLUA_SYM_F(is_tx_busy, UART_),
+    MLUA_SYM_F(tx_wait_blocking, UART_),
+    MLUA_SYM_F(is_readable, UART_),
+    MLUA_SYM_F(write_blocking, UART_),
+    MLUA_SYM_F(read_blocking, UART_),
+    MLUA_SYM_F(putc_raw, UART_),
+    MLUA_SYM_F(putc, UART_),
+    MLUA_SYM_F(puts, UART_),
+    MLUA_SYM_F(getc, UART_),
+    MLUA_SYM_F(set_break, UART_),
+    MLUA_SYM_F(set_translate_crlf, UART_),
+    MLUA_SYM_F(is_readable_within_us, UART_),
+    MLUA_SYM_F(get_dreq, UART_),
+    MLUA_SYM_F(enable_loopback, UART_),
 #if LIB_MLUA_MOD_MLUA_EVENT
-    MLUA_SYM_F(enable_irq, Uart_),
+    MLUA_SYM_F(enable_irq, UART_),
 #else
     MLUA_SYM_V(enable_irq, boolean, false),
 #endif
@@ -344,7 +344,7 @@ MLUA_SYMBOLS(module_syms) = {
 
 static __attribute__((constructor)) void init(void) {
     for (uint i = 0; i < NUM_UARTS; ++i) {
-        UartState* state = &uart_state[i];
+        UARTState* state = &uart_state[i];
         state->rx_event = MLUA_EVENT_UNSET;
         state->tx_event = MLUA_EVENT_UNSET;
     }
@@ -360,14 +360,14 @@ MLUA_OPEN_MODULE(hardware.uart) {
     mlua_new_module(ls, NUM_UARTS, module_syms);
     int mod_index = lua_gettop(ls);
 
-    // Create the Uart class.
-    mlua_new_class(ls, mlua_Uart_name, Uart_syms, true);
+    // Create the UART class.
+    mlua_new_class(ls, mlua_UART_name, UART_syms, true);
     lua_pop(ls, 1);
 
-    // Create Uart instances.
+    // Create UART instances.
     for (uint i = 0; i < NUM_UARTS; ++i) {
         uart_inst_t* inst = uart_get_instance(i);
-        *new_Uart(ls) = inst;
+        *new_UART(ls) = inst;
 #ifdef uart_default
         if (inst == uart_default) {
             lua_pushvalue(ls, -1);

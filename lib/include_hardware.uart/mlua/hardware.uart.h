@@ -14,10 +14,10 @@ extern "C" {
 #endif
 
 // Get a uart_inst_t* value at the given stack index, or raise an error if the
-// stack entry is not a Uart userdata.
-static inline uart_inst_t* mlua_check_Uart(lua_State* ls, int arg) {
-    extern char const mlua_Uart_name[];
-    return *((uart_inst_t**)luaL_checkudata(ls, arg, mlua_Uart_name));
+// stack entry is not a UART userdata.
+static inline uart_inst_t* mlua_check_UART(lua_State* ls, int arg) {
+    extern char const mlua_UART_name[];
+    return *((uart_inst_t**)luaL_checkudata(ls, arg, mlua_UART_name));
 }
 
 #ifdef __cplusplus

@@ -11,7 +11,7 @@
 MLUA_FUNC_0_0(mod_, stdio_uart_, init)
 MLUA_FUNC_0_0(mod_init_stdout, stdout_uart_init,)
 MLUA_FUNC_0_0(mod_init_stdin, stdin_uart_init,)
-MLUA_FUNC_0_4(mod_, stdio_uart_, init_full, mlua_check_Uart, luaL_checkinteger,
+MLUA_FUNC_0_4(mod_, stdio_uart_, init_full, mlua_check_UART, luaL_checkinteger,
               luaL_checkinteger, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {

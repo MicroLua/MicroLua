@@ -19,7 +19,7 @@ function test_strict(t)
         :label("module attribute access"):raises("undefined symbol")
     local inst = uart[0]
     t:expect(function() return inst.UNKNOWN end)
-        :label("Uart instance attribute access"):raises("undefined symbol")
+        :label("UART instance attribute access"):raises("undefined symbol")
 end
 
 function test_index_base(t)

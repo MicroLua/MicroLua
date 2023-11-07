@@ -173,7 +173,7 @@ they would cause stuttering. For example:
 
 - `PICO_UART_ENABLE_CRLF_SUPPORT` => `hardware.uart.ENABLE_CRLF_SUPPORT`
 - `UART_PARITY_NONE` => `hardware.uart.PARITY_NONE`
-- `uart_set_baudrate()` => `hardware.uart.Uart.set_baudrate()`
+- `uart_set_baudrate()` => `hardware.uart.UART.set_baudrate()`
 
 Function arguments are kept in the same order as their C counterpart, except for
 out arguments, which map to multiple return values. Function argument types are
