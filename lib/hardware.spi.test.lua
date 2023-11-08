@@ -51,7 +51,7 @@ function test_configuration(t)
         :eq('\x28\x37\x06\x15\x24\x33')
 end
 
-function test_write_read_blocking_Y(t)
+function test_write_read_blocking_8bit_Y(t)
     local inst = setup(t, 8)
     local data = 'abcdefghijklmnopqrstuvwxyz0'
     t:expect(t:expr(inst):write_read_blocking(data)):eq(data)
@@ -59,13 +59,13 @@ function test_write_read_blocking_Y(t)
     t:expect(t:expr(inst):read_blocking(0x42, 13)):eq(('\x42'):rep(13))
 end
 
-function test_write16_read16_blocking_Y(t)
+function test_write_read_blocking_12bit_Y(t)
     local inst = setup(t, 12)
     local data = '\x01\x23\x45\x67\x89\xab\xcd\xef\xf0\xe1\xd2\xc3\xb4\xa5'
                  .. '\x96\x87\x78\x69\x5a\x4b\x3c\x2d\x1e\x0f'
-    t:expect(t:expr(inst):write16_read16_blocking(data))
+    t:expect(t:expr(inst):write_read_blocking(data))
         :eq('\x01\x03\x45\x07\x89\x0b\xcd\x0f\xf0\x01\xd2\x03\xb4\x05'
             .. '\x96\x07\x78\x09\x5a\x0b\x3c\x0d\x1e\x0f')
-    inst:write16_blocking(data)
-    t:expect(t:expr(inst):read16_blocking(0xf123, 13)):eq(('\x23\x01'):rep(13))
+    inst:write_blocking(data)
+    t:expect(t:expr(inst):read_blocking(0xf123, 17)):eq(('\x23\x01'):rep(17))
 end
