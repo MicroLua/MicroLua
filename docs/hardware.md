@@ -324,6 +324,53 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
   The callback can be removed either by killing the returned thread, or by
   calling `set_alarm()` with a `nil` callback.
 
+## `hardware.spi`
+
+**Library:** [`hardware_spi`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_spi),
+header: [`hardware/spi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_spi/include/hardware/spi.h),
+sources: [`hardware_spi`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_spi)\
+**Module:** [`hardware.spi`](../lib/hardware.spi.c),
+build target: `mlua_mod_hardware_spi`,
+tests: [`hardware.spi.test`](../lib/hardware.spi.test.lua)
+
+This module defines the `hardware.spi.SPI` class, which exposes the
+functionality for one SPI peripheral. All library functions that take an
+`spi_inst_t*` as a first argument are exposed as methods on the `SPI` class.
+The class is instantiated once for each SPI peripheral of the target, and the
+instances can be accessed by indexing the module with the instance index. The
+default SPI peripheral, if defined, can be accessed as `default`.
+
+> [!NOTE]
+> There are no 16-bit variants of the write / read functions, since the latter
+> auto-detect the word size from the peripheral configuration.
+
+- `[0]: SPI`\
+  `[1]: SPI`\
+  The `SPI` instances.
+
+- `NUM: integer`\
+  The number of SPI peripherals available on the target.
+
+- `default: SPI | boolean`\
+  The default `SPI` instance, or `false` if `PICO_DEFAULT_SPI` is unset.
+
+- `SPI:regs_base() -> integer`\
+  Return the base address of the peripheral registers (`SPIx_BASE`).
+
+- `SPI:write_read_blocking(src) -> string`\
+  `SPI:write_blocking(src)`\
+  `SPI:read_blocking(tx_data, len) -> string`\
+  Write to and / or read from the SPI peripheral. Yields until the write and /
+  or read completes if the IRQ handler is enabled. The word size is
+  auto-detected from the peripheral configuration. For word sizes >8 bits,
+  `src` must provide two bytes per word (little-endian).
+
+- `SPI:enable_loopback(enable)`\
+  Enable or disable the loopback mode of the SPI peripheral (`LBM` in `SSPCR1`).
+
+- `SPI:enable_irq(enable)`\
+  [Enable or disable](core.md#irq-enablers) the SPI IRQ handler (`SPIx_IRQ`).
+
 ## `hardware.sync`
 
 **Library:** [`hardware_sync`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_sync),

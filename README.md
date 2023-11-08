@@ -67,7 +67,7 @@ interface to C code.
 
 ### Roadmap
 
-- **Add more bindings for the Pico SDK.** SPI and PIO are high on the list,
+- **Add more bindings for the Pico SDK.** PWM and PIO are high on the list,
   followed by USB, Wifi and Bluetooth. Eventually, most SDK libraries should
   have a binding.
 - **Improve threading performance.** A C implementation of the
