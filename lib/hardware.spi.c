@@ -16,7 +16,7 @@
 
 char const mlua_SPI_name[] = "hardware.spi.SPI";
 
-static spi_inst_t* get_instance(uint num) {
+static inline spi_inst_t* get_instance(uint num) {
     return num == 0 ? spi0 : spi1;
 }
 
@@ -50,8 +50,9 @@ static SPIState spi_state[NUM_SPIS];
 
 static void __time_critical_func(handle_spi_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - SPI0_IRQ;
-    spi_hw_t* hs = spi_get_hw(get_instance(num));
-    (void)hs;
+    spi_hw_t* hw = spi_get_hw(get_instance(num));
+    hw_clear_bits(&hw->imsc,
+        SPI_SSPIMSC_TXIM_BITS | SPI_SSPIMSC_RXIM_BITS | SPI_SSPIMSC_RTIM_BITS);
     SPIState* state = &spi_state[num];
     mlua_event_set(state->event);
 }
@@ -96,18 +97,20 @@ static int SPI_set_format(lua_State* ls) {
     return 0;
 }
 
+#define WR_FIFO_DEPTH 8
+
 // This function combines all spi_(write(16)?_)(read(16)?_)blocking functions
 // into a single implementation. The functions from the SDK are placed in RAM,
 // probbaly for performance reasons, but since performance matters less with Lua
 // but RAM is scarce, we trade a bit of performance against RAM.
-static void write_read_blocking(spi_inst_t* spi, uint8_t const* src,
+static void write_read_blocking(spi_inst_t* inst, uint8_t const* src,
                                 uint8_t* dst, size_t len, bool bits16,
                                 uint16_t tx_data) {
-    size_t const fifo_depth = 8;
-    size_t rx = len, tx = len;
-    spi_hw_t* hw = spi_get_hw(spi);
-    while (rx > 0 || tx > 0) {
-        if (tx > 0 && spi_is_writable(spi) && rx < tx + fifo_depth) {
+    size_t tx = len, rx = len;
+    spi_hw_t* hw = spi_get_hw(inst);
+    while (tx > 0 || rx > 0) {
+        // Feed the TX FIFO, avoiding RX FIFO overflows.
+        if (tx > 0 && rx < tx + WR_FIFO_DEPTH && spi_is_writable(inst)) {
             if (src != NULL) {
                 tx_data = *src++;
                 if (bits16) tx_data |= (*src++) << 8;
@@ -115,7 +118,9 @@ static void write_read_blocking(spi_inst_t* spi, uint8_t const* src,
             hw->dr = (uint32_t)tx_data;
             --tx;
         }
-        if (rx > 0 && spi_is_readable(spi)) {
+
+        // Drain the RX FIFO.
+        if (rx > 0 && spi_is_readable(inst)) {
             uint32_t data = hw->dr;
             if (dst != NULL) {
                 *dst++ = data;
@@ -126,10 +131,99 @@ static void write_read_blocking(spi_inst_t* spi, uint8_t const* src,
     }
 }
 
+enum { wrf_16 = 1, wrf_write = 2, wrf_read = 4 };
+
+static int try_write_read(lua_State* ls, bool timeout) {
+    spi_inst_t* inst = to_SPI(ls, 1);
+    int flags = lua_tointeger(ls, 3);
+    size_t tx = lua_tointeger(ls, 4);
+    size_t rx = lua_tointeger(ls, 5);
+    bool bits16 = (flags & wrf_16) != 0;
+    uint8_t const* src = NULL;
+    uint32_t tx_data = 0;
+    if ((flags & wrf_write) != 0) {
+        size_t len;
+        src = (uint8_t const*)lua_tolstring(ls, 2, &len);
+        src += len - tx;
+        if (bits16) src -= tx;
+    } else {
+        tx_data = lua_tointeger(ls, 2) & 0xffff;
+    }
+    luaL_Buffer buf;
+    uint8_t* dst = NULL;
+    if ((flags & wrf_read) != 0 && rx > 0) {
+        dst = (uint8_t*)luaL_buffinitsize(ls, &buf, rx);
+    }
+
+    spi_hw_t* hw = spi_get_hw(inst);
+    for (;;) {
+        bool suspend = true;
+
+        // Feed the TX FIFO, avoiding RX FIFO overflows.
+        while (tx > 0 && rx < tx + WR_FIFO_DEPTH && spi_is_writable(inst)) {
+            if (src != NULL) {
+                tx_data = *src++;
+                if (bits16) tx_data |= (*src++) << 8;
+            }
+            hw->dr = tx_data;
+            --tx;
+            suspend = false;
+        }
+
+        // Drain the RX FIFO.
+        while (rx > 0 && spi_is_readable(inst)) {
+            uint32_t data = hw->dr;
+            if (dst != NULL) {
+                *dst++ = data;
+                luaL_addsize(&buf, 1);
+                if (bits16) {
+                    *dst++ = data >> 8;
+                    luaL_addsize(&buf, 1);
+                }
+            }
+            --rx;
+            suspend = false;
+        }
+        if (tx == 0 && rx == 0) break;
+
+        // If nothing was done during this round, suspend and wait for an IRQ.
+        if (suspend) {
+            hw_set_bits(&hw->imsc,
+                (tx > 0 && rx < tx + WR_FIFO_DEPTH ? SPI_SSPIMSC_TXIM_BITS : 0)
+                | (rx > 0 ? SPI_SSPIMSC_RXIM_BITS | SPI_SSPIMSC_RTIM_BITS : 0));
+            if (dst != NULL && luaL_bufflen(&buf) > 0) luaL_pushresult(&buf);
+            lua_pushinteger(ls, tx);
+            lua_replace(ls, 4);
+            lua_pushinteger(ls, rx);
+            lua_replace(ls, 5);
+            return -1;
+        }
+    }
+    if (dst == NULL) return 0;
+    if (luaL_bufflen(&buf) > 0) luaL_pushresult(&buf);
+    lua_concat(ls, lua_gettop(ls) - 5);
+    return 1;
+}
+
+static int write_read_non_blocking(lua_State* ls, spi_inst_t* inst, int flags,
+                                   size_t len) {
+    MLuaEvent* event = &spi_state[spi_get_index(inst)].event;
+    if (!mlua_event_can_wait(event)) return -1;
+    lua_settop(ls, 2);
+    lua_pushinteger(ls, flags);  // flags
+    lua_pushinteger(ls, len);  // tx
+    lua_pushinteger(ls, len);  // rx
+    return mlua_event_wait(ls, *event, &try_write_read, 0);
+}
+
 static int SPI_write_read_blocking(lua_State* ls) {
     spi_inst_t* inst = to_SPI(ls, 1);
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 2, &len);
+
+    int res = write_read_non_blocking(ls, inst, wrf_write | wrf_read, len);
+    if (res >= 0) return res;
+
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
     write_read_blocking(inst, src, dst, len, false, 0);
@@ -141,6 +235,10 @@ static int SPI_write_blocking(lua_State* ls) {
     spi_inst_t* inst = to_SPI(ls, 1);
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 2, &len);
+
+    int res = write_read_non_blocking(ls, inst, wrf_write, len);
+    if (res >= 0) return res;
+
     write_read_blocking(inst, src, NULL, len, false, 0);
     return 0;
 }
@@ -149,10 +247,10 @@ static int SPI_read_blocking(lua_State* ls) {
     spi_inst_t* inst = to_SPI(ls, 1);
     uint16_t tx_data = luaL_checkinteger(ls, 2);
     size_t len = luaL_checkinteger(ls, 3);
-    if (len <= 0) {
-        lua_pushliteral(ls, "");
-        return 1;
-    }
+
+    int res = write_read_non_blocking(ls, inst, wrf_read, len);
+    if (res >= 0) return res;
+
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
     write_read_blocking(inst, NULL, dst, len, false, tx_data);
@@ -165,6 +263,11 @@ static int SPI_write16_read16_blocking(lua_State* ls) {
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 2, &len);
     luaL_argcheck(ls, len % 2 == 0, 2, "length must be even");
+
+    int res = write_read_non_blocking(ls, inst, wrf_16 | wrf_write | wrf_read,
+                                      len / 2);
+    if (res >= 0) return res;
+
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
     write_read_blocking(inst, src, dst, len / 2, true, 0);
@@ -177,7 +280,12 @@ static int SPI_write16_blocking(lua_State* ls) {
     size_t len;
     uint8_t const* src = (uint8_t const*)luaL_checklstring(ls, 2, &len);
     luaL_argcheck(ls, len % 2 == 0, 2, "length must be even");
-    write_read_blocking(inst, src, NULL, len / 2, true, 0);
+    len /= 2;
+
+    int res = write_read_non_blocking(ls, inst, wrf_16 | wrf_write, len);
+    if (res >= 0) return res;
+
+    write_read_blocking(inst, src, NULL, len, true, 0);
     return 0;
 }
 
@@ -185,10 +293,10 @@ static int SPI_read16_blocking(lua_State* ls) {
     spi_inst_t* inst = to_SPI(ls, 1);
     uint16_t tx_data = luaL_checkinteger(ls, 2);
     size_t len = luaL_checkinteger(ls, 3);
-    if (len <= 0) {
-        lua_pushliteral(ls, "");
-        return 1;
-    }
+
+    int res = write_read_non_blocking(ls, inst, wrf_16 | wrf_read, len);
+    if (res >= 0) return res;
+
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, 2 * len);
     write_read_blocking(inst, NULL, dst, len, true, tx_data);
