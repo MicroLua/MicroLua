@@ -15,15 +15,19 @@
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 
-static MLuaEvent event = MLUA_EVENT_UNSET;
+typedef struct ADCState {
+    MLuaEvent event;
+} ADCState;
+
+static ADCState adc_state = {.event = MLUA_EVENT_UNSET};
 
 static void __time_critical_func(handle_adc_irq)(void) {
     adc_irq_set_enabled(false);
-    mlua_event_set(event);
+    mlua_event_set(adc_state.event);
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
-    char const* err = mlua_event_enable_irq(ls, &event, ADC_IRQ_FIFO,
+    char const* err = mlua_event_enable_irq(ls, &adc_state.event, ADC_IRQ_FIFO,
                                             &handle_adc_irq, 1, -1);
     if (err != NULL) return luaL_error(ls, "ADC: %s", err);
     return 0;
@@ -41,8 +45,8 @@ static int try_fifo_get(lua_State* ls, bool timeout) {
 }
 
 static int mod_fifo_get_blocking(lua_State* ls) {
-    if (mlua_event_can_wait(&event)) {
-        return mlua_event_wait(ls, event, &try_fifo_get, 0);
+    if (mlua_event_can_wait(&adc_state.event)) {
+        return mlua_event_wait(ls, adc_state.event, &try_fifo_get, 0);
     }
     lua_pushinteger(ls, adc_fifo_get_blocking());
     return 1;
