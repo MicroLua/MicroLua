@@ -94,13 +94,6 @@ static int SPI_deinit(lua_State* ls) {
     return 0;
 }
 
-static int SPI_set_format(lua_State* ls) {
-    spi_set_format(check_SPI(ls, 1), luaL_checkinteger(ls, 2),
-                   luaL_checkinteger(ls, 3), luaL_checkinteger(ls, 4),
-                   luaL_optinteger(ls, 5, SPI_MSB_FIRST));
-    return 0;
-}
-
 #define WR_FIFO_DEPTH 8
 
 // This function combines all spi_(write(16)?_)(read(16)?_)blocking functions
@@ -273,6 +266,9 @@ MLUA_FUNC_R2(SPI_, spi_, set_baudrate, lua_pushinteger, check_SPI,
              luaL_checkinteger)
 MLUA_FUNC_R1(SPI_, spi_, get_baudrate, lua_pushinteger, check_SPI)
 MLUA_FUNC_R1(SPI_, spi_, get_index, lua_pushinteger, check_SPI)
+MLUA_FUNC_V(SPI_, spi_, set_format, check_SPI(ls, 1), luaL_checkinteger(ls, 2),
+            luaL_checkinteger(ls, 3), luaL_checkinteger(ls, 4),
+            luaL_optinteger(ls, 5, SPI_MSB_FIRST))
 MLUA_FUNC_V2(SPI_, spi_, set_slave, check_SPI, mlua_to_cbool)
 MLUA_FUNC_R1(SPI_, spi_, is_writable, lua_pushboolean, check_SPI)
 MLUA_FUNC_R1(SPI_, spi_, is_readable, lua_pushboolean, check_SPI)
