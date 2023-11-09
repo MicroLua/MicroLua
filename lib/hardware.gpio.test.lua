@@ -4,6 +4,7 @@
 _ENV = mlua.Module(...)
 
 local gpio = require 'hardware.gpio'
+local regs = require 'hardware.regs.io_bank0'
 local irq = require 'hardware.irq'
 local list = require 'mlua.list'
 local thread = require 'mlua.thread'
@@ -160,6 +161,8 @@ function test_driving(t)
     t:expect(gpio.get_all() & (1 << pin)):label("gpio.get_all()")
         :eq((1 << pin))
     t:expect(t:expr(gpio).get_pad(pin)):eq(true)
+    t:expect(gpio.get_status(pin) & regs.GPIO0_STATUS_INFROMPAD_BITS)
+        :label("pad"):eq(regs.GPIO0_STATUS_INFROMPAD_BITS)
 
     gpio.set_input_enabled(pin, false)
     t:expect(t:expr(gpio).get(pin)):eq(false)
@@ -171,6 +174,8 @@ function test_driving(t)
     t:expect(t:expr(gpio).get(pin)):eq(false)
     t:expect(gpio.get_all() & (1 << pin)):label("gpio.get_all()"):eq(0)
     t:expect(t:expr(gpio).get_pad(pin)):eq(false)
+    t:expect(gpio.get_status(pin) & regs.GPIO0_STATUS_INFROMPAD_BITS)
+        :label("pad"):eq(0)
 
     gpio.set_mask(1 << pin)
     t:expect(t:expr(gpio).get_out_level(pin)):eq(true)

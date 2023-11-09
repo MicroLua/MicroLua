@@ -239,8 +239,14 @@ static int mod_acknowledge_irq(lua_State* ls) {
     return 0;
 }
 
-// Not defined in hardware/gpio.h for some reason.
+// Not declared in hardware/gpio.h for some reason.
 int gpio_get_pad(uint gpio);
+
+static int mod_get_status(lua_State* ls) {
+    uint gpio = mlua_check_gpio(ls, 1);
+    lua_pushinteger(ls, iobank0_hw->io[gpio].status);
+    return 1;
+}
 
 MLUA_FUNC_1_1(mod_, gpio_, get_pad, lua_pushboolean, mlua_check_gpio)
 MLUA_FUNC_0_2(mod_, gpio_, set_function, mlua_check_gpio, luaL_checkinteger)
@@ -317,6 +323,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(DRIVE_STRENGTH_12MA, integer, GPIO_DRIVE_STRENGTH_12MA),
 
     MLUA_SYM_F(get_pad, mod_),
+    MLUA_SYM_F(get_status, mod_),
     MLUA_SYM_F(set_function, mod_),
     MLUA_SYM_F(get_function, mod_),
     MLUA_SYM_F(set_pulls, mod_),
