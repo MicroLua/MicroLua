@@ -7,21 +7,20 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_1_5(mod_, clock_, configure, lua_pushboolean, luaL_checkinteger,
-              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger,
-              luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, clock_, stop, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, clock_, get_hz, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_,, frequency_count_khz, lua_pushinteger,
-              luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, clock_, set_reported_hz, luaL_checkinteger,
-              luaL_checkinteger)
-MLUA_FUNC_0_4(mod_, clock_, gpio_init_int_frac, luaL_checkinteger,
-              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_3(mod_, clock_, gpio_init, luaL_checkinteger,
-              luaL_checkinteger, luaL_checknumber)
-MLUA_FUNC_1_4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
-              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_R5(mod_, clock_, configure, lua_pushboolean, luaL_checkinteger,
+             luaL_checkinteger, luaL_checkinteger, luaL_checkinteger,
+             luaL_checkinteger)
+MLUA_FUNC_V1(mod_, clock_, stop, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, clock_, get_hz, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_R1(mod_,, frequency_count_khz, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_V2(mod_, clock_, set_reported_hz, luaL_checkinteger,
+             luaL_checkinteger)
+MLUA_FUNC_V4(mod_, clock_, gpio_init_int_frac, luaL_checkinteger,
+             luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_V3(mod_, clock_, gpio_init, luaL_checkinteger, luaL_checkinteger,
+             luaL_checknumber)
+MLUA_FUNC_R4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
+             luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(KHZ, integer, KHZ),

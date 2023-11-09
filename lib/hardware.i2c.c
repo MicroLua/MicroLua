@@ -307,19 +307,19 @@ static int I2C_read_data_cmd(lua_State* ls) {
     return 1;
 }
 
-MLUA_FUNC_1_2(I2C_, i2c_, init, lua_pushinteger, mlua_check_I2C,
-              luaL_checkinteger)
-MLUA_FUNC_1_2(I2C_, i2c_, set_baudrate, lua_pushinteger, mlua_check_I2C,
-              luaL_checkinteger)
-MLUA_FUNC_0_3(I2C_, i2c_, set_slave_mode, mlua_check_I2C, mlua_to_cbool,
-              luaL_checkinteger)
-MLUA_FUNC_1_1(I2C_, i2c_, hw_index, lua_pushinteger, mlua_check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, get_write_available, lua_pushinteger, mlua_check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, get_read_available, lua_pushinteger, mlua_check_I2C)
-MLUA_FUNC_1_1(I2C_, i2c_, read_byte_raw, lua_pushinteger, mlua_check_I2C)
-MLUA_FUNC_0_2(I2C_, i2c_, write_byte_raw, mlua_check_I2C, luaL_checkinteger)
-MLUA_FUNC_1_2(I2C_, i2c_, get_dreq, lua_pushinteger, mlua_check_I2C,
-              mlua_to_cbool)
+MLUA_FUNC_R2(I2C_, i2c_, init, lua_pushinteger, mlua_check_I2C,
+             luaL_checkinteger)
+MLUA_FUNC_R2(I2C_, i2c_, set_baudrate, lua_pushinteger, mlua_check_I2C,
+             luaL_checkinteger)
+MLUA_FUNC_V3(I2C_, i2c_, set_slave_mode, mlua_check_I2C, mlua_to_cbool,
+             luaL_checkinteger)
+MLUA_FUNC_R1(I2C_, i2c_, hw_index, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_R1(I2C_, i2c_, get_write_available, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_R1(I2C_, i2c_, get_read_available, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_R1(I2C_, i2c_, read_byte_raw, lua_pushinteger, mlua_check_I2C)
+MLUA_FUNC_V2(I2C_, i2c_, write_byte_raw, mlua_check_I2C, luaL_checkinteger)
+MLUA_FUNC_R2(I2C_, i2c_, get_dreq, lua_pushinteger, mlua_check_I2C,
+             mlua_to_cbool)
 
 #define I2C_write_blocking_until I2C_write_blocking
 #define I2C_read_blocking_until I2C_read_blocking

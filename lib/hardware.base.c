@@ -49,11 +49,11 @@ WRITE_FN(8)
 WRITE_FN(16)
 WRITE_FN(32)
 
-MLUA_FUNC_0_2(mod_,, hw_set_bits, check_io_rw_32, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_,, hw_clear_bits, check_io_rw_32, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_,, hw_xor_bits, check_io_rw_32, luaL_checkinteger)
-MLUA_FUNC_0_3(mod_,, hw_write_masked, check_io_rw_32, luaL_checkinteger,
-              luaL_checkinteger)
+MLUA_FUNC_V2(mod_,, hw_set_bits, check_io_rw_32, luaL_checkinteger)
+MLUA_FUNC_V2(mod_,, hw_clear_bits, check_io_rw_32, luaL_checkinteger)
+MLUA_FUNC_V2(mod_,, hw_xor_bits, check_io_rw_32, luaL_checkinteger)
+MLUA_FUNC_V3(mod_,, hw_write_masked, check_io_rw_32, luaL_checkinteger,
+             luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(read8, mod_),

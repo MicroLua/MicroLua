@@ -180,17 +180,17 @@ static int mod_write(lua_State* ls) {
     return mlua_pico_stdio_write(ls, STDOUT_FILENO, 1);
 }
 
-MLUA_FUNC_1_0(mod_, stdio_, init_all, lua_pushboolean)
-MLUA_FUNC_0_0(mod_, stdio_, flush)
-MLUA_FUNC_0_2(mod_, stdio_, set_driver_enabled, mlua_check_userdata,
-              mlua_to_cbool)
-MLUA_FUNC_0_1(mod_, stdio_, filter_driver, mlua_check_userdata_or_nil)
-MLUA_FUNC_0_2(mod_, stdio_, set_translate_crlf, mlua_check_userdata,
-              mlua_to_cbool)
-MLUA_FUNC_1_1(mod_,, putchar, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_,, puts, lua_pushinteger, luaL_checkstring)
-MLUA_FUNC_1_1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
+MLUA_FUNC_R0(mod_, stdio_, init_all, lua_pushboolean)
+MLUA_FUNC_V0(mod_, stdio_, flush)
+MLUA_FUNC_V2(mod_, stdio_, set_driver_enabled, mlua_check_userdata,
+             mlua_to_cbool)
+MLUA_FUNC_V1(mod_, stdio_, filter_driver, mlua_check_userdata_or_nil)
+MLUA_FUNC_V2(mod_, stdio_, set_translate_crlf, mlua_check_userdata,
+             mlua_to_cbool)
+MLUA_FUNC_R1(mod_,, putchar, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_R1(mod_,, putchar_raw, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_R1(mod_,, puts, lua_pushinteger, luaL_checkstring)
+MLUA_FUNC_R1(mod_,, puts_raw, lua_pushinteger, luaL_checkstring)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(EOF, integer, EOF),

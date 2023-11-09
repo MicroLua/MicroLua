@@ -114,20 +114,20 @@ static int mod_cancel(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_1_0(mod_,, time_us_32, lua_pushinteger)
-MLUA_FUNC_1_0(mod_,, time_us_64, mlua_push_int64)
-MLUA_FUNC_0_1(mod_,, busy_wait_us_32, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_,, busy_wait_us, mlua_check_int64)
-MLUA_FUNC_0_1(mod_,, busy_wait_ms, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_,, busy_wait_until, check_absolute_time)
-MLUA_FUNC_1_1(mod_,, time_reached, lua_pushboolean, check_absolute_time)
-MLUA_FUNC_0_1(mod_, hardware_alarm_, claim, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, hardware_alarm_, claim_unused, lua_pushinteger,
-              lua_toboolean)
-MLUA_FUNC_0_1(mod_, hardware_alarm_, unclaim, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
-              luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, hardware_alarm_, force_irq, check_alarm)
+MLUA_FUNC_R0(mod_,, time_us_32, lua_pushinteger)
+MLUA_FUNC_R0(mod_,, time_us_64, mlua_push_int64)
+MLUA_FUNC_V1(mod_,, busy_wait_us_32, luaL_checkinteger)
+MLUA_FUNC_V1(mod_,, busy_wait_us, mlua_check_int64)
+MLUA_FUNC_V1(mod_,, busy_wait_ms, luaL_checkinteger)
+MLUA_FUNC_V1(mod_,, busy_wait_until, check_absolute_time)
+MLUA_FUNC_R1(mod_,, time_reached, lua_pushboolean, check_absolute_time)
+MLUA_FUNC_V1(mod_, hardware_alarm_, claim, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, hardware_alarm_, claim_unused, lua_pushinteger,
+             lua_toboolean)
+MLUA_FUNC_V1(mod_, hardware_alarm_, unclaim, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
+             luaL_checkinteger)
+MLUA_FUNC_V1(mod_, hardware_alarm_, force_irq, check_alarm)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(time_us_32, mod_),

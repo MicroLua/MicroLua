@@ -9,9 +9,9 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-MLUA_FUNC_0_5(mod_, pll_, init, mlua_check_userdata, luaL_checkinteger,
-              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, pll_, deinit, mlua_check_userdata)
+MLUA_FUNC_V5(mod_, pll_, init, mlua_check_userdata, luaL_checkinteger,
+             luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, pll_, deinit, mlua_check_userdata)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(VCO_MIN_FREQ_KHZ, integer, PICO_PLL_VCO_MIN_FREQ_KHZ),

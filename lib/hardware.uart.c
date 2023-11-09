@@ -272,28 +272,28 @@ static int UART_enable_loopback(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_1_1(UART_, uart_, get_index, lua_pushinteger, mlua_check_UART)
-MLUA_FUNC_1_2(UART_, uart_, init, lua_pushinteger, mlua_check_UART,
-              luaL_checkinteger)
-MLUA_FUNC_1_2(UART_, uart_, set_baudrate, lua_pushinteger, mlua_check_UART,
-              luaL_checkinteger)
-MLUA_FUNC_0_3(UART_, uart_, set_hw_flow, mlua_check_UART, mlua_to_cbool,
-              mlua_to_cbool)
-MLUA_FUNC_0_4(UART_, uart_, set_format, mlua_check_UART, luaL_checkinteger,
-              luaL_checkinteger, luaL_checkinteger)
-MLUA_FUNC_0_3(UART_, uart_, set_irq_enables, mlua_check_UART, mlua_to_cbool,
-              mlua_to_cbool)
-MLUA_FUNC_1_1(UART_, uart_, is_enabled, lua_pushboolean, mlua_check_UART)
-MLUA_FUNC_0_2(UART_, uart_, set_fifo_enabled, mlua_check_UART, mlua_to_cbool)
-MLUA_FUNC_1_1(UART_, uart_, is_writable, lua_pushboolean, mlua_check_UART)
-MLUA_FUNC_1_1(UART_, uart_, is_readable, lua_pushboolean, mlua_check_UART)
-MLUA_FUNC_0_2(UART_, uart_, putc_raw, mlua_check_UART, luaL_checkinteger)
-MLUA_FUNC_0_2(UART_, uart_, putc, mlua_check_UART, luaL_checkinteger)
-MLUA_FUNC_0_2(UART_, uart_, puts, mlua_check_UART, luaL_checkstring)
-MLUA_FUNC_0_2(UART_, uart_, set_break, mlua_check_UART, mlua_to_cbool)
-MLUA_FUNC_0_2(UART_, uart_, set_translate_crlf, mlua_check_UART, mlua_to_cbool)
-MLUA_FUNC_1_2(UART_, uart_, get_dreq, lua_pushinteger, mlua_check_UART,
-              mlua_to_cbool)
+MLUA_FUNC_R1(UART_, uart_, get_index, lua_pushinteger, mlua_check_UART)
+MLUA_FUNC_R2(UART_, uart_, init, lua_pushinteger, mlua_check_UART,
+             luaL_checkinteger)
+MLUA_FUNC_R2(UART_, uart_, set_baudrate, lua_pushinteger, mlua_check_UART,
+             luaL_checkinteger)
+MLUA_FUNC_V3(UART_, uart_, set_hw_flow, mlua_check_UART, mlua_to_cbool,
+             mlua_to_cbool)
+MLUA_FUNC_V4(UART_, uart_, set_format, mlua_check_UART, luaL_checkinteger,
+             luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_V3(UART_, uart_, set_irq_enables, mlua_check_UART, mlua_to_cbool,
+             mlua_to_cbool)
+MLUA_FUNC_R1(UART_, uart_, is_enabled, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_V2(UART_, uart_, set_fifo_enabled, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_R1(UART_, uart_, is_writable, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_R1(UART_, uart_, is_readable, lua_pushboolean, mlua_check_UART)
+MLUA_FUNC_V2(UART_, uart_, putc_raw, mlua_check_UART, luaL_checkinteger)
+MLUA_FUNC_V2(UART_, uart_, putc, mlua_check_UART, luaL_checkinteger)
+MLUA_FUNC_V2(UART_, uart_, puts, mlua_check_UART, luaL_checkstring)
+MLUA_FUNC_V2(UART_, uart_, set_break, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_V2(UART_, uart_, set_translate_crlf, mlua_check_UART, mlua_to_cbool)
+MLUA_FUNC_R2(UART_, uart_, get_dreq, lua_pushinteger, mlua_check_UART,
+             mlua_to_cbool)
 
 MLUA_SYMBOLS(UART_syms) = {
     MLUA_SYM_F(get_index, UART_),

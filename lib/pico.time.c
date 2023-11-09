@@ -158,24 +158,22 @@ static int mod_add_repeating_timer_ms(lua_State* ls) {
         ls, make_timeout_time_us(delay >= 0 ? delay : -delay), true, delay);
 }
 
-MLUA_FUNC_1_0(mod_,, get_absolute_time, push_absolute_time)
-MLUA_FUNC_1_1(mod_,, to_ms_since_boot, lua_pushinteger, check_absolute_time)
-MLUA_FUNC_1_2(mod_,, delayed_by_us, push_absolute_time, check_absolute_time,
-              mlua_check_int64)
-MLUA_FUNC_1_2(mod_,, delayed_by_ms, push_absolute_time, check_absolute_time,
-              luaL_checkinteger)
-MLUA_FUNC_1_1(mod_,, make_timeout_time_us, push_absolute_time, mlua_check_int64)
-MLUA_FUNC_1_1(mod_,, make_timeout_time_ms, push_absolute_time,
-              luaL_checkinteger)
-MLUA_FUNC_1_2(mod_,, absolute_time_diff_us, mlua_push_int64,
-              check_absolute_time, check_absolute_time)
-MLUA_FUNC_1_2(mod_,, absolute_time_min, push_absolute_time,
-              check_absolute_time, check_absolute_time)
-MLUA_FUNC_1_1(mod_,, is_at_the_end_of_time, lua_pushboolean,
-              check_absolute_time)
-MLUA_FUNC_1_1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
-MLUA_FUNC_1_1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
-              check_absolute_time)
+MLUA_FUNC_R0(mod_,, get_absolute_time, push_absolute_time)
+MLUA_FUNC_R1(mod_,, to_ms_since_boot, lua_pushinteger, check_absolute_time)
+MLUA_FUNC_R2(mod_,, delayed_by_us, push_absolute_time, check_absolute_time,
+             mlua_check_int64)
+MLUA_FUNC_R2(mod_,, delayed_by_ms, push_absolute_time, check_absolute_time,
+             luaL_checkinteger)
+MLUA_FUNC_R1(mod_,, make_timeout_time_us, push_absolute_time, mlua_check_int64)
+MLUA_FUNC_R1(mod_,, make_timeout_time_ms, push_absolute_time, luaL_checkinteger)
+MLUA_FUNC_R2(mod_,, absolute_time_diff_us, mlua_push_int64, check_absolute_time,
+             check_absolute_time)
+MLUA_FUNC_R2(mod_,, absolute_time_min, push_absolute_time, check_absolute_time,
+             check_absolute_time)
+MLUA_FUNC_R1(mod_,, is_at_the_end_of_time, lua_pushboolean, check_absolute_time)
+MLUA_FUNC_R1(mod_,, is_nil_time, lua_pushboolean, check_absolute_time)
+MLUA_FUNC_R1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
+             check_absolute_time)
 
 #define mod_cancel_repeating_timer mod_cancel_alarm
 

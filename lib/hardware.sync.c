@@ -7,16 +7,16 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_0_0(mod_, __, sev)
-MLUA_FUNC_0_0(mod_, __, wfe)
-MLUA_FUNC_0_0(mod_, __, wfi)
-MLUA_FUNC_0_0(mod_, __, dmb)
-MLUA_FUNC_0_0(mod_, __, dsb)
-MLUA_FUNC_0_0(mod_, __, isb)
-MLUA_FUNC_0_0(mod_, __, mem_fence_acquire)
-MLUA_FUNC_0_0(mod_, __, mem_fence_release)
-MLUA_FUNC_1_0(mod_,, save_and_disable_interrupts, lua_pushinteger)
-MLUA_FUNC_0_1(mod_,, restore_interrupts, luaL_checkinteger)
+MLUA_FUNC_V0(mod_, __, sev)
+MLUA_FUNC_V0(mod_, __, wfe)
+MLUA_FUNC_V0(mod_, __, wfi)
+MLUA_FUNC_V0(mod_, __, dmb)
+MLUA_FUNC_V0(mod_, __, dsb)
+MLUA_FUNC_V0(mod_, __, isb)
+MLUA_FUNC_V0(mod_, __, mem_fence_acquire)
+MLUA_FUNC_V0(mod_, __, mem_fence_release)
+MLUA_FUNC_R0(mod_,, save_and_disable_interrupts, lua_pushinteger)
+MLUA_FUNC_V1(mod_,, restore_interrupts, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(sev, mod_),

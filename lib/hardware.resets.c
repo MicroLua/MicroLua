@@ -7,9 +7,9 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_0_1(mod_,, reset_block, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_,, unreset_block, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_,, unreset_block_wait, luaL_checkinteger)
+MLUA_FUNC_V1(mod_,, reset_block, luaL_checkinteger)
+MLUA_FUNC_V1(mod_,, unreset_block, luaL_checkinteger)
+MLUA_FUNC_V1(mod_,, unreset_block_wait, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(reset_block, mod_),

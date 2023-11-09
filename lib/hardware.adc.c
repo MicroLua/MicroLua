@@ -59,21 +59,21 @@ static int mod_fifo_get_blocking(lua_State* ls) {
     return 1;
 }
 
-MLUA_FUNC_0_0(mod_, adc_, init)
-MLUA_FUNC_0_1(mod_, adc_, gpio_init, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, adc_, select_input, check_channel)
-MLUA_FUNC_1_0(mod_, adc_, get_selected_input, lua_pushinteger)
-MLUA_FUNC_0_1(mod_, adc_, set_round_robin, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, adc_, set_temp_sensor_enabled, mlua_to_cbool)
-MLUA_FUNC_1_0(mod_, adc_, read, lua_pushinteger)
-MLUA_FUNC_0_1(mod_, adc_, run, mlua_to_cbool)
-MLUA_FUNC_0_1(mod_, adc_, set_clkdiv, luaL_checknumber)
-MLUA_FUNC_0_5(mod_, adc_, fifo_setup, mlua_to_cbool, mlua_to_cbool,
-              luaL_checkinteger, mlua_to_cbool, mlua_to_cbool)
-MLUA_FUNC_1_0(mod_, adc_, fifo_is_empty, lua_pushboolean)
-MLUA_FUNC_1_0(mod_, adc_, fifo_get_level, lua_pushinteger)
-MLUA_FUNC_1_0(mod_, adc_, fifo_get, lua_pushinteger)
-MLUA_FUNC_0_0(mod_, adc_, fifo_drain)
+MLUA_FUNC_V0(mod_, adc_, init)
+MLUA_FUNC_V1(mod_, adc_, gpio_init, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, adc_, select_input, check_channel)
+MLUA_FUNC_R0(mod_, adc_, get_selected_input, lua_pushinteger)
+MLUA_FUNC_V1(mod_, adc_, set_round_robin, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, adc_, set_temp_sensor_enabled, mlua_to_cbool)
+MLUA_FUNC_R0(mod_, adc_, read, lua_pushinteger)
+MLUA_FUNC_V1(mod_, adc_, run, mlua_to_cbool)
+MLUA_FUNC_V1(mod_, adc_, set_clkdiv, luaL_checknumber)
+MLUA_FUNC_V5(mod_, adc_, fifo_setup, mlua_to_cbool, mlua_to_cbool,
+             luaL_checkinteger, mlua_to_cbool, mlua_to_cbool)
+MLUA_FUNC_R0(mod_, adc_, fifo_is_empty, lua_pushboolean)
+MLUA_FUNC_R0(mod_, adc_, fifo_get_level, lua_pushinteger)
+MLUA_FUNC_R0(mod_, adc_, fifo_get, lua_pushinteger)
+MLUA_FUNC_V0(mod_, adc_, fifo_drain)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),

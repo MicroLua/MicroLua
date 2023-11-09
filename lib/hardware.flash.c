@@ -34,7 +34,7 @@ int mod_do_cmd(lua_State* ls) {
     return 1;
 }
 
-MLUA_FUNC_0_2(mod_, flash_, range_erase, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_V2(mod_, flash_, range_erase, luaL_checkinteger, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(PAGE_SIZE, integer, FLASH_PAGE_SIZE),

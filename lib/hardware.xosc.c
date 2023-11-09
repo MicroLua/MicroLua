@@ -7,9 +7,9 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_0_0(mod_, xosc_, init)
-MLUA_FUNC_0_0(mod_, xosc_, disable)
-MLUA_FUNC_0_0(mod_, xosc_, dormant)
+MLUA_FUNC_V0(mod_, xosc_, init)
+MLUA_FUNC_V0(mod_, xosc_, disable)
+MLUA_FUNC_V0(mod_, xosc_, dormant)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),

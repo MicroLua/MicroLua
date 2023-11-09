@@ -33,43 +33,43 @@ static int mod_reg_base(lua_State* ls) {
     return 1;
 }
 
-MLUA_FUNC_0_2(Config_, pwm_config_, set_phase_correct, check_Config,
-              mlua_to_cbool)
-MLUA_FUNC_0_2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
+MLUA_FUNC_V2(Config_, pwm_config_, set_phase_correct, check_Config,
+             mlua_to_cbool)
+MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
 MLUA_FUNC_V(Config_, pwm_config_, set_clkdiv_int_frac, check_Config(ls, 1),
             luaL_checkinteger(ls, 2), luaL_optinteger(ls, 3, 0));
-MLUA_FUNC_0_2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
-              luaL_checkinteger)
-MLUA_FUNC_0_3(Config_, pwm_config_, set_output_polarity, check_Config,
-              mlua_to_cbool, mlua_to_cbool)
-MLUA_FUNC_0_2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
+MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
+             luaL_checkinteger)
+MLUA_FUNC_V3(Config_, pwm_config_, set_output_polarity, check_Config,
+             mlua_to_cbool, mlua_to_cbool)
+MLUA_FUNC_V2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
 
-MLUA_FUNC_1_1(mod_, pwm_, gpio_to_slice_num, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, pwm_, gpio_to_channel, lua_pushinteger, luaL_checkinteger)
-MLUA_FUNC_0_3(mod_, pwm_, init, check_slice, check_Config, mlua_to_cbool)
-MLUA_FUNC_0_2(mod_, pwm_, set_wrap, check_slice, luaL_checkinteger)
-MLUA_FUNC_0_3(mod_, pwm_, set_chan_level, check_slice, luaL_checkinteger,
-              luaL_checkinteger)
-MLUA_FUNC_0_3(mod_, pwm_, set_both_levels, check_slice, luaL_checkinteger,
-              luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, pwm_, set_gpio_level, mlua_check_gpio, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, pwm_, get_counter, lua_pushinteger, check_slice)
-MLUA_FUNC_0_2(mod_, pwm_, set_counter, check_slice, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, pwm_, advance_count, check_slice)
-MLUA_FUNC_0_1(mod_, pwm_, retard_count, check_slice)
+MLUA_FUNC_R1(mod_, pwm_, gpio_to_slice_num, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, pwm_, gpio_to_channel, lua_pushinteger, luaL_checkinteger)
+MLUA_FUNC_V3(mod_, pwm_, init, check_slice, check_Config, mlua_to_cbool)
+MLUA_FUNC_V2(mod_, pwm_, set_wrap, check_slice, luaL_checkinteger)
+MLUA_FUNC_V3(mod_, pwm_, set_chan_level, check_slice, luaL_checkinteger,
+             luaL_checkinteger)
+MLUA_FUNC_V3(mod_, pwm_, set_both_levels, check_slice, luaL_checkinteger,
+             luaL_checkinteger)
+MLUA_FUNC_V2(mod_, pwm_, set_gpio_level, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, pwm_, get_counter, lua_pushinteger, check_slice)
+MLUA_FUNC_V2(mod_, pwm_, set_counter, check_slice, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, pwm_, advance_count, check_slice)
+MLUA_FUNC_V1(mod_, pwm_, retard_count, check_slice)
 MLUA_FUNC_V(mod_, pwm_, set_clkdiv_int_frac, check_slice(ls, 1),
             luaL_checkinteger(ls, 2), luaL_optinteger(ls, 3, 0));
-MLUA_FUNC_0_2(mod_, pwm_, set_clkdiv, check_slice, luaL_checknumber)
-MLUA_FUNC_0_3(mod_, pwm_, set_output_polarity, check_slice, mlua_to_cbool,
-              mlua_to_cbool)
-MLUA_FUNC_0_2(mod_, pwm_, set_clkdiv_mode, check_slice, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, pwm_, set_phase_correct, check_slice, mlua_to_cbool)
-MLUA_FUNC_0_2(mod_, pwm_, set_enabled, check_slice, mlua_to_cbool)
-MLUA_FUNC_0_1(mod_, pwm_, set_mask_enabled, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, pwm_, clear_irq, check_slice)
-MLUA_FUNC_1_0(mod_, pwm_, get_irq_status_mask, lua_pushinteger)
-MLUA_FUNC_0_1(mod_, pwm_, force_irq, check_slice)
-MLUA_FUNC_1_1(mod_, pwm_, get_dreq, lua_pushinteger, check_slice)
+MLUA_FUNC_V2(mod_, pwm_, set_clkdiv, check_slice, luaL_checknumber)
+MLUA_FUNC_V3(mod_, pwm_, set_output_polarity, check_slice, mlua_to_cbool,
+             mlua_to_cbool)
+MLUA_FUNC_V2(mod_, pwm_, set_clkdiv_mode, check_slice, luaL_checkinteger)
+MLUA_FUNC_V2(mod_, pwm_, set_phase_correct, check_slice, mlua_to_cbool)
+MLUA_FUNC_V2(mod_, pwm_, set_enabled, check_slice, mlua_to_cbool)
+MLUA_FUNC_V1(mod_, pwm_, set_mask_enabled, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, pwm_, clear_irq, check_slice)
+MLUA_FUNC_R0(mod_, pwm_, get_irq_status_mask, lua_pushinteger)
+MLUA_FUNC_V1(mod_, pwm_, force_irq, check_slice)
+MLUA_FUNC_R1(mod_, pwm_, get_dreq, lua_pushinteger, check_slice)
 
 #define Config_set_clkdiv_int Config_set_clkdiv_int_frac
 

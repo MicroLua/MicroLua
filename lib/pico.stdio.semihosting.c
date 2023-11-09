@@ -7,7 +7,7 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_0_0(mod_, stdio_semihosting_, init)
+MLUA_FUNC_V0(mod_, stdio_semihosting_, init)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(driver, lightuserdata, &stdio_semihosting),

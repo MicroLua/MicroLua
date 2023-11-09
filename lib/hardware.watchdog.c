@@ -8,12 +8,12 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-MLUA_FUNC_0_1(mod_, watchdog_, start_tick, luaL_checkinteger)
-MLUA_FUNC_0_0(mod_, watchdog_, update)
-MLUA_FUNC_0_2(mod_, watchdog_, enable, luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_1_0(mod_, watchdog_, caused_reboot, lua_pushboolean)
-MLUA_FUNC_1_0(mod_, watchdog_, enable_caused_reboot, lua_pushboolean)
-MLUA_FUNC_1_0(mod_, watchdog_, get_count, lua_pushinteger)
+MLUA_FUNC_V1(mod_, watchdog_, start_tick, luaL_checkinteger)
+MLUA_FUNC_V0(mod_, watchdog_, update)
+MLUA_FUNC_V2(mod_, watchdog_, enable, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_R0(mod_, watchdog_, caused_reboot, lua_pushboolean)
+MLUA_FUNC_R0(mod_, watchdog_, enable_caused_reboot, lua_pushboolean)
+MLUA_FUNC_R0(mod_, watchdog_, get_count, lua_pushinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     // watchdog_reboot: Not useful in Lua

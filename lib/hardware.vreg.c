@@ -7,7 +7,7 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_0_1(mod_, vreg_, set_voltage, luaL_checkinteger)
+MLUA_FUNC_V1(mod_, vreg_, set_voltage, luaL_checkinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(VOLTAGE_0_85, integer, VREG_VOLTAGE_0_85),

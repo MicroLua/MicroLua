@@ -157,9 +157,9 @@ static int mod_disable_alarm(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_0_0(mod_, rtc_, init)
-MLUA_FUNC_1_0(mod_, rtc_, running, lua_pushboolean)
-MLUA_FUNC_0_0(mod_, rtc_, enable_alarm)
+MLUA_FUNC_V0(mod_, rtc_, init)
+MLUA_FUNC_R0(mod_, rtc_, running, lua_pushboolean)
+MLUA_FUNC_V0(mod_, rtc_, enable_alarm)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),

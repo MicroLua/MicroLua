@@ -170,15 +170,15 @@ static int mod_set_enabled(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_0_2(mod_, irq_, set_priority, check_irq, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, irq_, get_priority, lua_pushinteger, check_irq)
-MLUA_FUNC_1_1(mod_, irq_, is_enabled, lua_pushboolean, check_irq)
-MLUA_FUNC_0_2(mod_, irq_, set_mask_enabled, luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_1_1(mod_, irq_, has_shared_handler, lua_pushboolean, check_irq)
-MLUA_FUNC_0_1(mod_, irq_, set_pending, check_irq)
-MLUA_FUNC_0_1(mod_,, user_irq_claim, check_user_irq)
-MLUA_FUNC_1_1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
-MLUA_FUNC_0_1(mod_,, user_irq_unclaim, check_user_irq)
+MLUA_FUNC_V2(mod_, irq_, set_priority, check_irq, luaL_checkinteger)
+MLUA_FUNC_R1(mod_, irq_, get_priority, lua_pushinteger, check_irq)
+MLUA_FUNC_R1(mod_, irq_, is_enabled, lua_pushboolean, check_irq)
+MLUA_FUNC_V2(mod_, irq_, set_mask_enabled, luaL_checkinteger, mlua_to_cbool)
+MLUA_FUNC_R1(mod_, irq_, has_shared_handler, lua_pushboolean, check_irq)
+MLUA_FUNC_V1(mod_, irq_, set_pending, check_irq)
+MLUA_FUNC_V1(mod_,, user_irq_claim, check_user_irq)
+MLUA_FUNC_R1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
+MLUA_FUNC_V1(mod_,, user_irq_unclaim, check_user_irq)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(TIMER_IRQ_0, integer, TIMER_IRQ_0),

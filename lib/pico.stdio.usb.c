@@ -7,8 +7,8 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_1_0(mod_, stdio_usb_, init, lua_pushboolean)
-MLUA_FUNC_1_0(mod_, stdio_usb_, connected, lua_pushboolean)
+MLUA_FUNC_R0(mod_, stdio_usb_, init, lua_pushboolean)
+MLUA_FUNC_R0(mod_, stdio_usb_, connected, lua_pushboolean)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(driver, lightuserdata, &stdio_usb),

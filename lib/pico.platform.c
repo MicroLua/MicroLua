@@ -7,10 +7,10 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-MLUA_FUNC_1_0(mod_,, rp2040_chip_version, lua_pushinteger)
-MLUA_FUNC_1_0(mod_,, rp2040_rom_version, lua_pushinteger)
-MLUA_FUNC_0_1(mod_,, busy_wait_at_least_cycles, luaL_checkinteger)
-MLUA_FUNC_1_0(mod_,, get_core_num, lua_pushinteger)
+MLUA_FUNC_R0(mod_,, rp2040_chip_version, lua_pushinteger)
+MLUA_FUNC_R0(mod_,, rp2040_rom_version, lua_pushinteger)
+MLUA_FUNC_V1(mod_,, busy_wait_at_least_cycles, luaL_checkinteger)
+MLUA_FUNC_R0(mod_,, get_core_num, lua_pushinteger)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NUM_CORES, integer, NUM_CORES),

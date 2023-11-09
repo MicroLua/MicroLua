@@ -163,9 +163,9 @@ static int mod_get_status(lua_State* ls) {
     return 1;
 }
 
-MLUA_FUNC_1_0(mod_, multicore_fifo_, rvalid, lua_pushboolean)
-MLUA_FUNC_1_0(mod_, multicore_fifo_, wready, lua_pushboolean)
-MLUA_FUNC_0_0(mod_, multicore_fifo_, drain)
+MLUA_FUNC_R0(mod_, multicore_fifo_, rvalid, lua_pushboolean)
+MLUA_FUNC_R0(mod_, multicore_fifo_, wready, lua_pushboolean)
+MLUA_FUNC_V0(mod_, multicore_fifo_, drain)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(ROE, integer, SIO_FIFO_ST_ROE_BITS),
