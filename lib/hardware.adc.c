@@ -42,7 +42,7 @@ static int mod_fifo_enable_irq(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-static int try_fifo_get(lua_State* ls, bool timeout) {
+static int fifo_get_loop(lua_State* ls, bool timeout) {
     if (adc_fifo_is_empty()) {
         adc_irq_set_enabled(true);
         return -1;
@@ -53,7 +53,7 @@ static int try_fifo_get(lua_State* ls, bool timeout) {
 
 static int mod_fifo_get_blocking(lua_State* ls) {
     if (mlua_event_can_wait(&adc_state.event)) {
-        return mlua_event_wait(ls, adc_state.event, &try_fifo_get, 0);
+        return mlua_event_loop(ls, adc_state.event, &fifo_get_loop, 0);
     }
     lua_pushinteger(ls, adc_fifo_get_blocking());
     return 1;

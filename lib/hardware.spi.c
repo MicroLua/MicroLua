@@ -138,7 +138,7 @@ static int write_read_blocking(lua_State* ls, spi_inst_t* inst, bool read,
     return 1;
 }
 
-static int try_write_read(lua_State* ls, bool timeout) {
+static int write_read_loop(lua_State* ls, bool timeout) {
     spi_inst_t* inst = to_SPI(ls, 1);
     bool read = lua_toboolean(ls, 3);
     size_t tx = lua_tointeger(ls, 4);
@@ -218,7 +218,7 @@ static int write_read_non_blocking(lua_State* ls, spi_inst_t* inst, bool read,
     lua_pushboolean(ls, read);  // read
     lua_pushinteger(ls, len);  // tx
     lua_pushinteger(ls, len);  // rx
-    return mlua_event_wait(ls, *event, &try_write_read, 0);
+    return mlua_event_loop(ls, *event, &write_read_loop, 0);
 }
 
 static int write_read(lua_State* ls, bool read, uint8_t const* src,

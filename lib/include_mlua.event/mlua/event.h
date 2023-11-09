@@ -102,22 +102,22 @@ int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
                        int index);
 
-typedef int (*MLuaEventGetter)(lua_State*, bool);
+typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 
 // Return true iff waiting for the given even is possible, i.e. yielding is
 // enabled and the event was claimed.
 bool mlua_event_can_wait(MLuaEvent* event);
 
-// Wait for an event, suspending as long as try_get returns a negative value.
-// The index is passed to mlua_event_suspend as a deadline index.
-// TODO: Find a better name for this function
-int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
+// Run an event loop. The loop function is called repeatedly, suspending after
+// each call, as long as the function returns a negative value. The index is
+// passed to mlua_event_suspend as a deadline index.
+int mlua_event_loop(lua_State* ls, MLuaEvent event, MLuaEventLoopFn loop,
                     int index);
 
 #if !LIB_MLUA_MOD_MLUA_EVENT
 #define mlua_event_require(ls) do {} while(0)
 #define mlua_event_can_wait(event) (false)
-#define mlua_event_wait(ls, event, try_get, index) ((int)0)
+#define mlua_event_wait(ls, event, loop, index) ((int)0)
 #endif
 
 // Start an event handler thread for the given event. The function expects two

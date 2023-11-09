@@ -65,7 +65,7 @@ static int I2C_deinit(lua_State* ls) {
     return 0;
 }
 
-static int try_write(lua_State* ls, bool timeout) {
+static int write_loop(lua_State* ls, bool timeout) {
     if (timeout) {
         luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
@@ -150,7 +150,7 @@ static int I2C_write_blocking(lua_State* ls) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_wait(ls, *event, &try_write, 5);
+        return mlua_event_loop(ls, *event, &write_loop, 5);
     }
 
     int res;
@@ -177,7 +177,7 @@ static int I2C_write_timeout_us(lua_State* ls) {
     return I2C_write_blocking(ls);
 }
 
-static int try_read(lua_State* ls, bool timeout) {
+static int read_loop(lua_State* ls, bool timeout) {
     if (timeout) {
         luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
@@ -270,7 +270,7 @@ static int I2C_read_blocking(lua_State* ls) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_wait(ls, *event, &try_read, 5);
+        return mlua_event_loop(ls, *event, &read_loop, 5);
     }
 
     bool no_deadline = lua_isnoneornil(ls, 5);

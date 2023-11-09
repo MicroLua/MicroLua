@@ -245,14 +245,14 @@ bool mlua_event_can_wait(MLuaEvent* event) {
     return ok;
 }
 
-static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
-                             MLuaEventGetter try_get, int index);
-static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx);
+static int mlua_event_loop_1(lua_State* ls, MLuaEvent event,
+                             MLuaEventLoopFn loop, int index);
+static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx);
 
-int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
+int mlua_event_loop(lua_State* ls, MLuaEvent event, MLuaEventLoopFn loop,
                     int index) {
     if (event >= NUM_EVENTS) return luaL_error(ls, "wait for unclaimed event");
-    int res = try_get(ls, false);
+    int res = loop(ls, false);
     if (res >= 0) return res;
     if (index != 0) {
         if (lua_isnoneornil(ls, index)) {
@@ -262,26 +262,26 @@ int mlua_event_wait(lua_State* ls, MLuaEvent event, MLuaEventGetter try_get,
         }
     }
     mlua_event_watch(ls, event);
-    return mlua_event_wait_1(ls, event, try_get, index);
+    return mlua_event_loop_1(ls, event, loop, index);
 }
 
-static int mlua_event_wait_1(lua_State* ls, MLuaEvent event,
-                             MLuaEventGetter try_get, int index) {
-    lua_pushlightuserdata(ls, try_get);
+static int mlua_event_loop_1(lua_State* ls, MLuaEvent event,
+                             MLuaEventLoopFn loop, int index) {
+    lua_pushlightuserdata(ls, loop);
     lua_pushinteger(ls, index);
-    return mlua_event_suspend(ls, &mlua_event_wait_2, event, index);
+    return mlua_event_suspend(ls, &mlua_event_loop_2, event, index);
 }
 
-static int mlua_event_wait_2(lua_State* ls, int status, lua_KContext ctx) {
-    MLuaEventGetter try_get = (MLuaEventGetter)lua_touserdata(ls, -2);
+static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
+    MLuaEventLoopFn loop = (MLuaEventLoopFn)lua_touserdata(ls, -2);
     int index = lua_tointeger(ls, -1);
-    lua_pop(ls, 2);  // Restore the stack for try_get
-    int res = try_get(ls, false);
+    lua_pop(ls, 2);  // Restore the stack for loop
+    int res = loop(ls, false);
     if (res < 0) {
         if (index == 0 || !time_reached(mlua_to_int64(ls, index))) {
-            return mlua_event_wait_1(ls, (MLuaEvent)ctx, try_get, index);
+            return mlua_event_loop_1(ls, (MLuaEvent)ctx, loop, index);
         }
-        res = try_get(ls, true);
+        res = loop(ls, true);
     }
     mlua_event_unwatch(ls, (MLuaEvent)ctx);
     return res;

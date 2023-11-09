@@ -109,7 +109,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-static int try_getchar(lua_State* ls, bool timeout) {
+static int getchar_loop(lua_State* ls, bool timeout) {
     if (timeout) {
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
         return 1;
@@ -121,7 +121,7 @@ static int try_getchar(lua_State* ls, bool timeout) {
 
 static int mod_getchar(lua_State* ls) {
     if (mlua_event_can_wait(&stdio_state.event)) {
-        return mlua_event_wait(ls, stdio_state.event, &try_getchar, 0);
+        return mlua_event_loop(ls, stdio_state.event, &getchar_loop, 0);
     }
     lua_pushinteger(ls, getchar());
     return 1;
@@ -132,7 +132,7 @@ static int mod_getchar_timeout_us(lua_State* ls) {
     if (mlua_event_can_wait(&stdio_state.event)) {
         mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
         lua_replace(ls, 1);
-        return mlua_event_wait(ls, stdio_state.event, &try_getchar, 1);
+        return mlua_event_loop(ls, stdio_state.event, &getchar_loop, 1);
     }
     lua_pushinteger(ls, getchar_timeout_us(timeout));
     return 1;
@@ -147,7 +147,7 @@ static int do_read(lua_State* ls, int fd, lua_Integer len) {
     return 1;
 }
 
-static int try_read(lua_State* ls, bool timeout) {
+static int read_loop(lua_State* ls, bool timeout) {
     if (!chars_available_reset()) return -1;
     return do_read(ls, lua_tointeger(ls, -2), lua_tointeger(ls, -1));
 }
@@ -158,7 +158,7 @@ int mlua_pico_stdio_read(lua_State* ls, int fd, int index) {
     if (mlua_event_can_wait(&stdio_state.event)) {
         lua_pushinteger(ls, fd);
         lua_pushinteger(ls, len);
-        return mlua_event_wait(ls, stdio_state.event, &try_read, 0);
+        return mlua_event_loop(ls, stdio_state.event, &read_loop, 0);
     }
     return do_read(ls, fd, len);
 }

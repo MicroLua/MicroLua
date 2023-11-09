@@ -68,7 +68,7 @@ static int mod_launch_core1(lua_State* ls) {
     return 0;
 }
 
-static int try_stopped(lua_State* ls, bool timeout) {
+static int stopped_loop(lua_State* ls, bool timeout) {
     CoreState* st = (CoreState*)lua_touserdata(ls, -1);
     uint32_t save = mlua_event_lock();
     bool stopped = st->shutdown_event == MLUA_EVENT_UNSET;
@@ -105,7 +105,7 @@ static int mod_reset_core1(lua_State* ls) {
     char const* err = mlua_event_claim(&st->stopped_event);
     if (err != NULL) return luaL_error(ls, "multicore: %s", err);
     lua_pushlightuserdata(ls, st);
-    return mlua_event_wait(ls, st->stopped_event, &try_stopped, 0);
+    return mlua_event_loop(ls, st->stopped_event, &stopped_loop, 0);
 }
 
 static int handle_shutdown_event(lua_State* ls) {
