@@ -14,7 +14,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-char const mlua_SPI_name[] = "hardware.spi.SPI";
+static char const SPI_name[] = "hardware.spi.SPI";
 
 static inline spi_inst_t* get_instance(uint num) {
     return num == 0 ? spi0 : spi1;
@@ -26,13 +26,13 @@ static inline bool use_16_bit_values(spi_hw_t* hw) {
 
 static spi_inst_t** new_SPI(lua_State* ls) {
     spi_inst_t** v = lua_newuserdatauv(ls, sizeof(spi_inst_t*), 0);
-    luaL_getmetatable(ls, mlua_SPI_name);
+    luaL_getmetatable(ls, SPI_name);
     lua_setmetatable(ls, -2);
     return v;
 }
 
 static inline spi_inst_t* check_SPI(lua_State* ls, int arg) {
-    return *((spi_inst_t**)luaL_checkudata(ls, arg, mlua_SPI_name));
+    return *((spi_inst_t**)luaL_checkudata(ls, arg, SPI_name));
 }
 
 static inline spi_inst_t* to_SPI(lua_State* ls, int arg) {
@@ -334,7 +334,7 @@ MLUA_OPEN_MODULE(hardware.spi) {
     int mod_index = lua_gettop(ls);
 
     // Create the SPI class.
-    mlua_new_class(ls, mlua_SPI_name, SPI_syms, true);
+    mlua_new_class(ls, SPI_name, SPI_syms, true);
     lua_pop(ls, 1);
 
     // Create SPI instances.
