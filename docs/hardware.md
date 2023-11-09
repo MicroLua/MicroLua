@@ -215,6 +215,27 @@ sources: [`hardware_pll`](https://github.com/raspberrypi/pico-sdk/blob/master/sr
 build target: `mlua_mod_hardware_pll`,
 tests: [`hardware.pll.test`](../lib/hardware.pll.test.lua)
 
+## `hardware.pwm`
+
+**Library:** [`hardware_pwm`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pwm),
+header: [`hardware/pwm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pwm/include/hardware/pwm.h),
+sources: [`hardware_pwm`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pwm)\
+**Module:** [`hardware.pwm`](../lib/hardware.pwm.c),
+build target: `mlua_mod_hardware_pwm`,
+tests: [`hardware.pwm.test`](../lib/hardware.pwm.test.lua)
+
+This module defines the `hardware.pwm.Config` class, which exposes PWM
+configuration functionality. All library functions that take an
+`pwm_config*` as a first argument are exposed as methods on the `Config` class.
+
+> [!NOTE]
+> IRQ functionality isn't implemented yet.
+
+- `reg_base(slice = nil) -> integer`\
+  When `slice` is `nil`, return the base address of the peripheral registers
+  (`PWM_BASE`). Otherwise, return the base address of the registers for the
+  given slice.
+
 ## `hardware.regs.*`
 
 **Library:** `hardware_regs`,

@@ -67,9 +67,8 @@ interface to C code.
 
 ### Roadmap
 
-- **Add more bindings for the Pico SDK.** PWM and PIO are high on the list,
-  followed by USB, Wifi and Bluetooth. Eventually, most SDK libraries should
-  have a binding.
+- **Add more bindings for the Pico SDK.** PIO is high on the list, followed by
+  USB, Wifi and Bluetooth. Eventually, most SDK libraries should have a binding.
 - **Improve threading performance.** A C implementation of the
   [`mlua.thread`](docs/mlua.md#mluathread) module, with a less naive timer list,
   could significantly improve event dispatch latency.

@@ -46,7 +46,7 @@ end
 
 function test_free_running(t)
     pin, slice, chan = setup(t)
-    pwm.set_clkdiv_int_frac(slice, 32)
+    pwm.set_clkdiv_int_frac(slice, 6)
     pwm.set_output_polarity(slice, false, false)
     pwm.set_clkdiv_mode(slice, pwm.DIV_FREE_RUNNING)
     pwm.set_phase_correct(slice, false)
@@ -57,9 +57,9 @@ function test_free_running(t)
     t:expect(t:expr(pwm).get_counter(slice)):eq(0)
     local value = wrap // 2
     pwm.set_chan_level(slice, chan, value)
+    t:expect(t:expr(gpio).get_pad(pin)):eq(true)
     pwm.set_mask_enabled(1 << slice, true)
     t:expect(t:expr(pwm).get_counter(slice)):gt(0)
-    t:expect(t:expr(gpio).get_pad(pin)):eq(true)
     while pwm.get_counter(slice) < value do end
     t:expect(t:expr(gpio).get_pad(pin)):eq(false)
     while pwm.get_counter(slice) >= value do end
