@@ -13,6 +13,13 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+static uint check_channel(lua_State* ls, int arg) {
+    uint num = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, num < NUM_ADC_CHANNELS, arg,
+                  "invalid ADC channel number");
+    return num;
+}
+
 #if LIB_MLUA_MOD_MLUA_EVENT
 
 typedef struct ADCState {
@@ -54,7 +61,7 @@ static int mod_fifo_get_blocking(lua_State* ls) {
 
 MLUA_FUNC_0_0(mod_, adc_, init)
 MLUA_FUNC_0_1(mod_, adc_, gpio_init, luaL_checkinteger)
-MLUA_FUNC_0_1(mod_, adc_, select_input, luaL_checkinteger)
+MLUA_FUNC_0_1(mod_, adc_, select_input, check_channel)
 MLUA_FUNC_1_0(mod_, adc_, get_selected_input, lua_pushinteger)
 MLUA_FUNC_0_1(mod_, adc_, set_round_robin, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, adc_, set_temp_sensor_enabled, mlua_to_cbool)
