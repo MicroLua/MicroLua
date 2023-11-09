@@ -39,6 +39,12 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg) {
     return ud;
 }
 
+uint mlua_check_gpio(lua_State* ls, int arg) {
+    uint num = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, num < NUM_BANK0_GPIOS, arg, "invalid GPIO number");
+    return num;
+}
+
 #if LIB_MLUA_MOD_MLUA_EVENT
 
 static bool yield_enabled[NUM_CORES];

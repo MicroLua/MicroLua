@@ -52,6 +52,10 @@ void* mlua_check_userdata(lua_State* ls, int arg);
 // Raises an error if the argument is not a userdata or nil.
 void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 
+// Return the given argument as a GPIO number. Raises an error if the argument
+// value is out of bounds.
+uint mlua_check_gpio(lua_State* ls, int arg);
+
 extern spin_lock_t* mlua_lock;
 
 // Push the thread metatable field with the given name. Returns the type of the

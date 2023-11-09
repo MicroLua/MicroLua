@@ -14,13 +14,6 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-static uint check_gpio(lua_State* ls, int index) {
-    lua_Integer gpio = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= gpio && gpio < (lua_Integer)NUM_BANK0_GPIOS, index,
-                  "invalid GPIO number");
-    return gpio;
-}
-
 #if LIB_MLUA_MOD_MLUA_EVENT
 
 #define EVENTS_SIZE ((NUM_BANK0_GPIOS + 7) / 8)
@@ -183,7 +176,7 @@ static int mod_set_irq_enabled_with_callback_1(lua_State* ls, int status,
 typedef void (*IRQEnabler)(uint, uint32_t, bool);
 
 static int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
-    uint gpio = check_gpio(ls, 1);
+    uint gpio = mlua_check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enabled = mlua_to_cbool(ls, 3);
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -215,7 +208,7 @@ static int mod_set_dormant_irq_enabled(lua_State* ls) {
 }
 
 static int mod_get_irq_event_mask(lua_State* ls) {
-    uint gpio = check_gpio(ls, 1);
+    uint gpio = mlua_check_gpio(ls, 1);
     uint block = gpio / 8;
     uint32_t pending = iobank0_hw->intr[block];  // Raw state
 #if LIB_MLUA_MOD_MLUA_EVENT
@@ -230,7 +223,7 @@ static int mod_get_irq_event_mask(lua_State* ls) {
 }
 
 static int mod_acknowledge_irq(lua_State* ls) {
-    uint gpio = check_gpio(ls, 1);
+    uint gpio = mlua_check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
 #if LIB_MLUA_MOD_MLUA_EVENT
     IRQState* state = &irq_state[get_core_num()];
@@ -249,50 +242,50 @@ static int mod_acknowledge_irq(lua_State* ls) {
 // Not defined in hardware/gpio.h for some reason.
 int gpio_get_pad(uint gpio);
 
-MLUA_FUNC_1_1(mod_, gpio_, get_pad, lua_pushboolean, check_gpio)
-MLUA_FUNC_0_2(mod_, gpio_, set_function, check_gpio, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, gpio_, get_function, lua_pushinteger, check_gpio)
-MLUA_FUNC_0_3(mod_, gpio_, set_pulls, check_gpio, mlua_to_cbool,
+MLUA_FUNC_1_1(mod_, gpio_, get_pad, lua_pushboolean, mlua_check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, set_function, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_function, lua_pushinteger, mlua_check_gpio)
+MLUA_FUNC_0_3(mod_, gpio_, set_pulls, mlua_check_gpio, mlua_to_cbool,
               mlua_to_cbool)
-MLUA_FUNC_0_1(mod_, gpio_, pull_up, check_gpio)
-MLUA_FUNC_1_1(mod_, gpio_, is_pulled_up, lua_pushboolean, check_gpio)
-MLUA_FUNC_0_1(mod_, gpio_, pull_down, check_gpio)
-MLUA_FUNC_1_1(mod_, gpio_, is_pulled_down, lua_pushboolean, check_gpio)
-MLUA_FUNC_0_1(mod_, gpio_, disable_pulls, check_gpio)
-MLUA_FUNC_0_2(mod_, gpio_, set_irqover, check_gpio, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, set_outover, check_gpio, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, set_inover, check_gpio, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, set_oeover, check_gpio, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, set_input_enabled, check_gpio, mlua_to_cbool)
-MLUA_FUNC_0_2(mod_, gpio_, set_input_hysteresis_enabled, check_gpio,
+MLUA_FUNC_0_1(mod_, gpio_, pull_up, mlua_check_gpio)
+MLUA_FUNC_1_1(mod_, gpio_, is_pulled_up, lua_pushboolean, mlua_check_gpio)
+MLUA_FUNC_0_1(mod_, gpio_, pull_down, mlua_check_gpio)
+MLUA_FUNC_1_1(mod_, gpio_, is_pulled_down, lua_pushboolean, mlua_check_gpio)
+MLUA_FUNC_0_1(mod_, gpio_, disable_pulls, mlua_check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, set_irqover, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_outover, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_inover, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_oeover, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_0_2(mod_, gpio_, set_input_enabled, mlua_check_gpio, mlua_to_cbool)
+MLUA_FUNC_0_2(mod_, gpio_, set_input_hysteresis_enabled, mlua_check_gpio,
               mlua_to_cbool)
 MLUA_FUNC_1_1(mod_, gpio_, is_input_hysteresis_enabled, lua_pushboolean,
-              check_gpio)
-MLUA_FUNC_0_2(mod_, gpio_, set_slew_rate, check_gpio, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, gpio_, get_slew_rate, lua_pushinteger, check_gpio)
-MLUA_FUNC_0_2(mod_, gpio_, set_drive_strength, check_gpio,
+              mlua_check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, set_slew_rate, mlua_check_gpio, luaL_checkinteger)
+MLUA_FUNC_1_1(mod_, gpio_, get_slew_rate, lua_pushinteger, mlua_check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, set_drive_strength, mlua_check_gpio,
               luaL_checkinteger)
 MLUA_FUNC_1_1(mod_, gpio_, get_drive_strength, lua_pushinteger,
-              check_gpio)
-MLUA_FUNC_0_1(mod_, gpio_, init, check_gpio)
-MLUA_FUNC_0_1(mod_, gpio_, deinit, check_gpio)
+              mlua_check_gpio)
+MLUA_FUNC_0_1(mod_, gpio_, init, mlua_check_gpio)
+MLUA_FUNC_0_1(mod_, gpio_, deinit, mlua_check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, init_mask, luaL_checkinteger)
-MLUA_FUNC_1_1(mod_, gpio_, get, lua_pushboolean, check_gpio)
+MLUA_FUNC_1_1(mod_, gpio_, get, lua_pushboolean, mlua_check_gpio)
 MLUA_FUNC_1_0(mod_, gpio_, get_all, lua_pushinteger)
 MLUA_FUNC_0_1(mod_, gpio_, set_mask, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, clr_mask, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, xor_mask, luaL_checkinteger)
 MLUA_FUNC_0_2(mod_, gpio_, put_masked, luaL_checkinteger, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, put_all, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, put, check_gpio, mlua_to_cbool)
-MLUA_FUNC_1_1(mod_, gpio_, get_out_level, lua_pushboolean, check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, put, mlua_check_gpio, mlua_to_cbool)
+MLUA_FUNC_1_1(mod_, gpio_, get_out_level, lua_pushboolean, mlua_check_gpio)
 MLUA_FUNC_0_1(mod_, gpio_, set_dir_out_masked, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, set_dir_in_masked, luaL_checkinteger)
 MLUA_FUNC_0_2(mod_, gpio_, set_dir_masked, luaL_checkinteger, luaL_checkinteger)
 MLUA_FUNC_0_1(mod_, gpio_, set_dir_all_bits, luaL_checkinteger)
-MLUA_FUNC_0_2(mod_, gpio_, set_dir, check_gpio, mlua_to_cbool)
-MLUA_FUNC_1_1(mod_, gpio_, is_dir_out, lua_pushboolean, check_gpio)
-MLUA_FUNC_1_1(mod_, gpio_, get_dir, lua_pushinteger, check_gpio)
+MLUA_FUNC_0_2(mod_, gpio_, set_dir, mlua_check_gpio, mlua_to_cbool)
+MLUA_FUNC_1_1(mod_, gpio_, is_dir_out, lua_pushboolean, mlua_check_gpio)
+MLUA_FUNC_1_1(mod_, gpio_, get_dir, lua_pushinteger, mlua_check_gpio)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(FUNC_XIP, integer, GPIO_FUNC_XIP),
