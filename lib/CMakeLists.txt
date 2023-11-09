@@ -139,6 +139,21 @@ target_link_libraries(mlua_mod_hardware_pll_test INTERFACE
     mlua_mod_pico_stdlib
 )
 
+mlua_add_c_module(mlua_mod_hardware_pwm hardware.pwm.c)
+target_link_libraries(mlua_mod_hardware_pwm INTERFACE
+    hardware_pwm
+    pico_platform
+)
+
+mlua_add_lua_test_modules(mlua_mod_hardware_pwm_test hardware.pwm.test.lua)
+target_link_libraries(mlua_mod_hardware_pwm_test INTERFACE
+    mlua_mod_hardware_gpio
+    mlua_mod_hardware_pwm
+    mlua_mod_hardware_regs_addressmap
+    mlua_mod_hardware_regs_pwm
+    mlua_mod_pico
+)
+
 mlua_add_lua_test_modules(mlua_mod_hardware_regs_test hardware.regs.test.lua)
 
 file(GLOB paths LIST_DIRECTORIES false CONFIGURE_DEPENDS
