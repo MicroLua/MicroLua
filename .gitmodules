@@ -1,3 +1,6 @@
+[submodule "littlefs"]
+    path = ext/littlefs
+    url = https://github.com/littlefs-project/littlefs.git
 [submodule "lua"]
     path = ext/lua
     url = https://github.com/lua/lua.git
