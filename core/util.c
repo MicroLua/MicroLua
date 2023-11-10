@@ -45,6 +45,12 @@ uint mlua_check_gpio(lua_State* ls, int arg) {
     return num;
 }
 
+int mlua_push_fail_int(lua_State* ls, int err) {
+    luaL_pushfail(ls);
+    lua_pushinteger(ls, err);
+    return 2;
+}
+
 #if LIB_MLUA_MOD_MLUA_EVENT
 
 static bool yield_enabled[NUM_CORES];

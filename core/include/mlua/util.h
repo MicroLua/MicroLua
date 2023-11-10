@@ -56,6 +56,9 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 // value is out of bounds.
 uint mlua_check_gpio(lua_State* ls, int arg);
 
+// Push a failure and an error code, and return the number of pushed values.
+int mlua_push_fail_int(lua_State* ls, int err);
+
 extern spin_lock_t* mlua_lock;
 
 // Push the thread metatable field with the given name. Returns the type of the
