@@ -7,8 +7,8 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
-char const __flash_binary_start;
-char const __flash_binary_end;
+extern char const __flash_binary_start;
+extern char const __flash_binary_end;
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(board, string, PICO_BOARD),
