@@ -62,7 +62,7 @@ Here's how to get started with a new project based on MicroLua:
     $ export MLUA_PATH="${HOME}/MicroLua"
 
     # Build the executable.
-    $ cmake -s . -B build -DPICO_BOARD=pico
+    $ cmake -S . -B build -DPICO_BOARD=pico
     $ make -j9 -C build
 
     # This generates the executable files build/my_project_hello.elf and

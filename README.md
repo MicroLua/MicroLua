@@ -107,7 +107,7 @@ $ git submodule update --init
 $ tools/term /dev/ttyACM0
 
 # Build the unit tests.
-$ cmake -s . -B build -DPICO_BOARD=pico
+$ cmake -S . -B build -DPICO_BOARD=pico
 $ make -j9 -C build/lib
 
 # Start the target in BOOTSEL mode and flash it with picotool.
