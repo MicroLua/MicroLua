@@ -31,6 +31,9 @@ struct MLuaBlockDev {
     // Flush all writes to the block device.
     int (*sync)(MLuaBlockDev* dev);
 
+    // Return the message corresponding to an error code.
+    char const* (*error)(int err);
+
     // The size of the block device.
     uint64_t size;
 

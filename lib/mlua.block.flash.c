@@ -47,6 +47,8 @@ static int flash_dev_sync(MLuaBlockDev* dev) {
     return 0;
 }
 
+static char const* flash_dev_error(int err) { return "unknown error"; }
+
 static int mod_Device(lua_State* ls) {
     uint32_t off = luaL_checkinteger(ls, 1);
     size_t size = luaL_checkinteger(ls, 2);
@@ -61,6 +63,7 @@ static int mod_Device(lua_State* ls) {
     dev->super.write = &flash_dev_write,
     dev->super.erase = &flash_dev_erase,
     dev->super.sync = &flash_dev_sync,
+    dev->super.error = &flash_dev_error,
     dev->super.size = end - off;
     dev->super.read_size = 1;
     dev->super.write_size = FLASH_PAGE_SIZE;

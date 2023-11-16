@@ -356,6 +356,38 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     pico_time
 )
 
+pico_add_library(mlua_littlefs)
+target_include_directories(mlua_littlefs_headers INTERFACE
+    "${MLUA_LITTLEFS_SOURCE_DIR}"
+)
+target_compile_definitions(mlua_littlefs_headers INTERFACE
+    LFS_NO_ASSERT=1
+    LFS_NO_DEBUG=1
+    LFS_NO_ERROR=1
+    LFS_NO_MALLOC=1
+    LFS_NO_WARN=1
+)
+target_sources(mlua_littlefs INTERFACE
+    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs.c"
+    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs_util.c"
+)
+
+mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
+target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
+    mlua_mod_mlua_block
+    mlua_littlefs
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_fs_lfs_test
+    mlua.fs.lfs.test.lua)
+target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
+    mlua_mod_mlua_block_flash
+    mlua_mod_mlua_fs_lfs
+    mlua_mod_mlua_list
+    mlua_mod_mlua_util
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
     include_mlua.int64)

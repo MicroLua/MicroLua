@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 message("MLUA_PATH is ${MLUA_PATH}")
+set(MLUA_LITTLEFS_SOURCE_DIR "${MLUA_PATH}/ext/littlefs" CACHE INTERNAL "")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
 set(GEN "${MLUA_PATH}/tools/gen.lua" CACHE INTERNAL "")
 

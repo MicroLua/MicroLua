@@ -45,9 +45,9 @@ uint mlua_check_gpio(lua_State* ls, int arg) {
     return num;
 }
 
-int mlua_push_fail_int(lua_State* ls, lua_Integer err) {
+int mlua_push_fail(lua_State* ls, char const* err) {
     luaL_pushfail(ls);
-    lua_pushinteger(ls, err);
+    lua_pushstring(ls, err);
     return 2;
 }
 
