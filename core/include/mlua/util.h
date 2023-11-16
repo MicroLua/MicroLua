@@ -57,7 +57,7 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 uint mlua_check_gpio(lua_State* ls, int arg);
 
 // Push a failure and an error code, and return the number of pushed values.
-int mlua_push_fail_int(lua_State* ls, int err);
+int mlua_push_fail_int(lua_State* ls, lua_Integer err);
 
 extern spin_lock_t* mlua_lock;
 
