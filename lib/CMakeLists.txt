@@ -329,6 +329,20 @@ target_link_libraries(mlua_mod_mlua_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_mlua_block mlua.block.c)
+target_include_directories(mlua_mod_mlua_block_headers INTERFACE
+    include_mlua.block)
+target_link_libraries(mlua_mod_mlua_block INTERFACE
+    mlua_mod_mlua_int64
+)
+
+mlua_add_c_module(mlua_mod_mlua_block_flash mlua.block.flash.c)
+target_link_libraries(mlua_mod_mlua_block_flash INTERFACE
+    hardware_flash
+    hardware_sync
+    mlua_mod_mlua_block
+)
+
 mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
 
 mlua_add_c_module(mlua_mod_mlua_event mlua.event.c)
