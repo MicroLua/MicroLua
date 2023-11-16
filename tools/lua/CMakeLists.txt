@@ -19,10 +19,10 @@ target_compile_definitions(lua PRIVATE
     MLUA_MAXSTACK=0
     MLUA_BUFFERSIZE=0
 )
-target_link_options(lua PRIVATE -lm)
+target_link_libraries(lua PRIVATE m)
 if(CMAKE_HOST_WIN32)
     target_compile_definitions(lua PRIVATE LUA_USE_WINDOWS)
 else()
     target_compile_definitions(lua PRIVATE LUA_USE_LINUX)
-    target_link_options(lua PRIVATE -ldl)
+    target_link_libraries(lua PRIVATE dl)
 endif()
