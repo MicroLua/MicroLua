@@ -442,14 +442,15 @@ that value.
 - `Matcher:apply(fn) -> self`\
   Apply the function `fn` to the value, and set it as the new value.
 
-- `Matcher:eq(want, cmp = mlua.util.eq) -> self`\
+- `Matcher:eq(want, eq = mlua.util.eq) -> self`\
+  `Matcher:neq(want, eq = mlua.util.eq) -> self`\
   `Matcher:lt(want) -> self`\
   `Matcher:lte(want) -> self`\
   `Matcher:gt(want) -> self`\
   `Matcher:gte(want) -> self`\
-  Declare an expectation that the value is equal, less than, less than or
-  equal, greater than, or greater than or equal to `want`. Equality comparison
-  accepts an optional comparison function.
+  Declare an expectation that the value is equal, not equal, less than, less
+  than or equal, greater than, or greater than or equal to `want`. Equality and
+  inequality comparisons accept an optional equality comparison function.
 
 - `Matcher:close_to(want, eps) -> self`\
   Declare an expectation that the value is within `eps` of `want`.

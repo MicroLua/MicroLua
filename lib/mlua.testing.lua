@@ -187,7 +187,13 @@ function Matcher:apply(fn)
     return self
 end
 
-function Matcher:eq(want, cmp) return self:_rel_op(want, cmp or util.eq, '') end
+function Matcher:eq(want, eq) return self:_rel_op(want, eq or util.eq, '') end
+
+function Matcher:neq(want, eq)
+    local neq = eq and function(a, b) return not eq(a, b) end or util.neq
+    return self:_rel_op(want, neq, '~=')
+end
+
 function Matcher:lt(want) return self:_rel_op(want, util.lt, '<') end
 function Matcher:lte(want) return self:_rel_op(want, util.lte, '<=') end
 function Matcher:gt(want) return self:_rel_op(want, util.gt, '>') end
