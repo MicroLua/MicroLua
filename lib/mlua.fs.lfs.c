@@ -179,8 +179,7 @@ static int Filesystem_stat(lua_State* ls) {
     if (res < 0) return push_error(ls, fs, res);
     lua_pushstring(ls, info.name);
     lua_pushinteger(ls, info.type);
-    lua_pushinteger(ls, info.size);
-    return 3;
+    return info.type == LFS_TYPE_REG ? lua_pushinteger(ls, info.size), 3 : 2;
 }
 
 static int Filesystem_getattr(lua_State* ls) {
@@ -498,8 +497,7 @@ static int Dir_read(lua_State* ls) {
     if (res == 0) return lua_pushboolean(ls, true), 1;
     lua_pushstring(ls, info.name);
     lua_pushinteger(ls, info.type);
-    lua_pushinteger(ls, info.size);
-    return 3;
+    return info.type == LFS_TYPE_REG ? lua_pushinteger(ls, info.size), 3 : 2;
 }
 
 static int Dir_seek(lua_State* ls) {

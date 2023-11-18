@@ -128,20 +128,25 @@ end
 
 function Expr:__eval()
     local e = rawget(self, ekey)
-    local pv, v = nil, e.r
-    for _, it in list.ipairs(e) do pv, v = v, it[2](pv, v) end
-    return v
+    local pv, v, le = nil, e.r, list.len(e)
+    for i = 1, le - 1 do pv, v = v, e[i][2](pv, v) end
+    if e.m then return list.pack(e[le][2](pv, v)) end
+    return e[le][2](pv, v)
 end
 
 local ExprFactory = {__name = 'ExprFactory'}
 
-function ExprFactory:__index(k)
-    return setmetatable({[ekey] = {r = locals(2), [0] = 0}}, Expr)[k]
+local function new_expr(fact, attrs)
+    local e = rawget(fact, ekey)
+    if e then for k, v in pairs(e) do attrs[k] = v end end
+    return setmetatable({[ekey] = attrs}, Expr)
 end
+
+function ExprFactory:__index(k) return new_expr(self, {r = locals(2)})[k] end
 
 function ExprFactory:__call(t, root)
     if not oo.isinstance(t, Test) then root = t end
-    return setmetatable({[ekey] = {r = root, [0] = 0}}, Expr)
+    return new_expr(self, {r = root})
 end
 
 local Matcher = oo.class('Matcher')
@@ -245,6 +250,7 @@ local ERROR = '@{+RED}ERROR@{NORM}'
 Test = oo.class('Test')
 Test.helper = 'xGJLirXXSePWnLIqptqM85UBIpZdaYs86P7zfF9sWaa3'
 Test.expr = setmetatable({}, ExprFactory)
+Test.mexpr = setmetatable({[ekey] = {m = true}}, ExprFactory)
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent

@@ -350,7 +350,9 @@ The `Test` class represents a single unit test.
   when determining the location of a test failure.
 
 - `Test.expr: ExprFactory`\
-  An expression factory.
+  `Test.mexpr: ExprFactory`\
+  An expression factory. `expr` uses only the first return value, while `mexpr`
+  packs all return values into a [`List`](#mlualist).
 
 - `Test:cleanup(fn)`\
   Registers the function `fn` to be called after the test completes. Cleanup

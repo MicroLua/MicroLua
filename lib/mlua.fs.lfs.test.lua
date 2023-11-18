@@ -34,10 +34,10 @@ function set_up(t)
 end
 
 function test_stat(t)
-    local name, type, size = fs:stat('/dir/file1')
-    t:expect(name):label("/dir/file1 name"):eq('file1')
-    t:expect(type):label("/dir/file1 type"):eq(lfs.TYPE_REG)
-    t:expect(size):label("/dir/file1 size"):eq(5)
+    t:expect(t:mexpr(fs):stat('/')):eq{'/', lfs.TYPE_DIR}
+    t:expect(t:mexpr(fs):stat('/dir')):eq{'dir', lfs.TYPE_DIR}
+    t:expect(t:mexpr(fs):stat('/dir/file1')):eq{'file1', lfs.TYPE_REG, 5}
+    t:expect(t:mexpr(fs):stat('/dir/file2')):eq{'file2', lfs.TYPE_REG, 8}
 end
 
 function test_attrs(t)
@@ -163,15 +163,15 @@ function test_dir(t)
         t:expect(t:expr(d):read()):eq('.')
     end
     t:expect(t.expr.read_dir(fs, '/dir')):eq{
-        {'.', lfs.TYPE_DIR, 0},
-        {'..', lfs.TYPE_DIR, 0},
+        {'.', lfs.TYPE_DIR},
+        {'..', lfs.TYPE_DIR},
         {'file1', lfs.TYPE_REG, 5},
         {'file2', lfs.TYPE_REG, 8},
-        {'sub', lfs.TYPE_DIR, 0},
+        {'sub', lfs.TYPE_DIR},
     }
     t:expect(t.expr.read_dir(fs, '/dir/sub')):eq{
-        {'.', lfs.TYPE_DIR, 0},
-        {'..', lfs.TYPE_DIR, 0},
+        {'.', lfs.TYPE_DIR},
+        {'..', lfs.TYPE_DIR},
         {'file', lfs.TYPE_REG, 3},
     }
 end
