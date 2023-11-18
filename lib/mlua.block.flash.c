@@ -10,12 +10,14 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Check against flash limits
+// TODO: Check against boundaries in handler functions
 // TODO: Use pico_flash instead of hardware_flash to handle lockout
 
 extern char const __flash_binary_start;
 
 typedef struct Flash {
-    MLuaBlockDev super;
+    MLuaBlockDev dev;
     char const* start;
 } Flash;
 
@@ -49,7 +51,7 @@ static int flash_dev_sync(MLuaBlockDev* dev) {
 
 static char const* flash_dev_error(int err) { return "unknown error"; }
 
-static int mod_Device(lua_State* ls) {
+static int mod_new(lua_State* ls) {
     uint32_t off = luaL_checkinteger(ls, 1);
     size_t size = luaL_checkinteger(ls, 2);
 
@@ -59,21 +61,21 @@ static int mod_Device(lua_State* ls) {
     if (off >= end) return luaL_error(ls, "zero blocks in range");
 
     Flash* dev = (Flash*)mlua_new_BlockDev(ls, sizeof(Flash), 0);
-    dev->super.read = &flash_dev_read,
-    dev->super.write = &flash_dev_write,
-    dev->super.erase = &flash_dev_erase,
-    dev->super.sync = &flash_dev_sync,
-    dev->super.error = &flash_dev_error,
-    dev->super.size = end - off;
-    dev->super.read_size = 1;
-    dev->super.write_size = FLASH_PAGE_SIZE;
-    dev->super.erase_size = FLASH_SECTOR_SIZE;
+    dev->dev.read = &flash_dev_read,
+    dev->dev.write = &flash_dev_write,
+    dev->dev.erase = &flash_dev_erase,
+    dev->dev.sync = &flash_dev_sync,
+    dev->dev.error = &flash_dev_error,
+    dev->dev.size = end - off;
+    dev->dev.read_size = 1;
+    dev->dev.write_size = FLASH_PAGE_SIZE;
+    dev->dev.erase_size = FLASH_SECTOR_SIZE;
     dev->start = &__flash_binary_start + off;
     return 1;
 }
 
 MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_F(Device, mod_),
+    MLUA_SYM_F(new, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.block.flash) {

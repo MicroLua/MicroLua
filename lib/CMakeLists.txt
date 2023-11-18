@@ -383,6 +383,7 @@ mlua_add_lua_test_modules(mlua_mod_mlua_fs_lfs_test
 target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
     mlua_mod_mlua_block_flash
     mlua_mod_mlua_fs_lfs
+    mlua_mod_mlua_int64
     mlua_mod_mlua_list
     mlua_mod_mlua_util
     mlua_mod_table

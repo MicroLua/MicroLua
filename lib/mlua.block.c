@@ -53,11 +53,21 @@ static int BlockDev_sync(lua_State* ls) {
     return lua_pushboolean(ls, true), 1;
 }
 
+static int BlockDev_size(lua_State* ls) {
+    MLuaBlockDev* dev = mlua_check_BlockDev(ls, 1);
+    lua_pushinteger(ls, dev->size);
+    lua_pushinteger(ls, dev->read_size);
+    lua_pushinteger(ls, dev->write_size);
+    lua_pushinteger(ls, dev->erase_size);
+    return 4;
+}
+
 MLUA_SYMBOLS(BlockDev_syms) = {
     MLUA_SYM_F(read, BlockDev_),
     MLUA_SYM_F(write, BlockDev_),
     MLUA_SYM_F(erase, BlockDev_),
     MLUA_SYM_F(sync, BlockDev_),
+    MLUA_SYM_F(size, BlockDev_),
 };
 
 MLUA_SYMBOLS(module_syms) = {
