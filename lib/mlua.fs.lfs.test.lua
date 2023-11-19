@@ -69,7 +69,11 @@ end
 function test_block_accounting(t)
     t:expect(t:expr(fs):gc()):eq(true)
     t:expect(t:expr(fs):size()):gt(0)
-    -- TODO: Traverse and check that block count matches
+    local bc = 0
+    t:expect(t:expr(fs):traverse(function(block) bc = bc + 1 end)):eq(true)
+    -- size() is implemented in terms of traverse(), but the latter includes
+    -- some blocks that the former doesn't. Hence the ">=".
+    t:expect(bc):label("block count"):gte(fs:size())
 end
 
 function test_remove(t)

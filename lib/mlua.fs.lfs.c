@@ -222,6 +222,20 @@ static int Filesystem_gc(lua_State* ls) {
     return push_lfs_result_bool(ls, fs, lfs_fs_gc(&fs->lfs));
 }
 
+static int fs_traverse(void* data, lfs_block_t block) {
+    lua_State* ls = data;
+    lua_pushvalue(ls, 2);
+    lua_pushinteger(ls, block);
+    lua_call(ls, 1, 1);
+    return lua_tointeger(ls, -1);
+}
+
+static int Filesystem_traverse(lua_State* ls) {
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    return push_lfs_result_bool(ls, fs,
+        lfs_fs_traverse(&fs->lfs, &fs_traverse, ls));
+}
+
 #ifndef LFS_READONLY
 
 static lfs_size_t check_blocks(lua_State* ls, Filesystem* fs, int arg) {
@@ -317,8 +331,8 @@ MLUA_SYMBOLS(Filesystem_syms) = {
     MLUA_SYM_F(getattr, Filesystem_),
     MLUA_SYM_F(statvfs, Filesystem_),
     MLUA_SYM_F(size, Filesystem_),
-    // MLUA_SYM_F(traverse, Filesystem_),
     MLUA_SYM_F(gc, Filesystem_),
+    MLUA_SYM_F(traverse, Filesystem_),
 #ifndef LFS_READONLY
     MLUA_SYM_F(format, Filesystem_),
     MLUA_SYM_F(grow, Filesystem_),
