@@ -111,6 +111,172 @@ This module provides the core event handling and dispatch functionality.
   Wait for events to fire or the given time to pass. This function is used by
   the thread scheduler.
 
+## `mlua.fs.lfs`
+
+**Module:** [`mlua.fs.lfs`](../lib/mlua.fs.lfs.c),
+build target: `mlua_mod_mlua_fs_lfs`,
+tests: [`mlua.fs.lfs.test`](../lib/mlua.fs.lfs.test.lua)
+
+This module provides bindings for the
+[littlefs](https://github.com/littlefs-project/littlefs) library. It allows
+creating and mounting filesystems on [block devices](#mluablock) and operating
+on their content. The following compile definitions affect how the bindings are
+exposed:
+
+- `LFS_READONLY`: When defined, only read-only constants and functions are
+  defined (those not tagged with *[write]* below). The others are replaced by
+  the value `false`.
+- `LFS_MIGRATE`: When defined, provide the `Filesystem:migrate()` function.
+
+Functions that fail return `fail`, an error message and an error code from
+[`mlua.errors`](#mluaerrors).
+
+- `Filesystem(device) -> Filesystem`\
+  Create a filesystem object operating on the given block device. This doesn't
+  format or mount the filesystem; it only binds a filesystem to a device.
+
+- `VERSION: integer`\
+  `DISK_VERSION: integer`\
+  The library and disk format versions.
+
+- `NAME_MAX: integer`\
+  `FILE_MAX: integer`\
+  `ATTR_MAX: integer`\
+  The maximum size of file names, file content and custom attributes.
+
+- `TYPE_REG: integer`\
+  `TYPE_DIR: integer`\
+  File types: regular file and directory.
+
+- `O_RDONLY: integer`\
+  `O_WRONLY: integer` *[write]*\
+  `O_RDWR: integer` *[write]*\
+  `O_CREAT: integer` *[write]*\
+  `O_EXCL: integer` *[write]*\
+  `O_TRUNC: integer` *[write]*\
+  `O_APPEND: integer` *[write]*\
+  Flags that can be passed to `Filesystem:open()`.
+
+- `SEEK_SET: integer`\
+  `SEEK_CUR: integer`\
+  `SEEK_END: integer`\
+  Values that can be passed to `File:seek()`.
+
+- `Filesystem:format(size) -> true | (fail, msg, err)` *[write]*\
+  Format the underlying block device for a filesystem of the given size. If
+  `size` is missing, the filesystem fills the whole block device. The filesystem
+  must not be mounted.
+
+- `Filesystem:migrate(size) -> true | (fail, msg, err)` *[write]*\
+  Attempt to migrate a previous version of littlefs. If `size` is missing, the
+  filesystem fills the whole block device. The filesystem must not be mounted.
+  Only defined if `LFS_MIGRATE` is defined.
+
+- `Filesystem:mount() -> true | (fail, msg, err)`\
+  Mount an existing filesystem.
+
+- `Filesystem:unmount() -> true | (fail, msg, err)`\
+  `Filesystem:__close() -> true | (fail, msg, err)`\
+  `Filesystem:__gc() -> true | (fail, msg, err)`\
+  Unmount the filesystem.
+
+- `Filesystem:grow(size) -> true | (fail, msg, err)` *[write]*\
+  Grow a mounted filesystem to the given size. If `size` is missing, the
+  filesystem is grown to fill the whole block device.
+
+- `Filesystem:statvfs() -> (6 * integer) | (fail, msg, err)`\
+  Return information about the filesystem, as described by `struct lfs_fsinfo`:
+  the on-disk version (`disk_version`), the size of a logical block
+  (`block_size`), the number of logical blocks (`block_count`), and the limits
+  on file names (`name_max`), file content (`file_max`) and custom attributes
+  (`attr_max`).
+
+- `Filesystem:size() -> integer | (fail, msg, err)`\
+  Return the number of allocated blocks in the filesystem.
+
+- `Filesystem:gc() -> true | (fail, msg, err)`\
+  Attempt to proactively find free blocks.
+
+- `Filesystem:traverse(callback) -> true | (fail, msg, err)`\
+  Call `callback` with each block address that is currently in use.
+
+- `Filesystem:mkconsistent() -> true | (fail, msg, err)` *[write]*\
+  Attempt to make the filesystem consistent and ready for writing.
+
+- `Filesystem:open(path, flags) -> File | (fail, msg, err)`\
+  Open a file. `flags` is a bitwise-or of `O_*` values.
+
+- `Filesystem:opendir(path) -> Dir | (fail, msg, err)`\
+  Open a directory.
+
+- `Filesystem:stat() -> (name, type, [size]) | (fail, msg, err)`\
+  Return information about a file. `size` is only returned for regular files
+  (i.e. when `type == TYPE_REG`).
+
+- `Filesystem:getattr(path, attr) -> string | (fail, msg, err)`\
+  `Filesystem:setattr(path, attr, value) -> true | (fail, msg, err)` *[write]*\
+  `Filesystem:removeattr(path, attr) -> true | (fail, msg, err)` *[write]*\
+  Get, set or remove a custom attribute from a file.
+
+- `Filesystem:mkdir(path) -> true | (fail, msg, err)` *[write]*\
+  Create a directory.
+
+- `Filesystem:remove(path) -> true | (fail, msg, err)` *[write]*\
+  Remove a file.
+
+- `Filesystem:rename(old_path, new_path) -> true | (fail, msg, err)` *[write]*\
+  Rename a file.
+
+- `File:close() -> true | (fail, msg, err)`\
+  `File:__close() -> true | (fail, msg, err)`\
+  `File:__gc() -> true | (fail, msg, err)`\
+  Close the file.
+
+- `File:sync() -> true | (fail, msg, err)`\
+  Synchronize the file to storage.
+
+- `File:read(size) -> string | (fail, msg, err)`\
+  Read data from the file.
+
+- `File:write(data) -> integer | (fail, msg, err)` *[write]*\
+  Write data to the file. Returns the number of bytes written.
+
+- `File:truncate(size) -> true | (fail, msg, err)` *[write]*\
+  Truncate the file at the given size.
+
+- `File:seek(offset, [whence]) -> integer | (fail, msg, err)`\
+  Change the current position in the file. If `whence` is missing, it is set to
+  `SEEK_SET`. Returns the new position from the start of the file.
+
+- `File:rewind() -> integer | (fail, msg, err)`\
+  Change the current position to the start of the file (equivalent to
+  `seek(0, SEEK_SET)`). Returns the new position from the start of the file (0).
+
+- `File:tell() -> integer | (fail, msg, err)`\
+  Return the current position in the file (equivalent to `seek(0, SEEK_CUR)`).
+
+- `File:size() -> integer | (fail, msg, err)`\
+  Return the size of the file.
+
+- `Dir:close() -> true | (fail, msg, err)`\
+  `Dir:__close() -> true | (fail, msg, err)`\
+  `Dir:__gc() -> true | (fail, msg, err)`\
+  Close the directory.
+
+- `Dir:read() -> (name, type, [size]) | (fail, msg, err)`\
+  Read an entry in the directory. `size` is only returned for regular files
+  (i.e. when `type == TYPE_REG`).
+
+- `Dir:seek(offset) -> true | (fail, msg, err)`\
+  Change the current position in the directory. `offset` must be a value
+  previously returned by `Dir:tell()`.
+
+- `Dir:rewind() -> true | (fail, msg, err)`\
+  Change the current position to the start of the directory.
+
+- `Dir:tell() -> true | (fail, msg, err)`\
+  Return the current position in the directory.
+
 ## `mlua.int64`
 
 **Module:** [`mlua.int64`](../lib/mlua.int64.c),
