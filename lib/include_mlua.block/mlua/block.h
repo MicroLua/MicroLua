@@ -13,14 +13,6 @@
 extern "C" {
 #endif
 
-// Error codes.
-enum MLuaErrno {
-    MLUA_EINVAL = -1000,
-};
-
-// Return a string describing a block device error code.
-char const* mlua_block_dev_error(int err);
-
 // A block device.
 typedef struct MLuaBlockDev MLuaBlockDev;
 struct MLuaBlockDev {

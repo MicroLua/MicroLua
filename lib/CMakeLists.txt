@@ -333,6 +333,7 @@ mlua_add_c_module(mlua_mod_mlua_block mlua.block.c)
 target_include_directories(mlua_mod_mlua_block_headers INTERFACE
     include_mlua.block)
 target_link_libraries(mlua_mod_mlua_block INTERFACE
+    mlua_mod_mlua_errors
     mlua_mod_mlua_int64
 )
 
@@ -341,6 +342,7 @@ target_link_libraries(mlua_mod_mlua_block_flash INTERFACE
     hardware_flash
     hardware_sync
     mlua_mod_mlua_block
+    mlua_mod_mlua_errors
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
@@ -385,6 +387,7 @@ target_sources(mlua_littlefs INTERFACE
 mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
 target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
     mlua_mod_mlua_block
+    mlua_mod_mlua_errors
     mlua_littlefs
 )
 
@@ -392,6 +395,7 @@ mlua_add_lua_test_modules(mlua_mod_mlua_fs_lfs_test
     mlua.fs.lfs.test.lua)
 target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
     mlua_mod_mlua_block_flash
+    mlua_mod_mlua_errors
     mlua_mod_mlua_fs_lfs
     mlua_mod_mlua_int64
     mlua_mod_mlua_list

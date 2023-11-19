@@ -7,6 +7,7 @@
 #include "hardware/sync.h"
 
 #include "mlua/block.h"
+#include "mlua/errors.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
 

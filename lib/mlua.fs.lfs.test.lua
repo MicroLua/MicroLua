@@ -4,6 +4,7 @@
 _ENV = mlua.Module(...)
 
 local flash = require 'mlua.block.flash'
+local errors = require 'mlua.errors'
 local lfs = require 'mlua.fs.lfs'
 local list = require 'mlua.list'
 local util = require 'mlua.util'
@@ -38,6 +39,8 @@ function test_stat(t)
     t:expect(t:mexpr(fs):stat('/dir')):eq{'dir', lfs.TYPE_DIR}
     t:expect(t:mexpr(fs):stat('/dir/file1')):eq{'file1', lfs.TYPE_REG, 5}
     t:expect(t:mexpr(fs):stat('/dir/file2')):eq{'file2', lfs.TYPE_REG, 8}
+    t:expect(t:mexpr(fs):stat('/not-exists'))
+        :eq{nil, "no such file or directory", errors.ENOENT}
 end
 
 function test_attrs(t)

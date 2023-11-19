@@ -8,6 +8,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/block.h"
+#include "mlua/errors.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
@@ -40,35 +41,32 @@ static inline MLuaBlockDev* fs_dev(Filesystem* fs) {
     return fs->config.context;
 }
 
-static char const* error_msg(int err) {
+static int mlua_err(int err) {
     switch (err) {
-    case LFS_ERR_OK: return "no error";
-    case LFS_ERR_IO: return "input / output error";
-    case LFS_ERR_CORRUPT: return "corrupted";
-    case LFS_ERR_NOENT: return "no such file or directory";
-    case LFS_ERR_EXIST: return "file exists";
-    case LFS_ERR_NOTDIR: return "not a directory";
-    case LFS_ERR_ISDIR: return "is a directory";
-    case LFS_ERR_NOTEMPTY: return "directory not empty";
-    case LFS_ERR_BADF: return "bad file descriptor";
-    case LFS_ERR_FBIG: return "file too large";
-    case LFS_ERR_INVAL: return "invalid argument";
-    case LFS_ERR_NOSPC: return "no space left on device";
-    case LFS_ERR_NOMEM: return "no memory available";
-    case LFS_ERR_NOATTR: return "no data / attr available";
-    case LFS_ERR_NAMETOOLONG: return "filename too long";
-    default: return mlua_block_dev_error(err);
+    case LFS_ERR_IO: return MLUA_EIO;
+    case LFS_ERR_CORRUPT: return MLUA_ECORRUPT;
+    case LFS_ERR_NOENT: return MLUA_ENOENT;
+    case LFS_ERR_EXIST: return MLUA_EEXIST;
+    case LFS_ERR_NOTDIR: return MLUA_ENOTDIR;
+    case LFS_ERR_ISDIR: return MLUA_EISDIR;
+    case LFS_ERR_NOTEMPTY: return MLUA_ENOTEMPTY;
+    case LFS_ERR_BADF: return MLUA_EBADF;
+    case LFS_ERR_FBIG: return MLUA_EFBIG;
+    case LFS_ERR_INVAL: return MLUA_EINVAL;
+    case LFS_ERR_NOSPC: return MLUA_ENOSPC;
+    case LFS_ERR_NOMEM: return MLUA_ENOMEM;
+    case LFS_ERR_NOATTR: return MLUA_ENOATTR;
+    case LFS_ERR_NAMETOOLONG: return MLUA_ENAMETOOLONG;
+    default: return err;
     }
 }
 
-static int push_error(lua_State* ls, lua_Integer err) {
-    mlua_push_fail(ls, error_msg(err));
-    lua_pushinteger(ls, err);
-    return 3;
+static int push_error(lua_State* ls, int err) {
+    return mlua_err_push(ls, mlua_err(err));
 }
 
 static int push_lfs_result_bool(lua_State* ls, int res) {
-    if (res != LFS_ERR_OK) return push_error(ls, res);
+    if (res < 0) return push_error(ls, res);
     return lua_pushboolean(ls, true), 1;
 }
 
@@ -584,21 +582,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NAME_MAX, integer, LFS_NAME_MAX),
     MLUA_SYM_V(FILE_MAX, integer, LFS_FILE_MAX),
     MLUA_SYM_V(ATTR_MAX, integer, LFS_ATTR_MAX),
-    MLUA_SYM_V(ERR_OK, integer, LFS_ERR_OK),
-    MLUA_SYM_V(ERR_IO, integer, LFS_ERR_IO),
-    MLUA_SYM_V(ERR_CORRUPT, integer, LFS_ERR_CORRUPT),
-    MLUA_SYM_V(ERR_NOENT, integer, LFS_ERR_NOENT),
-    MLUA_SYM_V(ERR_EXIST, integer, LFS_ERR_EXIST),
-    MLUA_SYM_V(ERR_NOTDIR, integer, LFS_ERR_NOTDIR),
-    MLUA_SYM_V(ERR_ISDIR, integer, LFS_ERR_ISDIR),
-    MLUA_SYM_V(ERR_NOTEMPTY, integer, LFS_ERR_NOTEMPTY),
-    MLUA_SYM_V(ERR_BADF, integer, LFS_ERR_BADF),
-    MLUA_SYM_V(ERR_FBIG, integer, LFS_ERR_FBIG),
-    MLUA_SYM_V(ERR_INVAL, integer, LFS_ERR_INVAL),
-    MLUA_SYM_V(ERR_NOSPC, integer, LFS_ERR_NOSPC),
-    MLUA_SYM_V(ERR_NOMEM, integer, LFS_ERR_NOMEM),
-    MLUA_SYM_V(ERR_NOATTR, integer, LFS_ERR_NOATTR),
-    MLUA_SYM_V(ERR_NAMETOOLONG, integer, LFS_ERR_NAMETOOLONG),
     MLUA_SYM_V(TYPE_REG, integer, LFS_TYPE_REG),
     MLUA_SYM_V(TYPE_DIR, integer, LFS_TYPE_DIR),
     MLUA_SYM_V(O_RDONLY, integer, LFS_O_RDONLY),
