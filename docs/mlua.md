@@ -26,6 +26,46 @@ simplifies [module definitions](core.md#lua-modules).
 - `Module()`\
   Create a new empty module.
 
+## `mlua.block`
+
+**Module:** [`mlua.block`](../lib/mlua.block.c),
+build target: `mlua_mod_mlua_block`
+
+This module provides an abstraction for defining block devices in C
+(`mlua.block.Dev`). Functions that fail return `fail`, an error message and an
+error code from [`mlua.errors`](#mluaerrors).
+
+- `Dev:read(offset, size) -> string | (fail, msg, err)`\
+  Read from the block device. `offset` and `size` must be multiples of
+  `read_size`.
+
+- `Dev:write(offset, data) -> true | (fail, msg, err)`\
+  Write to the block device. `offset` and `size` must be multiples of
+  `write_size`.
+
+- `Dev:erase(offset, size) -> true | (fail, msg, err)`\
+  Erase a range of the block device. `offset` and `size` must be multiples of
+  `erase_size`.
+
+- `Dev:sync() -> true | (fail, msg, err)`\
+  Flush all writes to the block device.
+
+- `Dev:size() -> (integer, integer, integer, integer)`\
+  Return the size of the block device in bytes, as well as `read_size`,
+  `write_size` and `erase_size`.
+
+### `mlua.block.flash`
+
+**Module:** [`mlua.block.flash`](../lib/mlua.block.flash.c),
+build target: `mlua_mod_mlua_block_flash`
+
+This module provides a block device that uses the QSPI flash for storage.
+
+- `new(offset, size) -> Dev`\
+  Create a new flash block device starting at `offset` in flash memory. `offset`
+  is rounded up to the next multiple of `FLASH_SECTOR_SIZE`. `size` is adjusted so that `offset + size` is rounded down to the previous multiple of
+  `FLASH_SECTOR_SIZE`.
+
 ## `mlua.config`
 
 **Module:** `mlua.config` (auto-generated),
