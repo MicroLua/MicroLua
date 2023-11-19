@@ -111,10 +111,10 @@ static inline Filesystem* to_Filesystem(lua_State* ls, int arg) {
     return lua_touserdata(ls, arg);
 }
 
-static uint8_t check_attr_type(lua_State* ls, int arg) {
-    lua_Unsigned type = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, type <= 0xff, arg, "invalid attribute type");
-    return type;
+static uint8_t check_attr(lua_State* ls, int arg) {
+    lua_Unsigned attr = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, attr <= 0xff, arg, "invalid attribute number type");
+    return attr;
 }
 
 static int Filesystem_mount(lua_State* ls) {
@@ -147,6 +147,7 @@ static int Filesystem_open(lua_State* ls) {
     lua_setiuservalue(ls, -2, 1);
     memset(f, 0, sizeof(File));
     f->config.buffer = f->buffer;
+    // TODO: Add support for getting and setting custom attributes
 
     int res = lfs_file_opencfg(&fs->lfs, &f->file, path, flags, &f->config);
     if (res < 0) return push_error(ls, res);
@@ -183,13 +184,13 @@ static int Filesystem_stat(lua_State* ls) {
 static int Filesystem_getattr(lua_State* ls) {
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
-    uint8_t type = check_attr_type(ls, 3);
+    uint8_t attr = check_attr(ls, 3);
     luaL_Buffer buf;
     luaL_buffinit(ls, &buf);
     lfs_size_t size = LUAL_BUFFERSIZE;
     for (;;) {
         char* dst = luaL_prepbuffsize(&buf, size);
-        lfs_ssize_t res = lfs_getattr(&fs->lfs, path, type, dst, size);
+        lfs_ssize_t res = lfs_getattr(&fs->lfs, path, attr, dst, size);
         if (res < 0) return push_error(ls, res);
         if ((lfs_size_t)res <= size) return luaL_pushresultsize(&buf, res), 1;
         size = res;
@@ -286,18 +287,18 @@ static int Filesystem_rename(lua_State* ls) {
 static int Filesystem_setattr(lua_State* ls) {
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
-    uint8_t type = check_attr_type(ls, 3);
+    uint8_t attr = check_attr(ls, 3);
     size_t size;
-    void const* attr = luaL_checklstring(ls, 4, &size);
+    void const* value = luaL_checklstring(ls, 4, &size);
     return push_lfs_result_bool(ls,
-        lfs_setattr(&fs->lfs, path, type, attr, size));
+        lfs_setattr(&fs->lfs, path, attr, value, size));
 }
 
 static int Filesystem_removeattr(lua_State* ls) {
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
-    uint8_t type = check_attr_type(ls, 3);
-    return push_lfs_result_bool(ls, lfs_removeattr(&fs->lfs, path, type));
+    uint8_t attr = check_attr(ls, 3);
+    return push_lfs_result_bool(ls, lfs_removeattr(&fs->lfs, path, attr));
 }
 
 static int Filesystem_mkconsistent(lua_State* ls) {
@@ -407,7 +408,7 @@ static int File_seek(lua_State* ls) {
     Filesystem* fs = NULL;
     File* f = check_File(ls, 1, &fs);
     lfs_soff_t off = luaL_checkinteger(ls, 2);
-    int whence = luaL_checkinteger(ls, 3);
+    int whence = luaL_optinteger(ls, 3, LFS_SEEK_SET);
     return push_lfs_result_int(ls,
         lfs_file_seek(&fs->lfs, &f->file, off, whence));
 }
