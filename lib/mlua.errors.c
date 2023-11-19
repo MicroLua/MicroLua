@@ -6,19 +6,19 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-#define MLUA_ERR(code, msg) \
-    static_assert(MLUA_ ## code < 0, "MLUA_" #code " not negative"); \
-    static_assert(MLUA_ ## code > MLUA_ERR_MARKER, \
-                  "MLUA_" #code " is smaller than the marker"); \
-    static_assert((MLUA_ ## code & MLUA_ERR_MASK) == MLUA_ERR_MARKER, \
-                  "MLUA_" #code " has no marker");
+#define MLUA_ERR(name, value, msg) \
+    static_assert(MLUA_ ## name < 0, "MLUA_" #name " not negative"); \
+    static_assert(MLUA_ ## name > MLUA_ERR_MARKER, \
+                  "MLUA_" #name " is smaller than the marker"); \
+    static_assert((MLUA_ ## name & MLUA_ERR_MASK) == MLUA_ERR_MARKER, \
+                  "MLUA_" #name " has no marker");
 MLUA_ERRORS
 #undef MLUA_ERR
 
 char const* mlua_err_msg(int err) {
     switch (err) {
     case MLUA_EOK: return "no error";
-#define MLUA_ERR(code, msg) case MLUA_ ## code: return msg;
+#define MLUA_ERR(name, value, msg) case MLUA_ ## name: return msg;
 MLUA_ERRORS
 #undef MLUA_ERR
     default: return "unknown error";

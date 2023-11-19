@@ -97,11 +97,6 @@ This module provides a common set of error codes, for use by other modules. Note
 that although the error codes look very much like `errno` values, they have
 nothing to do with `errno` and have different numeric values.
 
-> [!IMPORTANT]
-> The numeric values of the error codes are **not** part of the API and can
-> change at any time. Always compare error codes to the symbols in this module
-> in error handling code.
-
 - `message(code) -> string`\
   Return a string describing the given error code.
 

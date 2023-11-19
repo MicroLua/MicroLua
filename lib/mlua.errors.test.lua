@@ -9,6 +9,7 @@ function test_codes(t)
     t:expect(errors.EOK):eq(0)
     t:expect(errors.EINVAL):lt(0)
     t:expect(errors.ENOENT):lt(0)
+    t:expect(errors.EINVAL):neq(errors.ENOENT)
 end
 
 function test_message(t)
