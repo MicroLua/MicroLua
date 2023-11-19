@@ -7,6 +7,13 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+char const* mlua_block_dev_error(int err) {
+    switch (err) {
+    case MLUA_EINVAL: return "invalid argument";
+    default: return "unknown error";
+    }
+}
+
 char const mlua_BlockDev_name[] = "mlua.block.Dev";
 
 MLuaBlockDev* mlua_new_BlockDev(lua_State* ls, size_t size, int nuv) {
@@ -22,8 +29,8 @@ static int BlockDev_read(lua_State* ls) {
     size_t size = luaL_checkinteger(ls, 3);
     luaL_Buffer buf;
     void* dst = luaL_buffinitsize(ls, &buf, size);
-    int res = dev->read(dev, off, dst, size);
-    if (res < 0) return mlua_push_fail(ls, dev->error(res));
+    int err = dev->read(dev, off, dst, size);
+    if (err < 0) return mlua_push_fail(ls, mlua_block_dev_error(err));
     return luaL_pushresultsize(&buf, size), 1;
 }
 
@@ -32,8 +39,8 @@ static int BlockDev_write(lua_State* ls) {
     uint64_t off = mlua_check_int64(ls, 2);
     size_t len;
     void const* src = luaL_checklstring(ls, 3, &len);
-    int res = dev->write(dev, off, src, len);
-    if (res < 0) return mlua_push_fail(ls, dev->error(res));
+    int err = dev->write(dev, off, src, len);
+    if (err < 0) return mlua_push_fail(ls, mlua_block_dev_error(err));
     return lua_pushboolean(ls, true), 1;
 }
 
@@ -41,15 +48,15 @@ static int BlockDev_erase(lua_State* ls) {
     MLuaBlockDev* dev = mlua_check_BlockDev(ls, 1);
     uint64_t off = mlua_check_int64(ls, 2);
     size_t size = luaL_checkinteger(ls, 3);
-    int res = dev->erase(dev, off, size);
-    if (res < 0) return mlua_push_fail(ls, dev->error(res));
+    int err = dev->erase(dev, off, size);
+    if (err < 0) return mlua_push_fail(ls, mlua_block_dev_error(err));
     return lua_pushboolean(ls, true), 1;
 }
 
 static int BlockDev_sync(lua_State* ls) {
     MLuaBlockDev* dev = mlua_check_BlockDev(ls, 1);
-    int res = dev->sync(dev);
-    if (res < 0) return mlua_push_fail(ls, dev->error(res));
+    int err = dev->sync(dev);
+    if (err < 0) return mlua_push_fail(ls, mlua_block_dev_error(err));
     return lua_pushboolean(ls, true), 1;
 }
 
