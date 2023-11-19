@@ -347,6 +347,16 @@ target_link_libraries(mlua_mod_mlua_block_flash INTERFACE
 
 mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
 
+mlua_add_c_module(mlua_mod_mlua_errors mlua.errors.c)
+target_include_directories(mlua_mod_mlua_errors_headers INTERFACE
+    include_mlua.errors)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_errors_test
+    mlua.errors.test.lua)
+target_link_libraries(mlua_mod_mlua_errors_test INTERFACE
+    mlua_mod_mlua_errors
+)
+
 mlua_add_c_module(mlua_mod_mlua_event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
@@ -356,16 +366,6 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     mlua_mod_mlua_int64
     pico_platform
     pico_time
-)
-
-mlua_add_c_module(mlua_mod_mlua_errors mlua.errors.c)
-target_include_directories(mlua_mod_mlua_errors_headers INTERFACE
-    include_mlua.errors)
-
-mlua_add_lua_test_modules(mlua_mod_mlua_errors_test
-    mlua.errors.test.lua)
-target_link_libraries(mlua_mod_mlua_errors_test INTERFACE
-    mlua_mod_mlua_errors
 )
 
 pico_add_library(mlua_littlefs)

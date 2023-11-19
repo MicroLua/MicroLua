@@ -47,6 +47,24 @@ mlua_target_config(example_target
 )
 ```
 
+## `mlua.errors`
+
+**Module:** [`mlua.errors`](../lib/mlua.errors.c),
+build target: `mlua_mod_mlua_errors`,
+tests: [`mlua.errors.test`](../lib/mlua.errors.test.lua)
+
+This module provides a common set of error codes, for use by other modules. Note
+that although the error codes look very much like `errno` values, they have
+nothing to do with `errno` and have different numeric values.
+
+> [!IMPORTANT]
+> The numeric values of the error codes are **not** part of the API and can
+> change at any time. Always compare error codes to the symbols in this module
+> in error handling code.
+
+- `message(code) -> string`\
+  Return a string describing the given error code.
+
 ## `mlua.event`
 
 **Module:** [`mlua.event`](../lib/mlua.event.c),
