@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.Module(...)
+_ENV = mlua.module(...)
 
 local flash = require 'hardware.flash'
 local addressmap = require 'hardware.regs.addressmap'

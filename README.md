@@ -149,10 +149,10 @@ end
 ## Documentation
 
 - [Core functionality](docs/core.md) of MicroLua.
+- [`mlua.*`](docs/mlua.md): MicroLua libraries.
 - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
   the Pico SDK.
 - [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the Pico SDK.
-- [`mlua.*`](docs/mlua.md): MicroLua libraries.
 
 ## Contributing
 
