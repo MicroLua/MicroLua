@@ -135,6 +135,11 @@ static int Filesystem_unmount(lua_State* ls) {
     return lua_pushboolean(ls, true), 1;
 }
 
+static int Filesystem_is_mounted(lua_State* ls) {
+    Filesystem* fs = check_Filesystem(ls, 1);
+    return lua_pushboolean(ls, fs->mounted), 1;
+}
+
 static int Filesystem_open(lua_State* ls) {
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
@@ -323,6 +328,7 @@ static int Filesystem_migrate(lua_State* ls) {
 MLUA_SYMBOLS(Filesystem_syms) = {
     MLUA_SYM_F(mount, Filesystem_),
     MLUA_SYM_F(unmount, Filesystem_),
+    MLUA_SYM_F(is_mounted, Filesystem_),
     MLUA_SYM_F(open, Filesystem_),
     MLUA_SYM_F(opendir, Filesystem_),
     MLUA_SYM_F(stat, Filesystem_),

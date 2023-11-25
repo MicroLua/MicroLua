@@ -180,6 +180,9 @@ Functions that fail return `fail`, an error message and an error code from
   `Filesystem:__gc() -> true | (fail, msg, err)`\
   Unmount the filesystem.
 
+- `Filesystem:is_mounted() -> bool`\
+  Return `true` iff the filesystem is mounted.
+
 - `Filesystem:grow(size) -> true | (fail, msg, err)` *[write]*\
   Grow a mounted filesystem to the given size. If `size` is missing, the
   filesystem is grown to fill the whole block device.
