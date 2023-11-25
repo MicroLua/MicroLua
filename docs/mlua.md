@@ -131,10 +131,6 @@ exposed:
 Functions that fail return `fail`, an error message and an error code from
 [`mlua.errors`](#mluaerrors).
 
-- `Filesystem(device) -> Filesystem`\
-  Create a filesystem object operating on the given block device. This doesn't
-  format or mount the filesystem; it only binds a filesystem to a device.
-
 - `VERSION: integer`\
   `DISK_VERSION: integer`\
   The library and disk format versions.
@@ -161,6 +157,10 @@ Functions that fail return `fail`, an error message and an error code from
   `SEEK_CUR: integer`\
   `SEEK_END: integer`\
   Values that can be passed to `File:seek()`.
+
+- `new(device) -> Filesystem`\
+  Create a filesystem object operating on the given block device. This doesn't
+  format or mount the filesystem; it only binds a filesystem to a device.
 
 - `Filesystem:format(size) -> true | (fail, msg, err)` *[write]*\
   Format the underlying block device for a filesystem of the given size. If

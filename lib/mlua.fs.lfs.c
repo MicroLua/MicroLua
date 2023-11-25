@@ -556,7 +556,7 @@ static struct lfs_config config_base = {
     .lookahead_size = LOOKAHEAD_SIZE,
 };
 
-static int mod_Filesystem(lua_State* ls) {
+static int mod_new(lua_State* ls) {
     MLuaBlockDev* dev = mlua_check_BlockDev(ls, 1);
     Filesystem* fs = lua_newuserdatauv(
         ls, sizeof(Filesystem) + 2 * dev->write_size, 1);
@@ -605,7 +605,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(SEEK_CUR, integer, LFS_SEEK_CUR),
     MLUA_SYM_V(SEEK_END, integer, LFS_SEEK_END),
 
-    MLUA_SYM_F(Filesystem, mod_),
+    MLUA_SYM_F(new, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.fs.lfs) {

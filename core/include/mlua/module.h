@@ -227,7 +227,7 @@ typedef struct MLuaModule {
 
 // Define a function to open a module with the given name, and register it.
 #define MLUA_OPEN_MODULE(n) \
-bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)); \
+bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)) \
 static int mlua_open_module(lua_State* ls); \
 static MLuaModule const module \
     __attribute__((__section__("mlua_module_registry"), __used__)) \
@@ -236,7 +236,7 @@ static int mlua_open_module(lua_State* ls)
 
 // Register a module open function.
 #define MLUA_REGISTER_MODULE(n, fn) \
-bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)); \
+bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)) \
 int fn(lua_State* ls); \
 static MLuaModule const module \
     __attribute__((__section__("mlua_module_registry"), __used__)) \

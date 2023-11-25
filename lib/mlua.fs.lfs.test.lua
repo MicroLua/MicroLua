@@ -23,7 +23,7 @@ function set_up(t)
     local off = pico.flash_binary_end - pico.flash_binary_start
     dev = flash.new(off, pico.FLASH_SIZE_BYTES - off)
     local size = dev:size()
-    fs = lfs.Filesystem(dev)
+    fs = lfs.new(dev)
     t:assert(fs:format(size // 2))  -- Half-size to allow growing
     t:assert(fs:mount())
     t:cleanup(function() fs:unmount() end)
