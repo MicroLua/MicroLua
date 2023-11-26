@@ -409,6 +409,24 @@ target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_mlua_fs_loader mlua.fs.loader.c)
+target_link_libraries(mlua_mod_mlua_fs_loader INTERFACE
+    hardware_flash
+    mlua_mod_mlua_block_flash
+    mlua_mod_mlua_errors
+    mlua_mod_mlua_fs_headers
+    pico_binary_info
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_fs_loader_test
+    mlua.fs.loader.test.lua)
+target_link_libraries(mlua_mod_mlua_fs_loader_test INTERFACE
+    mlua_mod_mlua_fs
+    mlua_mod_mlua_fs_loader
+    mlua_mod_package
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
     include_mlua.int64)
@@ -730,8 +748,7 @@ target_link_libraries(mlua_mod_pico_unique_id_test INTERFACE
 )
 
 set(MLUA_TEST_TARGET_FILTER "${MLUA_TEST_TARGET_FILTER}" CACHE STRING
-    "Test target filter regexp"
-)
+    "Test target filter regexp")
 get_property(TESTS GLOBAL PROPERTY mlua_test_targets)
 if(NOT "${MLUA_TEST_TARGET_FILTER}" STREQUAL "")
     list(FILTER TESTS INCLUDE REGEX "${MLUA_TEST_TARGET_FILTER}")
@@ -740,6 +757,10 @@ endif()
 add_executable(mlua_tests)
 mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
+    MLUA_FS_LOADER_FILESYSTEM=mlua.fs.lfs
+    MLUA_FS_LOADER_FLAT=1
+    MLUA_FS_LOADER_FORMAT=1
+    MLUA_FS_LOADER_SIZE=\(100<<10\)
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0
     PICO_MAX_SHARED_IRQ_HANDLERS=16
@@ -754,6 +775,7 @@ mlua_target_config(mlua_tests
     b:string=\"test\"
 )
 target_link_libraries(mlua_tests PRIVATE
+    mlua_mod_mlua_fs_lfs
     mlua_mod_mlua_stdio
     mlua_mod_mlua_testing
     mlua_mod_mlua_thread
