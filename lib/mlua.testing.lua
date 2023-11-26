@@ -388,12 +388,20 @@ function Test:_run(fn)
     return keep
 end
 
+local tb_exclude = {
+    "\n\tmlua%.testing:[^\n]*",
+    "\n\t%[C%]: in function 'xpcall'[^\n]*",
+    "\n\t%(%.%.%.tail calls%.%.%.%)[^\n]*"
+}
+
 function Test:_pcall(fn, ...)
     return xpcall(fn, function(err)
         if err ~= err_terminate then
             self._error = true
             self:enable_output()
-            return self:_log(ERROR, "%s", debug.traceback(err, 2))
+            local tb = debug.traceback(err, 2)
+            for _, pat in ipairs(tb_exclude) do tb = tb:gsub(pat, '') end
+            return self:_log(ERROR, "%s", tb)
         end
         return err
     end, ...)
