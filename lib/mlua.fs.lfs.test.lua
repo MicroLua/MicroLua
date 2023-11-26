@@ -22,7 +22,7 @@ end
 function set_up(t)
     -- Create a filesystem in the unused part of the flash and mount it.
     local off = pico.flash_binary_end - pico.flash_binary_start
-    dev = flash.new(off, pico.FLASH_SIZE_BYTES - off)
+    dev = flash.new(off, 100 << 10)
     local size = dev:size()
     dfs = lfs.new(dev)
     t:assert(dfs:format(size // 2))  -- Half-size to allow growing
