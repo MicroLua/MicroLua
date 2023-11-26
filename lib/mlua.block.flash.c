@@ -6,6 +6,8 @@
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 
+#include "lua.h"
+#include "lauxlib.h"
 #include "mlua/block.h"
 #include "mlua/errors.h"
 #include "mlua/module.h"

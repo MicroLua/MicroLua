@@ -9,9 +9,12 @@
 #include "lauxlib.h"
 #include "mlua/block.h"
 #include "mlua/errors.h"
+#include "mlua/fs.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
+
+// TODO: Share filesystems across cores, with locking
 
 static char const Filesystem_name[] = "mlua.fs.littlefs.Filesystem";
 static char const File_name[] = "mlua.fs.littlefs.File";
@@ -58,6 +61,43 @@ static int mlua_err(int err) {
     case LFS_ERR_NOATTR: return MLUA_ENOATTR;
     case LFS_ERR_NAMETOOLONG: return MLUA_ENAMETOOLONG;
     default: return err;
+    }
+}
+
+static int to_file_type(int type) {
+    switch (type) {
+    case LFS_TYPE_REG: return MLUA_FS_TYPE_REG;
+    case LFS_TYPE_DIR: return MLUA_FS_TYPE_DIR;
+    default: return MLUA_FS_TYPE_UNKNOWN;
+    }
+}
+
+static_assert(MLUA_FS_O_RDWR == (MLUA_FS_O_RDONLY | MLUA_FS_O_WRONLY),
+              "inconsistent MLUA_FS_O_* flags");
+#ifndef LFS_READONLY
+static_assert(LFS_O_RDWR == (LFS_O_RDONLY | LFS_O_WRONLY),
+              "inconsistent LFS_O_* flags");
+#endif
+
+static int from_open_flags(int flags) {
+    int res = 0;
+    if ((flags & MLUA_FS_O_RDONLY) != 0) res |= LFS_O_RDONLY;
+#ifndef LFS_READONLY
+    if ((flags & MLUA_FS_O_WRONLY) != 0) res |= LFS_O_WRONLY;
+    if ((flags & MLUA_FS_O_CREAT) != 0) res |= LFS_O_CREAT;
+    if ((flags & MLUA_FS_O_EXCL) != 0) res |= LFS_O_EXCL;
+    if ((flags & MLUA_FS_O_TRUNC) != 0) res |= LFS_O_TRUNC;
+    if ((flags & MLUA_FS_O_APPEND) != 0) res |= LFS_O_APPEND;
+#endif
+    return res;
+}
+
+static int from_seek_whence(int whence) {
+    switch (whence) {
+    case MLUA_FS_SEEK_SET: return LFS_SEEK_SET;
+    case MLUA_FS_SEEK_CUR: return LFS_SEEK_CUR;
+    case MLUA_FS_SEEK_END: return LFS_SEEK_END;
+    default: return LFS_SEEK_SET;
     }
 }
 
@@ -154,7 +194,8 @@ static int Filesystem_open(lua_State* ls) {
     f->config.buffer = f->buffer;
     // TODO: Add support for getting and setting custom attributes
 
-    int res = lfs_file_opencfg(&fs->lfs, &f->file, path, flags, &f->config);
+    int res = lfs_file_opencfg(&fs->lfs, &f->file, path, from_open_flags(flags),
+                               &f->config);
     if (res < 0) return push_error(ls, res);
     return 1;
 }
@@ -182,7 +223,7 @@ static int Filesystem_stat(lua_State* ls) {
     int res = lfs_stat(&fs->lfs, path, &info);
     if (res < 0) return push_error(ls, res);
     lua_pushstring(ls, info.name);
-    lua_pushinteger(ls, info.type);
+    lua_pushinteger(ls, to_file_type(info.type));
     return info.type == LFS_TYPE_REG ? lua_pushinteger(ls, info.size), 3 : 2;
 }
 
@@ -414,9 +455,9 @@ static int File_seek(lua_State* ls) {
     Filesystem* fs = NULL;
     File* f = check_File(ls, 1, &fs);
     lfs_soff_t off = luaL_checkinteger(ls, 2);
-    int whence = luaL_optinteger(ls, 3, LFS_SEEK_SET);
+    int whence = luaL_optinteger(ls, 3, MLUA_FS_SEEK_SET);
     return push_lfs_result_int(ls,
-        lfs_file_seek(&fs->lfs, &f->file, off, whence));
+        lfs_file_seek(&fs->lfs, &f->file, off, from_seek_whence(whence)));
 }
 
 static int File_tell(lua_State* ls) {
@@ -514,7 +555,7 @@ static int Dir_read(lua_State* ls) {
     if (res < 0) return push_error(ls, res);
     if (res == 0) return lua_pushboolean(ls, true), 1;
     lua_pushstring(ls, info.name);
-    lua_pushinteger(ls, info.type);
+    lua_pushinteger(ls, to_file_type(info.type));
     return info.type == LFS_TYPE_REG ? lua_pushinteger(ls, info.size), 3 : 2;
 }
 
@@ -589,27 +630,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NAME_MAX, integer, LFS_NAME_MAX),
     MLUA_SYM_V(FILE_MAX, integer, LFS_FILE_MAX),
     MLUA_SYM_V(ATTR_MAX, integer, LFS_ATTR_MAX),
-    MLUA_SYM_V(TYPE_REG, integer, LFS_TYPE_REG),
-    MLUA_SYM_V(TYPE_DIR, integer, LFS_TYPE_DIR),
-    MLUA_SYM_V(O_RDONLY, integer, LFS_O_RDONLY),
-#ifndef LFS_READONLY
-    MLUA_SYM_V(O_WRONLY, integer, LFS_O_WRONLY),
-    MLUA_SYM_V(O_RDWR, integer, LFS_O_RDWR),
-    MLUA_SYM_V(O_CREAT, integer, LFS_O_CREAT),
-    MLUA_SYM_V(O_EXCL, integer, LFS_O_EXCL),
-    MLUA_SYM_V(O_TRUNC, integer, LFS_O_TRUNC),
-    MLUA_SYM_V(O_APPEND, integer, LFS_O_APPEND),
-#else
-    MLUA_SYM_V(O_WRONLY, boolean, false),
-    MLUA_SYM_V(O_RDWR, boolean, false),
-    MLUA_SYM_V(O_CREAT, boolean, false),
-    MLUA_SYM_V(O_EXCL, boolean, false),
-    MLUA_SYM_V(O_TRUNC, boolean, false),
-    MLUA_SYM_V(O_APPEND, boolean, false),
-#endif
-    MLUA_SYM_V(SEEK_SET, integer, LFS_SEEK_SET),
-    MLUA_SYM_V(SEEK_CUR, integer, LFS_SEEK_CUR),
-    MLUA_SYM_V(SEEK_END, integer, LFS_SEEK_END),
 
     MLUA_SYM_F(new, mod_),
 };
