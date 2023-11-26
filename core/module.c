@@ -192,8 +192,7 @@ static int preload___index(lua_State* ls) {
     for (MLuaModule const* m = &__start_mlua_module_registry;
             m != &__stop_mlua_module_registry; ++m) {
         if (strcmp(m->name, name) == 0) {
-            lua_pushcfunction(ls, m->open);
-            return 1;
+            return lua_pushcfunction(ls, m->open), 1;
         }
     }
     return 0;
@@ -248,5 +247,13 @@ void mlua_register_modules(lua_State* ls) {
     luaL_newmetatable(ls, Preload_name);
     mlua_set_fields(ls, Preload_syms);
     lua_setmetatable(ls, -2);
+    lua_pop(ls, 1);
+
+    // Remove unused searchers.
+    lua_getfield(ls, -1, "searchers");
+    for (lua_Integer i = luaL_len(ls, -1); i > 1; --i) {
+        lua_pushnil(ls);
+        lua_seti(ls, -2, i);
+    }
     lua_pop(ls, 2);
 }

@@ -15,7 +15,7 @@ MLUA_OPEN_MODULE(@MOD@) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
     }
-    lua_pushstring(ls, "@MOD@");
+    lua_pushliteral(ls, "@MOD@");
     lua_call(ls, 1, 1);
     return 1;
 }
