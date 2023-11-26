@@ -92,7 +92,9 @@ static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx) {
     }
     if (delay == 0) return 0;
     mlua_push_int64(ls, to_us_since_boot(delay < 0 ?
-        delayed_by_us(mlua_to_int64(ls, lua_upvalueindex(1)), (uint64_t)-delay)
+        delayed_by_us(
+            from_us_since_boot(mlua_to_int64(ls, lua_upvalueindex(1))),
+            (uint64_t)-delay)
         : delayed_by_us(get_absolute_time(), (uint64_t)delay)));
     lua_replace(ls, lua_upvalueindex(1));
     return alarm_thread(ls);

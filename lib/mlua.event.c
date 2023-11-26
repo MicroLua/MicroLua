@@ -278,7 +278,8 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
     lua_pop(ls, 2);  // Restore the stack for loop
     int res = loop(ls, false);
     if (res < 0) {
-        if (index == 0 || !time_reached(mlua_to_int64(ls, index))) {
+        if (index == 0 ||
+                !time_reached(from_us_since_boot(mlua_to_int64(ls, index)))) {
             return mlua_event_loop_1(ls, (MLuaEvent)ctx, loop, index);
         }
         res = loop(ls, true);
