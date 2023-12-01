@@ -111,7 +111,32 @@ This module provides the core event handling and dispatch functionality.
   Wait for events to fire or the given time to pass. This function is used by
   the thread scheduler.
 
-## `mlua.fs.lfs`
+## `mlua.fs`
+
+**Module:** [`mlua.fs`](../lib/mlua.fs.c),
+build target: `mlua_mod_mlua_fs`
+
+This module provides functionality that is common across all filesystems.
+
+- `TYPE_REG: integer`\
+  `TYPE_DIR: integer`\
+  File types: regular file and directory.
+
+- `O_RDONLY: integer`\
+  `O_WRONLY: integer`\
+  `O_RDWR: integer`\
+  `O_CREAT: integer`\
+  `O_EXCL: integer`\
+  `O_TRUNC: integer`\
+  `O_APPEND: integer`\
+  Flags that can be passed when opening a file.
+
+- `SEEK_SET: integer`\
+  `SEEK_CUR: integer`\
+  `SEEK_END: integer`\
+  Values that can be passed when seeking in a file.
+
+### `mlua.fs.lfs`
 
 **Module:** [`mlua.fs.lfs`](../lib/mlua.fs.lfs.c),
 build target: `mlua_mod_mlua_fs_lfs`,
@@ -123,10 +148,11 @@ creating and mounting filesystems on [block devices](#mluablock) and operating
 on their content. The following compile definitions affect how the bindings are
 exposed:
 
-- `LFS_READONLY`: When defined, only read-only constants and functions are
-  defined (those not tagged with *[write]* below). The others are replaced by
-  the value `false`.
+- `LFS_READONLY`: When defined, only read-only functions are defined (those not
+  tagged with *[write]* below). The others are replaced by the value `false`.
 - `LFS_MIGRATE`: When defined, provide the `Filesystem:migrate()` function.
+- `LFS_THREADSAFE`: When defined, enables locking on filesystems, allowing
+  access from both cores.
 
 Functions that fail return `fail`, an error message and an error code from
 [`mlua.errors`](#mluaerrors).
@@ -139,24 +165,6 @@ Functions that fail return `fail`, an error message and an error code from
   `FILE_MAX: integer`\
   `ATTR_MAX: integer`\
   The maximum size of file names, file content and custom attributes.
-
-- `TYPE_REG: integer`\
-  `TYPE_DIR: integer`\
-  File types: regular file and directory.
-
-- `O_RDONLY: integer`\
-  `O_WRONLY: integer` *[write]*\
-  `O_RDWR: integer` *[write]*\
-  `O_CREAT: integer` *[write]*\
-  `O_EXCL: integer` *[write]*\
-  `O_TRUNC: integer` *[write]*\
-  `O_APPEND: integer` *[write]*\
-  Flags that can be passed to `Filesystem:open()`.
-
-- `SEEK_SET: integer`\
-  `SEEK_CUR: integer`\
-  `SEEK_END: integer`\
-  Values that can be passed to `File:seek()`.
 
 - `new(device) -> Filesystem`\
   Create a filesystem object operating on the given block device. This doesn't
@@ -177,7 +185,6 @@ Functions that fail return `fail`, an error message and an error code from
 
 - `Filesystem:unmount() -> true | (fail, msg, err)`\
   `Filesystem:__close() -> true | (fail, msg, err)`\
-  `Filesystem:__gc() -> true | (fail, msg, err)`\
   Unmount the filesystem.
 
 - `Filesystem:is_mounted() -> bool`\
