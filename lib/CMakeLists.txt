@@ -338,6 +338,8 @@ target_link_libraries(mlua_mod_mlua_block INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua_block_flash mlua.block.flash.c)
+target_include_directories(mlua_mod_mlua_block_flash_headers INTERFACE
+    include_mlua.block.flash)
 target_link_libraries(mlua_mod_mlua_block_flash INTERFACE
     hardware_flash
     hardware_sync
@@ -389,11 +391,14 @@ target_sources(mlua_littlefs INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
+target_include_directories(mlua_mod_mlua_fs_lfs_headers INTERFACE
+    include_mlua.fs.lfs)
 target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
+    mlua_littlefs
     mlua_mod_mlua_block
     mlua_mod_mlua_errors
     mlua_mod_mlua_fs_headers
-    mlua_littlefs
+    pico_sync
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_fs_lfs_test
@@ -410,12 +415,17 @@ target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua_fs_loader mlua.fs.loader.c)
+target_compile_definitions(mlua_mod_mlua_fs_loader INTERFACE
+    LFS_THREADSAFE=1
+)
 target_link_libraries(mlua_mod_mlua_fs_loader INTERFACE
     hardware_flash
     mlua_mod_mlua_block_flash
     mlua_mod_mlua_errors
     mlua_mod_mlua_fs_headers
+    mlua_mod_mlua_fs_lfs
     pico_binary_info
+    pico_platform
 )
 
 mlua_add_lua_test_modules(mlua_mod_mlua_fs_loader_test
@@ -757,10 +767,9 @@ endif()
 add_executable(mlua_tests)
 mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
-    MLUA_FS_LOADER_FILESYSTEM=mlua.fs.lfs
     MLUA_FS_LOADER_FLAT=1
     MLUA_FS_LOADER_FORMAT=1
-    MLUA_FS_LOADER_SIZE=\(100<<10\)
+    MLUA_FS_LOADER_SIZE=100<<10
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0
     PICO_MAX_SHARED_IRQ_HANDLERS=16
@@ -775,7 +784,6 @@ mlua_target_config(mlua_tests
     b:string=\"test\"
 )
 target_link_libraries(mlua_tests PRIVATE
-    mlua_mod_mlua_fs_lfs
     mlua_mod_mlua_stdio
     mlua_mod_mlua_testing
     mlua_mod_mlua_thread

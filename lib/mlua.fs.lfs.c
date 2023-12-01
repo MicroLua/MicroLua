@@ -1,30 +1,35 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include "mlua/fs.lfs.h"
+
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include "pico/mutex.h"
 
 #include "lfs.h"
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/block.h"
 #include "mlua/errors.h"
 #include "mlua/fs.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-// TODO: Share filesystems across cores, with locking
-
-static char const Filesystem_name[] = "mlua.fs.littlefs.Filesystem";
-static char const File_name[] = "mlua.fs.littlefs.File";
-static char const Dir_name[] = "mlua.fs.littlefs.Dir";
+static char const Filesystem_name[] = "mlua.fs.lfs.Filesystem";
+static char const File_name[] = "mlua.fs.lfs.File";
+static char const Dir_name[] = "mlua.fs.lfs.Dir";
 
 #define LOOKAHEAD_SIZE 16
 
 typedef struct Filesystem {
-    lfs_t lfs;
     struct lfs_config config;
+    lfs_t lfs;
+#ifdef LFS_THREADSAFE
+    mutex_t mu;
+#endif
     bool mounted;
     uint32_t lookahead_buffer[LOOKAHEAD_SIZE / sizeof(uint32_t)];
     uint8_t buffers[0];
@@ -137,18 +142,61 @@ static int fs_sync(struct lfs_config const* c) {
     return dev->sync(dev);
 }
 
+#ifdef LFS_THREADSAFE
+
+static int fs_lock(struct lfs_config const* c) {
+    Filesystem* fs = (Filesystem*)c;
+    mutex_enter_blocking(&fs->mu);
+    return LFS_ERR_OK;
+}
+
+static int fs_unlock(struct lfs_config const* c) {
+    Filesystem* fs = (Filesystem*)c;
+    mutex_exit(&fs->mu);
+    return LFS_ERR_OK;
+}
+
+#endif  // LFS_THREADSAFE
+
+static void init_filesystem(Filesystem* fs, MLuaBlockDev* dev) {
+    memset(fs, 0, sizeof(*fs));
+    fs->config.context = dev;
+    fs->config.read = &fs_read,
+    fs->config.prog = &fs_prog,
+    fs->config.erase = &fs_erase,
+    fs->config.sync = &fs_sync,
+#ifdef LFS_THREADSAFE
+    mutex_init(&fs->mu);
+    fs->config.lock = &fs_lock,
+    fs->config.unlock = &fs_unlock,
+#endif
+    fs->config.read_size = dev->read_size;
+    fs->config.prog_size = dev->write_size;
+    fs->config.block_size = dev->erase_size;
+    fs->config.block_cycles = 500,
+    fs->config.cache_size = fs->config.prog_size;
+    fs->config.lookahead_size = LOOKAHEAD_SIZE,
+    fs->config.read_buffer = fs->buffers;
+    fs->config.prog_buffer = &fs->buffers[fs->config.cache_size];
+    fs->config.lookahead_buffer = fs->lookahead_buffer;
+}
+
 static inline Filesystem* check_Filesystem(lua_State* ls, int arg) {
-    return luaL_checkudata(ls, arg, Filesystem_name);
+    void* ptr = luaL_checkudata(ls, arg, Filesystem_name);
+    if (ptr == NULL || lua_rawlen(ls, arg) != sizeof(ptr)) return ptr;
+    return *((Filesystem**)ptr);
 }
 
 static inline Filesystem* check_mounted_Filesystem(lua_State* ls, int arg) {
-    Filesystem* fs = luaL_checkudata(ls, arg, Filesystem_name);
+    Filesystem* fs = check_Filesystem(ls, arg);
     if (!fs->mounted) return luaL_error(ls, "filesystem isn't mounted"), NULL;
     return fs;
 }
 
 static inline Filesystem* to_Filesystem(lua_State* ls, int arg) {
-    return lua_touserdata(ls, arg);
+    void* ptr = lua_touserdata(ls, arg);
+    if (lua_rawlen(ls, arg) != sizeof(ptr)) return ptr;
+    return *((Filesystem**)ptr);
 }
 
 static uint8_t check_attr(lua_State* ls, int arg) {
@@ -594,33 +642,50 @@ MLUA_SYMBOLS_NOHASH(Dir_syms_nh) = {
     MLUA_SYM_F_NH(__gc, Dir_),
 };
 
-static struct lfs_config config_base = {
-    .read = &fs_read,
-    .prog = &fs_prog,
-    .erase = &fs_erase,
-    .sync = &fs_sync,
-    .block_cycles = 500,
-    .lookahead_size = LOOKAHEAD_SIZE,
-};
+void* mlua_fs_lfs_alloc(MLuaBlockDev* dev) {
+    Filesystem* fs = malloc(sizeof(Filesystem) + 2 * dev->write_size);
+    init_filesystem(fs, dev);
+    return fs;
+}
+
+int mlua_fs_lfs_mount(void* fs, bool format) {
+    Filesystem* tfs = fs;
+
+    // Mount the filesystem.
+    int res = lfs_mount(&tfs->lfs, &tfs->config);
+    if (res == LFS_ERR_OK) {
+        tfs->mounted = true;
+        return MLUA_EOK;
+    }
+    if (!format) return mlua_err(res);
+
+    // Mounting failed, format the filesystem.
+    tfs->config.block_count = fs_dev(tfs)->size / tfs->config.block_size;
+    res = lfs_format(&tfs->lfs, &tfs->config);
+    if (res != LFS_ERR_OK) return mlua_err(res);
+
+    // Mount the formatted filesystem.
+    res = lfs_mount(&tfs->lfs, &tfs->config);
+    if (res != LFS_ERR_OK) return mlua_err(res);
+    tfs->mounted = true;
+    return MLUA_EOK;
+}
+
+void mlua_fs_lfs_push(lua_State* ls, void* fs) {
+    *((Filesystem**)lua_newuserdatauv(ls, sizeof(Filesystem*), 0)) = fs;
+    luaL_getmetatable(ls, Filesystem_name);
+    lua_setmetatable(ls, -2);
+}
 
 static int mod_new(lua_State* ls) {
-    MLuaBlockDev* dev = mlua_check_BlockDev(ls, 1);
+    MLuaBlockDev* dev = mlua_block_check(ls, 1);
     Filesystem* fs = lua_newuserdatauv(
         ls, sizeof(Filesystem) + 2 * dev->write_size, 1);
     luaL_getmetatable(ls, Filesystem_name);
     lua_setmetatable(ls, -2);
     lua_pushvalue(ls, 1);  // Keep dev alive
     lua_setiuservalue(ls, -2, 1);
-    fs->config = config_base;
-    fs->config.context = dev;
-    fs->config.read_size = dev->read_size;
-    fs->config.prog_size = dev->write_size;
-    fs->config.block_size = dev->erase_size;
-    fs->config.cache_size = fs->config.prog_size;
-    fs->config.read_buffer = fs->buffers;
-    fs->config.prog_buffer = &fs->buffers[fs->config.cache_size];
-    fs->config.lookahead_buffer = fs->lookahead_buffer;
-    fs->mounted = false;
+    init_filesystem(fs, dev);
     return 1;
 }
 

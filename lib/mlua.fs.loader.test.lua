@@ -9,6 +9,9 @@ local package = require 'package'
 local string = require 'string'
 
 function set_up(t)
+    t:expect(loader.block, "no block device");
+    t:assert(loader.fs, "no filesystem");
+
     -- Re-format the filesystem to avoid flakes due to a bad filesystem.
     t:assert(t:expr(loader.fs):is_mounted()):eq(true)
     t:assert(t:expr(loader.fs):unmount()):eq(true)

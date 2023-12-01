@@ -44,15 +44,12 @@ struct MLuaBlockDev {
     uint32_t erase_size;
 };
 
-// Create a new BlockDev value on the stack.
-MLuaBlockDev* mlua_new_BlockDev(lua_State* ls, size_t size, int nuv);
+// Push a BlockDev value to the stack.
+void* mlua_block_push(lua_State* ls, size_t size, int nuv);
 
 // Get a BlockDev value, or raise an error if the argument is not a BlockDev
 // userdata.
-static inline MLuaBlockDev* mlua_check_BlockDev(lua_State* ls, int arg) {
-    extern char const mlua_BlockDev_name[];
-    return luaL_checkudata(ls, arg, mlua_BlockDev_name);
-}
+MLuaBlockDev* mlua_block_check(lua_State* ls, int arg);
 
 #ifdef __cplusplus
 }

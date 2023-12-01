@@ -5,22 +5,22 @@
 
 #include "hardware/flash.h"
 #include "pico/binary_info.h"
+#include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/errors.h"
+#include "mlua/block.flash.h"
 #include "mlua/fs.h"
+#include "mlua/fs.lfs.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
 
 #ifndef MLUA_FS_LOADER_OFFSET
-#define MLUA_FS_LOADER_OFFSET (PICO_FLASH_SIZE_BYTES - MLUA_FS_LOADER_SIZE)
+#define MLUA_FS_LOADER_OFFSET (PICO_FLASH_SIZE_BYTES - (MLUA_FS_LOADER_SIZE))
 #endif
 #ifndef MLUA_FS_LOADER_SIZE
 #define MLUA_FS_LOADER_SIZE (1 << 20)
-#endif
-#ifndef MLUA_FS_LOADER_FILESYSTEM
-#define MLUA_FS_LOADER_FILESYSTEM mlua.fs.lfs
 #endif
 #ifndef MLUA_FS_LOADER_FORMAT
 #define MLUA_FS_LOADER_FORMAT 0
@@ -32,20 +32,34 @@
 #define MLUA_FS_LOADER_FLAT 1
 #endif
 
-static_assert((MLUA_FS_LOADER_OFFSET & (FLASH_SECTOR_SIZE - 1)) == 0,
+static_assert(((MLUA_FS_LOADER_OFFSET) & (FLASH_SECTOR_SIZE - 1)) == 0,
               "MLUA_FS_LOADER_OFFSET must be a multiple of FLASH_SECTOR_SIZE");
-static_assert((MLUA_FS_LOADER_SIZE & (FLASH_SECTOR_SIZE - 1)) == 0,
+static_assert(((MLUA_FS_LOADER_SIZE) & (FLASH_SECTOR_SIZE - 1)) == 0,
               "MLUA_FS_LOADER_SIZE must be a multiple of FLASH_SECTOR_SIZE");
 static_assert(
-    MLUA_FS_LOADER_OFFSET >= 0
-    && (MLUA_FS_LOADER_OFFSET + MLUA_FS_LOADER_SIZE <= PICO_FLASH_SIZE_BYTES),
+    (MLUA_FS_LOADER_OFFSET) >= 0
+    && ((MLUA_FS_LOADER_OFFSET) + (MLUA_FS_LOADER_SIZE) <= PICO_FLASH_SIZE_BYTES),
     "Filesystem is outside of flash boundaries");
 
 bi_decl(bi_block_device(
-    MLUA_BI_TAG, MLUA_ESTR(MLUA_FS_LOADER_FILESYSTEM),
-    XIP_BASE + MLUA_FS_LOADER_OFFSET, MLUA_FS_LOADER_SIZE, NULL,
+    MLUA_BI_TAG, "lfs (loader)",
+    XIP_BASE + (MLUA_FS_LOADER_OFFSET), (MLUA_FS_LOADER_SIZE), NULL,
     BINARY_INFO_BLOCK_DEV_FLAG_READ | BINARY_INFO_BLOCK_DEV_FLAG_WRITE
     | BINARY_INFO_BLOCK_DEV_FLAG_REFORMAT | BINARY_INFO_BLOCK_DEV_FLAG_PT_NONE))
+
+extern char const __flash_binary_start[];
+extern char const __flash_binary_end[];
+
+static MLuaBlockFlash dev;
+static void* fs;
+
+static __attribute__((constructor)) void init(void) {
+    mlua_block_flash_init(&dev, (MLUA_FS_LOADER_OFFSET), (MLUA_FS_LOADER_SIZE));
+    if (__flash_binary_end <= __flash_binary_start + (MLUA_FS_LOADER_OFFSET)) {
+        fs = mlua_fs_lfs_alloc(&dev.dev);  // Never freed
+        mlua_fs_lfs_mount(fs, MLUA_FS_LOADER_FORMAT);
+    }
+}
 
 typedef struct Loader {
     void* buffer;
@@ -175,49 +189,17 @@ MLUA_OPEN_MODULE(mlua.fs.loader) {
     lua_seti(ls, -2, luaL_len(ls, -2) + 1);
     lua_pop(ls, 2);  // Remove searchers & package
 
-    // Create a block device.
-    mlua_require(ls, "mlua.block.flash", true);
-    lua_getfield(ls, -1, "new");
-    lua_remove(ls, -2);
-    lua_pushinteger(ls, MLUA_FS_LOADER_OFFSET);
-    lua_pushinteger(ls, MLUA_FS_LOADER_SIZE);
-    lua_call(ls, 2, 1);
-    if (!lua_toboolean(ls, 1)) return lua_settop(ls, mod_index), 1;
-    lua_pushvalue(ls, -1);
+    // Create a reference to the global block device.
+    mlua_require(ls, "mlua.block.flash", false);
+    *((MLuaBlockFlash**)mlua_block_push(ls, sizeof(MLuaBlockFlash*), 0)) = &dev;
     lua_setfield(ls, mod_index, "block");
 
-    // Create a filesystem on the block device.
-    mlua_require(ls, MLUA_ESTR(MLUA_FS_LOADER_FILESYSTEM), true);
-    lua_getfield(ls, -1, "new");
-    lua_remove(ls, -2);
-    lua_rotate(ls, -2, 1);
-    lua_call(ls, 1, 1);
-    if (!lua_toboolean(ls, 1)) return lua_settop(ls, mod_index), 1;
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, mod_index, "fs");
-
-    // Mount the filesystem.
-    lua_getfield(ls, -1, "mount");
-    lua_pushvalue(ls, -2);
-    lua_call(ls, 1, 1);
-
-#if MLUA_FS_LOADER_FORMAT
-    // Check if mounting succeeded.
-    if (lua_toboolean(ls, -1)) return lua_settop(ls, mod_index), 1;
-    lua_pop(ls, 1);
-
-    // Mounting failed, format the filesystem.
-    lua_getfield(ls, -1, "format");
-    lua_pushvalue(ls, -2);
-    lua_call(ls, 1, 1);
-    if (!lua_toboolean(ls, -1)) return lua_settop(ls, mod_index), 1;
-    lua_pop(ls, 1);
-
-    // Mount the formatted filesystem.
-    lua_getfield(ls, -1, "mount");
-    lua_rotate(ls, -2, 1);
-    lua_call(ls, 1, 0);
-#endif
+    // Create a reference to the global filesystem.
+    if (fs != NULL) {
+        mlua_require(ls, "mlua.fs.lfs", false);
+        mlua_fs_lfs_push(ls, fs);
+        lua_setfield(ls, mod_index, "fs");
+    }
 
     return lua_settop(ls, mod_index), 1;
 }
