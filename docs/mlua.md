@@ -147,9 +147,9 @@ a module searcher that looks up modules in that filesystem. When the module is
 linked-in, it is auto-loaded during interpreter creation, which enables loading
 the main module from the filesystem, for both cores.
 
-The filesystem is mounted as LFS ([`mlua.fs.lfs`](#mluafslfs)) and uses the QSPI
-flash for storage ([`mlua.block.flash`](#mluablockflash)). It can be customized
-with the following compile definitions:
+The filesystem is mounted as littlefs ([`mlua.fs.lfs`](#mluafslfs)) and uses the
+QSPI flash for storage ([`mlua.block.flash`](#mluablockflash)). It can be
+customized with the following compile definitions:
 
 - `MLUA_FS_LOADER_OFFSET` (default: `PICO_FLASH_SIZE_BYTES -
   MLUA_FS_LOADER_SIZE`): The offset in flash memory where the filesystem starts.
