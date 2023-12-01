@@ -453,11 +453,9 @@ MLUA_SYMBOLS(Filesystem_syms) = {
 };
 
 #define Filesystem___close Filesystem_unmount
-#define Filesystem___gc Filesystem_unmount
 
 MLUA_SYMBOLS_NOHASH(Filesystem_syms_nh) = {
     MLUA_SYM_F_NH(__close, Filesystem_),
-    MLUA_SYM_F_NH(__gc, Filesystem_),
 };
 
 static inline File* check_File(lua_State* ls, int arg, Filesystem** fs) {
