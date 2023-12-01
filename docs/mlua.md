@@ -136,6 +136,46 @@ This module provides functionality that is common across all filesystems.
   `SEEK_END: integer`\
   Values that can be passed when seeking in a file.
 
+### `mlua.fs.loader`
+
+**Module:** [`mlua.fs.loader`](../lib/mlua.fs.loader.c),
+build target: `mlua_mod_mlua_fs_loader`,
+tests: [`mlua.fs.loader.test`](../lib/mlua.fs.loader.test.lua)
+
+This module creates a global filesystem early in the boot process, and registers
+a module searcher that looks up modules in that filesystem. When the module is
+linked-in, it is auto-loaded during interpreter creation, which enables loading
+the main module from the filesystem, for both cores.
+
+The filesystem is mounted as LFS ([`mlua.fs.lfs`](#mluafslfs)) and uses the QSPI
+flash for storage ([`mlua.block.flash`](#mluablockflash)). It can be customized
+with the following compile definitions:
+
+- `MLUA_FS_LOADER_OFFSET` (default: `PICO_FLASH_SIZE_BYTES -
+  MLUA_FS_LOADER_SIZE`): The offset in flash memory where the filesystem starts.
+  Must be aligned on a `FLASH_SECTOR_SIZE` boundary. The default value places it
+  at the end of the flash memory.
+- `MLUA_FS_LOADER_SIZE` (default: 1 MiB): The size of the filesystem. Must be a
+  multiple of `FLASH_SECTOR_SIZE`.
+- `MLUA_FS_LOADER_FORMAT` (default: 0): When true, formats the filesystem if it
+  fails to mount.
+- `MLUA_FS_LOADER_BASE` (default: `"/lua"`): The path below which to look for
+  modules.
+- `MLUA_FS_LOADER_FLAT` (default: 1): When true, look up modules in the
+  directory `MLUA_FS_LOADER_BASE`, i.e. the module `a.b.c` is loaded from the
+  file `/lua/a.b.c.lua`. When false, look up modules in `MLUA_FS_LOADER_BASE`
+  and its subdirectories, i.e. the module `a.b.c` is loaded either from
+  `/lua/a/b/c.lua` or `/lua/a/b/c/init.lua`.
+
+Information about the filesystem (flash range, type) is available as binary
+info, and can be viewed with `picotool info -a`.
+
+- `block: mlua.block.Dev`\
+  The block device on which the filesystem operates.
+
+- `fs: mlua.fs.lfs.Filesystem`\
+  The filesystem from which modules are loaded.
+
 ### `mlua.fs.lfs`
 
 **Module:** [`mlua.fs.lfs`](../lib/mlua.fs.lfs.c),

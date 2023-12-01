@@ -72,9 +72,6 @@ interface to C code.
 - **Improve threading performance.** A C implementation of the
   [`mlua.thread`](docs/mlua.md#mluathread) module, with a less naive timer list,
   could significantly improve event dispatch latency.
-- **Load Lua modules from a filesystem** and allow updating them over USB. This
-  will enable simpler development workflows similar to e.g.
-  [MicroPython](https://micropython.org/) & [Thonny](https://thonny.org/).
 - **Tune garbage collection.** Garbage collection parameters are currently left
   at their default value, which may not be ideal for a memory-constrained
   target.
