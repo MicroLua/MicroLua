@@ -45,8 +45,13 @@ static int pmain(lua_State* ls) {
     mlua_util_init(ls);
 
     // Set up stdio streams.
-#ifdef LIB_MLUA_MOD_MLUA_STDIO
+#if LIB_MLUA_MOD_MLUA_STDIO
     mlua_require(ls, "mlua.stdio", false);
+#endif
+
+    // Enable module loading from a filesystem.
+#if LIB_MLUA_MOD_MLUA_FS_LOADER
+    mlua_require(ls, "mlua.fs.loader", false);
 #endif
 
     // Import the main module and get its main function.
