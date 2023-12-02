@@ -186,8 +186,7 @@ creating and mounting filesystems on [block devices](#mluablock) and operating
 on their content. The following compile definitions affect how the bindings are
 exposed:
 
-- `LFS_READONLY`: When defined, only read-only functions are defined (those not
-  tagged with *[write]* below). The others are replaced by the value `false`.
+- `LFS_READONLY`: When defined, allow only read operations.
 - `LFS_MIGRATE`: When defined, provide the `Filesystem:migrate()` function.
 - `LFS_THREADSAFE`: When defined, enables locking on filesystems, allowing
   access from both cores.
@@ -208,15 +207,10 @@ Functions that fail return `fail`, an error message and an error code from
   Create a filesystem object operating on the given block device. This doesn't
   format or mount the filesystem; it only binds a filesystem to a device.
 
-- `Filesystem:format(size) -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:format(size) -> true | (fail, msg, err)`\
   Format the underlying block device for a filesystem of the given size. If
   `size` is missing, the filesystem fills the whole block device. The filesystem
   must not be mounted.
-
-- `Filesystem:migrate(size) -> true | (fail, msg, err)` *[write]*\
-  Attempt to migrate a previous version of littlefs. If `size` is missing, the
-  filesystem fills the whole block device. The filesystem must not be mounted.
-  Only defined if `LFS_MIGRATE` is defined.
 
 - `Filesystem:mount() -> true | (fail, msg, err)`\
   Mount an existing filesystem.
@@ -228,7 +222,7 @@ Functions that fail return `fail`, an error message and an error code from
 - `Filesystem:is_mounted() -> bool`\
   Return `true` iff the filesystem is mounted.
 
-- `Filesystem:grow(size) -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:grow(size) -> true | (fail, msg, err)`\
   Grow a mounted filesystem to the given size. If `size` is missing, the
   filesystem is grown to fill the whole block device.
 
@@ -248,8 +242,13 @@ Functions that fail return `fail`, an error message and an error code from
 - `Filesystem:traverse(callback) -> true | (fail, msg, err)`\
   Call `callback` with each block address that is currently in use.
 
-- `Filesystem:mkconsistent() -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:mkconsistent() -> true | (fail, msg, err)`\
   Attempt to make the filesystem consistent and ready for writing.
+
+- `Filesystem:migrate(size) -> true | (fail, msg, err)`\
+  Attempt to migrate a previous version of littlefs. If `size` is missing, the
+  filesystem fills the whole block device. The filesystem must not be mounted.
+  Only defined if `LFS_MIGRATE` is defined.
 
 - `Filesystem:open(path, flags) -> File | (fail, msg, err)`\
   Open a file. `flags` is a bitwise-or of `O_*` values.
@@ -262,17 +261,17 @@ Functions that fail return `fail`, an error message and an error code from
   (i.e. when `type == TYPE_REG`).
 
 - `Filesystem:getattr(path, attr) -> string | (fail, msg, err)`\
-  `Filesystem:setattr(path, attr, value) -> true | (fail, msg, err)` *[write]*\
-  `Filesystem:removeattr(path, attr) -> true | (fail, msg, err)` *[write]*\
+  `Filesystem:setattr(path, attr, value) -> true | (fail, msg, err)`\
+  `Filesystem:removeattr(path, attr) -> true | (fail, msg, err)`\
   Get, set or remove a custom attribute from a file.
 
-- `Filesystem:mkdir(path) -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:mkdir(path) -> true | (fail, msg, err)`\
   Create a directory.
 
-- `Filesystem:remove(path) -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:remove(path) -> true | (fail, msg, err)`\
   Remove a file.
 
-- `Filesystem:rename(old_path, new_path) -> true | (fail, msg, err)` *[write]*\
+- `Filesystem:rename(old_path, new_path) -> true | (fail, msg, err)`\
   Rename a file.
 
 - `File:close() -> true | (fail, msg, err)`\
@@ -286,11 +285,8 @@ Functions that fail return `fail`, an error message and an error code from
 - `File:read(size) -> string | (fail, msg, err)`\
   Read data from the file.
 
-- `File:write(data) -> integer | (fail, msg, err)` *[write]*\
+- `File:write(data) -> integer | (fail, msg, err)`\
   Write data to the file. Returns the number of bytes written.
-
-- `File:truncate(size) -> true | (fail, msg, err)` *[write]*\
-  Truncate the file at the given size.
 
 - `File:seek(offset, [whence]) -> integer | (fail, msg, err)`\
   Change the current position in the file. If `whence` is missing, it is set to
@@ -305,6 +301,9 @@ Functions that fail return `fail`, an error message and an error code from
 
 - `File:size() -> integer | (fail, msg, err)`\
   Return the size of the file.
+
+- `File:truncate(size) -> true | (fail, msg, err)`\
+  Truncate the file at the given size.
 
 - `Dir:close() -> true | (fail, msg, err)`\
   `Dir:__close() -> true | (fail, msg, err)`\

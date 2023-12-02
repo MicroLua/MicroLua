@@ -30,6 +30,7 @@ extern "C" {
     MLUA_ERR(ENOSPC, 12, "no space left on device") \
     MLUA_ERR(ENOTDIR, 13, "not a directory") \
     MLUA_ERR(ENOTEMPTY, 14, "directory not empty") \
+    MLUA_ERR(EROFS, 15, "read-only filesystem") \
 
 // Error codes.
 enum MLuaErrno {

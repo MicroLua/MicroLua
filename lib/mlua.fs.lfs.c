@@ -205,6 +205,28 @@ static uint8_t check_attr(lua_State* ls, int arg) {
     return attr;
 }
 
+static lfs_size_t check_blocks(lua_State* ls, Filesystem* fs, int arg) {
+    uint64_t dev_size = fs_dev(fs)->size;
+    uint64_t size = lua_isnoneornil(ls, arg) ? dev_size
+                    : (uint64_t)mlua_check_int64(ls, arg);
+    luaL_argcheck(ls, size <= dev_size, arg, "larger than block device");
+    uint64_t blocks = size / fs->config.block_size;
+    luaL_argcheck(ls, blocks <= (lfs_size_t)-1, arg, "too large");
+    return blocks;
+}
+
+static int Filesystem_format(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (fs->mounted) return luaL_error(ls, "filesystem is mounted");
+    lfs_size_t blocks = check_blocks(ls, fs, 2);
+    fs->config.block_count = blocks;
+    return push_lfs_result_bool(ls, lfs_format(&fs->lfs, &fs->config));
+#endif
+}
+
 static int Filesystem_mount(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
     if (fs->mounted) return luaL_error(ls, "filesystem is already mounted");
@@ -228,10 +250,78 @@ static int Filesystem_is_mounted(lua_State* ls) {
     return lua_pushboolean(ls, fs->mounted), 1;
 }
 
+static int Filesystem_grow(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    lfs_size_t blocks = check_blocks(ls, fs, 2);
+    struct lfs_fsinfo info;
+    int res = lfs_fs_stat(&fs->lfs, &info);
+    if (res < 0) return push_error(ls, res);
+    luaL_argcheck(ls, blocks >= info.block_count, 2, "shrinking not supported");
+    return push_lfs_result_bool(ls, lfs_fs_grow(&fs->lfs, blocks));
+#endif
+}
+
+static int Filesystem_statvfs(lua_State* ls) {
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    struct lfs_fsinfo info;
+    int res = lfs_fs_stat(&fs->lfs, &info);
+    if (res < 0) return push_error(ls, res);
+    lua_pushinteger(ls, info.disk_version);
+    lua_pushinteger(ls, info.block_size);
+    lua_pushinteger(ls, info.block_count);
+    lua_pushinteger(ls, info.name_max);
+    lua_pushinteger(ls, info.file_max);
+    lua_pushinteger(ls, info.attr_max);
+    return 6;
+}
+
+static int Filesystem_size(lua_State* ls) {
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    return push_lfs_result_int(ls, lfs_fs_size(&fs->lfs));
+}
+
+static int Filesystem_gc(lua_State* ls) {
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    return push_lfs_result_bool(ls, lfs_fs_gc(&fs->lfs));
+}
+
+static int fs_traverse(void* data, lfs_block_t block) {
+    lua_State* ls = data;
+    lua_pushvalue(ls, 2);
+    lua_pushinteger(ls, block);
+    lua_call(ls, 1, 1);
+    return lua_tointeger(ls, -1);
+}
+
+static int Filesystem_traverse(lua_State* ls) {
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    return push_lfs_result_bool(ls,
+        lfs_fs_traverse(&fs->lfs, &fs_traverse, ls));
+}
+
+static int Filesystem_mkconsistent(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    return push_lfs_result_bool(ls, lfs_fs_mkconsistent(&fs->lfs));
+#endif
+}
+
 static int Filesystem_open(lua_State* ls) {
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
     int flags = luaL_checkinteger(ls, 3);
+
+#ifdef LFS_READONLY
+    if (flags & (MLUA_FS_O_WRONLY | MLUA_FS_O_CREAT | MLUA_FS_O_EXCL
+                 | MLUA_FS_O_TRUNC | MLUA_FS_O_APPEND) != 0) {
+        return mlua_err_push(ls, MLUA_EROFS);
+    }
+#endif
 
     File* f = lua_newuserdatauv(ls, sizeof(File) + fs_dev(fs)->write_size, 1);
     luaL_getmetatable(ls, File_name);
@@ -291,94 +381,10 @@ static int Filesystem_getattr(lua_State* ls) {
     }
 }
 
-static int Filesystem_statvfs(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    struct lfs_fsinfo info;
-    int res = lfs_fs_stat(&fs->lfs, &info);
-    if (res < 0) return push_error(ls, res);
-    lua_pushinteger(ls, info.disk_version);
-    lua_pushinteger(ls, info.block_size);
-    lua_pushinteger(ls, info.block_count);
-    lua_pushinteger(ls, info.name_max);
-    lua_pushinteger(ls, info.file_max);
-    lua_pushinteger(ls, info.attr_max);
-    return 6;
-}
-
-static int Filesystem_size(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    return push_lfs_result_int(ls, lfs_fs_size(&fs->lfs));
-}
-
-static int Filesystem_gc(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    return push_lfs_result_bool(ls, lfs_fs_gc(&fs->lfs));
-}
-
-static int fs_traverse(void* data, lfs_block_t block) {
-    lua_State* ls = data;
-    lua_pushvalue(ls, 2);
-    lua_pushinteger(ls, block);
-    lua_call(ls, 1, 1);
-    return lua_tointeger(ls, -1);
-}
-
-static int Filesystem_traverse(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    return push_lfs_result_bool(ls,
-        lfs_fs_traverse(&fs->lfs, &fs_traverse, ls));
-}
-
-#ifndef LFS_READONLY
-
-static lfs_size_t check_blocks(lua_State* ls, Filesystem* fs, int arg) {
-    uint64_t dev_size = fs_dev(fs)->size;
-    uint64_t size = lua_isnoneornil(ls, arg) ? dev_size
-                    : (uint64_t)mlua_check_int64(ls, arg);
-    luaL_argcheck(ls, size <= dev_size, arg, "larger than block device");
-    uint64_t blocks = size / fs->config.block_size;
-    luaL_argcheck(ls, blocks <= (lfs_size_t)-1, arg, "too large");
-    return blocks;
-}
-
-static int Filesystem_format(lua_State* ls) {
-    Filesystem* fs = check_Filesystem(ls, 1);
-    if (fs->mounted) return luaL_error(ls, "filesystem is mounted");
-    lfs_size_t blocks = check_blocks(ls, fs, 2);
-    fs->config.block_count = blocks;
-    return push_lfs_result_bool(ls, lfs_format(&fs->lfs, &fs->config));
-}
-
-static int Filesystem_grow(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    lfs_size_t blocks = check_blocks(ls, fs, 2);
-    struct lfs_fsinfo info;
-    int res = lfs_fs_stat(&fs->lfs, &info);
-    if (res < 0) return push_error(ls, res);
-    luaL_argcheck(ls, blocks >= info.block_count, 2, "shrinking not supported");
-    return push_lfs_result_bool(ls, lfs_fs_grow(&fs->lfs, blocks));
-}
-
-static int Filesystem_mkdir(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    char const* path = luaL_checkstring(ls, 2);
-    return push_lfs_result_bool(ls, lfs_mkdir(&fs->lfs, path));
-}
-
-static int Filesystem_remove(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    char const* path = luaL_checkstring(ls, 2);
-    return push_lfs_result_bool(ls, lfs_remove(&fs->lfs, path));
-}
-
-static int Filesystem_rename(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    char const* old_path = luaL_checkstring(ls, 2);
-    char const* new_path = luaL_checkstring(ls, 3);
-    return push_lfs_result_bool(ls, lfs_rename(&fs->lfs, old_path, new_path));
-}
-
 static int Filesystem_setattr(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
     uint8_t attr = check_attr(ls, 3);
@@ -386,21 +392,50 @@ static int Filesystem_setattr(lua_State* ls) {
     void const* value = luaL_checklstring(ls, 4, &size);
     return push_lfs_result_bool(ls,
         lfs_setattr(&fs->lfs, path, attr, value, size));
+#endif
 }
 
 static int Filesystem_removeattr(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
     char const* path = luaL_checkstring(ls, 2);
     uint8_t attr = check_attr(ls, 3);
     return push_lfs_result_bool(ls, lfs_removeattr(&fs->lfs, path, attr));
+#endif
 }
 
-static int Filesystem_mkconsistent(lua_State* ls) {
+static int Filesystem_mkdir(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
     Filesystem* fs = check_mounted_Filesystem(ls, 1);
-    return push_lfs_result_bool(ls, lfs_fs_mkconsistent(&fs->lfs));
+    char const* path = luaL_checkstring(ls, 2);
+    return push_lfs_result_bool(ls, lfs_mkdir(&fs->lfs, path));
+#endif
 }
 
-#endif  // LFS_READONLY
+static int Filesystem_remove(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    char const* path = luaL_checkstring(ls, 2);
+    return push_lfs_result_bool(ls, lfs_remove(&fs->lfs, path));
+#endif
+}
+
+static int Filesystem_rename(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    char const* old_path = luaL_checkstring(ls, 2);
+    char const* new_path = luaL_checkstring(ls, 3);
+    return push_lfs_result_bool(ls, lfs_rename(&fs->lfs, old_path, new_path));
+#endif
+}
 
 #if !defined(LFS_READONLY) && defined(LFS_MIGRATE)
 
@@ -415,36 +450,25 @@ static int Filesystem_migrate(lua_State* ls) {
 #endif
 
 MLUA_SYMBOLS(Filesystem_syms) = {
+    MLUA_SYM_F(format, Filesystem_),
     MLUA_SYM_F(mount, Filesystem_),
     MLUA_SYM_F(unmount, Filesystem_),
     MLUA_SYM_F(is_mounted, Filesystem_),
-    MLUA_SYM_F(open, Filesystem_),
-    MLUA_SYM_F(opendir, Filesystem_),
-    MLUA_SYM_F(stat, Filesystem_),
-    MLUA_SYM_F(getattr, Filesystem_),
+    MLUA_SYM_F(grow, Filesystem_),
     MLUA_SYM_F(statvfs, Filesystem_),
     MLUA_SYM_F(size, Filesystem_),
     MLUA_SYM_F(gc, Filesystem_),
     MLUA_SYM_F(traverse, Filesystem_),
-#ifndef LFS_READONLY
-    MLUA_SYM_F(format, Filesystem_),
-    MLUA_SYM_F(grow, Filesystem_),
+    MLUA_SYM_F(mkconsistent, Filesystem_),
+    MLUA_SYM_F(open, Filesystem_),
+    MLUA_SYM_F(opendir, Filesystem_),
+    MLUA_SYM_F(stat, Filesystem_),
+    MLUA_SYM_F(getattr, Filesystem_),
+    MLUA_SYM_F(setattr, Filesystem_),
+    MLUA_SYM_F(removeattr, Filesystem_),
     MLUA_SYM_F(mkdir, Filesystem_),
     MLUA_SYM_F(remove, Filesystem_),
     MLUA_SYM_F(rename, Filesystem_),
-    MLUA_SYM_F(setattr, Filesystem_),
-    MLUA_SYM_F(removeattr, Filesystem_),
-    MLUA_SYM_F(mkconsistent, Filesystem_),
-#else
-    MLUA_SYM_V(format, boolean, false),
-    MLUA_SYM_V(grow, boolean, false),
-    MLUA_SYM_V(mkdir, boolean, false),
-    MLUA_SYM_V(remove, boolean, false),
-    MLUA_SYM_V(rename, boolean, false),
-    MLUA_SYM_V(setattr, boolean, false),
-    MLUA_SYM_V(removeattr, boolean, false),
-    MLUA_SYM_V(mkconsistent, boolean, false),
-#endif
 #if !defined(LFS_READONLY) && defined(LFS_MIGRATE)
     MLUA_SYM_F(migrate, Filesystem_),
 #else
@@ -497,6 +521,20 @@ static int File_read(lua_State* ls) {
     return luaL_pushresultsize(&buf, res), 1;
 }
 
+static int File_write(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
+    Filesystem* fs = NULL;
+    File* f = check_File(ls, 1, &fs);
+    size_t size;
+    void const* src = luaL_checklstring(ls, 2, &size);
+    lfs_ssize_t res = lfs_file_write(&fs->lfs, &f->file, src, size);
+    if (res < 0) return push_error(ls, res);
+    return lua_pushinteger(ls, res), 1;
+#endif
+}
+
 static int File_seek(lua_State* ls) {
     Filesystem* fs = NULL;
     File* f = check_File(ls, 1, &fs);
@@ -524,43 +562,28 @@ static int File_size(lua_State* ls) {
     return push_lfs_result_int(ls, lfs_file_size(&fs->lfs, &f->file));
 }
 
-#ifndef LFS_READONLY
-
-static int File_write(lua_State* ls) {
-    Filesystem* fs = NULL;
-    File* f = check_File(ls, 1, &fs);
-    size_t size;
-    void const* src = luaL_checklstring(ls, 2, &size);
-    lfs_ssize_t res = lfs_file_write(&fs->lfs, &f->file, src, size);
-    if (res < 0) return push_error(ls, res);
-    return lua_pushinteger(ls, res), 1;
-}
-
 static int File_truncate(lua_State* ls) {
+#ifdef LFS_READONLY
+    return mlua_err_push(ls, MLUA_EROFS);
+#else
     Filesystem* fs = NULL;
     File* f = check_File(ls, 1, &fs);
     lfs_off_t size = luaL_checkinteger(ls, 2);
     return push_lfs_result_bool(ls,
         lfs_file_truncate(&fs->lfs, &f->file, size));
+#endif
 }
-
-#endif  // LFS_READONLY
 
 MLUA_SYMBOLS(File_syms) = {
     MLUA_SYM_F(close, File_),
     MLUA_SYM_F(sync, File_),
     MLUA_SYM_F(read, File_),
+    MLUA_SYM_F(write, File_),
     MLUA_SYM_F(seek, File_),
     MLUA_SYM_F(tell, File_),
     MLUA_SYM_F(rewind, File_),
     MLUA_SYM_F(size, File_),
-#ifndef LFS_READONLY
-    MLUA_SYM_F(write, File_),
     MLUA_SYM_F(truncate, File_),
-#else
-    MLUA_SYM_V(write, boolean, false),
-    MLUA_SYM_V(truncate, boolean, false),
-#endif
 };
 
 #define File___close File_close
