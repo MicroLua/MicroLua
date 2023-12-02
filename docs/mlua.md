@@ -157,8 +157,6 @@ customized with the following compile definitions:
   at the end of the flash memory.
 - `MLUA_FS_LOADER_SIZE` (default: 1 MiB): The size of the filesystem. Must be a
   multiple of `FLASH_SECTOR_SIZE`.
-- `MLUA_FS_LOADER_FORMAT` (default: 0): When true, formats the filesystem if it
-  fails to mount.
 - `MLUA_FS_LOADER_BASE` (default: `"/lua"`): The path below which to look for
   modules.
 - `MLUA_FS_LOADER_FLAT` (default: 1): When true, look up modules in the

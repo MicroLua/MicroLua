@@ -22,9 +22,6 @@
 #ifndef MLUA_FS_LOADER_SIZE
 #define MLUA_FS_LOADER_SIZE (1 << 20)
 #endif
-#ifndef MLUA_FS_LOADER_FORMAT
-#define MLUA_FS_LOADER_FORMAT 0
-#endif
 #ifndef MLUA_FS_LOADER_BASE
 #define MLUA_FS_LOADER_BASE "/lua"
 #endif
@@ -55,10 +52,11 @@ static void* fs;
 
 static __attribute__((constructor)) void init(void) {
     mlua_block_flash_init(&dev, (MLUA_FS_LOADER_OFFSET), (MLUA_FS_LOADER_SIZE));
-    if (__flash_binary_end <= __flash_binary_start + (MLUA_FS_LOADER_OFFSET)) {
-        fs = mlua_fs_lfs_alloc(&dev.dev);  // Never freed
-        mlua_fs_lfs_mount(fs, MLUA_FS_LOADER_FORMAT);
+    if (__flash_binary_end > __flash_binary_start + (MLUA_FS_LOADER_OFFSET)) {
+        return;  // Filesystem overlaps with binary
     }
+    fs = mlua_fs_lfs_alloc(&dev.dev);  // Never freed
+    mlua_fs_lfs_mount(fs);
 }
 
 typedef struct Loader {

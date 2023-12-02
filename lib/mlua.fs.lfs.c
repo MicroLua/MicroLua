@@ -646,27 +646,11 @@ void* mlua_fs_lfs_alloc(MLuaBlockDev* dev) {
     return fs;
 }
 
-int mlua_fs_lfs_mount(void* fs, bool format) {
+int mlua_fs_lfs_mount(void* fs) {
     Filesystem* tfs = fs;
-
-    // Mount the filesystem.
     int res = lfs_mount(&tfs->lfs, &tfs->config);
-    if (res == LFS_ERR_OK) {
-        tfs->mounted = true;
-        return MLUA_EOK;
-    }
-    if (!format) return mlua_err(res);
-
-    // Mounting failed, format the filesystem.
-    tfs->config.block_count = fs_dev(tfs)->size / tfs->config.block_size;
-    res = lfs_format(&tfs->lfs, &tfs->config);
-    if (res != LFS_ERR_OK) return mlua_err(res);
-
-    // Mount the formatted filesystem.
-    res = lfs_mount(&tfs->lfs, &tfs->config);
-    if (res != LFS_ERR_OK) return mlua_err(res);
-    tfs->mounted = true;
-    return MLUA_EOK;
+    if (res == LFS_ERR_OK) tfs->mounted = true;
+    return mlua_err(res);
 }
 
 void mlua_fs_lfs_push(lua_State* ls, void* fs) {

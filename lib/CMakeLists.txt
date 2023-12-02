@@ -768,7 +768,6 @@ add_executable(mlua_tests)
 mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_FS_LOADER_FLAT=1
-    MLUA_FS_LOADER_FORMAT=1
     MLUA_FS_LOADER_SIZE=100<<10
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0

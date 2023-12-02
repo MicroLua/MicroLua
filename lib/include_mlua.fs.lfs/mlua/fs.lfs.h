@@ -15,9 +15,8 @@ extern "C" {
 // Create a new global LFS filesystem on the given block device.
 void* mlua_fs_lfs_alloc(MLuaBlockDev* dev);
 
-// Mount a global LFS filesystem. If "format" is true and mounting fails, format
-// the filesystem and try mounting it again.
-int mlua_fs_lfs_mount(void* fs, bool format);
+// Mount a global LFS filesystem.
+int mlua_fs_lfs_mount(void* fs);
 
 // Push a Filesystem value to the stack.
 void mlua_fs_lfs_push(lua_State* ls, void* fs);
