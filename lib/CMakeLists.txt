@@ -771,6 +771,7 @@ target_compile_definitions(mlua_tests PRIVATE
     MLUA_FS_LOADER_SIZE=100<<10
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0
+    PICO_ENTER_USB_BOOT_ON_EXIT=1
     PICO_MAX_SHARED_IRQ_HANDLERS=16
 )
 mlua_target_config(mlua_tests

@@ -556,7 +556,7 @@ function Runner:__init()
 end
 
 function Runner:run()
-    while true do
+    while not self.exit do
         local t = Test()
         t._full_output = self.full_output
         t._full_results = self.full_results
@@ -609,12 +609,21 @@ end
 
 function Runner:cmd_reg() print_registry() end
 
+function Runner:cmd_x()
+    self.exit = true
+    return true
+end
+
 local function pmain()
     local runner = Runner()
     return runner:run()
 end
 
 function main()
+    local done<close> = function()
+        local thread = package.loaded['mlua.thread']
+        if thread then thread.shutdown() end
+    end
     return xpcall(pmain, function(err)
         io.aprintf("\n@{+RED}ERROR:@{NORM} %s\n", debug.traceback(err, 2))
         return err
