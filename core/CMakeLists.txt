@@ -1,16 +1,6 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
-# Copy Lua headers and generate luaconf.h.
-mlua_core_filenames(lua_h "*.h")
-list(FILTER lua_h EXCLUDE REGEX "^luaconf\\.h$")
-mlua_core_copy("${lua_h}" include)
-mlua_core_luaconf(include)
-
-# Copy Lua sources.
-mlua_core_filenames(lua_c "*.c")
-mlua_core_copy("${lua_c}" src)
-
 # Core Lua interpreter.
 mlua_add_core_library(mlua_core
     lapi.c
@@ -48,23 +38,6 @@ mlua_add_core_c_module(os loslib.c)
 mlua_add_core_c_module(string lstrlib.c)
 mlua_add_core_c_module(table ltablib.c)
 mlua_add_core_c_module(utf8 lutf8lib.c)
-
-# All core Lua modules.
-mlua_add_core_library(mlua_core_mod_all
-    linit.c
-)
-target_link_libraries(mlua_core_mod_all INTERFACE
-    mlua_mod_base
-    mlua_mod_coroutine
-    mlua_mod_debug
-    mlua_mod_io
-    mlua_mod_math
-    mlua_mod_os
-    mlua_mod_package
-    mlua_mod_string
-    mlua_mod_table
-    mlua_mod_utf8
-)
 
 # The entry point of the Lua interpreter.
 pico_add_library(mlua_core_main)

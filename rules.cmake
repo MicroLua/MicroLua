@@ -12,6 +12,31 @@ function(mlua_set NAME DEFAULT)
     set("${NAME}" "${${NAME}}" ${ARGN})
 endfunction()
 
+# Configure the interpreter.
+mlua_set(MLUA_INT INT CACHE STRING
+    "The type of Lua integers, one of (INT, LONG, LONGLONG)")
+set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
+mlua_set(MLUA_FLOAT FLOAT CACHE STRING
+    "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
+set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
+
+# Copy Lua sources. This is necessary to allow overriding luaconf.h.
+file(GLOB paths "${MLUA_LUA_SOURCE_DIR}/*.[hc]")
+foreach(path IN LISTS paths)
+    cmake_path(GET path FILENAME name)
+    if(NOT name STREQUAL "luaconf.h")
+        configure_file("${path}" "${CMAKE_BINARY_DIR}/ext/lua/${name}" COPYONLY)
+    endif()
+endforeach()
+
+# Generate luaconf.h.
+file(READ "${MLUA_LUA_SOURCE_DIR}/luaconf.h" LUACONF)
+string(REGEX REPLACE
+    "\n([ \t]*#[ \t]*define[ \t]+LUA_(INT|FLOAT)_DEFAULT[ \t])"
+    "\n// \\1" LUACONF "${LUACONF}")
+configure_file("${MLUA_PATH}/core/luaconf.in.h"
+    "${CMAKE_BINARY_DIR}/ext/lua/luaconf.h")
+
 if(NOT FENNEL)
     if(DEFINED ENV{FENNEL})
         set(FENNEL "$ENV{FENNEL}")
@@ -65,45 +90,14 @@ function(mlua_add_gen_target TARGET PREFIX SCOPE)
     target_sources("${TARGET}" "${SCOPE}" "${ARGN}")
 endfunction()
 
-function(mlua_core_filenames VAR GLOB)
-    file(GLOB paths "${MLUA_LUA_SOURCE_DIR}/${GLOB}")
-    foreach(path IN LISTS paths)
-        cmake_path(GET path FILENAME name)
-        list(APPEND names "${name}")
-    endforeach()
-    set("${VAR}" "${names}" PARENT_SCOPE)
-endfunction()
-
-function(mlua_core_copy FILENAMES DEST)
-    foreach(name IN LISTS FILENAMES)
-        configure_file("${MLUA_LUA_SOURCE_DIR}/${name}" "${DEST}/${name}"
-                       COPYONLY)
-    endforeach()
-endfunction()
-
-mlua_set(MLUA_INT INT CACHE STRING
-    "The type of Lua integers, one of (INT, LONG, LONGLONG)")
-set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
-mlua_set(MLUA_FLOAT FLOAT CACHE STRING
-    "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
-set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
-
-function(mlua_core_luaconf DEST)
-    file(READ "${MLUA_LUA_SOURCE_DIR}/luaconf.h" LUACONF)
-    string(REGEX REPLACE
-        "\n([ \t]*#[ \t]*define[ \t]+LUA_(INT|FLOAT)_DEFAULT[ \t])"
-        "\n// \\1" LUACONF "${LUACONF}")
-    configure_file("${MLUA_PATH}/core/luaconf.in.h" "${DEST}/luaconf.h")
-endfunction()
-
 function(mlua_add_core_library TARGET)
     pico_add_library("${TARGET}")
     target_include_directories("${TARGET}_headers" INTERFACE
-        "${CMAKE_CURRENT_BINARY_DIR}/include"
+        "${CMAKE_BINARY_DIR}/ext/lua"
     )
     foreach(name IN LISTS ARGN)
         target_sources("${TARGET}" INTERFACE
-            "${CMAKE_CURRENT_BINARY_DIR}/src/${name}"
+            "${CMAKE_BINARY_DIR}/ext/lua/${name}"
         )
     endforeach()
 endfunction()

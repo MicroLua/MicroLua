@@ -13,16 +13,6 @@ add_compile_options(
     -Wno-unused-function -Wno-unused-parameter
 )
 
-# Copy Lua headers and generate luaconf.h.
-mlua_core_filenames(lua_h "*.h")
-list(FILTER lua_h EXCLUDE REGEX "^luaconf\\.h$")
-mlua_core_copy("${lua_h}" include)
-mlua_core_luaconf(include)
-
-# Copy Lua sources.
-mlua_core_filenames(lua_c "*.c")
-mlua_core_copy("${lua_c}" src)
-
 # Embed the script.
 set(SCRIPT "${CMAKE_CURRENT_LIST_DIR}/gen.lua")
 cmake_path(GET SCRIPT FILENAME FILE)
@@ -33,16 +23,14 @@ set_source_files_properties(
 )
 
 add_executable(gen
-    "${CMAKE_CURRENT_BINARY_DIR}/src/onelua.c"
+    "${CMAKE_BINARY_DIR}/ext/lua/onelua.c"
     "${CMAKE_CURRENT_BINARY_DIR}/main.c"
 )
 target_compile_definitions(gen PRIVATE
     MAKE_LIB
-    MLUA_MAXSTACK=0
-    MLUA_BUFFERSIZE=0
 )
 target_include_directories(gen PRIVATE
-    "${CMAKE_CURRENT_BINARY_DIR}/include"
+    "${CMAKE_BINARY_DIR}/ext/lua"
 )
 target_link_libraries(gen PRIVATE m)
 if(CMAKE_HOST_WIN32)
