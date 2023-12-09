@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 # Copy Lua headers and generate luaconf.h.
-mlua_core_filenames(lua_h *.h)
-list(FILTER lua_h EXCLUDE REGEX ^luaconf\\.h$)
+mlua_core_filenames(lua_h "*.h")
+list(FILTER lua_h EXCLUDE REGEX "^luaconf\\.h$")
 mlua_core_copy("${lua_h}" include)
 mlua_core_luaconf(include)
 
 # Copy Lua sources.
-mlua_core_filenames(lua_c *.c)
+mlua_core_filenames(lua_c "*.c")
 mlua_core_copy("${lua_c}" src)
 
 # Core Lua interpreter.

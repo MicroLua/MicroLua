@@ -161,21 +161,21 @@ static int fs_unlock(struct lfs_config const* c) {
 static void init_filesystem(Filesystem* fs, MLuaBlockDev* dev) {
     memset(fs, 0, sizeof(*fs));
     fs->config.context = dev;
-    fs->config.read = &fs_read,
-    fs->config.prog = &fs_prog,
-    fs->config.erase = &fs_erase,
-    fs->config.sync = &fs_sync,
+    fs->config.read = &fs_read;
+    fs->config.prog = &fs_prog;
+    fs->config.erase = &fs_erase;
+    fs->config.sync = &fs_sync;
 #ifdef LFS_THREADSAFE
     mutex_init(&fs->mu);
-    fs->config.lock = &fs_lock,
-    fs->config.unlock = &fs_unlock,
+    fs->config.lock = &fs_lock;
+    fs->config.unlock = &fs_unlock;
 #endif
     fs->config.read_size = dev->read_size;
     fs->config.prog_size = dev->write_size;
     fs->config.block_size = dev->erase_size;
-    fs->config.block_cycles = 500,
+    fs->config.block_cycles = 500;
     fs->config.cache_size = fs->config.prog_size;
-    fs->config.lookahead_size = LOOKAHEAD_SIZE,
+    fs->config.lookahead_size = LOOKAHEAD_SIZE;
     fs->config.read_buffer = fs->buffers;
     fs->config.prog_buffer = &fs->buffers[fs->config.cache_size];
     fs->config.lookahead_buffer = fs->lookahead_buffer;

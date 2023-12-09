@@ -11,7 +11,7 @@ static char const data[] = {
 };
 
 MLUA_OPEN_MODULE(@MOD@) {
-    if (luaL_loadbufferx(ls, data, sizeof(data)-1, "@MOD@", "bt") != LUA_OK) {
+    if (luaL_loadbufferx(ls, data, sizeof(data) - 1, "@MOD@", "bt") != LUA_OK) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
     }
