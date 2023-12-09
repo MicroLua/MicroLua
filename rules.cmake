@@ -12,6 +12,13 @@ function(mlua_set NAME DEFAULT)
     set("${NAME}" "${${NAME}}" ${ARGN})
 endfunction()
 
+function(mlua_add_compile_options)
+    add_compile_options(
+        -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
+        -Wno-unused-function -Wno-unused-parameter
+    )
+endfunction()
+
 # Configure the interpreter.
 mlua_set(MLUA_INT INT CACHE STRING
     "The type of Lua integers, one of (INT, LONG, LONGLONG)")
