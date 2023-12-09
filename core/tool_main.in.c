@@ -8,7 +8,31 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
+#include "mlua/module.h"
 
+// We need at least one module, otherwise the symbols below aren't defined and
+// linking fails.
+MLUA_OPEN_MODULE(mlua) {
+    lua_createtable(ls, 0, 0);
+    return 1;
+}
+
+extern MLuaModule const __start_mlua_module_registry[];
+extern MLuaModule const __stop_mlua_module_registry[];
+
+// Set up all compiled-in modules in package.preload.
+static void preload_modules(lua_State* ls) {
+    luaL_requiref(ls, "package", luaopen_package, 0);
+    lua_getfield(ls, -1, "preload");
+    lua_remove(ls, -2);
+    for (MLuaModule const* m = __start_mlua_module_registry;
+            m != __stop_mlua_module_registry; ++m) {
+        lua_pushcfunction(ls, m->open);
+        lua_setfield(ls, -2, m->name);
+    }
+}
+
+// Include the script text.
 __asm__(
     ".section \".rodata\"\n"
     ".global script, script_end\n"
@@ -24,6 +48,7 @@ int pmain(lua_State* ls) {
     int argc = lua_tointeger(ls, 1);
     char** argv = lua_touserdata(ls, 2);
     luaL_openlibs(ls);
+    preload_modules(ls);
     if (luaL_loadbufferx(ls, script, script_end - script,
                          "@@FILE@", "t") != LUA_OK) {
         return lua_error(ls);

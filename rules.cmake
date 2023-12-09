@@ -270,20 +270,21 @@ function(mlua_add_lua_tool TARGET SCRIPT)
     set(main "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_main.c")
     configure_file("${MLUA_PATH}/core/tool_main.in.c" "${main}")
     set_source_files_properties("${main}" OBJECT_DEPENDS "${SCRIPT}")
-    add_executable(gen
+    add_executable("${TARGET}"
         "${CMAKE_BINARY_DIR}/ext/lua/onelua.c"
         "${main}"
     )
-    target_compile_definitions(gen PRIVATE
+    target_compile_definitions("${TARGET}" PRIVATE
         MAKE_LIB
     )
-    target_include_directories(gen PRIVATE
+    target_include_directories("${TARGET}" PRIVATE
         "${CMAKE_BINARY_DIR}/ext/lua"
+        "${MLUA_PATH}/core/include_tool"
     )
-    target_link_libraries(gen PRIVATE m)
+    target_link_libraries("${TARGET}" PRIVATE m)
     if(CMAKE_HOST_WIN32)
-        target_compile_definitions(gen PRIVATE LUA_USE_WINDOWS)
+        target_compile_definitions("${TARGET}" PRIVATE LUA_USE_WINDOWS)
     else()
-        target_compile_definitions(gen PRIVATE LUA_USE_LINUX)
+        target_compile_definitions("${TARGET}" PRIVATE LUA_USE_LINUX)
     endif()
 endfunction()

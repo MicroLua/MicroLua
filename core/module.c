@@ -184,13 +184,13 @@ void mlua_new_class_hash_(
     lua_setfield(ls, -2, "__index");
 }
 
-extern MLuaModule const __start_mlua_module_registry;
-extern MLuaModule const __stop_mlua_module_registry;
+extern MLuaModule const __start_mlua_module_registry[];
+extern MLuaModule const __stop_mlua_module_registry[];
 
 static int preload___index(lua_State* ls) {
     char const* name = luaL_checkstring(ls, 2);
-    for (MLuaModule const* m = &__start_mlua_module_registry;
-            m != &__stop_mlua_module_registry; ++m) {
+    for (MLuaModule const* m = __start_mlua_module_registry;
+            m != __stop_mlua_module_registry; ++m) {
         if (strcmp(m->name, name) == 0) {
             return lua_pushcfunction(ls, m->open), 1;
         }
@@ -199,10 +199,10 @@ static int preload___index(lua_State* ls) {
 }
 
 static int preload_next(lua_State* ls) {
-    MLuaModule const* m = &__start_mlua_module_registry;
+    MLuaModule const* m = __start_mlua_module_registry;
     if (!lua_isnil(ls, 2)) {
         char const* name = lua_tostring(ls, 2);
-        while (m != &__stop_mlua_module_registry) {
+        while (m != __stop_mlua_module_registry) {
             if (strcmp(m->name, name) == 0) {
                 ++m;
                 break;
@@ -210,7 +210,7 @@ static int preload_next(lua_State* ls) {
             ++m;
         }
     }
-    if (m == &__stop_mlua_module_registry) return 0;
+    if (m == __stop_mlua_module_registry) return 0;
     lua_pushstring(ls, m->name);
     lua_pushcfunction(ls, m->open);
     return 2;

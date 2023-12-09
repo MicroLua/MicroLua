@@ -46,9 +46,7 @@ target_sources(mlua_core_main INTERFACE
     module.c
     util.c
 )
-target_include_directories(mlua_core_main INTERFACE
-    "${CMAKE_CURRENT_LIST_DIR}/include"
-)
+target_include_directories(mlua_core_main_headers INTERFACE include)
 target_link_libraries(mlua_core_main INTERFACE
     hardware_exception
     hardware_sync
