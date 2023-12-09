@@ -438,8 +438,4 @@ local function main(cmd, ...)
     return fn(...)
 end
 
-local ok, err = pcall(main, ...)
-if not ok then
-    io.stderr:write(("ERROR: %s\n"):format(err))
-    os.exit(false, true)
-end
+return main(...)

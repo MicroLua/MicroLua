@@ -4,20 +4,12 @@
 message("MLUA_PATH is ${MLUA_PATH}")
 set(MLUA_LITTLEFS_SOURCE_DIR "${MLUA_PATH}/ext/littlefs" CACHE INTERNAL "")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
-set(GEN "${MLUA_PATH}/tools/gen.lua" CACHE INTERNAL "")
 
 function(mlua_set NAME DEFAULT)
     if("${${NAME}}" STREQUAL "")
         set("${NAME}" "${DEFAULT}")
     endif()
     set("${NAME}" "${${NAME}}" ${ARGN})
-endfunction()
-
-function(mlua_want_lua)
-    if(NOT Lua_FOUND)
-        set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${MLUA_PATH}/tools")
-        find_package(Lua REQUIRED)
-    endif()
 endfunction()
 
 if(NOT FENNEL)
@@ -125,12 +117,11 @@ function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg("${MOD}" "${ARGN}")
     set(template "${MLUA_PATH}/core/module_core.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}_reg.c")
-    mlua_want_lua()
     add_custom_command(
         COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-        DEPENDS "${GEN}" "${template}"
+        DEPENDS mlua_tool_gen "${template}"
         OUTPUT "${output}"
-        COMMAND Lua "${GEN}"
+        COMMAND mlua_tool_gen
             "coremod" "${MOD}" "${template}" "${output}"
         VERBATIM
     )
@@ -140,16 +131,15 @@ endfunction()
 
 function(mlua_add_c_module TARGET)
     pico_add_library("${TARGET}")
-    mlua_want_lua()
     foreach(src IN LISTS ARGN)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src FILENAME name)
         set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}")
         add_custom_command(
             COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-            DEPENDS "${GEN}" "${src}"
+            DEPENDS mlua_tool_gen "${src}"
             OUTPUT "${output}"
-            COMMAND Lua "${GEN}"
+            COMMAND mlua_tool_gen
                 "cmod" "${src}" "${output}"
             VERBATIM
         )
@@ -161,19 +151,18 @@ endfunction()
 function(mlua_add_header_module TARGET MOD SRC)
     cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE;STRIP")
     pico_add_library("${TARGET}")
-    mlua_want_lua()
     cmake_path(ABSOLUTE_PATH SRC)
     set(template "${MLUA_PATH}/core/module_header.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}.c")
     set(incdirs "$<TARGET_PROPERTY:${TARGET},INTERFACE_INCLUDE_DIRECTORIES>")
     add_custom_command(
         COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-        DEPENDS "${GEN}" "${SRC}" "${template}"
+        DEPENDS mlua_tool_gen "${SRC}" "${template}"
         OUTPUT "${output}"
         COMMAND "${CMAKE_C_COMPILER}" -E -dD
             "$<$<BOOL:${incdirs}>:-I$<JOIN:${incdirs},;-I>>"
             -o "${output}.syms" "${SRC}"
-        COMMAND Lua "${GEN}"
+        COMMAND mlua_tool_gen
             "headermod" "${MOD}" "${SRC}" "${output}.syms" "${template}"
             "${output}" EXCLUDE "${args_EXCLUDE}" STRIP "${args_STRIP}"
         COMMAND_EXPAND_LISTS
@@ -185,7 +174,6 @@ endfunction()
 
 function(mlua_add_lua_modules TARGET)
     pico_add_library("${TARGET}")
-    mlua_want_lua()
     foreach(src IN LISTS ARGN)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src STEM LAST_ONLY mod)
@@ -193,9 +181,9 @@ function(mlua_add_lua_modules TARGET)
         set(output "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
         add_custom_command(
             COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-            DEPENDS "${GEN}" "${src}" "${template}"
+            DEPENDS mlua_tool_gen "${src}" "${template}"
             OUTPUT "${output}"
-            COMMAND Lua "${GEN}"
+            COMMAND mlua_tool_gen
                 "luamod" "${mod}" "${src}" "${template}" "${output}"
             VERBATIM
         )
@@ -225,14 +213,13 @@ endfunction()
 
 # TARGET must be a binary target.
 function(mlua_add_config_module TARGET)
-    mlua_want_lua()
     set(template "${MLUA_PATH}/core/module_config.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/mlua.config_${TARGET}.c")
     add_custom_command(
         COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-        DEPENDS "${GEN}" "${template}"
+        DEPENDS mlua_tool_gen "${template}"
         OUTPUT "${output}"
-        COMMAND Lua "${GEN}"
+        COMMAND mlua_tool_gen
             "configmod" "mlua.config" "${template}" "${output}"
             "$<TARGET_PROPERTY:${TARGET},mlua_config_symbols>"
         COMMAND_EXPAND_LISTS
