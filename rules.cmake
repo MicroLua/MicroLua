@@ -241,3 +241,49 @@ function(mlua_add_lua_test_modules TARGET)
     mlua_add_lua_modules("${TARGET}" ${ARGN})
     set_property(GLOBAL APPEND PROPERTY mlua_test_targets "${TARGET}")
 endfunction()
+
+include(ExternalProject)
+
+function(mlua_add_tool TARGET SRC BIN)
+    cmake_path(GET BIN PARENT_PATH bin_dir)
+    ExternalProject_Add("${TARGET}_ext"
+        SOURCE_DIR "${SRC}"
+        BINARY_DIR "${bin_dir}"
+        CMAKE_ARGS
+            "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+            "-DMLUA_PATH:PATH=${MLUA_PATH}"
+            "-DMLUA_INT:STRING=${MLUA_INT}"
+            "-DMLUA_FLOAT:STRING=${MLUA_FLOAT}"
+        BUILD_ALWAYS 1  # Force dependency checking
+        INSTALL_COMMAND ""
+    )
+    if(CMAKE_HOST_WIN32)
+        string(APPEND BIN ".exe")
+    endif()
+    add_executable("${TARGET}" IMPORTED GLOBAL)
+    set_property(TARGET "${TARGET}" PROPERTY IMPORTED_LOCATION "${BIN}")
+    add_dependencies("${TARGET}" "${TARGET}_ext")
+endfunction()
+
+function(mlua_add_lua_tool TARGET SCRIPT)
+    cmake_path(GET SCRIPT FILENAME FILE)
+    set(main "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_main.c")
+    configure_file("${MLUA_PATH}/core/tool_main.in.c" "${main}")
+    set_source_files_properties("${main}" OBJECT_DEPENDS "${SCRIPT}")
+    add_executable(gen
+        "${CMAKE_BINARY_DIR}/ext/lua/onelua.c"
+        "${main}"
+    )
+    target_compile_definitions(gen PRIVATE
+        MAKE_LIB
+    )
+    target_include_directories(gen PRIVATE
+        "${CMAKE_BINARY_DIR}/ext/lua"
+    )
+    target_link_libraries(gen PRIVATE m)
+    if(CMAKE_HOST_WIN32)
+        target_compile_definitions(gen PRIVATE LUA_USE_WINDOWS)
+    else()
+        target_compile_definitions(gen PRIVATE LUA_USE_LINUX)
+    endif()
+endfunction()
