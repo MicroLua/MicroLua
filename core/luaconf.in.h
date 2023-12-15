@@ -28,7 +28,7 @@
 // lua_number2strx is undefined, so we use that.
 #undef lua_number2strx
 
-#ifdef PICO_BUILD
+#if PICO_ON_DEVICE
 
 // The Lua stack size limit. When <= 0, use the default.
 #ifndef MLUA_MAXSTACK
@@ -56,8 +56,8 @@
 // lua_writestringerror is used by panic(), warn() and debug.debug(). Use our
 // own simplified implementation to avoid depending on sprintf.
 #define lua_writestringerror(s, p) mlua_writestringerror(s, p)
-extern void mlua_writestringerror(char const* fmt, char const* param);
+void mlua_writestringerror(char const* fmt, char const* param);
 
-#endif  // PICO_BUILD
+#endif  // PICO_ON_DEVICE
 
 #endif
