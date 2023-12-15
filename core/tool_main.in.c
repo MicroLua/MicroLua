@@ -54,7 +54,7 @@ int pmain(lua_State* ls) {
         return lua_error(ls);
     }
     for (int i = 1; i < argc; ++i) lua_pushstring(ls, argv[i]);
-    if (lua_pcall(ls, argc - 1, 1, 0) != LUA_OK) return lua_error(ls);
+    lua_call(ls, argc - 1, 1);
     return 1;
 }
 
