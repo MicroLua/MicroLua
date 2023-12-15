@@ -26,6 +26,7 @@ set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
 mlua_set(MLUA_FLOAT FLOAT CACHE STRING
     "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
 set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
+mlua_set(MLUA_COMPILE 1 CACHE BOOL "Compile Lua sources at build-time")
 
 # Copy Lua sources. This is necessary to allow overriding luaconf.h.
 file(GLOB paths "${MLUA_LUA_SOURCE_DIR}/*.[hc]")
@@ -175,20 +176,27 @@ endfunction()
 
 function(mlua_add_lua_modules TARGET)
     pico_add_library("${TARGET}")
-    foreach(src IN LISTS ARGN)
-        cmake_path(ABSOLUTE_PATH src)
-        cmake_path(GET src STEM LAST_ONLY mod)
+    foreach(SRC IN LISTS ARGN)
+        cmake_path(ABSOLUTE_PATH SRC)
+        cmake_path(GET SRC STEM LAST_ONLY MOD)
         set(template "${MLUA_PATH}/core/module_lua.in.c")
-        set(output "${CMAKE_CURRENT_BINARY_DIR}/${mod}.c")
-        add_custom_command(
-            COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-            DEPENDS mlua_tool_gen "${src}" "${template}"
-            OUTPUT "${output}"
-            COMMAND mlua_tool_gen
-                "luamod" "${mod}" "${src}" "${template}" "${output}"
-            VERBATIM
-        )
-        mlua_add_gen_target("${TARGET}" mlua_gen_lua INTERFACE "${output}")
+        set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}.c")
+        if("${MLUA_COMPILE}")
+            add_custom_command(
+                COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
+                DEPENDS mlua_tool_gen "${SRC}" "${template}"
+                OUTPUT "${output}"
+                COMMAND mlua_tool_gen
+                    "luamod" "${MOD}" "${SRC}" "${template}" "${output}"
+                VERBATIM
+            )
+            mlua_add_gen_target("${TARGET}" mlua_gen_lua INTERFACE "${output}")
+        else()
+            set(INCBIN "1")
+            configure_file("${template}" "${output}")
+            set_source_files_properties("${output}" OBJECT_DEPENDS "${SRC}")
+            target_sources("${TARGET}" INTERFACE "${output}")
+        endif()
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()

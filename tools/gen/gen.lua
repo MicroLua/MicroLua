@@ -404,30 +404,21 @@ local function compile_lua(mod, src)
     local bin = string.dump(chunk)
 
     -- Format the compiled chunk as C array data.
-    local parts, offset = {}, 0
-    while true do
-        if offset >= #bin then break end
-        for i = 1, 16 do
-            local v = bin:byte(offset + i)
-            if v == nil then break end
-            table.insert(parts, ('0x%02x,'):format(v))
-        end
-        table.insert(parts, '\n')
-        offset = offset + 16
-    end
+    local out = {}
+    for i = 1, #bin do table.insert(out, ('0x%02x,'):format(bin:byte(i))) end
 
     -- Lua seems to rely on a terminating zero byte when loading chunks in text
     -- mode, even if it isn't included in the chunk size. This is likely a bug.
     -- We work around it by appending a zero byte to the output.
-    table.insert(parts, '0x00,')
-    return table.concat(parts)
+    table.insert(out, '0x00,')
+    return table.concat(out)
 end
 
 -- Generate a C module from a Lua source file.
 function cmd_luamod(mod, src, template, output)
     local data = compile_lua(mod, read_file(src))
     local tmpl = read_file(template)
-    local sub = {MOD = mod, DATA = data}
+    local sub = {MOD = mod, DATA = data, INCBIN = '0'}
     write_file(output, tmpl:gsub('@(%u+)@', sub))
 end
 
