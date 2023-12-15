@@ -32,7 +32,8 @@ bool mlua_yield_enabled(void);
 // TODO: Allow force-enabling yielding => eliminate blocking code
 // TODO: Make yield status per-thread
 #else
-__force_inline static bool mlua_yield_enabled(void) { return false; }
+__attribute__((__always_inline__))
+static inline bool mlua_yield_enabled(void) { return false; }
 #endif
 
 // Load a module, and optionally keep a reference to it on the stack.

@@ -101,7 +101,7 @@ static int pmain(lua_State* ls) {
 #else
     // The mlua.thread module isn't available. Call the main module's main
     // function directly.
-    if (has_main)
+    if (has_main) {
         lua_rotate(ls, 1, 1);
         lua_call(ls, 0, 0);
     }
