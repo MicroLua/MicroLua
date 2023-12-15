@@ -18,6 +18,8 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Add Filesystem:list(), returning an iterator
+
 static char const Filesystem_name[] = "mlua.fs.lfs.Filesystem";
 static char const File_name[] = "mlua.fs.lfs.File";
 static char const Dir_name[] = "mlua.fs.lfs.Dir";
@@ -231,7 +233,7 @@ static int Filesystem_mount(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
     if (fs->mounted) return luaL_error(ls, "filesystem is already mounted");
     int res = lfs_mount(&fs->lfs, &fs->config);
-    if (res != LFS_ERR_OK) return push_error(ls, res);
+    if (res < 0) return push_error(ls, res);
     fs->mounted = true;
     return lua_pushboolean(ls, true), 1;
 }
@@ -498,7 +500,6 @@ static int File_close(lua_State* ls) {
         return lua_pushboolean(ls, true), 1;
     }
     Filesystem* fs = to_Filesystem(ls, -1);
-    lua_pop(ls, 1);
     lua_pushnil(ls);  // Mark as closed
     lua_setiuservalue(ls, 1, 1);
     return push_lfs_result_bool(ls, lfs_file_close(&fs->lfs, &f->file));
@@ -610,7 +611,6 @@ static int Dir_close(lua_State* ls) {
         return lua_pushboolean(ls, true), 1;
     }
     Filesystem* fs = to_Filesystem(ls, -1);
-    lua_pop(ls, 1);
     lua_pushnil(ls);  // Mark as closed
     lua_setiuservalue(ls, 1, 1);
     return push_lfs_result_bool(ls, lfs_dir_close(&fs->lfs, &d->dir));
@@ -672,7 +672,7 @@ void* mlua_fs_lfs_alloc(MLuaBlockDev* dev) {
 int mlua_fs_lfs_mount(void* fs) {
     Filesystem* tfs = fs;
     int res = lfs_mount(&tfs->lfs, &tfs->config);
-    if (res == LFS_ERR_OK) tfs->mounted = true;
+    if (res < 0) tfs->mounted = true;
     return mlua_err(res);
 }
 
