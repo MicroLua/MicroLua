@@ -39,6 +39,18 @@ static int getfield(lua_State* ls) {
     return 1;
 }
 
+static int run_closure_1(lua_State* ls, int status, lua_KContext ctx) {
+    return lua_gettop(ls);
+}
+
+static int run_closure(lua_State* ls) {
+    for (int i = 1; !lua_isnone(ls, lua_upvalueindex(i)); ++i) {
+        lua_pushvalue(ls, lua_upvalueindex(i));
+    }
+    lua_callk(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0, &run_closure_1);
+    return run_closure_1(ls, LUA_OK, 0);
+}
+
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
     mlua_register_modules(ls);
@@ -66,6 +78,11 @@ static int pmain(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_THREAD
     // The mlua.thread module is available. Start a thread for the main module's
     // main function, then call mlua.thread.main.
+    int top = lua_gettop(ls);
+    if (has_main && top > 1) {  // Wrap arguments into a closure
+        lua_rotate(ls, 1, 1);
+        lua_pushcclosure(ls, &run_closure, top);
+    }
     mlua_require(ls, "mlua.thread", true);
     if (has_main) {
         lua_getfield(ls, -1, "start");  // Start the thread
@@ -82,7 +99,10 @@ static int pmain(lua_State* ls) {
 #else
     // The mlua.thread module isn't available. Call the main module's main
     // function directly.
-    if (has_main) lua_call(ls, 0, 0);
+    if (has_main)
+        lua_rotate(ls, 1, 1);
+        lua_call(ls, 0, 0);
+    }
 #endif
     return 0;
 }
@@ -172,7 +192,7 @@ lua_State* mlua_new_interpreter(void) {
     return ls;
 }
 
-void mlua_run_main(lua_State* ls) {
+int mlua_run_main(lua_State* ls, int args) {
     // Set the HardFault exception handler if none was set before.
     exception_handler_t handler =
         exception_get_vtable_handler(HARDFAULT_EXCEPTION);
@@ -183,11 +203,17 @@ void mlua_run_main(lua_State* ls) {
 
     lua_pushcfunction(ls, pmain);
     lua_rotate(ls, 1, 1);
-    int err = lua_pcall(ls, 2, 0, 0);
-    if (err != LUA_OK) {
+
+    int res = EXIT_FAILURE;
+    if (lua_pcall(ls, 2 + args, 1, 0) != LUA_OK || lua_isstring(ls, -1)) {
         mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
-        lua_pop(ls, 1);
+    } else if (lua_isnil(ls, -1)) {
+        res = EXIT_SUCCESS;
+    } else if (lua_isinteger(ls, -1)) {
+        res = lua_tointeger(ls, -1);
     }
+    lua_pop(ls, 1);
+    return res;
 }
 
 #ifndef MLUA_MAIN_MODULE
@@ -198,20 +224,27 @@ void mlua_run_main(lua_State* ls) {
 #define MLUA_MAIN_FUNCTION main
 #endif
 
-void mlua_main_core0(void) {
+int mlua_main_core0(int argc, char* argv[]) {
+    // Run the Lua interpreter.
+    lua_State* ls = mlua_new_interpreter();
+    if (ls == NULL) {
+        mlua_writestringerror("ERROR: failed to create Lua state\n", NULL);
+        return EXIT_FAILURE;
+    }
+    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
+    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
+    for (int i = 0; i < argc; ++i) lua_pushstring(ls, argv[i]);
+    int res = mlua_run_main(ls, argc);
+    lua_close(ls);
+    return res;
+}
+
+__attribute__((weak)) int main(int argc, char* argv[]) {
     // Ensure that the system timer is ticking. This seems to take some time
     // after a reset.
     busy_wait_us(1);
 
-    // Run the Lua interpreter.
-    lua_State* ls = mlua_new_interpreter();
-    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
-    lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
-    mlua_run_main(ls);
-    lua_close(ls);
-}
+    argc = 0;  // Not sure if the argument is passed by crt0.S
 
-__attribute__((weak)) int main(void) {
-    mlua_main_core0();
-    return 0;
+    return mlua_main_core0(argc, argv);
 }

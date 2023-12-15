@@ -16,6 +16,8 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Allow passing arguments to main() on core 1
+
 typedef struct CoreState {
     lua_State* ls;
     MLuaEvent shutdown_event;
@@ -28,7 +30,7 @@ static CoreState core_state[NUM_CORES - 1];
 static void launch_core(void) {
     CoreState* st = &core_state[get_core_num() - 1];
     lua_State* ls = st->ls;
-    mlua_run_main(ls);
+    mlua_run_main(ls, 0);
     // TODO: The event should be unclaimed after closing the lua_State,
     //       otherwise the core could be reset before the state can be closed.
     mlua_event_unclaim(ls, &st->shutdown_event);
