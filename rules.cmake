@@ -117,18 +117,9 @@ endfunction()
 
 function(mlua_add_core_c_module MOD)
     mlua_add_core_c_module_noreg("${MOD}" "${ARGN}")
-    set(template "${MLUA_PATH}/core/module_core.in.c")
     set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}_reg.c")
-    add_custom_command(
-        COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
-        DEPENDS mlua_tool_gen "${template}"
-        OUTPUT "${output}"
-        COMMAND mlua_tool_gen
-            "coremod" "${MOD}" "${template}" "${output}"
-        VERBATIM
-    )
-    mlua_add_gen_target("mlua_mod_${MOD}" mlua_gen_core INTERFACE "${output}")
-    target_link_libraries("mlua_mod_${MOD}" INTERFACE mlua_core mlua_core_main)
+    configure_file("${MLUA_PATH}/core/module_core.in.c" "${output}")
+    target_sources("mlua_mod_${MOD}" INTERFACE "${output}")
 endfunction()
 
 function(mlua_add_c_module TARGET)

@@ -3,4 +3,4 @@
 
 #include "mlua/module.h"
 
-MLUA_REGISTER_MODULE(@MOD@, luaopen_@SYM@);
+MLUA_REGISTER_MODULE(@MOD@, luaopen_@MOD@);

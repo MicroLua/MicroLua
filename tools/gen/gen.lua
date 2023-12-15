@@ -7,7 +7,6 @@
 --  - cmod: Pre-process a C module source file.
 --  - configmod: Generate a C module providing symbols defined in the build
 --    system.
---  - coremod: Generate a C file that registers a core C module.
 --  - headermod: Generate a C module providing the preprocessor symbols defined
 --    by a header file.
 --  - luamod: Generate a C module from a Lua source file.
@@ -337,13 +336,6 @@ function cmd_configmod(mod, template, output, ...)
     local tmpl = read_file(template)
     local sub = {MOD = mod, SYMBOLS = table.concat(syms, '\n')}
     write_file(output, preprocess_cmod(tmpl:gsub('@(%u+)@', sub)))
-end
-
--- Generate a C file that registers a core C module.
-function cmd_coremod(mod, template, output)
-    local tmpl = read_file(template)
-    local sub = {MOD = mod, SYM = mod:gsub('%.', '_')}
-    write_file(output, tmpl:gsub('@(%u+)@', sub))
 end
 
 -- Parse preprocessor symbols that define values.
