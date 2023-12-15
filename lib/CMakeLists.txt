@@ -377,27 +377,23 @@ mlua_add_c_module(mlua_mod_mlua_fs mlua.fs.c)
 target_include_directories(mlua_mod_mlua_fs_headers INTERFACE
     include_mlua.fs)
 
-pico_add_library(mlua_littlefs)
-target_include_directories(mlua_littlefs_headers INTERFACE
+mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
+target_include_directories(mlua_mod_mlua_fs_lfs_headers INTERFACE
     "${MLUA_LITTLEFS_SOURCE_DIR}"
+    include_mlua.fs.lfs
 )
-target_compile_definitions(mlua_littlefs_headers INTERFACE
+target_compile_definitions(mlua_mod_mlua_fs_lfs INTERFACE
     LFS_NO_ASSERT=1
     LFS_NO_DEBUG=1
     LFS_NO_ERROR=1
     LFS_NO_MALLOC=1
     LFS_NO_WARN=1
 )
-target_sources(mlua_littlefs INTERFACE
+target_sources(mlua_mod_mlua_fs_lfs INTERFACE
     "${MLUA_LITTLEFS_SOURCE_DIR}/lfs.c"
     "${MLUA_LITTLEFS_SOURCE_DIR}/lfs_util.c"
 )
-
-mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
-target_include_directories(mlua_mod_mlua_fs_lfs_headers INTERFACE
-    include_mlua.fs.lfs)
 target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
-    mlua_littlefs
     mlua_mod_mlua_block
     mlua_mod_mlua_errors
     mlua_mod_mlua_fs_headers
