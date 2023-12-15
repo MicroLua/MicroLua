@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local fs = require 'mlua.fs'
 local loader = require 'mlua.fs.loader'
@@ -42,11 +42,11 @@ function test_loading(t)
 
     assert(loader.fs:mkdir('/lua'))
     write_file(loader.fs, ('/lua/%s.a.lua'):format(prefix), [[
-        _ENV = mlua.module(...)
+        _ENV = module(...)
         value = 'a'
     ]])
     write_file(loader.fs, ('/%s.b.lua'):format(prefix), [[
-        _ENV = mlua.module(...)
+        _ENV = module(...)
         value = 'b'
     ]])
 
@@ -69,7 +69,7 @@ end
 
 function test_loading_multicore(t)
     write_file(loader.fs, ('/lua/%s.c.lua'):format(prefix), [[
-        _ENV = mlua.module(...)
+        _ENV = module(...)
 
         local multicore = require 'pico.multicore'
         local fifo = require 'pico.multicore.fifo'

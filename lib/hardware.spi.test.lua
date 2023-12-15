@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local addressmap = require 'hardware.regs.addressmap'
 local spi = require 'hardware.spi'

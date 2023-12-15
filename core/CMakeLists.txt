@@ -50,7 +50,6 @@ target_include_directories(mlua_core_main INTERFACE include)
 target_link_libraries(mlua_core_main INTERFACE
     mlua_core
     mlua_mod_base
-    mlua_mod_mlua
     mlua_mod_package
 )
 if(NOT PICO_PLATFORM STREQUAL "host")

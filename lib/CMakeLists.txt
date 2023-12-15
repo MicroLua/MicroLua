@@ -320,11 +320,6 @@ target_link_libraries(mlua_mod_hardware_xosc_test INTERFACE
     mlua_mod_hardware_xosc
 )
 
-mlua_add_lua_modules(mlua_mod_mlua mlua.lua)
-target_link_libraries(mlua_mod_mlua INTERFACE
-    mlua_mod_package
-)
-
 mlua_add_lua_test_modules(mlua_mod_mlua_test mlua.test.lua)
 target_link_libraries(mlua_mod_mlua_test INTERFACE
     mlua_mod_mlua_io

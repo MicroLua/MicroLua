@@ -12,18 +12,7 @@ The test modules can be useful as usage examples.
 - `_VERSION: string = LUA_VERSION`\
   `_RELEASE: string = LUA_RELEASE`
 
-- `mlua`\
-  The `mlua` module is auto-loaded on startup and made available as a global.
-
-## `mlua`
-
-**Module:** [`mlua`](../lib/mlua.lua),
-tests: [`mlua.test`](../lib/mlua.test.lua)
-
-The `mlua` module is auto-loaded on startup and made available as a global. This
-simplifies [module definitions](core.md#lua-modules).
-
-- `Module()`\
+- `module(name)`\
   Create a new empty module.
 
 ## `mlua.block`

@@ -14,7 +14,7 @@ Here's how to get started with a new project based on MicroLua:
 1. Create a file `main.lua` containing a `main()` function.
 
     ```lua
-    _ENV = mlua.Module(...)
+    _ENV = module(...)
 
     function main()
       print("Hello, world!")
@@ -74,7 +74,7 @@ Here's how to get started with a new project based on MicroLua:
 A Lua module is a `.lua` file with the following line at the very top:
 
 ```lua
-_ENV = mlua.Module(...)
+_ENV = module(...)
 ```
 
 This creates a new module, registers it with the name given to the `require()`

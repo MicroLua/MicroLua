@@ -3,7 +3,7 @@
 
 -- A unit-testing library.
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local debug = require 'debug'
 local io = require 'mlua.io'

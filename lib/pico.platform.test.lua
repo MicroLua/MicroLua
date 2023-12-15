@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local clocks = require 'hardware.clocks'
 local math = require 'math'

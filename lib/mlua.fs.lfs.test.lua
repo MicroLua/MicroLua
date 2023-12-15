@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local flash = require 'mlua.block.flash'
 local errors = require 'mlua.errors'

@@ -66,6 +66,23 @@ MLUA_SYMBOLS_NOHASH(Strict_syms) = {
     MLUA_SYM_V_NH(__index, function, &mlua_index_undefined),
 };
 
+static char const Module_name[] = "mlua.Module";
+
+static int global_module(lua_State* ls) {
+    lua_getfield(ls, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
+
+    // Create a new module table.
+    lua_createtable(ls, 0, 0);
+    luaL_getmetatable(ls, Module_name);
+    lua_setmetatable(ls, -2);
+
+    // Set it in package.loaded.
+    lua_pushvalue(ls, 1);
+    lua_pushvalue(ls, -2);
+    lua_settable(ls, -4);
+    return 1;
+}
+
 void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
                              int nrec) {
     mlua_new_table_(ls, fields, narr, nrec);
@@ -228,26 +245,43 @@ MLUA_SYMBOLS_NOHASH(Preload_syms) = {
     MLUA_SYM_V_NH(__pairs, function, &preload___pairs),
 };
 
+static int return_ctx(lua_State* ls, int status, lua_KContext ctx) {
+    return ctx;
+}
+
+static int Function___close(lua_State* ls) {
+    // Call the function itself, passing through the remaining arguments. This
+    // makes to-be-closed functions the equivalent of deferreds.
+    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &return_ctx);
+    return 0;
+}
+
 void mlua_register_modules(lua_State* ls) {
     // Require library "base".
     luaL_requiref(ls, "_G", luaopen_base, 1);
-    lua_pop(ls, 1);
+    lua_pop(ls, 1);  // _G
 
     // Create the Strict metatable, and set it on _G.
     lua_pushglobaltable(ls);
     luaL_newmetatable(ls, Strict_name);
     mlua_set_fields(ls, Strict_syms);
     lua_setmetatable(ls, -2);
-    lua_pop(ls, 1);
+    lua_pop(ls, 1);  // _G
+
+    // Create the Module metatable.
+    luaL_newmetatable(ls, Module_name);
+    lua_pushglobaltable(ls);
+    lua_setfield(ls, -2, "__index");
+    lua_pop(ls, 1);  // Module
 
     // Create the Preload metatable, and set it on package.preload to load
     // compiled-in modules.
     luaL_requiref(ls, "package", luaopen_package, 0);
-    lua_getfield(ls, -1, "preload");
+    lua_getfield(ls, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
     luaL_newmetatable(ls, Preload_name);
     mlua_set_fields(ls, Preload_syms);
     lua_setmetatable(ls, -2);
-    lua_pop(ls, 1);
+    lua_pop(ls, 1);  // preload
 
     // Remove unused searchers.
     lua_getfield(ls, -1, "searchers");
@@ -255,5 +289,19 @@ void mlua_register_modules(lua_State* ls) {
         lua_pushnil(ls);
         lua_seti(ls, -2, i);
     }
-    lua_pop(ls, 2);
+    lua_pop(ls, 2);  // searchers, package
+
+    // Set globals.
+    lua_pushstring(ls, LUA_RELEASE);
+    lua_setglobal(ls, "_RELEASE");
+    lua_pushcfunction(ls, &global_module);
+    lua_setglobal(ls, "module");
+
+    // Set a metatable on functions.
+    lua_pushcfunction(ls, &Function___close);  // Any function will do
+    lua_createtable(ls, 0, 1);
+    lua_pushcfunction(ls, &Function___close);
+    lua_setfield(ls, -2, "__close");
+    lua_setmetatable(ls, -2);
+    lua_pop(ls, 1);
 }

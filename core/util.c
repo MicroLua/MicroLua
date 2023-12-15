@@ -122,21 +122,6 @@ static __attribute__((constructor)) void init(void) {
 
 void mlua_util_init(lua_State* ls) {
     // Set globals.
-    lua_pushstring(ls, LUA_RELEASE);
-    lua_setglobal(ls, "_RELEASE");
     lua_pushcfunction(ls, &global_yield_enabled);
     lua_setglobal(ls, "yield_enabled");
-
-    // Set a metatable on functions.
-    lua_pushcfunction(ls, &Function___close);  // Any function will do
-    lua_createtable(ls, 0, 1);
-    lua_pushcfunction(ls, &Function___close);
-    lua_setfield(ls, -2, "__close");
-    lua_setmetatable(ls, -2);
-    lua_pop(ls, 1);
-
-    // Load the mlua module and register it in globals.
-    static char const mlua_name[] = "mlua";
-    mlua_require(ls, mlua_name, true);
-    lua_setglobal(ls, mlua_name);
 }

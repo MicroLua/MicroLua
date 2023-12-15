@@ -1,7 +1,7 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local gpio = require 'hardware.gpio'
 local i2c = require 'hardware.i2c'

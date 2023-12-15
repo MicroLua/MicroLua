@@ -3,7 +3,7 @@
 
 -- A cooperative threading library.
 
-_ENV = mlua.module(...)
+_ENV = module(...)
 
 local coroutine = require 'coroutine'
 local event = require 'mlua.event'
