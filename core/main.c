@@ -103,7 +103,7 @@ static int pmain(lua_State* ls) {
     // function directly.
     if (has_main) {
         lua_rotate(ls, 1, 1);
-        lua_call(ls, 0, 0);
+        lua_call(ls, lua_gettop(ls) - 1, 0);
     }
 #endif
     return 0;
