@@ -7,7 +7,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if PICO_ON_DEVICE
 #include "pico/binary_info.h"
+#endif
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -19,7 +21,11 @@ extern "C" {
 // Enable hashed symbol tables for modules and classes, based on perfect
 // hashing.
 #ifndef MLUA_HASH_SYMBOL_TABLES
+#if PICO_ON_DEVICE
 #define MLUA_HASH_SYMBOL_TABLES 1
+#else
+#define MLUA_HASH_SYMBOL_TABLES 0
+#endif
 #endif
 
 // Enable double-checking hashed symbol lookups against symbol names. Increases
@@ -221,6 +227,10 @@ typedef struct MLuaModule {
     char const* name;
     lua_CFunction open;
 } MLuaModule;
+
+#ifndef bi_decl
+#define bi_decl(...)
+#endif
 
 #define MLUA_BI_TAG BINARY_INFO_MAKE_TAG('M', 'L')
 #define MLUA_BI_FROZEN_MODULE 0xcb9305cf

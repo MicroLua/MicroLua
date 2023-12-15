@@ -48,13 +48,16 @@ target_sources(mlua_core_main INTERFACE
 )
 target_include_directories(mlua_core_main_headers INTERFACE include)
 target_link_libraries(mlua_core_main INTERFACE
-    hardware_exception
-    hardware_sync
-    hardware_timer
     mlua_core
     mlua_mod_base
     mlua_mod_mlua
     mlua_mod_package
-    pico_binary_info
-    pico_platform
 )
+if(NOT PICO_PLATFORM STREQUAL "host")
+    target_link_libraries(mlua_core_main INTERFACE
+        hardware_exception
+        hardware_timer
+        pico_binary_info
+        pico_platform
+    )
+endif()

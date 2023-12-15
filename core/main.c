@@ -7,9 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if PICO_ON_DEVICE
 #include "hardware/exception.h"
 #include "hardware/timer.h"
 #include "pico/platform.h"
+#endif
 
 #include "mlua/module.h"
 #include "mlua/util.h"
@@ -117,7 +119,11 @@ static int on_panic(lua_State* ls) {
     char const* msg = lua_tostring(ls, -1);
     if (msg == NULL) msg = "unknown error";
     mlua_writestringerror("PANIC: %s\n", msg);
+#if PICO_ON_DEVICE
     panic(NULL);
+#else
+    exit(EXIT_FAILURE);
+#endif
 }
 
 static void warn_print(char const* msg, bool first, bool last) {
@@ -148,6 +154,8 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
     if (cont || strcmp(msg, "@on") == 0) return;
     lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
 }
+
+#if PICO_ON_DEVICE
 
 // This HardFault exception handler catches semihosting calls when no debugger
 // is attached, and makes them silently succeed. For anything else, it does the
@@ -185,6 +193,8 @@ static __attribute__((naked)) void hardfault_handler(void) {
 
 void isr_hardfault(void);
 
+#endif  // PICO_ON_DEVICE
+
 lua_State* mlua_new_interpreter(void) {
     lua_State* ls = lua_newstate(allocate, NULL);
     lua_atpanic(ls, &on_panic);
@@ -193,6 +203,7 @@ lua_State* mlua_new_interpreter(void) {
 }
 
 int mlua_run_main(lua_State* ls, int args) {
+#if PICO_ON_DEVICE
     // Set the HardFault exception handler if none was set before.
     exception_handler_t handler =
         exception_get_vtable_handler(HARDFAULT_EXCEPTION);
@@ -200,6 +211,7 @@ int mlua_run_main(lua_State* ls, int args) {
         exception_set_exclusive_handler(HARDFAULT_EXCEPTION,
                                         &hardfault_handler);
     }
+#endif
 
     lua_pushcfunction(ls, pmain);
     lua_rotate(ls, 1, 1);
@@ -240,11 +252,13 @@ int mlua_main_core0(int argc, char* argv[]) {
 }
 
 __attribute__((weak)) int main(int argc, char* argv[]) {
+#if PICO_ON_DEVICE
     // Ensure that the system timer is ticking. This seems to take some time
     // after a reset.
     busy_wait_us(1);
 
     argc = 0;  // Not sure if the argument is passed by crt0.S
+#endif
 
     return mlua_main_core0(argc, argv);
 }
