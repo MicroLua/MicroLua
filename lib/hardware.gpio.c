@@ -1,6 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include "mlua/hardware.gpio.h"
+
 #include <stdbool.h>
 
 #include "hardware/gpio.h"

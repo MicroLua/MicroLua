@@ -66,6 +66,8 @@ target_link_libraries(mlua_mod_hardware_flash_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_hardware_gpio hardware.gpio.c)
+target_include_directories(mlua_mod_hardware_gpio_headers INTERFACE
+    include_hardware.gpio)
 target_link_libraries(mlua_mod_hardware_gpio INTERFACE
     hardware_gpio
     hardware_structs
@@ -142,6 +144,7 @@ target_link_libraries(mlua_mod_hardware_pll_test INTERFACE
 mlua_add_c_module(mlua_mod_hardware_pwm hardware.pwm.c)
 target_link_libraries(mlua_mod_hardware_pwm INTERFACE
     hardware_pwm
+    mlua_mod_hardware_gpio_headers
     pico_platform
 )
 

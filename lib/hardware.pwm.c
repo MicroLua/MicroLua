@@ -4,6 +4,7 @@
 #include "hardware/pwm.h"
 #include "pico/platform.h"
 
+#include "mlua/hardware.gpio.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
 

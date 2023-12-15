@@ -5,9 +5,9 @@
 
 #include <string.h>
 
+#if LIB_PICO_PLATFORM
 #include "pico/platform.h"
-
-spin_lock_t* mlua_lock;
+#endif
 
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
     return ctx;
@@ -37,12 +37,6 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg) {
     void* ud = lua_touserdata(ls, arg);
     luaL_argexpected(ls, ud != NULL, arg, "userdata or nil");
     return ud;
-}
-
-uint mlua_check_gpio(lua_State* ls, int arg) {
-    uint num = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, num < NUM_BANK0_GPIOS, arg, "invalid GPIO number");
-    return num;
 }
 
 int mlua_push_fail(lua_State* ls, char const* err) {
@@ -118,12 +112,13 @@ bool mlua_thread_is_alive(lua_State* thread) {
     }
 }
 
-static __attribute__((constructor)) void init(void) {
-    mlua_lock = spin_lock_instance(next_striped_spin_lock_num());
 #if LIB_MLUA_MOD_MLUA_EVENT
+
+static __attribute__((constructor)) void init(void) {
     for (uint core = 0; core < NUM_CORES; ++core) yield_enabled[core] = true;
-#endif
 }
+
+#endif
 
 void mlua_util_init(lua_State* ls) {
     // Set globals.
@@ -131,7 +126,6 @@ void mlua_util_init(lua_State* ls) {
     lua_setglobal(ls, "_RELEASE");
     lua_pushcfunction(ls, &global_yield_enabled);
     lua_setglobal(ls, "yield_enabled");
-    // TODO: Add ipairs0() => iterate integer indexes from 0
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do
