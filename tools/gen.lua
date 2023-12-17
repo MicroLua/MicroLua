@@ -11,6 +11,8 @@
 --    by a header file.
 --  - luamod: Generate a C module from a Lua source file.
 
+_ENV = module(...)
+
 local io = require 'io'
 local math = require 'math'
 local os = require 'os'
@@ -415,10 +417,8 @@ function cmd_luamod(mod, src, template, output)
 end
 
 -- Dispatch to the selected sub-command.
-local function main(cmd, ...)
+function main(exe, cmd, ...)
     local fn = _ENV['cmd_' .. cmd]
     if not fn then error(("unknown command: %s"):format(cmd), 0) end
     return fn(...)
 end
-
-return main(...)

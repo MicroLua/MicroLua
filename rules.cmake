@@ -26,7 +26,6 @@ set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
 mlua_set(MLUA_FLOAT FLOAT CACHE STRING
     "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
 set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
-mlua_set(MLUA_COMPILE 1 CACHE BOOL "Compile Lua sources at build-time")
 
 # Copy Lua sources. This is necessary to allow overriding luaconf.h.
 file(GLOB paths "${MLUA_LUA_SOURCE_DIR}/*.[hc]")
@@ -175,12 +174,17 @@ endfunction()
 
 function(mlua_add_lua_modules TARGET)
     mlua_add_library("${TARGET}")
+    set(compile 1)
     foreach(SRC IN LISTS ARGN)
+        if(SRC STREQUAL "NOCOMPILE")
+            set(compile 0)
+            continue()
+        endif()
         cmake_path(ABSOLUTE_PATH SRC)
         cmake_path(GET SRC STEM LAST_ONLY MOD)
         set(template "${MLUA_PATH}/core/module_lua.in.c")
         set(output "${CMAKE_CURRENT_BINARY_DIR}/${MOD}.c")
-        if("${MLUA_COMPILE}")
+        if("${compile}")
             add_custom_command(
                 COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
                 DEPENDS mlua_tool_gen "${SRC}" "${template}"
@@ -262,28 +266,4 @@ function(mlua_add_tool TARGET BIN)
     add_executable("${TARGET}" IMPORTED GLOBAL)
     set_property(TARGET "${TARGET}" PROPERTY IMPORTED_LOCATION "${BIN}")
     add_dependencies("${TARGET}" mlua_tools)
-endfunction()
-
-function(mlua_add_lua_tool TARGET SCRIPT)
-    cmake_path(GET SCRIPT FILENAME FILE)
-    set(main "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_main.c")
-    configure_file("${MLUA_PATH}/core/tool_main.in.c" "${main}")
-    set_source_files_properties("${main}" OBJECT_DEPENDS "${SCRIPT}")
-    add_executable("${TARGET}"
-        "${CMAKE_BINARY_DIR}/ext/lua/onelua.c"
-        "${main}"
-    )
-    target_compile_definitions("${TARGET}" PRIVATE
-        MAKE_LIB
-    )
-    target_include_directories("${TARGET}" PRIVATE
-        "${CMAKE_BINARY_DIR}/ext/lua"
-        "${MLUA_PATH}/core/include_tool"
-    )
-    target_link_libraries("${TARGET}" PRIVATE m)
-    if(CMAKE_HOST_WIN32)
-        target_compile_definitions("${TARGET}" PRIVATE LUA_USE_WINDOWS)
-    else()
-        target_compile_definitions("${TARGET}" PRIVATE LUA_USE_LINUX)
-    endif()
 endfunction()
