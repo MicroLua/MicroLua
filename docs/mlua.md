@@ -715,6 +715,10 @@ that value.
 - `Matcher:close_to_rel(want, fact) -> self`\
   Declare an expectation that the value is within `want * fact` of `want`.
 
+- `Matcher:has(key) -> self`\
+  `Matcher:not_has(key) -> self`\
+  Declare an expectation that the value has or doesn't have the key `key`.
+
 - `Matcher:raises(want)`\
   Declare an expectations that calling the value raises an error whose value
   matches the string pattern `want`.

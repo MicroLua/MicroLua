@@ -230,6 +230,19 @@ function Matcher:_compare(want, cmp, fmt)
     return self
 end
 
+function Matcher:has(key) return self:_index(key, true, "doesn't have") end
+function Matcher:not_has(key) return self:_index(key, false, "has") end
+
+function Matcher:_index(key, want, text)
+    local v = self:_eval()
+    local ok, value = pcall(function() return v[key] end)
+    if (ok and value ~= nil) ~= want then
+        self:_fail("%s %s key @{+CYAN}%s@{NORM}",
+                   self._l or util.repr(self._v), text, key)
+    end
+    return self
+end
+
 function Matcher:raises(want)
     local v, e = self:_value()
     local ok, err = pcall(function() if e then e(v) else v() end end)
