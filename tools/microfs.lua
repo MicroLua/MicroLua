@@ -32,9 +32,10 @@ local function read_file(path)
     return f:read('a')
 end
 
-function main(...)
+function main()
     local fs<close> = lfs.new(1 << 20)
     local data = fs:unmount()
     printf("Hello, world!\n")
-    for _, arg in ipairs{...} do printf("arg: %s\n", arg) end
+    printf("exe: %s\n", argv[0])
+    for _, arg in ipairs(argv) do printf("arg: %s\n", arg) end
 end

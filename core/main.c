@@ -237,28 +237,44 @@ int mlua_run_main(lua_State* ls, int args) {
 #endif
 
 int mlua_main_core0(int argc, char* argv[]) {
-    // Run the Lua interpreter.
     lua_State* ls = mlua_new_interpreter();
     if (ls == NULL) {
         mlua_writestringerror("ERROR: failed to create Lua state\n", NULL);
         return EXIT_FAILURE;
     }
+
+    // Set _G.argv.
+    if (argc > 0) {
+        lua_createtable(ls, argc - 1, 1);
+        for (int i = 0; i < argc; ++i) {
+            lua_pushstring(ls, argv[i]);
+            lua_rawseti(ls, -2, i);
+        }
+        lua_setglobal(ls, "argv");
+    }
+
+    // Load and run the main module.
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
-    for (int i = 0; i < argc; ++i) lua_pushstring(ls, argv[i]);
-    int res = mlua_run_main(ls, argc);
+    int res = mlua_run_main(ls, 0);
     lua_close(ls);
     return res;
 }
 
-__attribute__((weak)) int main(int argc, char* argv[]) {
 #if PICO_ON_DEVICE
+
+__attribute__((weak)) int main() {
     // Ensure that the system timer is ticking. This seems to take some time
     // after a reset.
     busy_wait_us(1);
 
-    argc = 0;  // Not sure if the argument is passed by crt0.S
-#endif
+    return mlua_main_core0(0, NULL);
+}
 
+#else
+
+__attribute__((weak)) int main(int argc, char* argv[]) {
     return mlua_main_core0(argc, argv);
 }
+
+#endif

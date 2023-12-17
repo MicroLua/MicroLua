@@ -12,6 +12,12 @@ The test modules can be useful as usage examples.
 - `_VERSION: string = LUA_VERSION`\
   `_RELEASE: string = LUA_RELEASE`
 
+- `argv: table`\
+  The arguments passed to `main()`. The table is zero-based: `argv[0]` contains
+  the executable name, and the following indexes contain the command-line
+  arguments. The global isn't set when running on a target that doesn't have
+  command-line arguments.
+
 - `module(name)`\
   Create a new empty module.
 

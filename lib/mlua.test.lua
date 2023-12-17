@@ -14,9 +14,11 @@ function set_up(t)
     t:printf("Lua: %s\n", _RELEASE:gsub('[^ ]+ (.*)', '%1'))
 end
 
-local function has(tab, name)
-    local ok, value = pcall(function() return tab[name] end)
-    return ok and value ~= nil
+function test_globals(t)
+    t:expect(_G):label("_G"):has('_VERSION')
+    t:expect(_G):label("_G"):has('_RELEASE')
+    t:expect(t:expr(_G)._VERSION_NUM):gte(504)
+    t:expect(t:expr(_G)._RELEASE_NUM):gte(50406)
 end
 
 local private_var = 'private'
@@ -30,22 +32,22 @@ function test_variable_access(t)
         :label("unqualified symbol lookup"):raises("undefined symbol: UNKNOWN$")
 
     -- In globals.
-    t:expect(not has(_G, 'private_var'), "private_var is in _G")
-    t:expect(not has(_G, 'public_var'), "public_var is in _G")
-    t:expect(not has(_G, 'public_var2'), "public_var2 is in _G")
-    t:expect(has(_G, 'error'), "error is not in _G")
+    t:expect(_G):label("_G"):not_has('private_var')
+    t:expect(_G):label("_G"):not_has('public_var')
+    t:expect(_G):label("_G"):not_has('public_var2')
+    t:expect(_G):label("_G"):has('error')
 
     -- In Lua module.
     local mod = require(module_name)
-    t:expect(not has(mod, 'private_var'), "private_var is in module")
-    t:expect(has(mod, 'public_var'), "public_var is not in module")
-    t:expect(has(mod, 'public_var2'), "public_var2 is not in module")
-    t:expect(has(mod, 'error'), "error is not in module")
+    t:expect(mod):label("mod"):not_has('private_var')
+    t:expect(mod):label("mod"):has('public_var')
+    t:expect(mod):label("mod"):has('public_var2')
+    t:expect(mod):label("mod"):has('error')
 
     -- In C module.
-    t:expect(has(pico, 'OK'), "OK is not in module")
+    t:expect(pico):label("pico"):has('OK')
     if config.HASH_SYMBOL_TABLES == 0 then
-        t:expect(not has(pico, 'UNKNOWN'), "UNKNOWN is in module")
+        t:expect(pico):label("pico"):not_has('UNKNOWN')
     end
 end
 

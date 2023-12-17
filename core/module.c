@@ -294,6 +294,10 @@ void mlua_register_modules(lua_State* ls) {
     // Set globals.
     lua_pushstring(ls, LUA_RELEASE);
     lua_setglobal(ls, "_RELEASE");
+    lua_pushinteger(ls, LUA_VERSION_NUM);
+    lua_setglobal(ls, "_VERSION_NUM");
+    lua_pushinteger(ls, LUA_VERSION_RELEASE_NUM);
+    lua_setglobal(ls, "_RELEASE_NUM");
     lua_pushcfunction(ls, &global_module);
     lua_setglobal(ls, "module");
 

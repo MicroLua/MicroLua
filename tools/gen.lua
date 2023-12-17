@@ -35,8 +35,17 @@ end
 -- Print to stdout.
 local function printf(format, ...) io.stdout:write(format:format(...)) end
 
--- Return a table that calls the given function when it is closed.
-local function defer(fn) return setmetatable({}, {__close = fn}) end
+-- Return a view into a slice of a list.
+local function slice(list, from)
+    local o = from - 1
+    return setmetatable({}, {
+        __index = function(_, k) return list[k + o] end,
+        __len = function(_, k)
+            local len = #list - o
+            return len < 0 and 0 or len
+        end,
+    })
+end
 
 -- Convert a list of values to a list of strings.
 local function to_strings(values)
@@ -54,14 +63,14 @@ end
 -- Write a file atomically.
 local function write_file(path, data)
     local tmp = path .. '.tmp'
-    local commit<close> = defer(function(_, err)
+    local commit<close> = function(_, err)
         local ok = not err
         if ok then ok, err = os.rename(tmp, path) end
         if not ok then
             os.remove(tmp)
             error(err, 0)
         end
-    end)
+    end
     local f<close> = assert(io.open(tmp, 'w'))
     assert(f:write(data))
 end
@@ -322,14 +331,16 @@ local function preprocess_cmod(text)
 end
 
 -- Preprocess a C module source file.
-function cmd_cmod(input, output)
+function cmd_cmod(args)
+    local input, output = table.unpack(args, 1, 2)
     write_file(output, preprocess_cmod(read_file(input)))
 end
 
 -- Generate a C module providing symbols defined in the build system.
-function cmd_configmod(mod, template, output, ...)
+function cmd_configmod(args)
+    local mod, template, output = table.unpack(args, 1, 3)
     local syms = {}
-    for _, sym in ipairs(table.pack(...)) do
+    for _, sym in ipairs(slice(args, 4)) do
         local name, typ, value = sym:match('^([^:]+):([^=]+)=(.*)$')
         if not name then raise("invalid symbol definition: %s", sym) end
         table.insert(syms,
@@ -367,8 +378,9 @@ end
 
 -- Generate a C module providing the preprocessor symbols defined by a header
 -- file.
-function cmd_headermod(mod, include, defines, template, output, ...)
-    local kwargs = parse_kwargs({'EXCLUDE', 'STRIP'}, table.pack(...))
+function cmd_headermod(args)
+    local mod, include, defines, template, output = table.unpack(args, 1, 5)
+    local kwargs = parse_kwargs({'EXCLUDE', 'STRIP'}, slice(args, 6))
     local syms = parse_defines(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP)
     local names = {}
     for sym in pairs(syms) do table.insert(names, sym) end
@@ -404,7 +416,8 @@ local function compile_lua(mod, src)
 end
 
 -- Generate a C module from a Lua source file.
-function cmd_luamod(mod, src, template, output)
+function cmd_luamod(args)
+    local mod, src, template, output = table.unpack(args, 1, 4)
     local data = compile_lua(mod, read_file(src))
     local tmpl = read_file(template)
     local sub = {MOD = mod, DATA = data, INCBIN = '0'}
@@ -412,8 +425,9 @@ function cmd_luamod(mod, src, template, output)
 end
 
 -- Dispatch to the selected sub-command.
-function main(exe, cmd, ...)
+function main()
+    local cmd = argv[1]
     local fn = _ENV['cmd_' .. cmd]
     if not fn then error(("unknown command: %s"):format(cmd), 0) end
-    return fn(...)
+    return fn(slice(argv, 2))
 end
