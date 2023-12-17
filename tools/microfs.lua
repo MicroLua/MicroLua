@@ -1,8 +1,10 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
+_ENV = module(...)
+
 local io = require 'io'
-local lfs = require 'lfs'
+local lfs = require 'microfs.lfs'
 local string = require 'string'
 
 -- Raise an error without position information.
@@ -30,11 +32,9 @@ local function read_file(path)
     return f:read('a')
 end
 
-local function main(cmd, ...)
+function main(...)
     local fs<close> = lfs.new(1 << 20)
     local data = fs:unmount()
     printf("Hello, world!\n")
-    printf(data)
+    for _, arg in ipairs{...} do printf("arg: %s\n", arg) end
 end
-
-return main(...)

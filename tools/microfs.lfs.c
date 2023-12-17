@@ -116,9 +116,8 @@ static int Dir_next(lua_State* ls) {
     return 3;
 }
 
-static luaL_Reg const Dir_syms[] = {
-    {"__close", Dir___close},
-    {NULL, NULL},
+MLUA_SYMBOLS_NOHASH(Dir_syms) = {
+    MLUA_SYM_F(__close, Dir_),
 };
 
 static int Filesystem___close(lua_State* ls) {
@@ -206,15 +205,14 @@ static int Filesystem_remove(lua_State* ls) {
     return 0;
 }
 
-static luaL_Reg const Filesystem_syms[] = {
-    {"__close", Filesystem___close},
-    {"unmount", Filesystem_unmount},
-    {"list", Filesystem_list},
-    {"read", Filesystem_read},
-    {"write", Filesystem_write},
-    {"mkdir", Filesystem_mkdir},
-    {"remove", Filesystem_remove},
-    {NULL, NULL},
+MLUA_SYMBOLS_NOHASH(Filesystem_syms) = {
+    MLUA_SYM_F(__close, Filesystem_),
+    MLUA_SYM_F(unmount, Filesystem_),
+    MLUA_SYM_F(list, Filesystem_),
+    MLUA_SYM_F(read, Filesystem_),
+    MLUA_SYM_F(write, Filesystem_),
+    MLUA_SYM_F(mkdir, Filesystem_),
+    MLUA_SYM_F(remove, Filesystem_),
 };
 
 static int mod_new(lua_State* ls) {
@@ -264,31 +262,23 @@ static int mod_new(lua_State* ls) {
     return 1;
 }
 
-static luaL_Reg const module_syms[] = {
-    {"new", mod_new},
-    {NULL, NULL},
+MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_F(new, mod_),
+    MLUA_SYM_V(TYPE_REG, integer, LFS_TYPE_REG),
+    MLUA_SYM_V(TYPE_DIR, integer, LFS_TYPE_DIR),
 };
 
-MLUA_OPEN_MODULE(lfs) {
+MLUA_OPEN_MODULE(microfs.lfs) {
     // Create the Dir class.
-    luaL_newmetatable(ls, Dir_name);
-    luaL_setfuncs(ls, Dir_syms, 0);
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, -2, "__index");
+    // TODO: Correctly handle hash vs. nohash
+    mlua_new_class(ls, Dir_name, Dir_syms, true);
     lua_pop(ls, 1);
 
     // Create the Filesystem class.
-    luaL_newmetatable(ls, Filesystem_name);
-    luaL_setfuncs(ls, Filesystem_syms, 0);
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, -2, "__index");
-    lua_pushinteger(ls, LFS_TYPE_REG);
-    lua_setfield(ls, -2, "TYPE_REG");
-    lua_pushinteger(ls, LFS_TYPE_DIR);
-    lua_setfield(ls, -2, "TYPE_DIR");
+    mlua_new_class(ls, Filesystem_name, Filesystem_syms, true);
     lua_pop(ls, 1);
 
     // Create the module.
-    luaL_newlib(ls, module_syms);
+    mlua_new_module(ls, 0, module_syms);
     return 1;
 }
