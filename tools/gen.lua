@@ -400,11 +400,6 @@ local function compile_lua(mod, src)
     -- Format the compiled chunk as C array data.
     local out = {}
     for i = 1, #bin do table.insert(out, ('0x%02x,'):format(bin:byte(i))) end
-
-    -- Lua seems to rely on a terminating zero byte when loading chunks in text
-    -- mode, even if it isn't included in the chunk size. This is likely a bug.
-    -- We work around it by appending a zero byte to the output.
-    table.insert(out, '0x00,')
     return table.concat(out)
 end
 

@@ -11,23 +11,25 @@
 __asm__(
     ".section \".rodata\"\n"
     ".local data, data_end\n"
-    "data:     .incbin \"@SRC@\"\n"
-    "data_end: .byte 0\n"
+    "data:\n"
+    ".incbin \"@SRC@\"\n"
+    "data_end:\n"
     ".previous\n"
 );
 
 extern char const data[];
 extern char const data_end[];
+#define data_size (data_end - data)
 
 #else
 
 static char const data[] = {@DATA@};
-#define data_end (data + sizeof(data) - 1)
+#define data_size (sizeof(data))
 
 #endif
 
 MLUA_OPEN_MODULE(@MOD@) {
-    if (luaL_loadbufferx(ls, data, data_end - data, "@MOD@", "bt") != LUA_OK) {
+    if (luaL_loadbufferx(ls, data, data_size, "@MOD@", "bt") != LUA_OK) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
     }
