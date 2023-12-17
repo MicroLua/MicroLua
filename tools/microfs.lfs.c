@@ -116,7 +116,10 @@ static int Dir_next(lua_State* ls) {
     return 3;
 }
 
-MLUA_SYMBOLS_NOHASH(Dir_syms) = {
+MLUA_SYMBOLS(Dir_syms) = {
+};
+
+MLUA_SYMBOLS_NOHASH(Dir_syms_nh) = {
     MLUA_SYM_F(__close, Dir_),
 };
 
@@ -205,14 +208,17 @@ static int Filesystem_remove(lua_State* ls) {
     return 0;
 }
 
-MLUA_SYMBOLS_NOHASH(Filesystem_syms) = {
-    MLUA_SYM_F(__close, Filesystem_),
+MLUA_SYMBOLS(Filesystem_syms) = {
     MLUA_SYM_F(unmount, Filesystem_),
     MLUA_SYM_F(list, Filesystem_),
     MLUA_SYM_F(read, Filesystem_),
     MLUA_SYM_F(write, Filesystem_),
     MLUA_SYM_F(mkdir, Filesystem_),
     MLUA_SYM_F(remove, Filesystem_),
+};
+
+MLUA_SYMBOLS_NOHASH(Filesystem_syms_nh) = {
+    MLUA_SYM_F(__close, Filesystem_),
 };
 
 static int mod_new(lua_State* ls) {
@@ -270,12 +276,13 @@ MLUA_SYMBOLS(module_syms) = {
 
 MLUA_OPEN_MODULE(microfs.lfs) {
     // Create the Dir class.
-    // TODO: Correctly handle hash vs. nohash
     mlua_new_class(ls, Dir_name, Dir_syms, true);
+    mlua_set_fields(ls, Dir_syms_nh);
     lua_pop(ls, 1);
 
     // Create the Filesystem class.
     mlua_new_class(ls, Filesystem_name, Filesystem_syms, true);
+    mlua_set_fields(ls, Filesystem_syms_nh);
     lua_pop(ls, 1);
 
     // Create the module.
