@@ -243,14 +243,14 @@ int mlua_main_core0(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Set _G.argv.
+    // Set _G.arg.
     if (argc > 0) {
         lua_createtable(ls, argc - 1, 1);
         for (int i = 0; i < argc; ++i) {
             lua_pushstring(ls, argv[i]);
             lua_rawseti(ls, -2, i);
         }
-        lua_setglobal(ls, "argv");
+        lua_setglobal(ls, "arg");
     }
 
     // Load and run the main module.

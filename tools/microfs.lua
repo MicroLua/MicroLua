@@ -23,9 +23,6 @@ end
 -- Print to stdout.
 local function printf(format, ...) io.stdout:write(format:format(...)) end
 
--- Return a table that calls the given function when it is closed.
-local function defer(fn) return setmetatable({}, {__close = fn}) end
-
 -- Read a file and return its content.
 local function read_file(path)
     local f<close> = assert(io.open(path, 'r'))
@@ -36,6 +33,6 @@ function main()
     local fs<close> = lfs.new(1 << 20)
     local data = fs:unmount()
     printf("Hello, world!\n")
-    printf("exe: %s\n", argv[0])
-    for _, arg in ipairs(argv) do printf("arg: %s\n", arg) end
+    printf("exe: %s\n", arg[0])
+    for _, arg in ipairs(arg) do printf("arg: %s\n", arg) end
 end

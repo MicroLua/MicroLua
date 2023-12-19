@@ -426,8 +426,8 @@ end
 
 -- Dispatch to the selected sub-command.
 function main()
-    local cmd = argv[1]
+    local cmd = arg[1]
     local fn = _ENV['cmd_' .. cmd]
     if not fn then error(("unknown command: %s"):format(cmd), 0) end
-    return fn(slice(argv, 2))
+    return fn(slice(arg, 2))
 end
