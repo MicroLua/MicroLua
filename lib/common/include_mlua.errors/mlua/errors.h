@@ -13,10 +13,9 @@ extern "C" {
 
 // The list of error names, values and descriptions. Do not change the value of
 // existing errors.
-//
-// Next value: 15
 #define MLUA_ERRORS \
     MLUA_ERR(EBADF, 1, "bad file descriptor") \
+    MLUA_ERR(EBUSY, 16, "device or resource busy") \
     MLUA_ERR(ECORRUPT, 2, "corrupted") \
     MLUA_ERR(EEXIST, 3, "file exists") \
     MLUA_ERR(EFBIG, 4, "file too large") \
@@ -24,10 +23,11 @@ extern "C" {
     MLUA_ERR(EIO, 6, "input / output error") \
     MLUA_ERR(EISDIR, 7, "is a directory") \
     MLUA_ERR(ENAMETOOLONG, 8, "filename too long") \
-    MLUA_ERR(ENOATTR, 9, "no data / attr available") \
+    MLUA_ERR(ENODATA, 9, "no data / attribute available") \
     MLUA_ERR(ENOENT, 10, "no such file or directory") \
     MLUA_ERR(ENOMEM, 11, "no memory available") \
     MLUA_ERR(ENOSPC, 12, "no space left on device") \
+    MLUA_ERR(ENOTCONN, 17, "transport endpoint is not connected") \
     MLUA_ERR(ENOTDIR, 13, "not a directory") \
     MLUA_ERR(ENOTEMPTY, 14, "directory not empty") \
     MLUA_ERR(EROFS, 15, "read-only filesystem") \

@@ -67,7 +67,7 @@ static int mlua_err(int err) {
     case LFS_ERR_INVAL: return MLUA_EINVAL;
     case LFS_ERR_NOSPC: return MLUA_ENOSPC;
     case LFS_ERR_NOMEM: return MLUA_ENOMEM;
-    case LFS_ERR_NOATTR: return MLUA_ENOATTR;
+    case LFS_ERR_NOATTR: return MLUA_ENODATA;
     case LFS_ERR_NAMETOOLONG: return MLUA_ENAMETOOLONG;
     default: return err;
     }
@@ -191,13 +191,6 @@ static inline Filesystem* check_Filesystem(lua_State* ls, int arg) {
     return *((Filesystem**)ptr);
 }
 
-static inline Filesystem* check_mounted_Filesystem(lua_State* ls, int arg) {
-    Filesystem* fs = check_Filesystem(ls, arg);
-    // TODO: Return an error instead of raising
-    if (!fs->mounted) return luaL_error(ls, "filesystem isn't mounted"), NULL;
-    return fs;
-}
-
 static inline Filesystem* to_Filesystem(lua_State* ls, int arg) {
     void* ptr = lua_touserdata(ls, arg);
     if (lua_rawlen(ls, arg) != sizeof(ptr)) return ptr;
@@ -225,7 +218,7 @@ static int Filesystem_format(lua_State* ls) {
     return mlua_err_push(ls, MLUA_EROFS);
 #else
     Filesystem* fs = check_Filesystem(ls, 1);
-    if (fs->mounted) return luaL_error(ls, "filesystem is mounted");
+    if (fs->mounted) return mlua_err_push(ls, MLUA_EBUSY);
     lfs_size_t blocks = check_blocks(ls, fs, 2);
     fs->config.block_count = blocks;
     return push_lfs_result_bool(ls, lfs_format(&fs->lfs, &fs->config));
@@ -234,7 +227,7 @@ static int Filesystem_format(lua_State* ls) {
 
 static int Filesystem_mount(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
-    if (fs->mounted) return luaL_error(ls, "filesystem is already mounted");
+    if (fs->mounted) return mlua_err_push(ls, MLUA_EBUSY);
     int res = lfs_mount(&fs->lfs, &fs->config);
     if (res < 0) return push_error(ls, res);
     fs->mounted = true;
@@ -259,7 +252,8 @@ static int Filesystem_grow(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     lfs_size_t blocks = check_blocks(ls, fs, 2);
     struct lfs_fsinfo info;
     int res = lfs_fs_stat(&fs->lfs, &info);
@@ -270,7 +264,8 @@ static int Filesystem_grow(lua_State* ls) {
 }
 
 static int Filesystem_statvfs(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     struct lfs_fsinfo info;
     int res = lfs_fs_stat(&fs->lfs, &info);
     if (res < 0) return push_error(ls, res);
@@ -284,12 +279,14 @@ static int Filesystem_statvfs(lua_State* ls) {
 }
 
 static int Filesystem_size(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     return push_lfs_result_int(ls, lfs_fs_size(&fs->lfs));
 }
 
 static int Filesystem_gc(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     return push_lfs_result_bool(ls, lfs_fs_gc(&fs->lfs));
 }
 
@@ -302,7 +299,8 @@ static int fs_traverse(void* data, lfs_block_t block) {
 }
 
 static int Filesystem_traverse(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     return push_lfs_result_bool(ls,
         lfs_fs_traverse(&fs->lfs, &fs_traverse, ls));
 }
@@ -311,13 +309,15 @@ static int Filesystem_mkconsistent(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     return push_lfs_result_bool(ls, lfs_fs_mkconsistent(&fs->lfs));
 #endif
 }
 
 static int Filesystem_open(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     int flags = luaL_checkinteger(ls, 3);
 
@@ -344,7 +344,8 @@ static int Filesystem_open(lua_State* ls) {
 }
 
 static int Filesystem_opendir(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
 
     Dir* d = lua_newuserdatauv(ls, sizeof(Dir), 1);
@@ -360,7 +361,8 @@ static int Filesystem_opendir(lua_State* ls) {
 }
 
 static int Filesystem_stat(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     struct lfs_info info;
     int res = lfs_stat(&fs->lfs, path, &info);
@@ -371,7 +373,8 @@ static int Filesystem_stat(lua_State* ls) {
 }
 
 static int Filesystem_getattr(lua_State* ls) {
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     uint8_t attr = check_attr(ls, 3);
     luaL_Buffer buf;
@@ -390,7 +393,8 @@ static int Filesystem_setattr(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     uint8_t attr = check_attr(ls, 3);
     size_t size;
@@ -404,7 +408,8 @@ static int Filesystem_removeattr(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     uint8_t attr = check_attr(ls, 3);
     return push_lfs_result_bool(ls, lfs_removeattr(&fs->lfs, path, attr));
@@ -415,7 +420,8 @@ static int Filesystem_mkdir(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     return push_lfs_result_bool(ls, lfs_mkdir(&fs->lfs, path));
 #endif
@@ -425,7 +431,8 @@ static int Filesystem_remove(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
     return push_lfs_result_bool(ls, lfs_remove(&fs->lfs, path));
 #endif
@@ -435,7 +442,8 @@ static int Filesystem_rename(lua_State* ls) {
 #ifdef LFS_READONLY
     return mlua_err_push(ls, MLUA_EROFS);
 #else
-    Filesystem* fs = check_mounted_Filesystem(ls, 1);
+    Filesystem* fs = check_Filesystem(ls, 1);
+    if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* old_path = luaL_checkstring(ls, 2);
     char const* new_path = luaL_checkstring(ls, 3);
     return push_lfs_result_bool(ls, lfs_rename(&fs->lfs, old_path, new_path));
@@ -446,7 +454,7 @@ static int Filesystem_rename(lua_State* ls) {
 
 static int Filesystem_migrate(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
-    if (fs->mounted) return luaL_error(ls, "filesystem is mounted");
+    if (fs->mounted) return mlua_err_push(ls, MLUA_EBUSY);
     lfs_size_t blocks = check_blocks(ls, fs, 2);
     fs->config.block_count = blocks;
     return push_lfs_result_bool(ls, lfs_migrate(&fs->lfs, &fs->config));

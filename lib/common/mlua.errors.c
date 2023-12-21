@@ -38,6 +38,8 @@ static int mod_message(lua_State* ls) {
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(EOK, integer, MLUA_EOK),
     // We can't use MLUA_ERRORS here due to read-only table parsing.
+    MLUA_SYM_V(EBADF, integer, MLUA_EBADF),
+    MLUA_SYM_V(EBUSY, integer, MLUA_EBUSY),
     MLUA_SYM_V(ECORRUPT, integer, MLUA_ECORRUPT),
     MLUA_SYM_V(EEXIST, integer, MLUA_EEXIST),
     MLUA_SYM_V(EFBIG, integer, MLUA_EFBIG),
@@ -45,12 +47,14 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(EIO, integer, MLUA_EIO),
     MLUA_SYM_V(EISDIR, integer, MLUA_EISDIR),
     MLUA_SYM_V(ENAMETOOLONG, integer, MLUA_ENAMETOOLONG),
-    MLUA_SYM_V(ENOATTR, integer, MLUA_ENOATTR),
+    MLUA_SYM_V(ENODATA, integer, MLUA_ENODATA),
     MLUA_SYM_V(ENOENT, integer, MLUA_ENOENT),
     MLUA_SYM_V(ENOMEM, integer, MLUA_ENOMEM),
     MLUA_SYM_V(ENOSPC, integer, MLUA_ENOSPC),
+    MLUA_SYM_V(ENOTCONN, integer, MLUA_ENOTCONN),
     MLUA_SYM_V(ENOTDIR, integer, MLUA_ENOTDIR),
     MLUA_SYM_V(ENOTEMPTY, integer, MLUA_ENOTEMPTY),
+    MLUA_SYM_V(EROFS, integer, MLUA_EROFS),
 
     MLUA_SYM_F(message, mod_),
 };
