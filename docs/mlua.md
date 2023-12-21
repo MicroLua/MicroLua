@@ -294,9 +294,9 @@ Functions that fail return `fail`, an error message and an error code from
 - `File:write(data) -> integer | (fail, msg, err)`\
   Write data to the file. Returns the number of bytes written.
 
-- `File:seek(offset, [whence]) -> integer | (fail, msg, err)`\
-  Change the current position in the file. If `whence` is missing, it is set to
-  `SEEK_SET`. Returns the new position from the start of the file.
+- `File:seek(offset, whence = SEEK_SET) -> integer | (fail, msg, err)`\
+  Change the current position in the file. Returns the new position from the
+  start of the file.
 
 - `File:rewind() -> integer | (fail, msg, err)`\
   Change the current position to the start of the file (equivalent to
