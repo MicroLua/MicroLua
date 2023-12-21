@@ -213,6 +213,10 @@ Functions that fail return `fail`, an error message and an error code from
   Create a filesystem object operating on the given block device. This doesn't
   format or mount the filesystem; it only binds a filesystem to a device.
 
+#### `Filesystem`
+
+The `Filesystem` type (`mlua.fs.lfs.Filesystem`) represents a filesystem.
+
 - `Filesystem:format(size) -> true | (fail, msg, err)`\
   Format the underlying block device for a filesystem of the given size. If
   `size` is missing, the filesystem fills the whole block device. The filesystem
@@ -280,6 +284,10 @@ Functions that fail return `fail`, an error message and an error code from
 - `Filesystem:rename(old_path, new_path) -> true | (fail, msg, err)`\
   Rename a file.
 
+#### `File`
+
+The `File` type (`mlua.fs.lfs.File`) represents an open file.
+
 - `File:close() -> true | (fail, msg, err)`\
   `File:__close() -> true | (fail, msg, err)`\
   `File:__gc() -> true | (fail, msg, err)`\
@@ -310,6 +318,10 @@ Functions that fail return `fail`, an error message and an error code from
 
 - `File:truncate(size) -> true | (fail, msg, err)`\
   Truncate the file at the given size.
+
+#### `Dir`
+
+The `Dir` type (`mlua.fs.lfs.Dir`) represents an open directory.
 
 - `Dir:close() -> true | (fail, msg, err)`\
   `Dir:__close() -> true | (fail, msg, err)`\
