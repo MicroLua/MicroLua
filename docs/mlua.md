@@ -23,7 +23,7 @@ The test modules can be useful as usage examples.
 
 ## `mlua.block`
 
-**Module:** [`mlua.block`](../lib/mlua.block.c),
+**Module:** [`mlua.block`](../lib/common/mlua.block.c),
 build target: `mlua_mod_mlua_block`
 
 This module provides an abstraction for defining block devices in C
@@ -64,7 +64,7 @@ This module provides a block device that uses the QSPI flash for storage.
 ## `mlua.config`
 
 **Module:** `mlua.config` (auto-generated),
-tests: [`mlua.config.test`](../lib/mlua.config.test.lua)
+tests: [`mlua.config.test`](../lib/common/mlua.config.test.lua)
 
 This module is auto-generated when `mlua_add_config_module()` is called for
 a CMake build target, and contains the symbols defined by `mlua_target_config()`
@@ -84,9 +84,9 @@ mlua_target_config(example_target
 
 ## `mlua.errors`
 
-**Module:** [`mlua.errors`](../lib/mlua.errors.c),
+**Module:** [`mlua.errors`](../lib/common/mlua.errors.c),
 build target: `mlua_mod_mlua_errors`,
-tests: [`mlua.errors.test`](../lib/mlua.errors.test.lua)
+tests: [`mlua.errors.test`](../lib/common/mlua.errors.test.lua)
 
 This module provides a common set of error codes, for use by other modules. Note
 that although the error codes look very much like `errno` values, they have
@@ -108,7 +108,7 @@ This module provides the core event handling and dispatch functionality.
 
 ## `mlua.fs`
 
-**Module:** [`mlua.fs`](../lib/mlua.fs.c),
+**Module:** [`mlua.fs`](../lib/common/mlua.fs.c),
 build target: `mlua_mod_mlua_fs`
 
 This module provides functionality that is common across all filesystems.
@@ -321,9 +321,9 @@ Functions that fail return `fail`, an error message and an error code from
 
 ## `mlua.int64`
 
-**Module:** [`mlua.int64`](../lib/mlua.int64.c),
+**Module:** [`mlua.int64`](../lib/common/mlua.int64.c),
 build target: `mlua_mod_mlua_int64`,
-tests: [`mlua.int64.test`](../lib/mlua.int64.test.lua)
+tests: [`mlua.int64.test`](../lib/common/mlua.int64.test.lua)
 
 This module provides a 64-bit signed integer type (`mlua.Int64`). When
 `lua_Integer` is a 32-bit integer, `Int64` is a full userdata with all the
@@ -379,9 +379,9 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 
 ## `mlua.io`
 
-**Module:** [`mlua.io`](../lib/mlua.io.lua),
+**Module:** [`mlua.io`](../lib/common/mlua.io.lua),
 build target: `mlua_mod_mlua_io`,
-tests: [`mlua.io.test`](../lib/mlua.io.test.lua)
+tests: [`mlua.io.test`](../lib/common/mlua.io.test.lua)
 
 This module provides helpers for input / output processing.
 
@@ -433,9 +433,9 @@ The `Buffer` type records writes and allows replaying them on another stream.
 
 ## `mlua.list`
 
-**Module:** [`mlua.list`](../lib/mlua.list.c),
+**Module:** [`mlua.list`](../lib/common/mlua.list.c),
 build target: `mlua_mod_mlua_list`,
-tests: [`mlua.list.test`](../lib/mlua.list.test.lua)
+tests: [`mlua.list.test`](../lib/common/mlua.list.test.lua)
 
 This module provides functions to operate on lists that can contain `nil`
 values. Such lists track the length of the list at index `[0]`. The module
@@ -484,9 +484,9 @@ functions as methods.
 
 ## `mlua.mem`
 
-**Module:** [`mlua.mem`](../lib/mlua.mem.c),
+**Module:** [`mlua.mem`](../lib/common/mlua.mem.c),
 build target: `mlua_mod_mlua_mem`,
-tests: [`mlua.mem.test`](../lib/mlua.mem.test.lua)
+tests: [`mlua.mem.test`](../lib/common/mlua.mem.test.lua)
 
 This module provides functionality to access raw memory (ROM, RAM).
 
@@ -524,9 +524,9 @@ The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
 
 ## `mlua.oo`
 
-**Module:** [`mlua.oo`](../lib/mlua.oo.lua),
+**Module:** [`mlua.oo`](../lib/common/mlua.oo.lua),
 build target: `mlua_mod_mlua_oo`,
-tests: [`mlua.oo.test`](../lib/mlua.oo.test.lua)
+tests: [`mlua.oo.test`](../lib/common/mlua.oo.test.lua)
 
 This module provides a simple object model for object-oriented programming.
 Classes are created with `class`, providing a name and optionally a base class.
@@ -849,9 +849,9 @@ terminate automatically get removed from the group.
 
 ## `mlua.util`
 
-**Module:** [`mlua.util`](../lib/mlua.util.lua),
+**Module:** [`mlua.util`](../lib/common/mlua.util.lua),
 build target: `mlua_mod_mlua_util`,
-tests: [`mlua.util.test`](../lib/mlua.util.test.lua)
+tests: [`mlua.util.test`](../lib/common/mlua.util.test.lua)
 
 This module provides various utilities.
 
