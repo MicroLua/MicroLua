@@ -83,6 +83,7 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
         int digit = isdigit((unsigned char)c) ? c - '0'
                     : toupper((unsigned char)c) - 'A' + 10;
         if (digit >= base) return false;
+        // TODO: Check for overflow? See l_str2int() in lobject.c
         v = v * base + digit;
         c = *s++;
     } while (isalnum((unsigned char)c));

@@ -39,7 +39,7 @@ static_assert(
     "Filesystem is outside of flash boundaries");
 
 bi_decl(bi_block_device(
-    MLUA_BI_TAG, "lfs (loader)",
+    MLUA_BI_TAG, "lfs:loader",
     XIP_BASE + (MLUA_FS_LOADER_OFFSET), (MLUA_FS_LOADER_SIZE), NULL,
     BINARY_INFO_BLOCK_DEV_FLAG_READ | BINARY_INFO_BLOCK_DEV_FLAG_WRITE
     | BINARY_INFO_BLOCK_DEV_FLAG_REFORMAT | BINARY_INFO_BLOCK_DEV_FLAG_PT_NONE))
