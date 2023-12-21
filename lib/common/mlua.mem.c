@@ -75,12 +75,18 @@ MLUA_SYMBOLS_NOHASH(Buffer_syms_nh) = {
 };
 
 static int mod_read(lua_State* ls) {
-    return read_mem(ls, (void const*)luaL_checkinteger(ls, 1),
+    if (sizeof(void*) > sizeof(lua_Integer)) {
+        return luaL_error(ls, "not supported");
+    }
+    return read_mem(ls, (void const*)(uintptr_t)luaL_checkinteger(ls, 1),
                     luaL_optinteger(ls, 2, 1));
 }
 
 static int mod_write(lua_State* ls) {
-    void* ptr = (void*)luaL_checkinteger(ls, 1);
+    if (sizeof(void*) > sizeof(lua_Integer)) {
+        return luaL_error(ls, "not supported");
+    }
+    void* ptr = (void*)(uintptr_t)luaL_checkinteger(ls, 1);
     size_t len;
     void const* src = (void const*)luaL_checklstring(ls, 2, &len);
     memcpy(ptr, src, len);

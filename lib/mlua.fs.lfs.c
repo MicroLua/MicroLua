@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef LFS_THREADSAFE
 #include "pico/mutex.h"
+#endif
 
 #include "lfs.h"
 #include "lua.h"

@@ -5,7 +5,7 @@ _ENV = module(...)
 
 local config = require 'mlua.config'
 local io = require 'mlua.io'
-local pico = require 'pico'
+local mem = require 'mlua.mem'
 local table = require 'table'
 
 local module_name = ...
@@ -45,9 +45,9 @@ function test_variable_access(t)
     t:expect(mod):label("mod"):has('error')
 
     -- In C module.
-    t:expect(pico):label("pico"):has('OK')
+    t:expect(mem):label("mem"):has('alloc')
     if config.HASH_SYMBOL_TABLES == 0 then
-        t:expect(pico):label("pico"):not_has('UNKNOWN')
+        t:expect(mem):label("mem"):not_has('UNKNOWN')
     end
 end
 
@@ -55,7 +55,7 @@ function test_strict(t)
     local want_c = config.HASH_SYMBOL_TABLES == 0 and "undefined symbol" or nil
     for _, test in ipairs{
         {"Lua module", require(module_name), "undefined symbol"},
-        {"C module", pico, want_c},
+        {"C module", mem, want_c},
         {"C class", stderr, want_c},
     } do
         local desc, tab, want = table.unpack(test)

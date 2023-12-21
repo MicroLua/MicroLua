@@ -143,7 +143,7 @@ function(mlua_add_c_module TARGET)
                 "cmod" "${src}" "${output}"
             VERBATIM
         )
-        mlua_add_gen_target("${TARGET}" mlua_gen_core INTERFACE "${output}")
+        mlua_add_gen_target("${TARGET}" mlua_gen_c INTERFACE "${output}")
     endforeach()
     target_link_libraries("${TARGET}" INTERFACE mlua_core mlua_core_main)
 endfunction()
