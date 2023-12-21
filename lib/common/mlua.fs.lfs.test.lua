@@ -3,34 +3,35 @@
 
 _ENV = module(...)
 
-local flash = require 'mlua.block.flash'
+local block_mem = require 'mlua.block.mem'
 local errors = require 'mlua.errors'
 local fs = require 'mlua.fs'
 local lfs = require 'mlua.fs.lfs'
 local list = require 'mlua.list'
+local mem = require 'mlua.mem'
 local util = require 'mlua.util'
-local pico = require 'pico'
 local table = require 'table'
 
 local dev, dfs
 
 local function write_file(path, data)
     local f<close> = assert(dfs:open(path, fs.O_WRONLY | fs.O_CREAT))
-    f:write(data)
+    assert(f:write(data))
+    assert(f:close())
 end
 
 function set_up(t)
-    -- Create a filesystem in the unused part of the flash and mount it.
-    dev = flash.new(pico.flash_binary_end - pico.flash_binary_start, 100 << 10)
+    -- Create a filesystem in RAM.
+    dev = block_mem.new(mem.alloc(32 << 10, 256, 256))
     local size = dev:size()
     dfs = lfs.new(dev)
-    t:assert(dfs:format(size // 2))  -- Half-size to allow growing
+    t:assert(dfs:format(size - 1024))  -- Allow growing
     t:expect(t:expr(dfs):is_mounted()):eq(false)
     t:assert(dfs:mount())
     t:expect(t:expr(dfs):is_mounted()):eq(true)
     t:cleanup(function() dfs:unmount() end)
-    dfs:mkdir('/dir')
-    dfs:mkdir('/dir/sub')
+    assert(dfs:mkdir('/dir'))
+    assert(dfs:mkdir('/dir/sub'))
     write_file('/dir/file1', '12345')
     write_file('/dir/file2', '12345678')
     write_file('/dir/sub/file', '123')
@@ -59,7 +60,7 @@ function test_statvfs(t)
     t:expect(dv):label("disk_version"):eq(lfs.DISK_VERSION)
     local size, _, _, erase_size = dev:size()
     t:expect(bs):label("block_size"):eq(erase_size)
-    t:expect(bc):label("block_count"):eq(size // erase_size // 2)
+    t:expect(bc):label("block_count"):eq((size - 1024) // erase_size)
     t:expect(name_max):label("name_max"):eq(lfs.NAME_MAX)
     t:expect(file_max):label("file_max"):eq(lfs.FILE_MAX)
     t:expect(attr_max):label("attr_max"):eq(lfs.ATTR_MAX)
@@ -82,7 +83,7 @@ function test_block_accounting(t)
 end
 
 function test_remove(t)
-    dfs:mkdir('/remove')
+    assert(dfs:mkdir('/remove'))
     write_file('/remove/file', '123')
     t:expect(t:expr(dfs):stat('/remove')):neq(nil)
     t:expect(t:expr(dfs):stat('/remove/file')):neq(nil)
@@ -94,7 +95,7 @@ function test_remove(t)
 end
 
 function test_rename(t)
-    dfs:mkdir('/rename')
+    assert(dfs:mkdir('/rename'))
     write_file('/rename/file', '123')
     t:expect(t:expr(dfs):rename('/rename/file', '/file-new')):eq(true)
     t:expect(t:expr(dfs):stat('/rename/file')):eq(nil)

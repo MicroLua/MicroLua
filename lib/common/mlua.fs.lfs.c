@@ -193,6 +193,7 @@ static inline Filesystem* check_Filesystem(lua_State* ls, int arg) {
 
 static inline Filesystem* check_mounted_Filesystem(lua_State* ls, int arg) {
     Filesystem* fs = check_Filesystem(ls, arg);
+    // TODO: Return an error instead of raising
     if (!fs->mounted) return luaL_error(ls, "filesystem isn't mounted"), NULL;
     return fs;
 }

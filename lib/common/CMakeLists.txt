@@ -16,6 +16,13 @@ target_link_libraries(mlua_mod_mlua_block INTERFACE
     mlua_mod_mlua_int64
 )
 
+mlua_add_c_module(mlua_mod_mlua_block_mem mlua.block.mem.c)
+target_link_libraries(mlua_mod_mlua_block_mem INTERFACE
+    mlua_mod_mlua_block
+    mlua_mod_mlua_errors
+    mlua_mod_mlua_mem
+)
+
 mlua_add_lua_test_modules(mlua_mod_mlua_config_test mlua.config.test.lua)
 
 mlua_add_c_module(mlua_mod_mlua_errors mlua.errors.c)
@@ -31,6 +38,41 @@ target_link_libraries(mlua_mod_mlua_errors_test INTERFACE
 mlua_add_c_module(mlua_mod_mlua_fs mlua.fs.c)
 target_include_directories(mlua_mod_mlua_fs_headers INTERFACE
     include_mlua.fs)
+
+mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
+target_include_directories(mlua_mod_mlua_fs_lfs_headers INTERFACE
+    "${MLUA_LITTLEFS_SOURCE_DIR}"
+    include_mlua.fs.lfs
+)
+target_compile_definitions(mlua_mod_mlua_fs_lfs INTERFACE
+    LFS_NO_ASSERT=1
+    LFS_NO_DEBUG=1
+    LFS_NO_ERROR=1
+    LFS_NO_MALLOC=1
+    LFS_NO_WARN=1
+)
+target_sources(mlua_mod_mlua_fs_lfs INTERFACE
+    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs.c"
+    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs_util.c"
+)
+target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
+    mlua_mod_mlua_block
+    mlua_mod_mlua_errors
+    mlua_mod_mlua_fs_headers
+)
+
+mlua_add_lua_test_modules(mlua_mod_mlua_fs_lfs_test
+    mlua.fs.lfs.test.lua)
+target_link_libraries(mlua_mod_mlua_fs_lfs_test INTERFACE
+    mlua_mod_mlua_block_mem
+    mlua_mod_mlua_errors
+    mlua_mod_mlua_fs
+    mlua_mod_mlua_fs_lfs
+    mlua_mod_mlua_list
+    mlua_mod_mlua_mem
+    mlua_mod_mlua_util
+    mlua_mod_table
+)
 
 mlua_add_c_module(mlua_mod_mlua_int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua_int64_headers INTERFACE
@@ -68,6 +110,8 @@ target_link_libraries(mlua_mod_mlua_list_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua_mem mlua.mem.c)
+target_include_directories(mlua_mod_mlua_mem_headers INTERFACE
+    include_mlua.mem)
 
 mlua_add_lua_test_modules(mlua_mod_mlua_mem_test
     mlua.mem.test.lua)

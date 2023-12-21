@@ -61,6 +61,17 @@ This module provides a block device that uses the QSPI flash for storage.
   is rounded up to the next multiple of `FLASH_SECTOR_SIZE`. `size` is adjusted so that `offset + size` is rounded down to the previous multiple of
   `FLASH_SECTOR_SIZE`.
 
+### `mlua.block.mem`
+
+**Module:** [`mlua.block.mem`](../lib/common/mlua.block.mem.c),
+build target: `mlua_mod_mlua_block_mem`
+
+This module provides a block device that uses a `mlua.mem.Buffer` for storage,
+i.e. a contiguous block of RAM.
+
+- `new(buffer, size, write_size = 256, erase_size = 256) -> Dev`\
+  Create a new memory block device in `buffer`.
+
 ## `mlua.config`
 
 **Module:** `mlua.config` (auto-generated),
@@ -171,9 +182,9 @@ info, and can be viewed with `picotool info -a`.
 
 ### `mlua.fs.lfs`
 
-**Module:** [`mlua.fs.lfs`](../lib/mlua.fs.lfs.c),
+**Module:** [`mlua.fs.lfs`](../lib/common/mlua.fs.lfs.c),
 build target: `mlua_mod_mlua_fs_lfs`,
-tests: [`mlua.fs.lfs.test`](../lib/mlua.fs.lfs.test.lua)
+tests: [`mlua.fs.lfs.test`](../lib/common/mlua.fs.lfs.test.lua)
 
 This module provides bindings for the
 [littlefs](https://github.com/littlefs-project/littlefs) library. It allows

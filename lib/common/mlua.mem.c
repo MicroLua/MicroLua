@@ -3,8 +3,7 @@
 
 #include <string.h>
 
-#include "lua.h"
-#include "lauxlib.h"
+#include "mlua/mem.h"
 #include "mlua/module.h"
 
 static int read_mem(lua_State* ls, void const* src, size_t size) {
@@ -19,26 +18,25 @@ static int read_mem(lua_State* ls, void const* src, size_t size) {
     return 1;
 }
 
-static char const Buffer_name[] = "mlua.mem.Buffer";
-
-static inline void* check_Buffer(lua_State* ls, int arg) {
-    return luaL_checkudata(ls, arg, Buffer_name);
-}
+char const mlua_Buffer_name[] = "mlua.mem.Buffer";
 
 static int Buffer_addr(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)check_Buffer(ls, 1));
+    if (sizeof(void*) > sizeof(lua_Integer)) {
+        return luaL_error(ls, "not supported");
+    }
+    lua_pushinteger(ls, (uintptr_t)mlua_mem_check_Buffer(ls, 1));
     return 1;
 }
 
 static int Buffer_clear(lua_State* ls) {
-    void* buf = check_Buffer(ls, 1);
+    void* buf = mlua_mem_check_Buffer(ls, 1);
     lua_Unsigned size = lua_rawlen(ls, 1);
     memset(buf, luaL_optinteger(ls, 2, 0), size);
     return 0;
 }
 
 static int Buffer_read(lua_State* ls) {
-    void const* buf = check_Buffer(ls, 1);
+    void const* buf = mlua_mem_check_Buffer(ls, 1);
     lua_Unsigned size = lua_rawlen(ls, 1);
     lua_Unsigned offset = luaL_optinteger(ls, 2, 0);
     luaL_argcheck(ls, offset <= size, 2, "out of bounds");
@@ -48,7 +46,7 @@ static int Buffer_read(lua_State* ls) {
 }
 
 static int Buffer_write(lua_State* ls) {
-    void* buf = check_Buffer(ls, 1);
+    void* buf = mlua_mem_check_Buffer(ls, 1);
     lua_Unsigned size = lua_rawlen(ls, 1);
     size_t len;
     void const* src = (void const*)luaL_checklstring(ls, 2, &len);
@@ -95,7 +93,7 @@ static int mod_write(lua_State* ls) {
 
 static int mod_alloc(lua_State* ls) {
     lua_newuserdatauv(ls, luaL_checkinteger(ls, 1), 0);
-    luaL_getmetatable(ls, Buffer_name);
+    luaL_getmetatable(ls, mlua_Buffer_name);
     lua_setmetatable(ls, -2);
     return 1;
 }
@@ -111,7 +109,7 @@ MLUA_OPEN_MODULE(mlua.mem) {
     mlua_new_module(ls, 0, module_syms);
 
     // Create the Buffer class.
-    mlua_new_class(ls, Buffer_name, Buffer_syms, true);
+    mlua_new_class(ls, mlua_Buffer_name, Buffer_syms, true);
     mlua_set_fields(ls, Buffer_syms_nh);
     lua_pop(ls, 1);
     return 1;
