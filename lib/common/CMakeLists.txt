@@ -39,6 +39,12 @@ mlua_add_c_module(mlua_mod_mlua_fs mlua.fs.c)
 target_include_directories(mlua_mod_mlua_fs_headers INTERFACE
     include_mlua.fs)
 
+mlua_add_lua_test_modules(mlua_mod_mlua_fs_test mlua.fs.test.lua)
+target_link_libraries(mlua_mod_mlua_fs_test INTERFACE
+    mlua_mod_mlua_fs
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_mlua_fs_lfs mlua.fs.lfs.c)
 target_include_directories(mlua_mod_mlua_fs_lfs_headers INTERFACE
     "${MLUA_LITTLEFS_SOURCE_DIR}"

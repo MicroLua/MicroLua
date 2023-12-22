@@ -120,7 +120,8 @@ This module provides the core event handling and dispatch functionality.
 ## `mlua.fs`
 
 **Module:** [`mlua.fs`](../lib/common/mlua.fs.c),
-build target: `mlua_mod_mlua_fs`
+build target: `mlua_mod_mlua_fs`,
+tests: [`mlua.fs.test`](../lib/mlua.fs.test.lua)
 
 This module provides functionality that is common across all filesystems.
 
@@ -141,6 +142,10 @@ This module provides functionality that is common across all filesystems.
   `SEEK_CUR: integer`\
   `SEEK_END: integer`\
   Values that can be passed when seeking in a file.
+
+- `join(path, ...) -> string`\
+  Join pathnames. Ignores previous parts if a part is absolute. Inserts a `/`
+  unless the first part is empty or already ends in `/`.
 
 ### `mlua.fs.loader`
 
