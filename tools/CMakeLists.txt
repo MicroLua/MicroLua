@@ -15,7 +15,6 @@ add_subdirectory("${MLUA_PATH}/core" core)
 mlua_add_lua_modules(gen_main NOCOMPILE gen.lua)
 target_link_libraries(gen_main INTERFACE
     mlua_mod_io
-    mlua_mod_math
     mlua_mod_os
     mlua_mod_string
     mlua_mod_table

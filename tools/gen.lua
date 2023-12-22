@@ -14,15 +14,12 @@
 _ENV = module(...)
 
 local io = require 'io'
-local math = require 'math'
 local os = require 'os'
 local string = require 'string'
 local table = require 'table'
 
--- Raise an error without position information.
-local function raise(format, ...)
-    return error(format:format(...), 0)
-end
+-- Raise an error without location information.
+local function raise(format, ...) return error(format:format(...), 0) end
 
 -- Raise an error if the first argument is false, otherwise return all
 -- arguments.
@@ -33,7 +30,7 @@ local function assert(...)
 end
 
 -- Print to stdout.
-local function printf(format, ...) io.stdout:write(format:format(...)) end
+local function printf(format, ...) return stdout:write(format:format(...)) end
 
 -- Return a view into a slice of a list.
 local function slice(list, from)
@@ -223,7 +220,7 @@ local function find_perfect_hash(keys)
     for i, key in ipairs(keys) do
         local kh = perfect_hash(key, h)
         if kh ~= i - 1 then
-            error(("Bad hash: %s -> %s, want %s"):format(key, kh, i - 1))
+            raise("bad hash: %s -> %s, want %s", key, kh, i - 1)
         end
     end
     return h
@@ -428,6 +425,6 @@ end
 function main()
     local cmd = arg[1]
     local fn = _ENV['cmd_' .. cmd]
-    if not fn then error(("unknown command: %s"):format(cmd), 0) end
+    if not fn then raise("unknown command: %s", cmd) end
     return fn(slice(arg, 2))
 end
