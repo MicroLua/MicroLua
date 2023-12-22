@@ -3,6 +3,8 @@
 
 #include "mlua/errors.h"
 
+#include <assert.h>
+
 #include "mlua/module.h"
 #include "mlua/util.h"
 

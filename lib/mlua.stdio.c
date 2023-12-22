@@ -3,7 +3,6 @@
 
 #include <unistd.h>
 
-#include "pico/stdio.h"
 #if LIB_PICO_STDIO_SEMIHOSTING
 #include "pico/stdio_semihosting.h"
 #endif
@@ -17,12 +16,10 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
+#if LIB_MLUA_MOD_PICO_STDIO
 #include "mlua/pico.stdio.h"
+#endif
 #include "mlua/util.h"
-
-// Silence link-time warnings.
-__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
-__attribute__((weak)) int _unlink(char const* file) { return -1; }
 
 static char const InStream_name[] = "mlua.stdio.InStream";
 

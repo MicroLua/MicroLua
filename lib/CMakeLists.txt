@@ -371,10 +371,6 @@ target_link_libraries(mlua_mod_mlua_fs_loader_test INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio.c)
-target_link_libraries(mlua_mod_mlua_stdio INTERFACE
-    mlua_mod_pico_stdio_headers
-    pico_stdio
-)
 
 mlua_add_lua_test_modules(mlua_mod_mlua_stdio_test mlua.stdio.test.lua)
 target_link_libraries(mlua_mod_mlua_stdio_test INTERFACE

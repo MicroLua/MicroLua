@@ -40,5 +40,5 @@ function test_print(t)
     print(1, 2.3, "4-5", v)
     print(6, 7, 8)
     t:expect(tostring(b)):label('output')
-        :eq("1\t" .. tostring(2.3) .."\t4-5\t(v)\n6\t7\t8\n")
+        :eq("1\t" .. tostring(2.3) .. "\t4-5\t(v)\n6\t7\t8\n")
 end

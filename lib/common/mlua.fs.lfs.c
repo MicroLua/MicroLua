@@ -3,6 +3,7 @@
 
 #include "mlua/fs.lfs.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

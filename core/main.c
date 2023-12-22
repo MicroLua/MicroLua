@@ -61,6 +61,15 @@ static int pmain(lua_State* ls) {
     // Set up stdio streams.
 #if LIB_MLUA_MOD_MLUA_STDIO
     mlua_require(ls, "mlua.stdio", false);
+#elif LIB_MLUA_MOD_IO
+    mlua_require(ls, "io", true);
+    lua_getfield(ls, -1, "stdin");
+    lua_setglobal(ls, "stdin");
+    lua_getfield(ls, -1, "stdout");
+    lua_setglobal(ls, "stdout");
+    lua_getfield(ls, -1, "stderr");
+    lua_setglobal(ls, "stderr");
+    lua_pop(ls, 1);
 #endif
 
     // Enable module loading from a filesystem.
