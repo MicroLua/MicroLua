@@ -36,6 +36,21 @@ static int list_len(lua_State* ls) {
     return 1;
 }
 
+static int list_set_len(lua_State* ls) {
+    lua_Integer len = length(ls, 1);
+    lua_Integer new_len = luaL_checkinteger(ls, 2);
+    if (new_len < 0) new_len = 0;
+    lua_settop(ls, 1);
+    if (new_len == len) return 1;
+    for (; len > new_len; --len) {
+        lua_pushnil(ls);
+        lua_rawseti(ls, 1, len);
+    }
+    lua_pushinteger(ls, new_len);
+    lua_rawseti(ls, 1, LEN_IDX);
+    return 1;
+}
+
 static int list_eq(lua_State* ls) {
     lua_Integer len1 = length(ls, 1);
     lua_Integer len2 = length(ls, 2);
@@ -78,7 +93,7 @@ static int list_ipairs(lua_State* ls) {
 
 static int list_append(lua_State* ls) {
     switch (lua_gettop(ls)) {
-    case 0: lua_pushnil(ls);  // Fall through
+    case 0: lua_pushnil(ls); __attribute__((fallthrough));
     case 1: return 1;
     }
     lua_Integer len = 0;
@@ -255,6 +270,7 @@ static int list___call(lua_State* ls) {
 
 MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(len, list_),
+    MLUA_SYM_F(set_len, list_),
     MLUA_SYM_F(eq, list_),
     MLUA_SYM_F(ipairs, list_),
     MLUA_SYM_F(append, list_),

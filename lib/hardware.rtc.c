@@ -22,7 +22,7 @@ static lua_Integer get_datetime_field(lua_State* ls, int arg,
         lua_Integer v = lua_tointegerx(ls, -1, &isnum);
         lua_pop(ls, 1);
         if (isnum) return v;
-        // fall-through
+        __attribute__((fallthrough));
     default:
         return luaL_error(ls, "invalid datetime %s value", name);
     }

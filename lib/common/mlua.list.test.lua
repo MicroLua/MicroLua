@@ -31,6 +31,19 @@ function test_len(t)
     end
 end
 
+function test_set_len(t)
+    for _, test in ipairs{
+        {nil, 0, nil},
+        {{}, 0, {}},
+        {{1, 2, 3}, 5, {[0] = 5, 1, 2, 3}},
+        {{1, 2, 3, 4, 5}, 3, {[0] = 3, 1, 2, 3}},
+        {{[0] = 7}, 4, {[0] = 4}},
+    } do
+        local arg, new, want = table.unpack(test)
+        t:expect(t:expr(list).set_len(arg, new)):eq(want, util.table_eq)
+    end
+end
+
 function test_eq(t)
     for _, test in ipairs{
         {nil, nil, true},
