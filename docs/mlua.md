@@ -897,6 +897,13 @@ This module provides various utilities.
 - `get(tab, key) -> any`\
   Return `tab[key]`, or `nil` if the lookup raises an error.
 
+- `raise(format, ...)`\
+  Format an error message and raise an error with it. The error doesn't include
+  location information.
+
+- `check(...) -> ...`\
+  Identical to `assert()`, but raised errors don't include location information.
+
 - `repr(v) -> string`\
   Return a human-readable string representation of `v`. Calls the `__repr`
   metamethod of `v` if it is defined.

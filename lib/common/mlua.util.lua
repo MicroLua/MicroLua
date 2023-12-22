@@ -25,6 +25,17 @@ function get(tab, key)
     if ok then return v end
 end
 
+-- Raise an error without location information.
+function raise(format, ...) return error(format:format(...), 0) end
+
+-- Raise an error if the first argument is false, otherwise return all
+-- arguments.
+function check(...)
+    local ok, msg = ...
+    if not ok then return error(msg, 0) end
+    return ...
+end
+
 local escapes = {
     [7] = '\\a', [8] = '\\b', [9] = '\\t', [10] = '\\n', [11] = '\\v',
     [12] = '\\f', [13] = '\\r', [34] = '\\"', [92] = '\\\\',
@@ -153,4 +164,3 @@ function table_comp(keys)
         return false
     end
 end
-
