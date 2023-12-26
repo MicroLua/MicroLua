@@ -31,22 +31,6 @@ target_link_libraries(gen PRIVATE
 )
 add_executable(mlua_tool_gen ALIAS gen)
 
-# Module: microfs.lfs
-mlua_add_c_module(microfs_lfs microfs.lfs.c)
-target_include_directories(microfs_lfs_headers INTERFACE
-    "${MLUA_LITTLEFS_SOURCE_DIR}"
-)
-target_compile_definitions(microfs_lfs INTERFACE
-    LFS_NO_ASSERT=1
-    LFS_NO_DEBUG=1
-    LFS_NO_ERROR=1
-    LFS_NO_WARN=1
-)
-target_sources(microfs_lfs INTERFACE
-    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs.c"
-    "${MLUA_LITTLEFS_SOURCE_DIR}/lfs_util.c"
-)
-
 # Module: microfs
 mlua_add_lua_modules(microfs_main microfs.lua)
 target_link_libraries(microfs_main INTERFACE
