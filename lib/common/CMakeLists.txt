@@ -139,6 +139,8 @@ target_link_libraries(mlua_mod_mlua_shell INTERFACE
     mlua_mod_string
 )
 
+mlua_add_lua_modules(mlua_mod_mlua_uf2 mlua.uf2.lua)
+
 mlua_add_lua_modules(mlua_mod_mlua_util mlua.util.lua)
 target_link_libraries(mlua_mod_mlua_util INTERFACE
     mlua_mod_math

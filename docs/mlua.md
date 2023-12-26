@@ -875,6 +875,32 @@ terminate automatically get removed from the group.
   Join the threads in the group. If the group is assigned to a to-be-closed
   variable, it is joined when the variable is closed.
 
+## `mlua.uf2`
+
+**Module:** [`mlua.uf2`](../lib/common/mlua.uf2.lua),
+build target: `mlua_mod_mlua_uf2`
+
+This module provides helpers to parse and generate
+[UF2 files](https://github.com/microsoft/uf2).
+
+- `flag_noflash: integer`\
+  `flag_file_container: integer`\
+  `flag_family_id_present: integer`\
+  `flag_md5_present: integer`\
+  `flag_ext_present: integer`\
+  Bit masks for the `flags` field.
+
+- `family_id_rp2040: integer`\
+  Family ID values.
+
+- `block_size: integer`\
+  The size of an UF2 block.
+
+- `parse(block, start = 1) -> table`\
+  Parse an UF2 block starting at `start` in `block`. Returns a table with the
+  fields `flags`, `target_addr`, `payload_size`, `block_no`, `num_blocks`,
+  `reserved` and `data`.
+
 ## `mlua.util`
 
 **Module:** [`mlua.util`](../lib/common/mlua.util.lua),
