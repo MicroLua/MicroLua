@@ -112,25 +112,24 @@ end
 
 -- Walk a filesystem tree, calling fn for each entry.
 local function walk(efs, path, fn)
-    local d<close>, msg, err = efs:opendir(path)
-    if not d then
-        if err ~= errors.ENOTDIR then raise(msg) end
-        local name, type, size = check(efs:stat(path))
-        fn(fs.join(path, name), type, size)
+    local name, type, size = check(efs:stat(path))
+    if type ~= fs.TYPE_DIR then
+        fn(path, type, size)
         return 1
     end
-    local cnt = 0
-    while true do
-        local name, type, size = check(d:read())
-        if name == true then break end
-        cnt = cnt + 1
-        if name ~= '.' and name ~= '..' then
-            local p = fs.join(path, name)
-            if type == fs.TYPE_DIR then size = walk(efs, p, fn) end
-            fn(p, type, size)
+    local function recurse(path)
+        local cnt = 0
+        for name, type, size in check(efs:list(path)) do
+            cnt = cnt + 1
+            if name ~= '.' and name ~= '..' then
+                local p = fs.join(path, name)
+                if type == fs.TYPE_DIR then size = recurse(p) end
+                fn(p, type, size)
+            end
         end
+        return cnt
     end
-    return cnt
+    return recurse(path)
 end
 
 function cmd_list(opts, args)

@@ -21,8 +21,6 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-// TODO: Add Filesystem:list(), returning an iterator
-
 static char const Filesystem_name[] = "mlua.fs.lfs.Filesystem";
 static char const File_name[] = "mlua.fs.lfs.File";
 static char const Dir_name[] = "mlua.fs.lfs.Dir";
@@ -330,35 +328,37 @@ static int Filesystem_open(lua_State* ls) {
 #endif
 
     File* f = lua_newuserdatauv(ls, sizeof(File) + fs_dev(fs)->write_size, 1);
+    memset(f, 0, sizeof(File));
+    f->config.buffer = f->buffer;
+    int res = lfs_file_opencfg(&fs->lfs, &f->file, path, from_open_flags(flags),
+                               &f->config);
+    if (res < 0) return push_error(ls, res);
     luaL_getmetatable(ls, File_name);
     lua_setmetatable(ls, -2);
     lua_pushvalue(ls, 1);  // Keep fs alive
     lua_setiuservalue(ls, -2, 1);
-    memset(f, 0, sizeof(File));
-    f->config.buffer = f->buffer;
-    // TODO: Add support for getting and setting custom attributes
-
-    int res = lfs_file_opencfg(&fs->lfs, &f->file, path, from_open_flags(flags),
-                               &f->config);
-    if (res < 0) return push_error(ls, res);
     return 1;
 }
 
-static int Filesystem_opendir(lua_State* ls) {
+static int Dir_next(lua_State* ls);
+
+static int Filesystem_list(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
     if (!fs->mounted) return mlua_err_push(ls, MLUA_ENOTCONN);
     char const* path = luaL_checkstring(ls, 2);
 
-    Dir* d = lua_newuserdatauv(ls, sizeof(Dir), 1);
+    lua_pushcfunction(ls, &Dir_next);  // Iterator function
+    Dir* d = lua_newuserdatauv(ls, sizeof(Dir), 1);  // State
+    memset(d, 0, sizeof(Dir));
+    int res = lfs_dir_open(&fs->lfs, &d->dir, path);
+    if (res < 0) return push_error(ls, res);
     luaL_getmetatable(ls, Dir_name);
     lua_setmetatable(ls, -2);
     lua_pushvalue(ls, 1);  // Keep fs alive
     lua_setiuservalue(ls, -2, 1);
-    memset(d, 0, sizeof(Dir));
-
-    int res = lfs_dir_open(&fs->lfs, &d->dir, path);
-    if (res < 0) return push_error(ls, res);
-    return 1;
+    lua_pushnil(ls);  // Control variable
+    lua_pushvalue(ls, -2);  // Closing value
+    return 4;
 }
 
 static int Filesystem_stat(lua_State* ls) {
@@ -475,7 +475,7 @@ MLUA_SYMBOLS(Filesystem_syms) = {
     MLUA_SYM_F(traverse, Filesystem_),
     MLUA_SYM_F(mkconsistent, Filesystem_),
     MLUA_SYM_F(open, Filesystem_),
-    MLUA_SYM_F(opendir, Filesystem_),
+    MLUA_SYM_F(list, Filesystem_),
     MLUA_SYM_F(stat, Filesystem_),
     MLUA_SYM_F(getattr, Filesystem_),
     MLUA_SYM_F(setattr, Filesystem_),
@@ -617,7 +617,7 @@ static inline Dir* check_Dir(lua_State* ls, int arg, Filesystem** fs) {
     return d;
 }
 
-static int Dir_close(lua_State* ls) {
+static int Dir___close(lua_State* ls) {
     Dir* d = luaL_checkudata(ls, 1, Dir_name);
     if (lua_getiuservalue(ls, 1, 1) == LUA_TNIL) {  // Already closed
         return lua_pushboolean(ls, true), 1;
@@ -628,47 +628,25 @@ static int Dir_close(lua_State* ls) {
     return push_lfs_result_bool(ls, lfs_dir_close(&fs->lfs, &d->dir));
 }
 
-static int Dir_read(lua_State* ls) {
+static int Dir_next(lua_State* ls) {
     Filesystem* fs = NULL;
     Dir* d = check_Dir(ls, 1, &fs);
     struct lfs_info info;
     int res = lfs_dir_read(&fs->lfs, &d->dir, &info);
-    if (res < 0) return push_error(ls, res);
-    if (res == 0) return lua_pushboolean(ls, true), 1;
+    if (res == 0) return 0;
+    if (res < 0) {
+        lua_pushstring(ls, mlua_err_msg(mlua_err(res)));
+        return lua_error(ls);
+    }
     lua_pushstring(ls, info.name);
     lua_pushinteger(ls, to_file_type(info.type));
     return info.type == LFS_TYPE_REG ? lua_pushinteger(ls, info.size), 3 : 2;
 }
 
-static int Dir_seek(lua_State* ls) {
-    Filesystem* fs = NULL;
-    Dir* d = check_Dir(ls, 1, &fs);
-    lfs_soff_t off = luaL_checkinteger(ls, 2);
-    return push_lfs_result_bool(ls, lfs_dir_seek(&fs->lfs, &d->dir, off));
-}
-
-static int Dir_tell(lua_State* ls) {
-    Filesystem* fs = NULL;
-    Dir* d = check_Dir(ls, 1, &fs);
-    return push_lfs_result_int(ls, lfs_dir_tell(&fs->lfs, &d->dir));
-}
-
-static int Dir_rewind(lua_State* ls) {
-    Filesystem* fs = NULL;
-    Dir* d = check_Dir(ls, 1, &fs);
-    return push_lfs_result_bool(ls, lfs_dir_rewind(&fs->lfs, &d->dir));
-}
-
 MLUA_SYMBOLS(Dir_syms) = {
-    MLUA_SYM_F(close, Dir_),
-    MLUA_SYM_F(read, Dir_),
-    MLUA_SYM_F(seek, Dir_),
-    MLUA_SYM_F(tell, Dir_),
-    MLUA_SYM_F(rewind, Dir_),
 };
 
-#define Dir___close Dir_close
-#define Dir___gc Dir_close
+#define Dir___gc Dir___close
 
 MLUA_SYMBOLS_NOHASH(Dir_syms_nh) = {
     MLUA_SYM_F_NH(__close, Dir_),

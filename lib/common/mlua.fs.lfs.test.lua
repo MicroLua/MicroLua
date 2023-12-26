@@ -148,14 +148,13 @@ function test_file(t)
         t:expect(t:expr(f):read(100))
             :eq("The quick brown fox flies over the fence")
     end
+    t:expect(t:mexpr(dfs):open('/not-found', fs.O_RDONLY))
+        :eq{nil, "no such file or directory", errors.ENOENT}
 end
 
 local function read_dir(path)
-    local d<close> = assert(dfs:opendir(path))
     local entries = list()
-    while true do
-        local name, type, size = assert(d:read())
-        if name == true then break end
+    for name, type, size in assert(dfs:list(path)) do
         entries:append(list{name, type, size})
     end
     table.sort(entries, util.table_comp{1})
@@ -164,16 +163,6 @@ end
 
 function test_dir(t)
     local _ = read_dir  -- Capture the upvalue
-    do
-        local d<close> = assert(dfs:opendir('/dir'))
-        t:expect(t:expr(d):read()):eq('.')
-        local pos = assert(d:tell())
-        t:expect(t:expr(d):read()):eq('..')
-        t:expect(t:expr(d):seek(pos)):eq(true)
-        t:expect(t:expr(d):read()):eq('..')
-        t:expect(t:expr(d):rewind()):eq(true)
-        t:expect(t:expr(d):read()):eq('.')
-    end
     t:expect(t.expr.read_dir('/dir')):eq{
         {'.', fs.TYPE_DIR},
         {'..', fs.TYPE_DIR},
@@ -186,4 +175,5 @@ function test_dir(t)
         {'..', fs.TYPE_DIR},
         {'file', fs.TYPE_REG, 3},
     }
+    t:expect(t.expr.read_dir('/not-found')):raises("no such file")
 end

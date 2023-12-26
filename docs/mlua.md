@@ -266,14 +266,14 @@ The `Filesystem` type (`mlua.fs.lfs.Filesystem`) represents a filesystem.
   Only defined if `LFS_MIGRATE` is defined.
 
 - `Filesystem:open(path, flags) -> File | (fail, msg, err)`\
-  Open a file. `flags` is a bitwise-or of `O_*` values.
+  Open a file. `flags` is a bitwise-or of `fs.O_*` values.
 
-- `Filesystem:opendir(path) -> Dir | (fail, msg, err)`\
-  Open a directory.
+- `Filesystem:list(path) -> iter(name, type, [size]) | (fail, msg, err)`\
+  List the content of a directory. Returns an iterator yielding the directory
+  entries in arbitrary order. `size` is only returned for regular files.
 
-- `Filesystem:stat() -> (name, type, [size]) | (fail, msg, err)`\
-  Return information about a file. `size` is only returned for regular files
-  (i.e. when `type == TYPE_REG`).
+- `Filesystem:stat(path) -> (name, type, [size]) | (fail, msg, err)`\
+  Return information about a file. `size` is only returned for regular files.
 
 - `Filesystem:getattr(path, attr) -> string | (fail, msg, err)`\
   `Filesystem:setattr(path, attr, value) -> true | (fail, msg, err)`\
@@ -323,29 +323,6 @@ The `File` type (`mlua.fs.lfs.File`) represents an open file.
 
 - `File:truncate(size) -> true | (fail, msg, err)`\
   Truncate the file at the given size.
-
-#### `Dir`
-
-The `Dir` type (`mlua.fs.lfs.Dir`) represents an open directory.
-
-- `Dir:close() -> true | (fail, msg, err)`\
-  `Dir:__close() -> true | (fail, msg, err)`\
-  `Dir:__gc() -> true | (fail, msg, err)`\
-  Close the directory.
-
-- `Dir:read() -> (name, type, [size]) | (fail, msg, err)`\
-  Read an entry in the directory. `size` is only returned for regular files
-  (i.e. when `type == TYPE_REG`).
-
-- `Dir:seek(offset) -> true | (fail, msg, err)`\
-  Change the current position in the directory. `offset` must be a value
-  previously returned by `Dir:tell()`.
-
-- `Dir:rewind() -> true | (fail, msg, err)`\
-  Change the current position to the start of the directory.
-
-- `Dir:tell() -> true | (fail, msg, err)`\
-  Return the current position in the directory.
 
 ## `mlua.int64`
 
