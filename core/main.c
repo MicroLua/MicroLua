@@ -3,7 +3,6 @@
 
 #include "mlua/main.h"
 
-#include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -212,32 +211,6 @@ lua_State* mlua_new_interpreter(void) {
     return ls;
 }
 
-int main_msg_handler(lua_State* ls) {
-    // Check if the error starts with a location ("module:123: ").
-    char const* msg = lua_tostring(ls, 1);
-    if (msg == NULL) return 1;
-    char const* sep1 = strchr(msg, ':');
-    if (sep1 == NULL || sep1 == msg) return 1;
-    char const* sep2 = sep1 + 1;
-    for (;; ++sep2) {
-        char c = *sep2;
-        if (c == ':') break;
-        if (!isdigit(c)) return 1;
-    }
-    if (sep2 == sep1 + 1 || *(sep2 + 1) != ' ') return 1;
-
-    // Check if the location refers to a loaded module.
-    lua_getfield(ls, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
-    lua_pushlstring(ls, msg, sep1 - msg);
-    bool found = lua_gettable(ls, -2) != LUA_TNIL;
-    lua_pop(ls, 2);
-    if (!found) return 1;
-
-    // Append a traceback to the error.
-    luaL_traceback(ls, ls, msg, 1);
-    return 1;
-}
-
 int mlua_run_main(lua_State* ls, int args) {
 #if PICO_ON_DEVICE
     // Set the HardFault exception handler if none was set before.
@@ -249,12 +222,11 @@ int mlua_run_main(lua_State* ls, int args) {
     }
 #endif
 
-    lua_pushcfunction(ls, main_msg_handler);
     lua_pushcfunction(ls, pmain);
-    lua_rotate(ls, 1, 2);
+    lua_rotate(ls, 1, 1);
 
     int res = EXIT_FAILURE;
-    if (lua_pcall(ls, 2 + args, 1, 1) != LUA_OK || lua_isstring(ls, -1)) {
+    if (lua_pcall(ls, 2 + args, 1, 0) != LUA_OK || lua_isstring(ls, -1)) {
         mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
     } else if (lua_isnil(ls, -1)) {
         res = EXIT_SUCCESS;
