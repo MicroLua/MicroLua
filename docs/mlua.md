@@ -518,8 +518,8 @@ The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
 - `Buffer:addr() -> integer`\
   Return the address of the buffer in memory.
 
-- `Buffer:clear(value = 0)`\
-  Clear the buffer by setting all bytes to `value`.
+- `Buffer:fill(value = 0, offset = 0, len = size - offset)`\
+  Fill `len` bytes of the buffer, starting at `offset`, with `value`.
 
 - `Buffer:read(offset = 0, len = size - offset) -> string`\
   Read `len` bytes from the buffer, starting at `offset`.

@@ -28,10 +28,15 @@ static int Buffer_addr(lua_State* ls) {
     return 1;
 }
 
-static int Buffer_clear(lua_State* ls) {
+static int Buffer_fill(lua_State* ls) {
     void* buf = mlua_mem_check_Buffer(ls, 1);
     lua_Unsigned size = lua_rawlen(ls, 1);
-    memset(buf, luaL_optinteger(ls, 2, 0), size);
+    int value = luaL_optinteger(ls, 2, 0);
+    lua_Unsigned offset = luaL_optinteger(ls, 3, 0);
+    luaL_argcheck(ls, offset <= size, 3, "out of bounds");
+    lua_Unsigned len = luaL_optinteger(ls, 4, size - offset);
+    luaL_argcheck(ls, offset + len <= size, 4, "out of bounds");
+    memset(buf + offset, value, len);
     return 0;
 }
 
@@ -63,7 +68,7 @@ static int Buffer___len(lua_State* ls) {
 
 MLUA_SYMBOLS(Buffer_syms) = {
     MLUA_SYM_F(addr, Buffer_),
-    MLUA_SYM_F(clear, Buffer_),
+    MLUA_SYM_F(fill, Buffer_),
     MLUA_SYM_F(read, Buffer_),
     MLUA_SYM_F(write, Buffer_),
 };
