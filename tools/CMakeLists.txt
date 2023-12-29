@@ -31,14 +31,14 @@ target_link_libraries(gen PRIVATE
 )
 add_executable(mlua_tool_gen ALIAS gen)
 
-# Module: microfs
-mlua_add_lua_modules(microfs_main microfs.lua)
-target_link_libraries(microfs_main INTERFACE
+# Module: microlua
+mlua_add_lua_modules(microlua_main microlua.lua)
+target_link_libraries(microlua_main INTERFACE
+    mlua_mod_debug
     mlua_mod_io
     mlua_mod_math
     mlua_mod_mlua_block_mem
     mlua_mod_mlua_cli
-    mlua_mod_mlua_errors
     mlua_mod_mlua_fs
     mlua_mod_mlua_fs_lfs
     mlua_mod_mlua_io
@@ -52,11 +52,11 @@ target_link_libraries(microfs_main INTERFACE
     mlua_mod_table
 )
 
-# Tool: microfs
-mlua_add_tool_executable(microfs)
-target_compile_definitions(microfs PRIVATE
-    MLUA_MAIN_MODULE=microfs
+# Tool: microlua
+mlua_add_tool_executable(microlua)
+target_compile_definitions(microlua PRIVATE
+    MLUA_MAIN_MODULE=microlua
 )
-target_link_libraries(microfs PRIVATE
-    microfs_main
+target_link_libraries(microlua PRIVATE
+    microlua_main
 )

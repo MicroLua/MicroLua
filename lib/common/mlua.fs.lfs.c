@@ -526,6 +526,8 @@ static int File_sync(lua_State* ls) {
 static int File_read(lua_State* ls) {
     Filesystem* fs = NULL;
     File* f = check_File(ls, 1, &fs);
+    // TODO: Make size optional
+    // TODO: Use file size as maximum buffer size
     lfs_size_t size = luaL_checkinteger(ls, 2);
     luaL_Buffer buf;
     void* dst = luaL_buffinitsize(ls, &buf, size);
