@@ -28,6 +28,20 @@ static int mod_join(lua_State* ls) {
     return 1;
 }
 
+static int mod_split(lua_State* ls) {
+    size_t len;
+    char const* path = luaL_checklstring(ls, 1, &len);
+    char const* b = path + len - 1;
+    while (b != path - 1 && *b != '/') --b;
+    ++b;
+    char const* e = b;
+    while (e != path && e[-1] == '/') --e;
+    if (e == path) e = b;
+    lua_pushlstring(ls, path, e - path);
+    lua_pushlstring(ls, b, path + len - b);
+    return 2;
+}
+
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(TYPE_REG, integer, MLUA_FS_TYPE_REG),
     MLUA_SYM_V(TYPE_DIR, integer, MLUA_FS_TYPE_DIR),
@@ -43,6 +57,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(SEEK_END, integer, MLUA_FS_SEEK_END),
 
     MLUA_SYM_F(join, mod_),
+    MLUA_SYM_F(split, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.fs) {

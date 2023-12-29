@@ -20,3 +20,22 @@ function test_join(t)
         t:expect(t:expr(fs).join(table.unpack(args))):eq(want)
     end
 end
+
+function test_split(t)
+    for _, test in ipairs{
+        {'abc/def/ghi', {'abc/def', 'ghi'}},
+        {'abc/def', {'abc', 'def'}},
+        {'abc', {'', 'abc'}},
+        {'', {'', ''}},
+        {'/abc/def/ghi', {'/abc/def', 'ghi'}},
+        {'/abc/def', {'/abc', 'def'}},
+        {'/abc', {'/', 'abc'}},
+        {'/', {'/', ''}},
+        {'abc///def', {'abc', 'def'}},
+        {'///abc', {'///', 'abc'}},
+        {'///', {'///', ''}},
+    } do
+        local arg, want = table.unpack(test)
+        t:expect(t:mexpr(fs).split(arg)):eq(want)
+    end
+end

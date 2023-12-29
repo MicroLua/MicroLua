@@ -147,6 +147,9 @@ This module provides functionality that is common across all filesystems.
   Join pathnames. Ignores previous parts if a part is absolute. Inserts a `/`
   unless the first part is empty or already ends in `/`.
 
+- `split(path) -> (string, string)`\
+  Split a path into containing directory and basename.
+
 ### `mlua.fs.loader`
 
 **Module:** [`mlua.fs.loader`](../lib/mlua.fs.loader.c),
