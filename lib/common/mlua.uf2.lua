@@ -35,3 +35,14 @@ function parse(block, start)
     return {flags = f, target_addr = a, payload_size = s,
             block_no = bno, num_blocks = nb, reserved = res, data = d}
 end
+
+-- Serialize an UF2 block.
+function serialize(block)
+    for _, field in ipairs{'target_addr', 'block_no', 'num_blocks', 'data'} do
+        if not block[field] then return nil, ('missing %s'):format(field) end
+    end
+    return struct:pack(magic_start0, magic_start1, block.flags or 0,
+                       block.target_addr, #block.data, block.block_no,
+                       block.num_blocks, block.reserved or 0, block.data,
+                       magic_end)
+end

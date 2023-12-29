@@ -881,6 +881,11 @@ This module provides helpers to parse and generate
   fields `flags`, `target_addr`, `payload_size`, `block_no`, `num_blocks`,
   `reserved` and `data`.
 
+- `serialize(block) -> string`\
+  Serialize an UF2 block. `block` is a table that must contain at least
+  `target_addr`, `block_no`, `num_blocks` and `data`, and optionally `flags`
+  and `reserved` (default: 0).
+
 ## `mlua.util`
 
 **Module:** [`mlua.util`](../lib/common/mlua.util.lua),
