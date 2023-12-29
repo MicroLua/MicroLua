@@ -106,19 +106,20 @@ static int pmain(lua_State* ls) {
     }
     lua_getfield(ls, -1, "main");  // Run thread.main
     lua_remove(ls, -2);  // Remove thread module
-    lua_call(ls, 0, 0);
+    lua_call(ls, 0, 1);
 #else
     // The mlua.thread module isn't available. Call the main module's main
     // function directly.
     if (has_main) {
         lua_rotate(ls, 1, 1);
-        lua_call(ls, lua_gettop(ls) - 1, 0);
+        lua_call(ls, lua_gettop(ls) - 1, 1);
     }
 #endif
-    return 0;
+    return 1;
 }
 
 static void* allocate(void* ud, void* ptr, size_t old_size, size_t new_size) {
+    // TODO: Record per-object stats based on old_size
     if (new_size != 0) return realloc(ptr, new_size);
     free(ptr);
     return NULL;
