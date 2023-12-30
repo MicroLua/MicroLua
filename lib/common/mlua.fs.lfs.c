@@ -227,6 +227,8 @@ static int Filesystem_format(lua_State* ls) {
 static int Filesystem_mount(lua_State* ls) {
     Filesystem* fs = check_Filesystem(ls, 1);
     if (fs->mounted) return mlua_err_push(ls, MLUA_EBUSY);
+    // TODO: Mounting can cause hard exceptions. Attempt to identify that a
+    // filesystem is actually present before mounting, e.g. look for "littlefs".
     int res = lfs_mount(&fs->lfs, &fs->config);
     if (res < 0) return push_error(ls, res);
     fs->mounted = true;
@@ -664,8 +666,9 @@ void* mlua_fs_lfs_alloc(MLuaBlockDev* dev) {
 int mlua_fs_lfs_mount(void* fs) {
     Filesystem* tfs = fs;
     int res = lfs_mount(&tfs->lfs, &tfs->config);
-    if (res < 0) tfs->mounted = true;
-    return mlua_err(res);
+    if (res < 0) return mlua_err(res);
+    tfs->mounted = true;
+    return MLUA_EOK;
 }
 
 void mlua_fs_lfs_push(lua_State* ls, void* fs) {
