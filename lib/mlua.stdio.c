@@ -21,6 +21,12 @@
 #endif
 #include "mlua/util.h"
 
+#if LIB_PICO_STDIO
+// Silence link-time warnings.
+__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
+__attribute__((weak)) int _unlink(char const* file) { return -1; }
+#endif
+
 static char const InStream_name[] = "mlua.stdio.InStream";
 
 static int InStream_read(lua_State* ls) {
