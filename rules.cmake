@@ -55,6 +55,34 @@ endif()
 set(FENNEL "${FENNEL}" CACHE PATH "Path to the fennel compiler" FORCE)
 message("FENNEL is ${FENNEL}")
 
+function(mlua_list_targets VAR)
+    cmake_parse_arguments(PARSE_ARGV 1 args "" "" "DIRS;EXCLUDE;INCLUDE")
+    set(targets)
+    foreach(dir IN LISTS args_DIRS)
+        get_property(dir_targets DIRECTORY "${dir}"
+                     PROPERTY BUILDSYSTEM_TARGETS)
+        set(filtered)
+        foreach(re IN LISTS args_INCLUDE)
+            set(tgs ${dir_targets})
+            list(FILTER tgs INCLUDE REGEX "${re}")
+            list(APPEND filtered ${tgs})
+        endforeach()
+        list(REMOVE_DUPLICATES filtered)
+        foreach(re IN LISTS args_EXCLUDE)
+            list(FILTER filtered EXCLUDE REGEX "${re}")
+        endforeach()
+        list(APPEND targets ${filtered})
+        get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+        foreach(subdir IN LISTS subdirs)
+            mlua_list_targets(sub_targets
+                DIRS "${subdir}"
+                INCLUDE ${args_INCLUDE} EXCLUDE ${args_EXCLUDE})
+            list(APPEND targets ${sub_targets})
+        endforeach()
+    endforeach()
+    set("${VAR}" "${targets}" PARENT_SCOPE)
+endfunction()
+
 function(mlua_fennel_version VERSION)
     execute_process(
         COMMAND "${FENNEL}" "--version"
@@ -206,6 +234,7 @@ endfunction()
 
 function(mlua_add_fnl_modules TARGET)
     mlua_want_fennel()
+    set(srcs)
     foreach(src IN LISTS ARGN)
         cmake_path(ABSOLUTE_PATH src)
         cmake_path(GET src STEM LAST_ONLY mod)
@@ -244,13 +273,6 @@ endfunction()
 function(mlua_target_config TARGET)
     set_property(TARGET "${TARGET}"
                  APPEND PROPERTY mlua_config_symbols "${ARGN}")
-endfunction()
-
-set_property(GLOBAL PROPERTY mlua_test_targets)
-
-function(mlua_add_lua_test_modules TARGET)
-    mlua_add_lua_modules("${TARGET}" ${ARGN})
-    set_property(GLOBAL APPEND PROPERTY mlua_test_targets "${TARGET}")
 endfunction()
 
 function(mlua_add_tool_executable TARGET)
