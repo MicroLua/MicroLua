@@ -23,18 +23,17 @@ target_link_libraries(gen_main INTERFACE
 
 # Tool: gen
 mlua_add_tool_executable(gen)
+add_executable(mlua_tool_gen ALIAS gen)
 target_compile_definitions(gen PRIVATE
     MLUA_MAIN_MODULE=gen
 )
 target_link_libraries(gen PRIVATE
     gen_main
 )
-add_executable(mlua_tool_gen ALIAS gen)
 
 # Module: microlua
 mlua_add_lua_modules(microlua_main microlua.lua)
 target_link_libraries(microlua_main INTERFACE
-    mlua_mod_debug
     mlua_mod_io
     mlua_mod_math
     mlua_mod_mlua_block_mem
