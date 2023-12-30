@@ -158,7 +158,7 @@ end
 
 -- Write a range to flash memory.
 local function write_flash_range(opts, path)
-    local cmd = list{opts.picotool, 'load', '--verify'}
+    local cmd = list{opts.picotool, 'load', '--update'}
     cmd:append(path, '-t', 'uf2')
     add_picotool_opts(cmd, opts)
     run(cmd)
@@ -306,6 +306,7 @@ local function cmd_fs(opts, args)
     if opts.program then opts.format = true end
 
     -- Read the block device data from the source.
+    printf("Reading filesystem source\n")
     local addr, size, data
     if opts.device or opts.program then
         addr, size = find_flash_drive(opts)
