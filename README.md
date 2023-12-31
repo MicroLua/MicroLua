@@ -103,13 +103,13 @@ $ tools/term /dev/ttyACM0
 
 # Build the unit tests.
 $ cmake -S . -B build -DPICO_BOARD=pico
-$ make -j9 -C build/lib
+$ make -j9 -C build/bin
 
 # Start the target in BOOTSEL mode and flash it with picotool.
-$ picotool load -v -x build/lib/mlua_tests.elf
+$ picotool load -v -x build/bin/mlua_tests.elf
 
 # Alternatively, start the target in BOOTSEL mode and copy to its boot drive.
-$ cp build/lib/mlua_tests.uf2 /mnt/RPI-RP2/
+$ cp build/bin/mlua_tests.uf2 /mnt/RPI-RP2/
 ```
 
 ## Examples

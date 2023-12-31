@@ -24,6 +24,7 @@ mlua_add_compile_options()
 add_compile_definitions(PICO_STDIO_DEFAULT_CRLF=0)
 add_subdirectory(core)
 add_subdirectory(lib)
+add_subdirectory(bin)
 
 include(ExternalProject)
 
