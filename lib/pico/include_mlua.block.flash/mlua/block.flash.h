@@ -1,8 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_MLUA_BLOCK_FLASH_H
-#define _MLUA_LIB_MLUA_BLOCK_FLASH_H
+#ifndef _MLUA_LIB_PICO_MLUA_BLOCK_FLASH_H
+#define _MLUA_LIB_PICO_MLUA_BLOCK_FLASH_H
 
 #include "mlua/block.h"
 

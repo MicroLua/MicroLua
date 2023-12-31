@@ -1,8 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_PICO_STDIO_H
-#define _MLUA_LIB_PICO_STDIO_H
+#ifndef _MLUA_LIB_PICO_PICO_STDIO_H
+#define _MLUA_LIB_PICO_PICO_STDIO_H
 
 #include "lua.h"
 
