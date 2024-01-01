@@ -10,6 +10,6 @@ MLUA_SYMBOLS_HASH(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(@MOD@) {
-    mlua_new_module(ls, 0, module_syms);
+    mlua_new_module_hash(ls, 0, module_syms);
     return 1;
 }
