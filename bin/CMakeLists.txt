@@ -3,7 +3,6 @@
 
 # Executable: standalone binary
 mlua_add_executable(mlua_standalone)
-mlua_add_config_module(mlua_standalone)
 target_compile_definitions(mlua_standalone PRIVATE
     MLUA_SYMBOL_HASH_DEBUG=0
 )
@@ -40,7 +39,6 @@ endif()
 
 # Executable: unit tests
 mlua_add_executable(mlua_tests)
-mlua_add_config_module(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0

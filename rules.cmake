@@ -284,9 +284,14 @@ function(mlua_target_config TARGET)
                  APPEND PROPERTY mlua_config_symbols "${ARGN}")
 endfunction()
 
-function(mlua_add_executable TARGET)
+function(mlua_add_executable_no_config TARGET)
     add_executable("${TARGET}" ${ARGN})
     mlua_add_executable_platform("${TARGET}")
+endfunction()
+
+function(mlua_add_executable TARGET)
+    mlua_add_executable_no_config("${TARGET}" ${ARGN})
+    mlua_add_config_module("${TARGET}")
 endfunction()
 
 function(mlua_add_tool TARGET BIN)

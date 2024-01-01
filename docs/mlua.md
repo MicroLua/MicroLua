@@ -77,15 +77,17 @@ i.e. a contiguous block of RAM.
 **Module:** `mlua.config` (auto-generated),
 tests: [`mlua.config.test`](../lib/common/mlua.config.test.lua)
 
-This module is auto-generated when `mlua_add_config_module()` is called for
-a CMake build target, and contains the symbols defined by `mlua_target_config()`
-calls. Symbol definitions have the format `{name}:{type}={value}`, where
-`{type}` is one of `boolean`, `integer`, `number` or `string`.
+This module is auto-generated for all executables defined with
+`mlua_add_executable()`, and contains the symbols defined by
+`mlua_target_config()` calls. Symbol definitions have the format
+`{name}:{type}={value}`, where `{type}` is one of `boolean`, `integer`, `number`
+or `string`.
 
 **Example:**
 
 ```cmake
-mlua_target_config(example_target
+mlua_add_executable(example_executable)
+mlua_target_config(example_executable
     my_bool:boolean=true
     my_int:integer=42
     my_num:number=123.456

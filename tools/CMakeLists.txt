@@ -21,7 +21,7 @@ target_link_libraries(gen_main INTERFACE
 )
 
 # Executable: gen
-mlua_add_executable(gen)
+mlua_add_executable_no_config(gen)
 add_executable(mlua_tool_gen ALIAS gen)
 target_compile_definitions(gen PRIVATE
     MLUA_MAIN_MODULE=gen
