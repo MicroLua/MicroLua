@@ -21,6 +21,21 @@ The test modules can be useful as usage examples.
 - `module(name)`\
   Create a new empty module.
 
+- `try(fn, [arg, ...]) -> (results) | (fail, err)`\
+  Call `fn` with the given arguments, and return the results of the call. If the
+  call raises an error, return `fail` and the error that was raised. This
+  function is kind of the opposite of `assert()`: it transforms errors into
+  `(fail, err)`, whereas `assert()` transforms `(fail, err)` into errors.
+
+  `try()` is slightly more convenient than `pcall()` when the first result is
+  known to not be `nil`, as it doesn't insert the status code. For example, to
+  require a module that may not be present:
+
+  ```lua
+  local i2c = try(require, 'hardware.i2c')
+  if i2c then ... end
+  ```
+
 ## `mlua.block`
 
 **Module:** [`mlua.block`](../lib/common/mlua.block.c),

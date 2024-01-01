@@ -83,6 +83,15 @@ static int global_module(lua_State* ls) {
     return 1;
 }
 
+static int global_try(lua_State* ls) {
+    if (lua_pcall(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0) == LUA_OK) {
+        return lua_gettop(ls);
+    }
+    luaL_pushfail(ls);
+    lua_rotate(ls, -2, 1);
+    return 2;
+}
+
 void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
                              int nrec) {
     mlua_new_table_(ls, fields, narr, nrec);
@@ -300,6 +309,8 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "_RELEASE_NUM");
     lua_pushcfunction(ls, &global_module);
     lua_setglobal(ls, "module");
+    lua_pushcfunction(ls, &global_try);
+    lua_setglobal(ls, "try");
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do
