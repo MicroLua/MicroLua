@@ -1,14 +1,19 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
-include("${MLUA_PATH}/pico_sdk_import.cmake")
+if(NOT TARGET mlua_rules_included)
+    add_library(mlua_rules_included INTERFACE)
+    include("${MLUA_PATH}/rules.cmake")
+    mlua_pre_project()
+endif()
 
 macro(mlua_init)
     if(NOT CMAKE_PROJECT_NAME)
-        message(WARNING
-            "mlua_init() should be called after the project is created")
+        message(WARNING "mlua_init() should be called after project()")
     endif()
-    pico_sdk_init()
-    add_subdirectory("${MLUA_PATH}" MicroLua)
+    mlua_post_project()
     mlua_add_compile_options()
+    if(NOT "${CMAKE_CURRENT_LIST_DIR}" STREQUAL "${MLUA_PATH}")
+        add_subdirectory("${MLUA_PATH}" MicroLua)
+    endif()
 endmacro()

@@ -176,18 +176,13 @@ developers. Similarly, large semiconductor companies release new chips and
 variants every year. Developing for these targets is a game of catch-up that I
 don't want to play.
 
-### Can MicroLua support other microcontroller families?
+### Does MicroLua support other microcontroller families?
 
-No, that's an explicit non-goal. Supporting multiple microcontroller families
-inevitably leads to either limiting features to the common denominator, or
-introducing a complex configuration system.
+Currently it doesn't, but it shouldn't be too difficult to add. The build system
+is already multi-platform, as it can create binaries for the RP2040 and for the
+build host. However, adding support for more platforms isn't a high priority.
 
-Moreover, MicroLua integrates directly with the build system of the Pico SDK,
-which is strongly tied to the RP2040. Supporting other microcontrollers would
-require a different build system.
-
-MicroLua will likely support later RP devices if / when they get released, but
-until then, the RP2040 is the only supported target.
+MicroLua will likely support later RP devices if / when they get released.
 
 ### How does MicroLua compare to other Lua projects for the Pico?
 

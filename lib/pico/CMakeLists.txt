@@ -336,6 +336,7 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     pico_time
 )
 
+# TODO: Use a platform-specific library
 target_link_libraries(mlua_mod_mlua_fs_lfs INTERFACE
     pico_sync
 )

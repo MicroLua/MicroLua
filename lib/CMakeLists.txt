@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: MIT
 
 add_subdirectory(common)
-add_subdirectory(pico)
+add_subdirectory("${MLUA_PLATFORM}")

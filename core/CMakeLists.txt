@@ -52,7 +52,8 @@ target_link_libraries(mlua_core_main INTERFACE
     mlua_mod_base
     mlua_mod_package
 )
-if(NOT PICO_PLATFORM STREQUAL "host")
+if(MLUA_PLATFORM STREQUAL "pico")
+    # TODO: Move these dependencies to a platform-specific library
     target_link_libraries(mlua_core_main INTERFACE
         hardware_exception
         hardware_timer

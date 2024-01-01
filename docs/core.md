@@ -42,12 +42,11 @@ Here's how to get started with a new project based on MicroLua:
     )
 
     # Add the executable.
-    add_executable(my_project_hello)
+    mlua_add_executable(my_project_hello)
     target_link_libraries(my_project_hello PRIVATE
         my_project_main
         pico_stdlib
     )
-    pico_add_extra_outputs(my_project_hello)
     ```
 
 3.  Copy the file [`mlua_import.cmake`](../mlua_import.cmake) from the MicroLua

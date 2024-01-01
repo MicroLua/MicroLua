@@ -3,14 +3,13 @@
 
 cmake_minimum_required(VERSION 3.20)
 
+include("${MLUA_PATH}/mlua_import.cmake")
+
 project(tools C)
 set(CMAKE_C_STANDARD 11)
 
-include("${MLUA_PATH}/rules.cmake")
-
-mlua_add_compile_options()
-add_subdirectory("${MLUA_PATH}/core" core)
-add_subdirectory("${MLUA_PATH}/lib/common" lib/common)
+set(MLUA_HAS_GEN true)
+mlua_init()
 
 # Module: gen
 mlua_add_lua_modules(gen_main NOCOMPILE gen.lua)
@@ -21,8 +20,8 @@ target_link_libraries(gen_main INTERFACE
     mlua_mod_table
 )
 
-# Tool: gen
-mlua_add_tool_executable(gen)
+# Executable: gen
+mlua_add_executable(gen)
 add_executable(mlua_tool_gen ALIAS gen)
 target_compile_definitions(gen PRIVATE
     MLUA_MAIN_MODULE=gen
@@ -51,8 +50,8 @@ target_link_libraries(microlua_main INTERFACE
     mlua_mod_table
 )
 
-# Tool: microlua
-mlua_add_tool_executable(microlua)
+# Executable: microlua
+mlua_add_executable(microlua)
 target_compile_definitions(microlua PRIVATE
     MLUA_MAIN_MODULE=microlua
 )

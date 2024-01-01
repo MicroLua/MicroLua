@@ -1,31 +1,44 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
-message("MLUA_PATH is ${MLUA_PATH}")
+message("MLUA_PATH is ${MLUA_PATH} (${MLUA_PATH_SRC})")
 set(MLUA_LITTLEFS_SOURCE_DIR "${MLUA_PATH}/ext/littlefs" CACHE INTERNAL "")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
 
 function(mlua_set NAME DEFAULT)
+    set(src "from cache")
     if("${${NAME}}" STREQUAL "")
-        set("${NAME}" "${DEFAULT}")
+        if(DEFINED ENV{${NAME}})
+            set("${NAME}" "$ENV{${NAME}}")
+            set(src "from environment")
+        else()
+            set("${NAME}" "${DEFAULT}")
+            set(src "default")
+        endif()
     endif()
-    set("${NAME}" "${${NAME}}" ${ARGN})
+    set("${NAME}" "${${NAME}}" ${ARGN} FORCE)
+    message("${NAME} is ${${NAME}} (${src})")
 endfunction()
 
-function(mlua_add_compile_options)
-    add_compile_options(
-        -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
-        -Wno-unused-function -Wno-unused-parameter
-    )
-endfunction()
+# Platform configuration.
+mlua_set(MLUA_PLATFORM "pico" CACHE STRING "The target platform")
+set_property(CACHE MLUA_PLATFORM PROPERTY STRINGS host pico)
+set(platform_cmake "${MLUA_PATH}/lib/${MLUA_PLATFORM}/platform.cmake")
+if(NOT EXISTS "${platform_cmake}")
+    message(FATAL_ERROR "Invalid platform: ${MLUA_PLATFORM}")
+endif()
+include("${platform_cmake}")
 
-# Configure the interpreter.
-mlua_set(MLUA_INT INT CACHE STRING
+# Lua interpreter configuration.
+mlua_set(MLUA_INT "INT" CACHE STRING
     "The type of Lua integers, one of (INT, LONG, LONGLONG)")
 set_property(CACHE MLUA_INT PROPERTY STRINGS INT LONG LONGLONG)
-mlua_set(MLUA_FLOAT FLOAT CACHE STRING
+mlua_set(MLUA_FLOAT "FLOAT" CACHE STRING
     "The type of Lua numbers, one of (FLOAT, DOUBLE, LONGDOUBLE)")
 set_property(CACHE MLUA_FLOAT PROPERTY STRINGS FLOAT DOUBLE LONGDOUBLE)
+
+# Fennel compiler configuration.
+mlua_set(MLUA_FENNEL "fennel" CACHE PATH "Path to the fennel compiler")
 
 # Copy Lua sources. This is necessary to allow overriding luaconf.h.
 file(GLOB paths "${MLUA_LUA_SOURCE_DIR}/*.[hc]")
@@ -44,16 +57,12 @@ string(REGEX REPLACE
 configure_file("${MLUA_PATH}/core/luaconf.in.h"
     "${CMAKE_BINARY_DIR}/ext/lua/luaconf.h")
 
-if(NOT FENNEL)
-    if(DEFINED ENV{FENNEL})
-        set(FENNEL "$ENV{FENNEL}")
-        message("Using FENNEL from environment ('${FENNEL}')")
-    else()
-        set(FENNEL "fennel")
-    endif()
-endif()
-set(FENNEL "${FENNEL}" CACHE PATH "Path to the fennel compiler" FORCE)
-message("FENNEL is ${FENNEL}")
+function(mlua_add_compile_options)
+    add_compile_options(
+        -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
+        -Wno-unused-function -Wno-unused-parameter
+    )
+endfunction()
 
 function(mlua_list_targets VAR)
     cmake_parse_arguments(PARSE_ARGV 1 args "" "" "DIRS;EXCLUDE;INCLUDE")
@@ -85,7 +94,7 @@ endfunction()
 
 function(mlua_fennel_version VERSION)
     execute_process(
-        COMMAND "${FENNEL}" "--version"
+        COMMAND "${MLUA_FENNEL}" "--version"
         OUTPUT_VARIABLE version
         RESULT_VARIABLE result
     )
@@ -243,7 +252,7 @@ function(mlua_add_fnl_modules TARGET)
             COMMENT "Generating $<PATH:RELATIVE_PATH,${output},${CMAKE_BINARY_DIR}>"
             DEPENDS "${src}"
             OUTPUT "${output}"
-            COMMAND "${FENNEL}"
+            COMMAND "${MLUA_FENNEL}"
                 "--compile" "--correlate" "${src}" > "${output}"
             VERBATIM
         )
@@ -275,10 +284,9 @@ function(mlua_target_config TARGET)
                  APPEND PROPERTY mlua_config_symbols "${ARGN}")
 endfunction()
 
-function(mlua_add_tool_executable TARGET)
+function(mlua_add_executable TARGET)
     add_executable("${TARGET}" ${ARGN})
-    target_compile_definitions("${TARGET}" PRIVATE LUA_USE_POSIX)
-    target_link_libraries("${TARGET}" PRIVATE m)
+    mlua_add_executable_platform("${TARGET}")
 endfunction()
 
 function(mlua_add_tool TARGET BIN)
