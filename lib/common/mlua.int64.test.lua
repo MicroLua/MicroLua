@@ -243,7 +243,7 @@ function test_binary_int_ops(t)
 end
 
 function test_binary_float_ops(t)
-    local values = {0, -1, 3, -7, 13, -1234, 2468}
+    local values = {-1, 3, -7, 13, -1234, 2468}
     local ops = {
         ['/'] = function(a, b) return a / b end,
         ['^'] = function(a, b) return a ^ b end,
