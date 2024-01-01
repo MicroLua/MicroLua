@@ -211,7 +211,9 @@ end
 function Matcher:close_to(want, eps)
     return self:_compare(
         want, function(g, w) return w - eps <= g and g <= w + eps end,
-        function() return ('%s ±%s'):format(util.repr(want), util.repr(eps)) end)
+        function()
+            return ('%s ±%s'):format(util.repr(want), util.repr(eps))
+        end)
 end
 
 function Matcher:close_to_rel(want, fact)
@@ -224,6 +226,19 @@ function Matcher:_compare(want, cmp, fmt)
         self:_fail("%s %s @{+WHITE}%s@{NORM}, want @{+CYAN}%s@{NORM}",
                    self._l or util.repr(self._v), self._op or '=',
                    util.repr(got), fmt)
+    end
+    return self
+end
+
+function Matcher:matches(want)
+    local got = self:_eval()
+    if type(got) ~= 'string' then
+        self:_fail("%s = @{+WHITE}%s@{NORM}, isn't a string",
+                   self._l or util.repr(self._v), util.repr(got))
+    elseif not got:find(want) then
+        self:_fail("%s = @{+WHITE}%s@{NORM}, doesn't match @{+CYAN}%s@{NORM}",
+                   self._l or util.repr(self._v), util.repr(got),
+                   util.repr(want))
     end
     return self
 end
@@ -246,7 +261,7 @@ function Matcher:raises(want)
     local ok, err = pcall(function() if e then e(v) else v() end end)
     if ok then
         self:_fail("%s didn't raise an error", self._l or util.repr(v))
-    elseif not err:find(want) then
+    elseif want and not err:find(want) then
         self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n"
                    .. "  @{+WHITE}%s@{NORM}", self._l or util.repr(v),
                    util.repr(want), err)
