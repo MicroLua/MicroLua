@@ -16,9 +16,9 @@ The test modules can be useful as usage examples.
 **Library:** [`hardware_adc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_adc),
 header: [`hardware/adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_adc/include/hardware/adc.h),
 sources: [`hardware_adc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_adc)\
-**Module:** [`hardware.adc`](../lib/hardware.adc.c),
+**Module:** [`hardware.adc`](../lib/pico/hardware.adc.c),
 build target: `mlua_mod_hardware_adc`,
-tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
+tests: [`hardware.adc.test`](../lib/pico/hardware.adc.test.lua)
 
 - `fifo_get_blocking() -> integer` *[yields]*\
   Wait for data in the ADC FIFO, then pop and return a value. Yields if the FIFO
@@ -33,9 +33,9 @@ tests: [`hardware.adc.test`](../lib/hardware.adc.test.lua)
 **Library:** [`hardware_base`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_base),
 header: [`hardware/address_mapped.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_base/include/hardware/address_mapped.h),
 sources: [`hardware_base`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_base)\
-**Module:** [`hardware.base`](../lib/hardware.base.c),
+**Module:** [`hardware.base`](../lib/pico/hardware.base.c),
 build target: `mlua_mod_hardware_base`,
-tests: [`hardware.base.test`](../lib/hardware.base.test.lua)
+tests: [`hardware.base.test`](../lib/pico/hardware.base.test.lua)
 
 The [`hardware.regs.*`](#hardwareregs) modules provide constants for peripheral
 block addresses (`hardware.regs.addressmap`), register offsets and bit masks.
@@ -67,9 +67,9 @@ block addresses (`hardware.regs.addressmap`), register offsets and bit masks.
 **Library:** [`hardware_clocks`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_clocks),
 header: [`hardware/clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_clocks/include/hardware/clocks.h),
 sources: [`hardware_clocks`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_clocks)\
-**Module:** [`hardware.clocks`](../lib/hardware.clocks.c),
+**Module:** [`hardware.clocks`](../lib/pico/hardware.clocks.c),
 build target: `mlua_mod_hardware_clocks`,
-tests: [`hardware.clocks.test`](../lib/hardware.clocks.test.lua)
+tests: [`hardware.clocks.test`](../lib/pico/hardware.clocks.test.lua)
 
 > [!NOTE]
 > Resus functionality isn't implemented yet.
@@ -79,18 +79,18 @@ tests: [`hardware.clocks.test`](../lib/hardware.clocks.test.lua)
 **Library:** [`hardware_flash`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_flash),
 header: [`hardware/flash.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_flash/include/hardware/flash.h),
 sources: [`hardware_flash`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_flash)\
-**Module:** [`hardware.flash`](../lib/hardware.flash.c),
+**Module:** [`hardware.flash`](../lib/pico/hardware.flash.c),
 build target: `mlua_mod_hardware_flash`,
-tests: [`hardware.flash.test`](../lib/hardware.flash.test.lua)
+tests: [`hardware.flash.test`](../lib/pico/hardware.flash.test.lua)
 
 ## `hardware.gpio`
 
 **Library:** [`hardware_gpio`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_gpio),
 header: [`hardware/gpio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_gpio/include/hardware/gpio.h),
 sources: [`hardware_gpio`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_gpio)\
-**Module:** [`hardware.gpio`](../lib/hardware.gpio.c),
+**Module:** [`hardware.gpio`](../lib/pico/hardware.gpio.c),
 build target: `mlua_mod_hardware_gpio`,
-tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
+tests: [`hardware.gpio.test`](../lib/pico/hardware.gpio.test.lua)
 
 > [!NOTE]
 > Raw IRQ handler functionality isn't implemented yet.
@@ -120,9 +120,9 @@ tests: [`hardware.gpio.test`](../lib/hardware.gpio.test.lua)
 **Library:** [`hardware_i2c`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_i2c),
 header: [`hardware/i2c.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_i2c/include/hardware/i2c.h),
 sources: [`hardware_i2c`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_i2c)\
-**Module:** [`hardware.i2c`](../lib/hardware.i2c.c),
+**Module:** [`hardware.i2c`](../lib/pico/hardware.i2c.c),
 build target: `mlua_mod_hardware_i2c`,
-tests: [`hardware.i2c.test`](../lib/hardware.i2c.test.lua)
+tests: [`hardware.i2c.test`](../lib/pico/hardware.i2c.test.lua)
 
 This module defines the `hardware.i2c.I2C` class, which exposes the
 functionality for one I2C peripheral. All library functions that take an
@@ -171,9 +171,9 @@ default I2C peripheral, if defined, can be accessed as `default`.
 **Library:** [`hardware_irq`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_irq),
 header: [`hardware/irq.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_irq/include/hardware/irq.h),
 sources: [`hardware_irq`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_irq)\
-**Module:** [`hardware.irq`](../lib/hardware.irq.c),
+**Module:** [`hardware.irq`](../lib/pico/hardware.irq.c),
 build target: `mlua_mod_hardware_irq`,
-tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
+tests: [`hardware.irq.test`](../lib/pico/hardware.irq.test.lua)
 
 > [!NOTE]
 > IRQ handlers can only be set for user IRQs (`FIRST_USER_IRQ` ..
@@ -211,18 +211,18 @@ tests: [`hardware.irq.test`](../lib/hardware.irq.test.lua)
 **Library:** [`hardware_pll`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pll),
 header: [`hardware/pll.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pll/include/hardware/pll.h),
 sources: [`hardware_pll`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pll)\
-**Module:** [`hardware.pll`](../lib/hardware.pll.c),
+**Module:** [`hardware.pll`](../lib/pico/hardware.pll.c),
 build target: `mlua_mod_hardware_pll`,
-tests: [`hardware.pll.test`](../lib/hardware.pll.test.lua)
+tests: [`hardware.pll.test`](../lib/pico/hardware.pll.test.lua)
 
 ## `hardware.pwm`
 
 **Library:** [`hardware_pwm`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pwm),
 header: [`hardware/pwm.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pwm/include/hardware/pwm.h),
 sources: [`hardware_pwm`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pwm)\
-**Module:** [`hardware.pwm`](../lib/hardware.pwm.c),
+**Module:** [`hardware.pwm`](../lib/pico/hardware.pwm.c),
 build target: `mlua_mod_hardware_pwm`,
-tests: [`hardware.pwm.test`](../lib/hardware.pwm.test.lua)
+tests: [`hardware.pwm.test`](../lib/pico/hardware.pwm.test.lua)
 
 This module defines the `hardware.pwm.Config` class, which exposes PWM
 configuration functionality. All library functions that take an
@@ -242,7 +242,7 @@ configuration functionality. All library functions that take an
 sources: [`hardware_regs`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs)\
 **Modules:** `hardware.regs.*`,
 build targets: `mlua_mod_hardware_regs_*`,
-tests: [`hardware.regs.test`](../lib/hardware.regs.test.lua)
+tests: [`hardware.regs.test`](../lib/pico/hardware.regs.test.lua)
 
 The `hardware.regs.*` modules expose constants defined in the
 [`hardware/regs/*.h`](https://github.com/raspberrypi/pico-sdk/tree/master/src/rp2040/hardware_regs/include/hardware/regs)
@@ -305,9 +305,9 @@ Here's the list of modules and their source header for reference:
 **Library:** [`hardware_resets`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_resets),
 header: [`hardware/resets.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_resets/include/hardware/resets.h),
 sources: [`hardware_resets`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_resets)\
-**Module:** [`hardware.resets`](../lib/hardware.resets.c),
+**Module:** [`hardware.resets`](../lib/pico/hardware.resets.c),
 build target: `mlua_mod_hardware_resets`,
-tests: [`hardware.resets.test`](../lib/hardware.resets.test.lua)
+tests: [`hardware.resets.test`](../lib/pico/hardware.resets.test.lua)
 
 The reset bitmasks are avaialble in the `hardware.regs.resets` module as
 `RESET_*_BITS`.
@@ -320,9 +320,9 @@ The reset bitmasks are avaialble in the `hardware.regs.resets` module as
 **Library:** [`hardware_rtc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_rtc),
 header: [`hardware/rtc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_rtc/include/hardware/rtc.h),
 sources: [`hardware_rtc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_rtc)\
-**Module:** [`hardware.rtc`](../lib/hardware.rtc.c),
+**Module:** [`hardware.rtc`](../lib/pico/hardware.rtc.c),
 build target: `mlua_mod_hardware_rtc`,
-tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
+tests: [`hardware.rtc.test`](../lib/pico/hardware.rtc.test.lua)
 
 - `set_datetime(t) -> boolean`\
   Set the RTC to the specified time. `t` is a table containing the fields of
@@ -350,9 +350,9 @@ tests: [`hardware.rtc.test`](../lib/hardware.rtc.test.lua)
 **Library:** [`hardware_spi`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_spi),
 header: [`hardware/spi.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_spi/include/hardware/spi.h),
 sources: [`hardware_spi`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_spi)\
-**Module:** [`hardware.spi`](../lib/hardware.spi.c),
+**Module:** [`hardware.spi`](../lib/pico/hardware.spi.c),
 build target: `mlua_mod_hardware_spi`,
-tests: [`hardware.spi.test`](../lib/hardware.spi.test.lua)
+tests: [`hardware.spi.test`](../lib/pico/hardware.spi.test.lua)
 
 This module defines the `hardware.spi.SPI` class, which exposes the
 functionality for one SPI peripheral. All library functions that take an
@@ -397,9 +397,9 @@ default SPI peripheral, if defined, can be accessed as `default`.
 **Library:** [`hardware_sync`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_sync),
 header: [`hardware/sync.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_sync/include/hardware/sync.h),
 sources: [`hardware_sync`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_sync)\
-**Module:** [`hardware.sync`](../lib/hardware.sync.c),
+**Module:** [`hardware.sync`](../lib/pico/hardware.sync.c),
 build target: `mlua_mod_hardware_sync`,
-tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
+tests: [`hardware.sync.test`](../lib/pico/hardware.sync.test.lua)
 
 > [!NOTE]
 > Spin lock functionality isn't exposed to Lua, because spin locks are supposed
@@ -410,9 +410,9 @@ tests: [`hardware.sync.test`](../lib/hardware.sync.test.lua)
 **Library:** [`hardware_timer`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_timer),
 header: [`hardware/timer.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_timer/include/hardware/timer.h),
 sources: [`hardware_timer`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_timer)\
-**Module:** [`hardware.timer`](../lib/hardware.timer.c),
+**Module:** [`hardware.timer`](../lib/pico/hardware.timer.c),
 build target: `mlua_mod_hardware_timer`,
-tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
+tests: [`hardware.timer.test`](../lib/pico/hardware.timer.test.lua)
 
 - `set_callback(alarm_num, callback) -> Thread`\
   Set the callback for the hardware timer `alarm_num`. The callback is called
@@ -430,9 +430,9 @@ tests: [`hardware.timer.test`](../lib/hardware.timer.test.lua)
 **Library:** [`hardware_uart`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_uart),
 header: [`hardware/uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_uart/include/hardware/uart.h),
 sources: [`hardware_uart`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_uart)\
-**Module:** [`hardware.uart`](../lib/hardware.uart.c),
+**Module:** [`hardware.uart`](../lib/pico/hardware.uart.c),
 build target: `mlua_mod_hardware_uart`,
-tests: [`hardware.uart.test`](../lib/hardware.uart.test.lua)
+tests: [`hardware.uart.test`](../lib/pico/hardware.uart.test.lua)
 
 This module defines the `hardware.uart.UART` class, which exposes the
 functionality for one UART peripheral. All library functions that take an
@@ -488,24 +488,24 @@ default UART peripheral, if defined, can be accessed as `default`.
 **Library:** [`hardware_vreg`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_vreg),
 header: [`hardware/vreg.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_vreg/include/hardware/vreg.h),
 sources: [`hardware_vreg`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_vreg)\
-**Module:** [`hardware.vreg`](../lib/hardware.vreg.c),
+**Module:** [`hardware.vreg`](../lib/pico/hardware.vreg.c),
 build target: `mlua_mod_hardware_vreg`,
-tests: [`hardware.vreg.test`](../lib/hardware.vreg.test.lua)
+tests: [`hardware.vreg.test`](../lib/pico/hardware.vreg.test.lua)
 
 ## `hardware.watchdog`
 
 **Library:** [`hardware_watchdog`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_watchdog),
 header: [`hardware/watchdog.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_watchdog/include/hardware/watchdog.h),
 sources: [`hardware_watchdog`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_watchdog)\
-**Module:** [`hardware.watchdog`](../lib/hardware.watchdog.c),
+**Module:** [`hardware.watchdog`](../lib/pico/hardware.watchdog.c),
 build target: `mlua_mod_hardware_watchdog`,
-tests: [`hardware.watchdog.test`](../lib/hardware.watchdog.test.lua)
+tests: [`hardware.watchdog.test`](../lib/pico/hardware.watchdog.test.lua)
 
 ## `hardware.xosc`
 
 **Library:** [`hardware_xosc`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_xosc),
 header: [`hardware/xosc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_xosc/include/hardware/xosc.h),
 sources: [`hardware_xosc`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_xosc)\
-**Module:** [`hardware.xosc`](../lib/hardware.xosc.c),
+**Module:** [`hardware.xosc`](../lib/pico/hardware.xosc.c),
 build target: `mlua_mod_hardware_xosc`,
-tests: [`hardware.xosc.test`](../lib/hardware.xosc.test.lua)
+tests: [`hardware.xosc.test`](../lib/pico/hardware.xosc.test.lua)

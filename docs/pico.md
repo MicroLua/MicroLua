@@ -16,9 +16,9 @@ The test modules can be useful as usage examples.
 **Library:** [`pico_base`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_base),
 header: [`pico.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_base/include/pico.h),
 sources: [`pico_base`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_base)\
-**Module:** [`pico`](../lib/pico.c),
+**Module:** [`pico`](../lib/pico/pico.c),
 build target: `mlua_mod_pico`,
-tests: [`pico.test`](../lib/pico.test.lua)
+tests: [`pico.test`](../lib/pico/pico.test.lua)
 
 - `board: string`\
   The name of the target board (`PICO_BOARD`).
@@ -39,7 +39,7 @@ tests: [`pico.test`](../lib/pico.test.lua)
 headers: [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)\
 **Module:** `pico.board` (auto-generated),
 build target: `mlua_mod_pico_board`,
-tests: [`pico.board.test`](../lib/pico.board.test.lua)
+tests: [`pico.board.test`](../lib/pico/pico.board.test.lua)
 
 This module exposes the constants defined in the
 [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)
@@ -50,9 +50,9 @@ header for the target platform. It is auto-generated.
 **Library:** [`pico_i2c_slave`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_i2c_slave),
 header: [`pico/i2c_slave.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_i2c_slave/include/pico/i2c_slave.h),
 sources: [`pico_i2c_slave`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_i2c_slave)\
-**Module:** [`pico.i2c_slave`](../lib/pico.i2c_slave.c),
+**Module:** [`pico.i2c_slave`](../lib/pico/pico.i2c_slave.c),
 build target: `mlua_mod_pico_i2c_slave`,
-tests: [`pico.i2c_slave.test`](../lib/pico.i2c_slave.test.lua)
+tests: [`pico.i2c_slave.test`](../lib/pico/pico.i2c_slave.test.lua)
 
 This module implements the same functionality as the `pico_i2c_slave` library,
 but with a different API and a different implementation. As of 2023-10, the
@@ -80,9 +80,9 @@ are serviced very quickly, and there are potential race conditions.
 **Library:** [`pico_multicore`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_multicore),
 header: [`pico/multicore.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_multicore/include/pico/multicore.h),
 sources: [`pico_multicore`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_multicore)\
-**Module:** [`pico.multicore`](../lib/pico.multicore.c),
+**Module:** [`pico.multicore`](../lib/pico/pico.multicore.c),
 build target: `mlua_mod_pico_multicore`,
-tests: [`pico.multicore.test`](../lib/pico.multicore.test.lua)
+tests: [`pico.multicore.test`](../lib/pico/pico.multicore.test.lua)
 
 This module allows launching a separate Lua interpreter in core 1. The
 interpreters in both cores are independent and don't share state. When resetting
@@ -107,9 +107,9 @@ a memory leak.
 **Library:** [`pico_multicore_fifo`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#multicore_fifo),
 header: [`pico/multicore.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_multicore/include/pico/multicore.h),
 sources: [`pico_multicore`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_multicore)\
-**Module:** [`pico.multicore.fifo`](../lib/pico.multicore.fifo.c),
+**Module:** [`pico.multicore.fifo`](../lib/pico/pico.multicore.fifo.c),
 build target: `mlua_mod_pico_multicore_fifo`,
-tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
+tests: [`pico.multicore.fifo.test`](../lib/pico/pico.multicore.fifo.test.lua)
 
 - `ROE: integer = SIO_FIFO_ST_ROE_BITS`\
   `WOF: integer = SIO_FIFO_ST_WOF_BITS`\
@@ -135,9 +135,9 @@ tests: [`pico.multicore.fifo.test`](../lib/pico.multicore.fifo.test.lua)
 **Library:** [`pico_platform`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_platform),
 header: [`pico/platform.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_platform/include/pico/platform.h),
 sources: [`pico_platform`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_platform)\
-**Module:** [`pico.platform`](../lib/pico.platform.c),
+**Module:** [`pico.platform`](../lib/pico/pico.platform.c),
 build target: `mlua_mod_pico_platform`,
-tests: [`pico.platform.test`](../lib/pico.platform.test.lua)
+tests: [`pico.platform.test`](../lib/pico/pico.platform.test.lua)
 
 This module exposes the constants defined in
 [`hardware/platform_defs.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/platform_defs.h).
@@ -150,9 +150,9 @@ This module exposes the constants defined in
 **Library:** [`pico_stdio`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio),
 header: [`pico/stdio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio/include/pico/stdio.h),
 sources: [`pico_stdio`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio)\
-**Module:** [`pico.stdio`](../lib/pico.stdio.c),
+**Module:** [`pico.stdio`](../lib/pico/pico.stdio.c),
 build target: `mlua_mod_pico_stdio`,
-tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
+tests: [`pico.stdio.test`](../lib/pico/pico.stdio.test.lua)
 
 - `EOF: integer`
 
@@ -192,7 +192,7 @@ tests: [`pico.stdio.test`](../lib/pico.stdio.test.lua)
 **Library:** [`pico_stdio_semihosting`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_semihosting),
 header: [`pico/stdio_semihosting.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_semihosting/include/pico/stdio_semihosting.h),
 sources: [`pico_stdio_semihosting`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_semihosting)\
-**Module:** [`pico.stdio.semihosting`](../lib/pico.stdio.semihosting.c)
+**Module:** [`pico.stdio.semihosting`](../lib/pico/pico.stdio.semihosting.c)
 build target: `mlua_mod_pico_stdio_semihosting`,
 
 - `driver: userdata`\
@@ -203,9 +203,9 @@ build target: `mlua_mod_pico_stdio_semihosting`,
 **Library:** [`pico_stdio_uart`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_uart),
 header: [`pico/stdio_uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_uart/include/pico/stdio_uart.h),
 sources: [`pico_stdio_uart`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_uart)\
-**Module:** [`pico.stdio.uart`](../lib/pico.stdio.uart.c),
+**Module:** [`pico.stdio.uart`](../lib/pico/pico.stdio.uart.c),
 build target: `mlua_mod_pico_stdio_uart`,
-tests: [`pico.stdio.uart.test`](../lib/pico.stdio.uart.test.lua)
+tests: [`pico.stdio.uart.test`](../lib/pico/pico.stdio.uart.test.lua)
 
 - `driver: userdata`\
   The UART stdio driver, for use in `pico.stdio` functions.
@@ -223,7 +223,7 @@ tests: [`pico.stdio.uart.test`](../lib/pico.stdio.uart.test.lua)
 **Library:** [`pico_stdio_usb`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_usb),
 header: [`pico/stdio_usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_usb/include/pico/stdio_usb.h),
 sources: [`pico_stdio_usb`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_usb)\
-**Module:** [`pico.stdio.usb`](../lib/pico.stdio.usb.c)
+**Module:** [`pico.stdio.usb`](../lib/pico/pico.stdio.usb.c)
 build target: `mlua_mod_pico_stdio_usb`,
 
 - `driver: userdata`\
@@ -232,11 +232,11 @@ build target: `mlua_mod_pico_stdio_usb`,
 ## `pico.stdlib`
 
 **Library:** [`pico_stdlib`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_stdlib),
-header: [`pico/stdlib.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_stdlib/include/pico/stdlib.h),
+header: [`pico/stdlib.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_stdlib/pico/include/pico/stdlib.h),
 sources: [`pico_stdlib`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_stdlib)\
-**Module:** [`pico.stdlib`](../lib/pico.stdlib.c),
+**Module:** [`pico.stdlib`](../lib/pico/pico.stdlib.c),
 build target: `mlua_mod_pico_stdlib`,
-tests: [`pico.stdlib.test`](../lib/pico.stdlib.test.lua)
+tests: [`pico.stdlib.test`](../lib/pico/pico.stdlib.test.lua)
 
 - `DEFAULT_LED_PIN_INVERTED: boolean`\
   `DEFAULT_WS2812_PIN: integer | boolean`\
@@ -249,9 +249,9 @@ tests: [`pico.stdlib.test`](../lib/pico.stdlib.test.lua)
 **Library:** [`pico_time`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_time),
 header: [`pico/time.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_time/include/pico/time.h),
 sources: [`pico_time`](https://github.com/raspberrypi/pico-sdk/blob/master/src/common/pico_time)\
-**Module:** [`pico.time`](../lib/pico.time.c),
+**Module:** [`pico.time`](../lib/pico/pico.time.c),
 build target: `mlua_mod_pico_time`,
-tests: [`pico.time.test`](../lib/pico.time.test.lua)
+tests: [`pico.time.test`](../lib/pico/pico.time.test.lua)
 
 Alarms and repeating timers are implemented using threads and thread timers.
 This allows for unlimited timers, without using alarm pools. Alarm pool
@@ -303,9 +303,9 @@ functionality is therefore not exposed to Lua and left for use by C code.
 **Library:** [`pico_unique_id`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_unique_id),
 header: [`pico/unique_id.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_unique_id/include/pico/unique_id.h),
 sources: [`pico_unique_id`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_unique_id)\
-**Module:** [`pico.unique_id`](../lib/pico.unique_id.c),
+**Module:** [`pico.unique_id`](../lib/pico/pico.unique_id.c),
 build target: `mlua_mod_pico_unique_id`,
-tests: [`pico.unique_id.test`](../lib/pico.unique_id.test.lua)
+tests: [`pico.unique_id.test`](../lib/pico/pico.unique_id.test.lua)
 
 - `BOARD_ID_SIZE: integer = PICO_UNIQUE_BOARD_ID_SIZE_BYTES`
 

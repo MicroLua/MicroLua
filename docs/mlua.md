@@ -66,7 +66,7 @@ error code from [`mlua.errors`](#mluaerrors).
 
 ### `mlua.block.flash`
 
-**Module:** [`mlua.block.flash`](../lib/mlua.block.flash.c),
+**Module:** [`mlua.block.flash`](../lib/pico/mlua.block.flash.c),
 build target: `mlua_mod_mlua_block_flash`
 
 This module provides a block device that uses the QSPI flash for storage.
@@ -125,7 +125,7 @@ nothing to do with `errno` and have different numeric values.
 
 ## `mlua.event`
 
-**Module:** [`mlua.event`](../lib/mlua.event.c),
+**Module:** [`mlua.event`](../lib/pico/mlua.event.c),
 build target: `mlua_mod_mlua_event`
 
 This module provides the core event handling and dispatch functionality.
@@ -138,7 +138,7 @@ This module provides the core event handling and dispatch functionality.
 
 **Module:** [`mlua.fs`](../lib/common/mlua.fs.c),
 build target: `mlua_mod_mlua_fs`,
-tests: [`mlua.fs.test`](../lib/mlua.fs.test.lua)
+tests: [`mlua.fs.test`](../lib/common/mlua.fs.test.lua)
 
 This module provides functionality that is common across all filesystems.
 
@@ -169,9 +169,9 @@ This module provides functionality that is common across all filesystems.
 
 ### `mlua.fs.loader`
 
-**Module:** [`mlua.fs.loader`](../lib/mlua.fs.loader.c),
+**Module:** [`mlua.fs.loader`](../lib/pico/mlua.fs.loader.c),
 build target: `mlua_mod_mlua_fs_loader`,
-tests: [`mlua.fs.loader.test`](../lib/mlua.fs.loader.test.lua)
+tests: [`mlua.fs.loader.test`](../lib/pico/mlua.fs.loader.test.lua)
 
 This module creates a global filesystem early in the boot process, and registers
 a module searcher that looks up modules in that filesystem. When the module is
@@ -572,9 +572,9 @@ necessary because Lua gets metamethods using a raw access.
 
 ## `mlua.stdio`
 
-**Module:** [`mlua.stdio`](../lib/mlua.stdio.c),
+**Module:** [`mlua.stdio`](../lib/common/mlua.stdio.c),
 build target: `mlua_mod_mlua_stdio`,
-tests: [`mlua.stdio.test`](../lib/mlua.stdio.test.lua)
+tests: [`mlua.stdio.test`](../lib/common/mlua.stdio.test.lua)
 
 This module manages stdio input and output. When linked in, it is automatically
 loaded during interpreter startup. It defines input and output stream types, and
@@ -611,9 +611,9 @@ The `OutStream` type (`mlua.OutStream`) represents an output stream.
 
 ## `mlua.testing`
 
-**Module:** [`mlua.testing`](../lib/mlua.testing.lua),
+**Module:** [`mlua.testing`](../lib/common/mlua.testing.lua),
 build target: `mlua_mod_mlua_testing`,
-tests: [`mlua.testing.test`](../lib/mlua.testing.test.lua)
+tests: [`mlua.testing.test`](../lib/common/mlua.testing.test.lua)
 
 This module is a unit-testing library inspired by the Go
 [`testing`](https://pkg.go.dev/testing) package. The best way to understand how
@@ -760,20 +760,20 @@ that value.
 
 ### Test helper modules
 
-- [`mlua.testing.clocks`](../lib/mlua.testing.clocks.lua): Helpers for testing
-  clock-related functionality.
-- [`mlua.testing.i2c`](../lib/mlua.testing.i2c.lua): Helpers for testing I2C
-  functionality.
-- [`mlua.testing.stdio`](../lib/mlua.testing.stdio.lua): Helpers for testing
-  stdio functionality.
-- [`mlua.testing.uart`](../lib/mlua.testing.uart.lua): Helpers for testing UART
-  functionality.
+- [`mlua.testing.clocks`](../lib/pico/mlua.testing.clocks.lua): Helpers for
+  testing clock-related functionality.
+- [`mlua.testing.i2c`](../lib/pico/mlua.testing.i2c.lua): Helpers for testing
+  I2C functionality.
+- [`mlua.testing.stdio`](../lib/pico/mlua.testing.stdio.lua): Helpers for
+  testing stdio functionality.
+- [`mlua.testing.uart`](../lib/pico/mlua.testing.uart.lua): Helpers for testing
+  UART functionality.
 
 ## `mlua.thread`
 
-**Module:** [`mlua.thread`](../lib/mlua.thread.lua),
+**Module:** [`mlua.thread`](../lib/pico/mlua.thread.lua),
 build target: `mlua_mod_mlua_thread`,
-tests: [`mlua.thread.test`](../lib/mlua.thread.test.lua)
+tests: [`mlua.thread.test`](../lib/pico/mlua.thread.test.lua)
 
 This module provides cooperative threading functionality based on coroutines.
 It sets the metaclass of the `coroutine` type to `Thread`, so coroutines are
