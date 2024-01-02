@@ -6,9 +6,22 @@
 
 #include <stdint.h>
 
+#include "lua.h"
+#include "lauxlib.h"
+#include "mlua/platform_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Abort the program.
+__attribute__((noreturn)) void mlua_platform_abort(void);
+
+// Perform set up at the very beginning of main().
+void mlua_platform_setup_main(int* argc, char* argv[]);
+
+// Perform set up after creating an interpreter.
+void mlua_platform_setup_interpreter(lua_State* ls);
 
 // Return the current time, as given by a monotonic clock.
 uint64_t mlua_platform_time_us(void);

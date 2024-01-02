@@ -1,13 +1,22 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
-target_sources(mlua_platform INTERFACE
-    platform.c
-)
+target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
+target_include_directories(mlua_platform INTERFACE include_platform)
+target_sources(mlua_platform INTERFACE platform.c)
 target_link_libraries(mlua_platform INTERFACE
-    hardware_flash
+    hardware_timer
+    mlua_mod_mlua_event_headers
+    pico_binary_info
+    pico_platform
     pico_time
 )
+if(NOT "${PICO_BOARD}" STREQUAL "host")
+    target_link_libraries(mlua_platform INTERFACE
+        hardware_exception
+        hardware_flash
+    )
+endif()
 
 mlua_add_lua_modules(mlua_test_00_setup 00_setup.test.lua)
 target_link_libraries(mlua_test_00_setup INTERFACE

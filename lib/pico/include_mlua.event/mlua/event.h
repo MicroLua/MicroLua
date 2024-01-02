@@ -104,6 +104,19 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 
 typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 
+#if LIB_MLUA_MOD_MLUA_EVENT
+// Return true iff yielding is enabled.
+bool mlua_yield_enabled(void);
+void mlua_set_yield_enabled(bool en);
+// TODO: Allow force-enabling yielding => eliminate blocking code
+// TODO: Make yield status per-thread
+#else
+__attribute__((__always_inline__))
+static inline bool mlua_yield_enabled(void) { return false; }
+__attribute__((__always_inline__))
+static inline void mlua_set_yield_enabled(bool en) {}
+#endif
+
 // Return true iff waiting for the given even is possible, i.e. yielding is
 // enabled and the event was claimed.
 bool mlua_event_can_wait(MLuaEvent* event);

@@ -26,16 +26,6 @@ void mlua_util_init(lua_State* ls);
 // A continuation that returns its ctx argument.
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-// Return true iff yielding is enabled.
-bool mlua_yield_enabled(void);
-// TODO: Allow force-enabling yielding => eliminate blocking code
-// TODO: Make yield status per-thread
-#else
-__attribute__((__always_inline__))
-static inline bool mlua_yield_enabled(void) { return false; }
-#endif
-
 // Load a module, and optionally keep a reference to it on the stack.
 void mlua_require(lua_State* ls, char const* module, bool keep);
 

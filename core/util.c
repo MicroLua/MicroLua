@@ -5,10 +5,6 @@
 
 #include <string.h>
 
-#if LIB_PICO_PLATFORM
-#include "pico/platform.h"
-#endif
-
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
     return ctx;
 }
@@ -21,8 +17,9 @@ void mlua_require(lua_State* ls, char const* module, bool keep) {
 
 bool mlua_to_cbool(lua_State* ls, int arg) {
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
-    if (lua_type(ls, arg) == LUA_TNUMBER)
+    if (lua_type(ls, arg) == LUA_TNUMBER) {
         return lua_tonumber(ls, arg) != l_mathop(0.0);
+    }
     return lua_toboolean(ls, arg);
 }
 
@@ -43,25 +40,6 @@ int mlua_push_fail(lua_State* ls, char const* err) {
     luaL_pushfail(ls);
     lua_pushstring(ls, err);
     return 2;
-}
-
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static bool yield_enabled[NUM_CORES];
-
-bool mlua_yield_enabled(void) { return yield_enabled[get_core_num()]; }
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
-static int global_yield_enabled(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    bool* en = &yield_enabled[get_core_num()];
-    lua_pushboolean(ls, *en);
-    if (!lua_isnoneornil(ls, 1)) *en = mlua_to_cbool(ls, 1);
-#else
-    lua_pushboolean(ls, false);
-#endif
-    return 1;
 }
 
 static int Function___close(lua_State* ls) {
@@ -110,18 +88,4 @@ bool mlua_thread_is_alive(lua_State* thread) {
     default:
         return false;
     }
-}
-
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint core = 0; core < NUM_CORES; ++core) yield_enabled[core] = true;
-}
-
-#endif
-
-void mlua_util_init(lua_State* ls) {
-    // Set globals.
-    lua_pushcfunction(ls, &global_yield_enabled);
-    lua_setglobal(ls, "yield_enabled");
 }

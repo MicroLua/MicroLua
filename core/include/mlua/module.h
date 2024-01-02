@@ -7,12 +7,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if PICO_ON_DEVICE
-#include "pico/binary_info.h"
-#endif
-
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,11 +18,7 @@ extern "C" {
 // Enable hashed symbol tables for modules and classes, based on perfect
 // hashing.
 #ifndef MLUA_HASH_SYMBOL_TABLES
-#if PICO_ON_DEVICE
-#define MLUA_HASH_SYMBOL_TABLES 1
-#else
-#define MLUA_HASH_SYMBOL_TABLES 0
-#endif
+#define MLUA_HASH_SYMBOL_TABLES MLUA_HASH_SYMBOL_TABLES_DEFAULT
 #endif
 
 // Enable double-checking hashed symbol lookups against symbol names. Increases
@@ -228,16 +221,9 @@ typedef struct MLuaModule {
     lua_CFunction open;
 } MLuaModule;
 
-#ifndef bi_decl
-#define bi_decl(...)
-#endif
-
-#define MLUA_BI_TAG BINARY_INFO_MAKE_TAG('M', 'L')
-#define MLUA_BI_FROZEN_MODULE 0xcb9305cf
-
 // Define a function to open a module with the given name, and register it.
 #define MLUA_OPEN_MODULE(n) \
-bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)) \
+MLUA_PLATFORM_REGISTER_MODULE(n); \
 static int mlua_open_module(lua_State* ls); \
 static MLuaModule const module \
     __attribute__((__section__("mlua_module_registry"), __used__)) \
@@ -246,7 +232,7 @@ static int mlua_open_module(lua_State* ls)
 
 // Register a module open function.
 #define MLUA_REGISTER_MODULE(n, fn) \
-bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n)) \
+MLUA_PLATFORM_REGISTER_MODULE(n); \
 int fn(lua_State* ls); \
 static MLuaModule const module \
     __attribute__((__section__("mlua_module_registry"), __used__)) \

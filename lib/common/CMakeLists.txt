@@ -141,6 +141,7 @@ target_link_libraries(mlua_test_mlua_oo INTERFACE
     mlua_mod_string
 )
 
+add_library(mlua_platform_luaconf INTERFACE)
 add_library(mlua_platform INTERFACE)
 target_compile_definitions(mlua_platform INTERFACE
     MLUA_PLATFORM=${MLUA_PLATFORM}

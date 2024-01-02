@@ -10,6 +10,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Instead of explicit per-core storage, use TLS
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
 void mlua_event_require(lua_State* ls) {
@@ -235,6 +236,11 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     return mlua_event_yield(ls, 1, cont, ctx);
 }
 
+static bool yield_enabled[NUM_CORES];
+
+bool mlua_yield_enabled(void) { return yield_enabled[get_core_num()]; }
+void mlua_set_yield_enabled(bool en) { yield_enabled[get_core_num()] = en; }
+
 bool mlua_event_can_wait(MLuaEvent* event) {
     if (!mlua_yield_enabled()) return false;
     uint32_t save = mlua_event_lock();
@@ -437,6 +443,7 @@ MLUA_SYMBOLS(module_syms) = {
 
 static __attribute__((constructor)) void init(void) {
     mlua_event_spinlock = spin_lock_instance(next_striped_spin_lock_num());
+    for (uint core = 0; core < NUM_CORES; ++core) yield_enabled[core] = true;
 }
 
 MLUA_OPEN_MODULE(mlua.event) {

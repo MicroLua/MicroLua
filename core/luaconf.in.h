@@ -4,6 +4,8 @@
 #ifndef _MLUA_CORE_LUACONF_H
 #define _MLUA_CORE_LUACONF_H
 
+#include "mlua/platform_luaconf.h"
+
 #define LUA_INT_DEFAULT LUA_INT_@MLUA_INT@
 #define LUA_FLOAT_DEFAULT LUA_FLOAT_@MLUA_FLOAT@
 
@@ -21,18 +23,13 @@
 
 @LUACONF@
 
-// Lua uses the C99 %a printf specifier in lua_number2strx. The "pico" printf
-// implementation (see pico_set_printf_implementation) doesn't support %a. The
-// "compiler" implementation uses newlib, which does support %a but only if it
-// is compiled with --enable-newlib-io-c99-formats. Lua provides a fallback if
-// lua_number2strx is undefined, so we use that.
+#if MLUA_UNDEF_lua_number2strx
 #undef lua_number2strx
-
-#if PICO_ON_DEVICE
+#endif
 
 // The Lua stack size limit. When <= 0, use the default.
 #ifndef MLUA_MAXSTACK
-#define MLUA_MAXSTACK 1000
+#define MLUA_MAXSTACK MLUA_MAXSTACK_DEFAULT
 #endif
 #if MLUA_MAXSTACK > 0
 #undef LUAI_MAXSTACK
@@ -41,7 +38,7 @@
 
 // The initial buffer size used by lauxlib. When <= 0, use the default.
 #ifndef MLUA_BUFFERSIZE
-#define MLUA_BUFFERSIZE 32
+#define MLUA_BUFFERSIZE MLUA_BUFFERSIZE_DEFAULT
 #endif
 #if MLUA_BUFFERSIZE > 0
 #undef LUAL_BUFFERSIZE
@@ -57,7 +54,5 @@
 // own simplified implementation to avoid depending on sprintf.
 #define lua_writestringerror(s, p) mlua_writestringerror(s, p)
 void mlua_writestringerror(char const* fmt, char const* param);
-
-#endif  // PICO_ON_DEVICE
 
 #endif

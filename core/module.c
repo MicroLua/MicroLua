@@ -7,10 +7,6 @@
 
 #include "lualib.h"
 
-bi_decl(bi_program_feature_group_with_flags(
-    MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, "frozen modules",
-    BI_NAMED_GROUP_SORT_ALPHA | BI_NAMED_GROUP_ADVANCED))
-
 void mlua_sym_push_boolean(lua_State* ls, MLuaSymVal const* value) {
     lua_pushboolean(ls, value->boolean);
 }

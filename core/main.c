@@ -7,13 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if PICO_ON_DEVICE
-#include "hardware/exception.h"
-#include "hardware/timer.h"
-#include "pico/platform.h"
-#endif
-
 #include "mlua/module.h"
+#include "mlua/platform.h"
 #include "mlua/util.h"
 
 void mlua_writestringerror(char const* fmt, char const* param) {
@@ -56,7 +51,6 @@ static int run_closure(lua_State* ls) {
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
     mlua_register_modules(ls);
-    mlua_util_init(ls);
 
     // Set up stdio streams.
 #if LIB_MLUA_MOD_MLUA_STDIO
@@ -129,11 +123,7 @@ static int on_panic(lua_State* ls) {
     char const* msg = lua_tostring(ls, -1);
     if (msg == NULL) msg = "unknown error";
     mlua_writestringerror("PANIC: %s\n", msg);
-#if PICO_ON_DEVICE
-    panic(NULL);
-#else
-    exit(EXIT_FAILURE);
-#endif
+    mlua_platform_abort();
 }
 
 static void warn_print(char const* msg, bool first, bool last) {
@@ -165,46 +155,6 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
     lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
 }
 
-#if PICO_ON_DEVICE
-
-// This HardFault exception handler catches semihosting calls when no debugger
-// is attached, and makes them silently succeed. For anything else, it does the
-// same as the default handler, i.e. hang with a "bkpt 0".
-//
-// Note that this doesn't work if the target was reset from openocd, even if
-// the latter has terminated, because the probe seems to keep watching for and
-// handling hardfaults, so semihosting requests halt the core and the handler
-// never gets called.
-static __attribute__((naked)) void hardfault_handler(void) {
-    pico_default_asm_volatile(
-        "movs r0, #4\n"         // r0 = SP (from MSP or PSP)
-        "mov r1, lr\n"
-        "tst r0, r1\n"
-        "beq 1f\n"
-        "mrs r0, psp\n"
-        "b 2f\n"
-    "1:\n"
-        "mrs r0, msp\n"
-    "2:\n"
-        "ldr r1, [r0, #24]\n"   // r1 = PC
-        "ldrh r2, [r1]\n"       // Check if the instruction is "bkpt 0xab"
-        "ldr r3, =0xbeab\n"     // (semihosting)
-        "cmp r2, r3\n"
-        "beq 3f\n"
-        "bkpt 0x00\n"           // Not semihosting, panic
-    "3:\n"
-        "adds r1, #2\n"         // Semihosting, skip the bkpt instruction
-        "str r1, [r0, #24]\n"
-        "movs r1, #0\n"         // Set the result of the semihosting call to 0
-        "str r1, [r0, #0]\n"
-        "bx lr\n"               // Return to the caller
-    );
-}
-
-void isr_hardfault(void);
-
-#endif  // PICO_ON_DEVICE
-
 lua_State* mlua_new_interpreter(void) {
     lua_State* ls = lua_newstate(allocate, NULL);
     lua_atpanic(ls, &on_panic);
@@ -213,16 +163,7 @@ lua_State* mlua_new_interpreter(void) {
 }
 
 int mlua_run_main(lua_State* ls, int args) {
-#if PICO_ON_DEVICE
-    // Set the HardFault exception handler if none was set before.
-    exception_handler_t handler =
-        exception_get_vtable_handler(HARDFAULT_EXCEPTION);
-    if (handler == &isr_hardfault) {
-        exception_set_exclusive_handler(HARDFAULT_EXCEPTION,
-                                        &hardfault_handler);
-    }
-#endif
-
+    mlua_platform_setup_interpreter(ls);
     lua_pushcfunction(ls, pmain);
     lua_rotate(ls, 1, 1);
 
@@ -247,6 +188,7 @@ int mlua_run_main(lua_State* ls, int args) {
 #endif
 
 int mlua_main_core0(int argc, char* argv[]) {
+    mlua_platform_setup_main(&argc, argv);
     lua_State* ls = mlua_new_interpreter();
     if (ls == NULL) {
         mlua_writestringerror("ERROR: failed to create Lua state\n", NULL);
@@ -271,20 +213,6 @@ int mlua_main_core0(int argc, char* argv[]) {
     return res;
 }
 
-#if PICO_ON_DEVICE
-
-__attribute__((weak)) int main() {
-    // Ensure that the system timer is ticking. This seems to take some time
-    // after a reset.
-    busy_wait_us(1);
-
-    return mlua_main_core0(0, NULL);
-}
-
-#else
-
 __attribute__((weak)) int main(int argc, char* argv[]) {
     return mlua_main_core0(argc, argv);
 }
-
-#endif

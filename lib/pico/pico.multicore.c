@@ -136,7 +136,9 @@ static int mod_set_shutdown_handler(lua_State* ls) {
     }
     CoreState* st = &core_state[core - 1];
     if (lua_isnone(ls, 1)) {  // No argument, use Thread.shutdown by default
-        mlua_thread_meta(ls, "shutdown");
+        if (mlua_thread_meta(ls, "shutdown") == LUA_TNIL) {
+            return luaL_error(ls, "handler required");
+        }
     } else if (lua_isnil(ls, 1)) {  // Nil handler, kill the handler thread
         mlua_event_stop_handler(ls, &st->shutdown_event);
         return 0;

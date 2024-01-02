@@ -26,6 +26,9 @@ mlua_add_core_library(mlua_core
     lzio.c
     ltests.c
 )
+target_link_libraries(mlua_core INTERFACE
+    mlua_platform_luaconf
+)
 
 # Core Lua modules.
 mlua_add_core_c_module_noreg(base lbaselib.c)
@@ -51,13 +54,5 @@ target_link_libraries(mlua_core_main INTERFACE
     mlua_core
     mlua_mod_base
     mlua_mod_package
+    mlua_platform
 )
-if(MLUA_PLATFORM STREQUAL "pico")
-    # TODO: Move these dependencies to a platform-specific library
-    target_link_libraries(mlua_core_main INTERFACE
-        hardware_exception
-        hardware_timer
-        pico_binary_info
-        pico_platform
-    )
-endif()
