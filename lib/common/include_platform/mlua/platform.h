@@ -23,8 +23,8 @@ void mlua_platform_setup_main(int* argc, char* argv[]);
 // Perform set up after creating an interpreter.
 void mlua_platform_setup_interpreter(lua_State* ls);
 
-// Return the current time, as given by a monotonic clock.
-uint64_t mlua_platform_time_us(void);
+// Return the current microsecond ticks, as given by a monotonic clock.
+uint64_t mlua_platform_ticks_us(void);
 
 // Return the range of values that can be returned by mlua_platform_time_us().
 void mlua_platform_time_range(uint64_t* min, uint64_t* max);

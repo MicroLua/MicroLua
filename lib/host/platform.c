@@ -26,7 +26,7 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
 #define CLOCK CLOCK_MONOTONIC
 #endif
 
-uint64_t mlua_platform_time_us(void) {
+uint64_t mlua_platform_ticks_us(void) {
     struct timespec ts;
     clock_gettime(CLOCK, &ts);
     return ts.tv_sec * (uint64_t)1000000 + ts.tv_nsec / 1000;

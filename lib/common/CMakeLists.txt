@@ -174,6 +174,7 @@ target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_mlua_list
     mlua_mod_mlua_oo
     mlua_mod_mlua_platform
+    mlua_mod_mlua_time
     mlua_mod_mlua_util
     mlua_mod_package
     mlua_mod_string
@@ -185,6 +186,17 @@ target_link_libraries(mlua_test_mlua_testing INTERFACE
     mlua_mod_mlua_list
     mlua_mod_mlua_util
     mlua_mod_table
+)
+
+mlua_add_c_module(mlua_mod_mlua_time mlua.time.c)
+target_link_libraries(mlua_mod_mlua_time INTERFACE
+    mlua_mod_mlua_int64
+    mlua_platform
+)
+
+mlua_add_lua_modules(mlua_test_mlua_time mlua.time.test.lua)
+target_link_libraries(mlua_test_mlua_time INTERFACE
+    mlua_mod_mlua_time
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_uf2 mlua.uf2.lua)

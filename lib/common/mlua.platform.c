@@ -7,23 +7,6 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-static void mod_min_time(lua_State* ls, MLuaSymVal const* value) {
-    uint64_t min, max;
-    mlua_platform_time_range(&min, &max);
-    mlua_push_int64(ls, min);
-}
-
-static void mod_max_time(lua_State* ls, MLuaSymVal const* value) {
-    uint64_t min, max;
-    mlua_platform_time_range(&min, &max);
-    mlua_push_int64(ls, max);
-}
-
-static int mod_time_us(lua_State* ls) {
-    mlua_push_int64(ls, mlua_platform_time_us());
-    return 1;
-}
-
 static void mod_flash(lua_State* ls, MLuaSymVal const* value) {
     MLuaFlash const* flash = mlua_platform_flash();
     if (flash == NULL)  {
@@ -47,12 +30,8 @@ static void mod_binary_size(lua_State* ls, MLuaSymVal const* value) {
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(name, string, MLUA_ESTR(MLUA_PLATFORM)),
-    MLUA_SYM_P(min_time, mod_),
-    MLUA_SYM_P(max_time, mod_),
     MLUA_SYM_P(flash, mod_),
     MLUA_SYM_P(binary_size, mod_),
-
-    MLUA_SYM_F(time_us, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.platform) {

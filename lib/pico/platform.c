@@ -94,7 +94,7 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
     lua_setglobal(ls, "yield_enabled");
 }
 
-uint64_t mlua_platform_time_us(void) {
+uint64_t mlua_platform_ticks_us(void) {
     return to_us_since_boot(get_absolute_time());
 }
 

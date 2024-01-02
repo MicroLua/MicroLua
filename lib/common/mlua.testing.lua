@@ -9,6 +9,7 @@ local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
 local platform = require 'mlua.platform'
+local time = require 'mlua.time'
 local util = require 'mlua.util'
 local package = require 'package'
 local string = require 'string'
@@ -392,9 +393,9 @@ end
 function Test:_run(fn)
     self:_progress_tick()
     self:_capture_output()
-    local start = platform.time_us()
+    local start = time.ticks()
     self:_pcall(fn, self)
-    self.duration = platform.time_us() - start
+    self.duration = time.ticks() - start
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
@@ -526,7 +527,7 @@ end
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._progress = stdout
-    local start = platform.time_us()
+    local start = time.ticks()
     if runs > 1 then
         for i = 1, runs do
             self:run(("Run #%s"):format(i), function(t) t:run_modules() end)
@@ -534,7 +535,7 @@ function Test:_main(runs)
     else
         self:run_modules()
     end
-    local dt = platform.time_us() - start
+    local dt = time.ticks() - start
     local mem = math.tointeger(collectgarbage('count') * 1024)
     self:_progress_end()
     io.write("\n")
@@ -544,7 +545,7 @@ function Test:_main(runs)
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
     io.printf("Duration: %.3f s, memory: %s bytes, binary: %s bytes\n",
-              dt / 1e6, mem, platform.binary_size)
+              dt / time.ticks_per_second, mem, platform.binary_size)
     io.printf("Result: %s\n", self:_result())
 end
 
@@ -552,7 +553,7 @@ function Test:_print_result(indent)
     indent = indent or ''
     if self.name then
         local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
-        local right = ('(%.3f s)'):format(self.duration / 1e6)
+        local right = ('(%.3f s)'):format(self.duration / time.ticks_per_second)
         io.printf("%s%s %s\n", left, (' '):rep(78 - #left - #right), right)
         indent = indent .. '  '
     end

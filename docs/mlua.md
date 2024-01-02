@@ -570,6 +570,25 @@ necessary because Lua gets metamethods using a raw access.
 - `isinstance(obj, cls) -> boolean`\
   Return true iff `obj` is an instance of `cls`.
 
+## `mlua.platform`
+
+**Module:** [`mlua.platform`](../lib/common/mlua.platform.c),
+build target: `mlua_mod_mlua_platform`,
+tests: [`mlua.platform.test`](../lib/common/mlua.platform.test.lua)
+
+This module exposes platform-specific functionality under a common interface.
+
+- `name: string`\
+  The name of the platform for which the binary was built (`MLUA_PLATFORM`).
+
+- `flash: table | false`\
+  A description of the flash memory provided by the platform, or `false` if the
+  platform doesn't have any flash memory. The table has the fields `address`,
+  `size`, `write_size` and `erase_size`.
+
+- `binary_size: integer | Int64`\
+  The size of the binary, or zero if the size is unknown.
+
 ## `mlua.stdio`
 
 **Module:** [`mlua.stdio`](../lib/common/mlua.stdio.c),
@@ -875,6 +894,24 @@ terminate automatically get removed from the group.
   `Group:__close()`\
   Join the threads in the group. If the group is assigned to a to-be-closed
   variable, it is joined when the variable is closed.
+
+## `mlua.time`
+
+**Module:** [`mlua.time`](../lib/common/mlua.time.c),
+build target: `mlua_mod_mlua_time`,
+tests: [`mlua.time.test`](../lib/common/mlua.time.test.lua)
+
+This module provides platform-independent time functionality.
+
+- `ticks_per_second: integer = 1e6`\
+  The number of ticks counted per second.
+
+- `ticks_min: Int64`\
+  `ticks_max: Int64`\
+  The range of values that can be returned by `ticks()`.
+
+- `ticks() -> Int64`\
+  Return the current microsecond ticks, as given by a monotonic clock.
 
 ## `mlua.uf2`
 
