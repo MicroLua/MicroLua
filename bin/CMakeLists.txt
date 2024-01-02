@@ -8,6 +8,9 @@ target_compile_definitions(mlua_standalone PRIVATE
 )
 mlua_target_config(mlua_standalone
 )
+target_link_libraries(mlua_standalone PRIVATE
+    mlua_mod_mlua_stdio
+)
 mlua_list_targets(modules
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
     INCLUDE "^mlua_mod_.*$"
@@ -31,7 +34,6 @@ if(MLUA_PLATFORM STREQUAL "pico")
         PICO_PROGRAM_VERSION_STRING="0.0"
     )
     target_link_libraries(mlua_standalone PRIVATE
-        mlua_mod_mlua_stdio
         mlua_mod_mlua_thread
         pico_stdlib
     )
@@ -52,6 +54,10 @@ mlua_target_config(mlua_tests
     a:integer=1
     b:string="test"
 )
+target_link_libraries(mlua_tests PRIVATE
+    mlua_mod_mlua_stdio
+    mlua_mod_mlua_testing
+)
 mlua_list_targets(tests
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
     INCLUDE "^mlua_test_.*$"
@@ -70,8 +76,6 @@ if(MLUA_PLATFORM STREQUAL "pico")
         PICO_PROGRAM_NAME="MicroLua-tests"
     )
     target_link_libraries(mlua_tests PRIVATE
-        mlua_mod_mlua_stdio
-        mlua_mod_mlua_testing
         mlua_mod_mlua_thread
         pico_stdlib
     )

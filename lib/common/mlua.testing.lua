@@ -4,14 +4,13 @@
 _ENV = module(...)
 
 local debug = require 'debug'
+local math = require 'math'
 local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
+local platform = require 'mlua.platform'
 local util = require 'mlua.util'
-local math = require 'math'
 local package = require 'package'
-local pico = require 'pico'
-local time = require 'pico.time'
 local string = require 'string'
 local table = require 'table'
 
@@ -393,9 +392,9 @@ end
 function Test:_run(fn)
     self:_progress_tick()
     self:_capture_output()
-    local start = time.get_absolute_time()
+    local start = platform.time_us()
     self:_pcall(fn, self)
-    self.duration = time.get_absolute_time() - start
+    self.duration = platform.time_us() - start
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
@@ -527,7 +526,7 @@ end
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._progress = stdout
-    local start = time.get_absolute_time()
+    local start = platform.time_us()
     if runs > 1 then
         for i = 1, runs do
             self:run(("Run #%s"):format(i), function(t) t:run_modules() end)
@@ -535,8 +534,8 @@ function Test:_main(runs)
     else
         self:run_modules()
     end
-    local dt = time.get_absolute_time() - start
-    local mem = collectgarbage('count') * 1024
+    local dt = platform.time_us() - start
+    local mem = math.tointeger(collectgarbage('count') * 1024)
     self:_progress_end()
     io.write("\n")
     self:_print_result()
@@ -544,8 +543,8 @@ function Test:_main(runs)
     io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
-    io.printf("Duration: %.3f s, memory: %d bytes, flash: %d bytes\n",
-              dt / 1e6, mem, pico.flash_binary_end - pico.flash_binary_start)
+    io.printf("Duration: %.3f s, memory: %s bytes, binary: %s bytes\n",
+              dt / 1e6, mem, platform.binary_size)
     io.printf("Result: %s\n", self:_result())
 end
 

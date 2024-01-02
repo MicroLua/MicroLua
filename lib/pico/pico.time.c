@@ -21,11 +21,11 @@ static void push_absolute_time(lua_State* ls, absolute_time_t t) {
     mlua_push_int64(ls, to_us_since_boot(t));
 }
 
-static void push_at_the_end_of_time(lua_State* ls, MLuaSymVal const* value) {
+static void mod_at_the_end_of_time(lua_State* ls, MLuaSymVal const* value) {
     push_absolute_time(ls, at_the_end_of_time);
 }
 
-static void push_nil_time(lua_State* ls, MLuaSymVal const* value) {
+static void mod_nil_time(lua_State* ls, MLuaSymVal const* value) {
     push_absolute_time(ls, nil_time);
 }
 
@@ -180,8 +180,8 @@ MLUA_FUNC_R1(mod_,, best_effort_wfe_or_timeout, lua_pushboolean,
 #define mod_cancel_repeating_timer mod_cancel_alarm
 
 MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_P(at_the_end_of_time, push_),
-    MLUA_SYM_P(nil_time, push_),
+    MLUA_SYM_P(at_the_end_of_time, mod_),
+    MLUA_SYM_P(nil_time, mod_),
 
     // to_us_since_boot: not useful in Lua
     // update_us_since_boot: not useful in Lua

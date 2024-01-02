@@ -93,6 +93,8 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
     return true;
 }
 
+// TODO: Inline some of the functions below, at least for the IS64INT case
+
 bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
 #if IS64INT
     if (!lua_isinteger(ls, arg)) return false;

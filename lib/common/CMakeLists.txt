@@ -141,9 +141,49 @@ target_link_libraries(mlua_test_mlua_oo INTERFACE
     mlua_mod_string
 )
 
+add_library(mlua_platform INTERFACE)
+target_compile_definitions(mlua_platform INTERFACE
+    MLUA_PLATFORM=${MLUA_PLATFORM}
+)
+target_include_directories(mlua_platform INTERFACE include_platform)
+
+mlua_add_c_module(mlua_mod_mlua_platform mlua.platform.c)
+target_link_libraries(mlua_mod_mlua_platform INTERFACE
+    mlua_mod_mlua_int64
+    mlua_platform
+)
+
+mlua_add_lua_modules(mlua_test_mlua_platform mlua.platform.test.lua)
+target_link_libraries(mlua_test_mlua_platform INTERFACE
+    mlua_mod_mlua_platform
+)
+
 mlua_add_lua_modules(mlua_mod_mlua_shell mlua.shell.lua)
 target_link_libraries(mlua_mod_mlua_shell INTERFACE
     mlua_mod_string
+)
+
+mlua_add_c_module(mlua_mod_mlua_stdio mlua.stdio.c)
+
+mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
+target_link_libraries(mlua_mod_mlua_testing INTERFACE
+    mlua_mod_debug
+    mlua_mod_math
+    mlua_mod_mlua_io
+    mlua_mod_mlua_list
+    mlua_mod_mlua_oo
+    mlua_mod_mlua_platform
+    mlua_mod_mlua_util
+    mlua_mod_package
+    mlua_mod_string
+    mlua_mod_table
+)
+
+mlua_add_lua_modules(mlua_test_mlua_testing mlua.testing.test.lua)
+target_link_libraries(mlua_test_mlua_testing INTERFACE
+    mlua_mod_mlua_list
+    mlua_mod_mlua_util
+    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_uf2 mlua.uf2.lua)
