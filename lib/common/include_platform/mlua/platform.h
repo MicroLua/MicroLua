@@ -4,6 +4,7 @@
 #ifndef _MLUA_LIB_COMMON_PLATFORM_H
 #define _MLUA_LIB_COMMON_PLATFORM_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "lua.h"
@@ -23,11 +24,18 @@ void mlua_platform_setup_main(int* argc, char* argv[]);
 // Perform set up after creating an interpreter.
 void mlua_platform_setup_interpreter(lua_State* ls);
 
-// Return the current microsecond ticks, as given by a monotonic clock.
-uint64_t mlua_platform_ticks_us(void);
+// Return the range of values that can be returned by mlua_platform_ticks().
+void mlua_platform_ticks_range(uint64_t* min, uint64_t* max);
 
-// Return the range of values that can be returned by mlua_platform_time_us().
-void mlua_platform_time_range(uint64_t* min, uint64_t* max);
+// Return the current microsecond ticks, as given by a monotonic clock.
+uint64_t mlua_platform_ticks(void);
+
+// Return true iff the given ticks value has been reached.
+bool mlua_platform_ticks_reached(uint64_t ticks);
+
+// Wait for an event, up to the given deadline. Returns true iff the deadline
+// was reached.
+bool mlua_platform_wait(uint64_t deadline);
 
 // A description of flash memory.
 typedef struct MLuaFlash {

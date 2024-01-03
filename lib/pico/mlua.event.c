@@ -8,6 +8,7 @@
 
 #include "mlua/int64.h"
 #include "mlua/module.h"
+#include "mlua/platform.h"
 #include "mlua/util.h"
 
 // TODO: Instead of explicit per-core storage, use TLS
@@ -362,7 +363,10 @@ int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent* event) {
 }
 
 static int mod_dispatch(lua_State* ls) {
-    absolute_time_t deadline = from_us_since_boot(mlua_check_int64(ls, 1));
+    uint64_t deadline = mlua_check_int64(ls, 1);
+    uint64_t ticks_min, ticks_max;
+    mlua_platform_ticks_range(&ticks_min, &ticks_max);
+    bool wake = deadline == ticks_min || mlua_platform_ticks_reached(deadline);
 
     // Get Thread.resume.
     lua_pushthread(ls);
@@ -375,7 +379,6 @@ static int mod_dispatch(lua_State* ls) {
     for (;;) {
         // Check for pending events and resume the corresponding watcher
         // threads.
-        bool wake = false;
         for (uint block = 0; block < EVENTS_SIZE; ++block) {
             uint32_t* pending = &event_state.pending[block];
             uint32_t save = mlua_event_lock();
@@ -417,14 +420,11 @@ static int mod_dispatch(lua_State* ls) {
         }
 
         // Return if at least one thread was resumed or the deadline has passed.
-        if (wake || is_nil_time(deadline) || time_reached(deadline)) break;
+        if (wake || mlua_platform_ticks_reached(deadline)) break;
+        wake = false;
 
         // Wait for events, up to the deadline.
-        if (!is_at_the_end_of_time(deadline)) {
-            best_effort_wfe_or_timeout(deadline);
-        } else {
-            __wfe();
-        }
+        mlua_platform_wait(deadline);
     }
     return 0;
 }

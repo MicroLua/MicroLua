@@ -213,11 +213,12 @@ function main()
         for thread in pairs(waiting) do co_close(thread) end
         active, head, tail, waiting, timers = nil, nil, nil, nil, nil
     end
+    local dispatch = event.dispatch
 
     while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
-        event.dispatch((thread or head ~= tail) and min_ticks
-                       or waiting[timers[1]] or max_ticks)
+        dispatch((thread or head ~= tail) and min_ticks
+                 or waiting[timers[1]] or max_ticks)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()

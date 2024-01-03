@@ -43,15 +43,15 @@ static inline char const* mlua_event_claim(MLuaEvent* ev) {
 // Free an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
 
-extern spin_lock_t* mlua_event_spinlock;
-
 // Lock event handling. This disables interrupts.
 __force_inline static uint32_t mlua_event_lock(void) {
+    extern spin_lock_t* mlua_event_spinlock;
     return spin_lock_blocking(mlua_event_spinlock);
 }
 
 // Unlock event handling.
 __force_inline static void mlua_event_unlock(uint32_t save) {
+    extern spin_lock_t* mlua_event_spinlock;
     spin_unlock(mlua_event_spinlock, save);
 }
 
@@ -130,7 +130,7 @@ int mlua_event_loop(lua_State* ls, MLuaEvent event, MLuaEventLoopFn loop,
 #if !LIB_MLUA_MOD_MLUA_EVENT
 #define mlua_event_require(ls) do {} while(0)
 #define mlua_event_can_wait(event) (false)
-#define mlua_event_wait(ls, event, loop, index) ((int)0)
+#define mlua_event_loop(ls, event, loop, index) ((int)0)
 #endif
 
 // Start an event handler thread for the given event. The function expects two

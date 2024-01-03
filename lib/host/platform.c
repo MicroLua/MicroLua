@@ -20,21 +20,31 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
     lua_setglobal(ls, "yield_enabled");
 }
 
+void mlua_platform_ticks_range(uint64_t* min, uint64_t* max) {
+    *min = 0;
+    *max = INT64_MAX;
+}
+
 #ifdef CLOCK_BOOTTIME
 #define CLOCK CLOCK_BOOTTIME
 #else
 #define CLOCK CLOCK_MONOTONIC
 #endif
 
-uint64_t mlua_platform_ticks_us(void) {
+uint64_t mlua_platform_ticks(void) {
     struct timespec ts;
     clock_gettime(CLOCK, &ts);
     return ts.tv_sec * (uint64_t)1000000 + ts.tv_nsec / 1000;
 }
 
-void mlua_platform_time_range(uint64_t* min, uint64_t* max) {
-    *min = 0;
-    *max = INT64_MAX;
+bool mlua_platform_ticks_reached(uint64_t ticks) {
+    return mlua_platform_ticks() >= ticks;
+}
+
+bool mlua_platform_wait(uint64_t deadline) {
+    struct timespec ts = {.tv_sec = deadline / 1000000,
+                          .tv_nsec = (deadline % 1000000) * 1000};
+    return clock_nanosleep(CLOCK, TIMER_ABSTIME, &ts, NULL) == 0;
 }
 
 MLuaFlash const* mlua_platform_flash(void) { return NULL; }

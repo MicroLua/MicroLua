@@ -197,6 +197,7 @@ target_link_libraries(mlua_mod_mlua_time INTERFACE
 mlua_add_lua_modules(mlua_test_mlua_time mlua.time.test.lua)
 target_link_libraries(mlua_test_mlua_time INTERFACE
     mlua_mod_mlua_time
+    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_mod_mlua_uf2 mlua.uf2.lua)

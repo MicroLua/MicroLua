@@ -5,6 +5,7 @@ target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
 target_include_directories(mlua_platform INTERFACE include_platform)
 target_sources(mlua_platform INTERFACE platform.c)
 target_link_libraries(mlua_platform INTERFACE
+    hardware_sync
     hardware_timer
     mlua_mod_mlua_event_headers
     pico_binary_info
@@ -349,6 +350,7 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     hardware_irq
     hardware_sync
     mlua_mod_mlua_int64
+    mlua_platform
     pico_platform
     pico_time
 )
