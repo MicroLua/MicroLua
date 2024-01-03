@@ -822,15 +822,6 @@ to run the configured main function, then runs `main()`.
 - `running() -> Thread`\
   Return the currently-running thread.
 
-- `now() -> Int64`\
-  Return the current time in microseconds.
-
-- `sleep_until(time)`\
-  Suspend the current thread until `time` has passed.
-
-- `sleep_us(duration)`\
-  Suspend the current thread for the given duration in microseconds.
-
 - `main()`\
   Run the thread scheduler loop.
 

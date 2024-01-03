@@ -6,7 +6,7 @@ _ENV = module(...)
 local coroutine = require 'coroutine'
 local event = require 'mlua.event'
 local oo = require 'mlua.oo'
-local time = require 'pico.time'
+local time = require 'mlua.time'
 local string = require 'string'
 local table = require 'table'
 
@@ -20,6 +20,7 @@ yield = coroutine.yield
 
 local co_resume, co_status = coroutine.resume, coroutine.status
 local co_close = coroutine.close
+local ticks, min_ticks, max_ticks = time.ticks, time.min_ticks, time.max_ticks
 
 local weak_keys = {__mode = 'k'}
 
@@ -83,6 +84,7 @@ local _shutdown = false
 
 -- Shut down the scheduler.
 function Thread.shutdown()
+    -- TODO: Take an argument, and return it from main()
     _shutdown = true
     yield()
 end
@@ -177,20 +179,11 @@ end
 -- Join the threads in the group on closure.
 Group.__close = Group.join
 
--- Return the current absolute time.
-now = time.get_absolute_time
-
--- Suspend the running thread until the given absolute time.
-sleep_until = time.sleep_until
-
--- Suspend the running thread for the given duration (in microseconds).
-sleep_us = time.sleep_us
-
 -- Resume the threads whose deadline has elapsed.
 local function resume_deadlined()
     local len = timers[0]
     if len == 0 then return end
-    local i, t = 1, now()
+    local i, t = 1, ticks()
     while i <= len do
         local thread = timers[i]
         if waiting[thread] > t then break end
@@ -220,12 +213,11 @@ function main()
         for thread in pairs(waiting) do co_close(thread) end
         active, head, tail, waiting, timers = nil, nil, nil, nil, nil
     end
-    local nil_time, at_the_end_of_time = time.nil_time, time.at_the_end_of_time
 
     while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
-        event.dispatch((thread or head ~= tail) and nil_time
-                       or waiting[timers[1]] or at_the_end_of_time)
+        event.dispatch((thread or head ~= tail) and min_ticks
+                       or waiting[timers[1]] or max_ticks)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
