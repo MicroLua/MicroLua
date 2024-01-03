@@ -53,7 +53,7 @@ static int fifo_get_loop(lua_State* ls, bool timeout) {
 
 static int mod_fifo_get_blocking(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    if (mlua_event_can_wait(&adc_state.event)) {
+    if (mlua_event_can_wait(ls, &adc_state.event)) {
         return mlua_event_loop(ls, adc_state.event, &fifo_get_loop, 0);
     }
 #endif

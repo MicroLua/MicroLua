@@ -83,7 +83,7 @@ static int set_handler(lua_State* ls, lua_Integer priority) {
     // Set the IRQ handler.
     uint irq = check_user_irq(ls, 1);
     MLuaEvent* ev = user_irq_event(irq);
-    char const* err = mlua_event_claim(ev);
+    char const* err = mlua_event_claim(ls, ev);
     if (err != NULL) return luaL_error(ls, "IRQ%d: %s", irq, err);
     mlua_event_set_irq_handler(irq, &handle_user_irq, priority);
 

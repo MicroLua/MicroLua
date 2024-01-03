@@ -125,7 +125,7 @@ static int mod_set_irq_callback(lua_State* ls) {
     }
 
     // Set the IRQ handler.
-    char const* err = mlua_event_claim(event);
+    char const* err = mlua_event_claim(ls, event);
     if (err == NULL) {
         irq_add_shared_handler(IO_IRQ_BANK0, &handle_gpio_irq,
                                GPIO_IRQ_CALLBACK_ORDER_PRIORITY);

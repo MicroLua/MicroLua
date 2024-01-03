@@ -25,6 +25,7 @@ spin_lock_t* mlua_event_spinlock;
 
 typedef struct EventState {
     uint32_t pending[EVENTS_SIZE];
+    uint32_t claimed[EVENTS_SIZE];
     uint32_t mask[NUM_CORES][EVENTS_SIZE];
 } EventState;
 
@@ -33,7 +34,7 @@ static EventState event_state;
 char const* const mlua_event_err_already_claimed
     = "event already claimed";
 
-char const* mlua_event_claim_core(MLuaEvent* ev, uint core) {
+char const* mlua_event_claim_core(lua_State* ls, MLuaEvent* ev, uint core) {
     uint32_t save = mlua_event_lock();
     MLuaEvent e = *ev;
     if (e < NUM_EVENTS) {
@@ -41,14 +42,13 @@ char const* mlua_event_claim_core(MLuaEvent* ev, uint core) {
         return mlua_event_err_already_claimed;
     }
     for (uint block = 0; block < EVENTS_SIZE; ++block) {
-        uint32_t mask = 0;
-        for (uint c = 0; c < NUM_CORES; ++c) mask |= event_state.mask[c][block];
-        int idx = __builtin_ffs(~mask);
+        int idx = __builtin_ffs(~event_state.claimed[block]);
         if (idx > 0) {
             --idx;
             *ev = block * 32 + idx;
             uint32_t m = 1u << idx;
             event_state.pending[block] &= ~m;
+            event_state.claimed[block] |= m;
             event_state.mask[core][block] |= m;
             mlua_event_unlock(save);
             return NULL;
@@ -65,16 +65,17 @@ void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
         mlua_event_unlock(save);
         return;
     }
-    uint32_t* pmask = &event_state.mask[get_core_num()][e / 32];
-    uint32_t mask = *pmask & ~(1u << (e % 32));
-    if (mask == *pmask) {
+    uint32_t* pclaimed = &event_state.claimed[e / 32];
+    uint32_t claimed = *pclaimed & ~(1u << (e % 32));
+    if (claimed == *pclaimed) {
         mlua_event_unlock(save);
         return;
     }
-    *pmask = mask;
+    *pclaimed = claimed;
     *ev = MLUA_EVENT_UNSET;
     mlua_event_unlock(save);
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
+    event_state.mask[get_core_num()][e / 32] &= ~(1u << (e % 32));
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state.pending);
     lua_pushnil(ls);
     lua_rawseti(ls, -2, e);
     lua_pop(ls, 1);
@@ -122,7 +123,7 @@ char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
         mlua_event_unclaim(ls, ev);
         return NULL;
     }
-    char const* err = mlua_event_claim(ev);
+    char const* err = mlua_event_claim(ls, ev);
     if (err != NULL) return err;
     mlua_event_set_irq_handler(irq, handler, priority);
     irq_set_enabled(irq, true);
@@ -159,7 +160,7 @@ void mlua_event_watch(lua_State* ls, MLuaEvent ev) {
         luaL_error(ls, "watching event in unyieldable thread");
         return;
     }
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state.pending);
     switch (lua_rawgeti(ls, -1, ev)) {
     case LUA_TNIL:  // No watchers
         lua_pop(ls, 1);
@@ -196,7 +197,7 @@ void mlua_event_watch(lua_State* ls, MLuaEvent ev) {
 
 void mlua_event_unwatch(lua_State* ls, MLuaEvent ev) {
     if (ev >= NUM_EVENTS) return;
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state.pending);
     switch (lua_rawgeti(ls, -1, ev)) {
     case LUA_TTHREAD:  // A single watcher
         lua_pushthread(ls);
@@ -239,11 +240,16 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 
 static bool yield_enabled[NUM_CORES];
 
-bool mlua_yield_enabled(void) { return yield_enabled[get_core_num()]; }
-void mlua_set_yield_enabled(bool en) { yield_enabled[get_core_num()] = en; }
+bool mlua_yield_enabled(lua_State* ls) {
+    return yield_enabled[get_core_num()];
+}
 
-bool mlua_event_can_wait(MLuaEvent* event) {
-    if (!mlua_yield_enabled()) return false;
+void mlua_set_yield_enabled(lua_State* ls, bool en) {
+    yield_enabled[get_core_num()] = en;
+}
+
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent* event) {
+    if (!mlua_yield_enabled(ls)) return false;
     uint32_t save = mlua_event_lock();
     MLuaEvent e = *event;
     bool ok = e < NUM_EVENTS && (event_state.mask[get_core_num()][e / 32]
@@ -374,7 +380,7 @@ static int mod_dispatch(lua_State* ls) {
     lua_replace(ls, 1);
     lua_settop(ls, 1);
 
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state);
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &event_state.pending);
     uint32_t* masks = event_state.mask[get_core_num()];
     for (;;) {
         // Check for pending events and resume the corresponding watcher
@@ -451,7 +457,7 @@ MLUA_OPEN_MODULE(mlua.event) {
 
     // Create the watcher thread table.
     lua_createtable(ls, NUM_EVENTS, 0);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, &event_state.pending);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

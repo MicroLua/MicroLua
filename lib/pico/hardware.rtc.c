@@ -115,7 +115,7 @@ static int mod_set_alarm(lua_State* ls) {
     check_datetime(ls, 1, &dt);
 
     // Set the alarm and callback.
-    char const* err = mlua_event_claim(&rtc_state.event);
+    char const* err = mlua_event_claim(ls, &rtc_state.event);
     if (err == NULL) {
         if (lua_isnone(ls, 2)) {  // No handler
             mlua_event_unclaim(ls, &rtc_state.event);

@@ -72,8 +72,10 @@ void isr_hardfault(void);
 
 static int global_yield_enabled(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
-    bool en = mlua_yield_enabled();
-    if (!lua_isnoneornil(ls, 1)) mlua_set_yield_enabled(lua_toboolean(ls, 1));
+    bool en = mlua_yield_enabled(ls);
+    if (!lua_isnoneornil(ls, 1)) {
+        mlua_set_yield_enabled(ls, lua_toboolean(ls, 1));
+    }
     return lua_pushboolean(ls, en), 1;
 #else
     return lua_pushboolean(ls, false), 1;

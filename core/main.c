@@ -157,6 +157,7 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
 
 lua_State* mlua_new_interpreter(void) {
     lua_State* ls = lua_newstate(allocate, NULL);
+    if (ls == NULL) return NULL;
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
     return ls;

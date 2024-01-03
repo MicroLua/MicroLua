@@ -73,7 +73,7 @@ static int SPI_enable_irq(lua_State* ls) {
         mlua_event_unclaim(ls, &state->event);
         return 0;
     }
-    char const* err = mlua_event_claim(&state->event);
+    char const* err = mlua_event_claim(ls, &state->event);
     if (err != NULL) return luaL_error(ls, "SPI%d: %s", num, err);
     mlua_event_set_irq_handler(irq, &handle_spi_irq, priority);
     irq_set_enabled(irq, true);
@@ -213,7 +213,7 @@ static int write_read_loop(lua_State* ls, bool timeout) {
 static int write_read_non_blocking(lua_State* ls, spi_inst_t* inst, bool read,
                                    size_t len) {
     MLuaEvent* event = &spi_state[spi_get_index(inst)].event;
-    if (!mlua_event_can_wait(event)) return -1;
+    if (!mlua_event_can_wait(ls, event)) return -1;
     lua_settop(ls, 2);
     lua_pushboolean(ls, read);  // read
     lua_pushinteger(ls, len);  // tx

@@ -32,12 +32,12 @@ extern char const* const mlua_event_err_already_claimed;
 
 // Claim an event for the given core. Returns NULL on success, or a message
 // describing the error.
-char const* mlua_event_claim_core(MLuaEvent* ev, uint core);
+char const* mlua_event_claim_core(lua_State* ls, MLuaEvent* ev, uint core);
 
 // Claim an event for the calling core. Returns NULL on success, or a message
 // describing the error.
-static inline char const* mlua_event_claim(MLuaEvent* ev) {
-    return mlua_event_claim_core(ev, get_core_num());
+static inline char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
+    return mlua_event_claim_core(ls, ev, get_core_num());
 }
 
 // Free an event.
@@ -106,20 +106,20 @@ typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 
 #if LIB_MLUA_MOD_MLUA_EVENT
 // Return true iff yielding is enabled.
-bool mlua_yield_enabled(void);
-void mlua_set_yield_enabled(bool en);
+bool mlua_yield_enabled(lua_State* ls);
+void mlua_set_yield_enabled(lua_State* ls, bool en);
 // TODO: Allow force-enabling yielding => eliminate blocking code
 // TODO: Make yield status per-thread
 #else
 __attribute__((__always_inline__))
-static inline bool mlua_yield_enabled(void) { return false; }
+static inline bool mlua_yield_enabled(lua_State* ls) { return false; }
 __attribute__((__always_inline__))
-static inline void mlua_set_yield_enabled(bool en) {}
+static inline void mlua_set_yield_enabled(lua_State* ls, bool en) {}
 #endif
 
 // Return true iff waiting for the given even is possible, i.e. yielding is
 // enabled and the event was claimed.
-bool mlua_event_can_wait(MLuaEvent* event);
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent* event);
 
 // Run an event loop. The loop function is called repeatedly, suspending after
 // each call, as long as the function returns a negative value. The index is

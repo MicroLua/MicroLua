@@ -45,27 +45,31 @@ static int mod_launch_core1(lua_State* ls) {
     if (get_core_num() == core) {
         return luaL_error(ls, "cannot launch core %d from itself", core);
     }
-    size_t len;
-    char const* module = luaL_checklstring(ls, 1, &len);
-    char const* fn = luaL_optstring(ls, 2, "main");
+    size_t mlen, flen;
+    char const* module = luaL_checklstring(ls, 1, &mlen);
+    char const* fn = luaL_optlstring(ls, 2, "main", &flen);
+
+    // Create a new interpreter.
+    lua_State* ls1 = mlua_new_interpreter();
+    if (ls1 == NULL) return luaL_error(ls, "interpreter creation failed");
 
     // Set up the shutdown request event.
     CoreState* st = &core_state[core - 1];
-    char const* err = mlua_event_claim_core(&st->shutdown_event, core);
+    char const* err = mlua_event_claim_core(ls1, &st->shutdown_event, core);
     if (err == mlua_event_err_already_claimed) {
+        lua_close(ls1);
         return luaL_error(ls, "core %d is already running an interpreter",
                           core);
     } else if (err != NULL) {
+        lua_close(ls1);
         return luaL_error(ls, "multicore: %s", err);
     }
-
-    // Create a new interpreter.
-    st->ls = mlua_new_interpreter();
+    st->ls = ls1;
     st->shutdown = false;
 
     // Launch the interpreter in the other core.
-    lua_pushlstring(st->ls, module, len);
-    lua_pushstring(st->ls, fn);
+    lua_pushlstring(ls1, module, mlen);
+    lua_pushlstring(ls1, fn, flen);
     multicore_launch_core1(&launch_core);
     return 0;
 }
@@ -104,7 +108,7 @@ static int mod_reset_core1(lua_State* ls) {
     // Wait for the interpreter to terminate.
     // TODO: This is racy. Core 1 could terminate before stopped_event is
     //       claimed. Then the wait below will get stuck.
-    char const* err = mlua_event_claim(&st->stopped_event);
+    char const* err = mlua_event_claim(ls, &st->stopped_event);
     if (err != NULL) return luaL_error(ls, "multicore: %s", err);
     lua_pushlightuserdata(ls, st);
     return mlua_event_loop(ls, st->stopped_event, &stopped_loop, 0);

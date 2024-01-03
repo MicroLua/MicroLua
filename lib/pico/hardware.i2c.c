@@ -146,7 +146,7 @@ static int I2C_write_blocking(lua_State* ls) {
     bool nostop = mlua_to_cbool(ls, 4);
 
     MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
-    if (mlua_event_can_wait(event)) {
+    if (mlua_event_can_wait(ls, event)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
         lua_pushinteger(ls, -1);  // offset
@@ -266,7 +266,7 @@ static int I2C_read_blocking(lua_State* ls) {
     bool nostop = mlua_to_cbool(ls, 4);
 
     MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
-    if (mlua_event_can_wait(event)) {
+    if (mlua_event_can_wait(ls, event)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
         lua_pushinteger(ls, -1);  // offset

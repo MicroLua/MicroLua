@@ -51,7 +51,7 @@ static int mod_enable_irq(lua_State* ls) {
 static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_push_blocking(lua_State* ls) {
-    if (mlua_yield_enabled()) return mod_push_blocking_1(ls, 0, 0);
+    if (mlua_yield_enabled(ls)) return mod_push_blocking_1(ls, 0, 0);
     multicore_fifo_push_blocking(luaL_checkinteger(ls, 1));
     return 0;
 }
@@ -73,7 +73,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_push_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 2);
-    if (mlua_yield_enabled()) {
+    if (mlua_yield_enabled(ls)) {
         mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
         lua_replace(ls, 2);
         return mod_push_timeout_us_1(ls, 0, 0);
@@ -112,7 +112,7 @@ static int pop_loop(lua_State* ls, bool timeout) {
 
 static int mod_pop_blocking(lua_State* ls) {
     MLuaEvent* event = &fifo_state[get_core_num()].event;
-    if (mlua_event_can_wait(event)) {
+    if (mlua_event_can_wait(ls, event)) {
         return mlua_event_loop(ls, *event, &pop_loop, 0);
     }
     lua_pushinteger(ls, multicore_fifo_pop_blocking());
@@ -122,7 +122,7 @@ static int mod_pop_blocking(lua_State* ls) {
 static int mod_pop_timeout_us(lua_State* ls) {
     absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 1));
     MLuaEvent* event = &fifo_state[get_core_num()].event;
-    if (mlua_event_can_wait(event)) {
+    if (mlua_event_can_wait(ls, event)) {
         mlua_push_int64(ls, to_us_since_boot(deadline));
         lua_replace(ls, 1);
         return mlua_event_loop(ls, *event, &pop_loop, 1);

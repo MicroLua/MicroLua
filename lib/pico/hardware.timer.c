@@ -73,7 +73,7 @@ static int mod_set_callback(lua_State* ls) {
     }
 
     // Set the callback.
-    char const* err = mlua_event_claim(ev);
+    char const* err = mlua_event_claim(ls, ev);
     if (err != NULL) return luaL_error(ls, "TIMER%d: %s", alarm, err);
     hardware_alarm_set_callback(alarm, &handle_alarm);
 
