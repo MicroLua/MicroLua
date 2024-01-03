@@ -53,7 +53,7 @@ static void __time_critical_func(handle_user_irq)(void) {
     uint32_t save = save_and_disable_interrupts();
     state->pending |= 1u << num;
     restore_interrupts(save);
-    mlua_event_set(state->events[num]);
+    mlua_event_set(&state->events[num]);
 }
 
 static int handle_user_irq_event(lua_State* ls) {
@@ -130,7 +130,7 @@ static int mod_clear(lua_State* ls) {
         uint32_t save = save_and_disable_interrupts();
         irq_clear(irq);
         state->pending &= ~(1u << num);
-        mlua_event_clear(state->events[num]);
+        mlua_event_clear(&state->events[num]);
         restore_interrupts(save);
     } else {
 #endif

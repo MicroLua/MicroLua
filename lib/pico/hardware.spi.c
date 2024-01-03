@@ -58,7 +58,7 @@ static void __time_critical_func(handle_spi_irq)(void) {
     hw_clear_bits(&hw->imsc,
         SPI_SSPIMSC_TXIM_BITS | SPI_SSPIMSC_RXIM_BITS | SPI_SSPIMSC_RTIM_BITS);
     SPIState* state = &spi_state[num];
-    mlua_event_set(state->event);
+    mlua_event_set(&state->event);
 }
 
 static int SPI_enable_irq(lua_State* ls) {
@@ -218,7 +218,7 @@ static int write_read_non_blocking(lua_State* ls, spi_inst_t* inst, bool read,
     lua_pushboolean(ls, read);  // read
     lua_pushinteger(ls, len);  // tx
     lua_pushinteger(ls, len);  // rx
-    return mlua_event_loop(ls, *event, &write_read_loop, 0);
+    return mlua_event_loop(ls, event, &write_read_loop, 0);
 }
 
 static int write_read(lua_State* ls, bool read, uint8_t const* src,

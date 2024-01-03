@@ -38,7 +38,7 @@ static AlarmState alarm_state;
 static void __time_critical_func(handle_alarm)(uint alarm) {
     uint32_t save = mlua_event_lock();
     alarm_state.pending |= 1u << alarm;
-    mlua_event_set_nolock(alarm_state.events[alarm]);
+    mlua_event_set_nolock(&alarm_state.events[alarm]);
     mlua_event_unlock(save);
 }
 

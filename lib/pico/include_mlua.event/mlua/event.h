@@ -55,6 +55,14 @@ __force_inline static void mlua_event_unlock(uint32_t save) {
     spin_unlock(mlua_event_spinlock, save);
 }
 
+// Dereference an MLuaEvent* under the event lock.
+__force_inline static MLuaEvent mlua_event_deref(MLuaEvent* ev) {
+    uint32_t save = mlua_event_lock();
+    MLuaEvent e = *ev;
+    mlua_event_unlock(save);
+    return e;
+}
+
 // Parse an IRQ priority argument, which must be an integer or nil.
 lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
                                           lua_Integer def);
@@ -78,19 +86,19 @@ char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
                                   lua_Integer priority);
 
 // Set an event pending.
-void mlua_event_set(MLuaEvent ev);
+void mlua_event_set(MLuaEvent* ev);
 
 // Set an event pending. Must be in a locked section.
-void mlua_event_set_nolock(MLuaEvent ev);
+void mlua_event_set_nolock(MLuaEvent* ev);
 
 // Clear the pending state of an event.
-void mlua_event_clear(MLuaEvent ev);
+void mlua_event_clear(MLuaEvent* ev);
 
 // Register the current thread to be notified when an event triggers.
-void mlua_event_watch(lua_State* ls, MLuaEvent ev);
+void mlua_event_watch(lua_State* ls, MLuaEvent* ev);
 
 // Unregister the current thread from notifications for an event.
-void mlua_event_unwatch(lua_State* ls, MLuaEvent ev);
+void mlua_event_unwatch(lua_State* ls, MLuaEvent* ev);
 
 // Yield from the running thread.
 int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
@@ -124,7 +132,7 @@ bool mlua_event_can_wait(lua_State* ls, MLuaEvent* event);
 // Run an event loop. The loop function is called repeatedly, suspending after
 // each call, as long as the function returns a negative value. The index is
 // passed to mlua_event_suspend as a deadline index.
-int mlua_event_loop(lua_State* ls, MLuaEvent event, MLuaEventLoopFn loop,
+int mlua_event_loop(lua_State* ls, MLuaEvent* ev, MLuaEventLoopFn loop,
                     int index);
 
 #if !LIB_MLUA_MOD_MLUA_EVENT

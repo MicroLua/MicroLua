@@ -84,10 +84,10 @@ static void __time_critical_func(handle_uart_irq)(void) {
         | UART_UARTMIS_TXMIS_BITS));
     UARTState* state = &uart_state[num];
     if (mis & (UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS)) {
-        mlua_event_set(state->rx_event);
+        mlua_event_set(&state->rx_event);
     }
     if (mis & UART_UARTMIS_TXMIS_BITS) {
-        mlua_event_set(state->tx_event);
+        mlua_event_set(&state->tx_event);
     }
 }
 
@@ -165,7 +165,7 @@ static int UART_write_blocking(lua_State* ls) {
     if (mlua_event_can_wait(ls, event)) {
         lua_settop(ls, 2);
         lua_pushinteger(ls, 0);  // offset
-        return mlua_event_loop(ls, *event, &write_loop, 0);
+        return mlua_event_loop(ls, event, &write_loop, 0);
     }
     uart_write_blocking(inst, src, len);
     return 0;
@@ -209,7 +209,7 @@ static int UART_read_blocking(lua_State* ls) {
     if (mlua_event_can_wait(ls, event)) {
         lua_settop(ls, 2);
         lua_pushinteger(ls, 0);  // offset
-        return mlua_event_loop(ls, *event, &read_loop, 0);
+        return mlua_event_loop(ls, event, &read_loop, 0);
     }
     luaL_Buffer buf;
     uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
@@ -229,7 +229,7 @@ static int UART_getc(lua_State* ls) {
     uart_inst_t* inst = mlua_check_UART(ls, 1);
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(ls, event)) {
-        return mlua_event_loop(ls, *event, &getc_loop, 0);
+        return mlua_event_loop(ls, event, &getc_loop, 0);
     }
     lua_pushinteger(ls, uart_getc(inst));
     return 1;
@@ -253,7 +253,7 @@ static int UART_is_readable_within_us(lua_State* ls) {
     if (mlua_event_can_wait(ls, event)) {
         mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
         lua_replace(ls, 2);
-        return mlua_event_loop(ls, *event, &is_readable_loop, 2);
+        return mlua_event_loop(ls, event, &is_readable_loop, 2);
     }
     lua_pushboolean(ls, uart_is_readable_within_us(inst, timeout));
     return 1;

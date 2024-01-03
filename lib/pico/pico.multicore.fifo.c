@@ -33,7 +33,7 @@ static void __time_critical_func(handle_sio_irq)(void) {
     st->status |= status & (SIO_FIFO_ST_ROE_BITS | SIO_FIFO_ST_WOF_BITS);
     if (status & SIO_FIFO_ST_VLD_BITS) {
         irq_set_enabled(SIO_IRQ_PROC0 + core, false);
-        mlua_event_set(st->event);
+        mlua_event_set(&st->event);
     }
 }
 
@@ -113,7 +113,7 @@ static int pop_loop(lua_State* ls, bool timeout) {
 static int mod_pop_blocking(lua_State* ls) {
     MLuaEvent* event = &fifo_state[get_core_num()].event;
     if (mlua_event_can_wait(ls, event)) {
-        return mlua_event_loop(ls, *event, &pop_loop, 0);
+        return mlua_event_loop(ls, event, &pop_loop, 0);
     }
     lua_pushinteger(ls, multicore_fifo_pop_blocking());
     return 1;
@@ -125,7 +125,7 @@ static int mod_pop_timeout_us(lua_State* ls) {
     if (mlua_event_can_wait(ls, event)) {
         mlua_push_int64(ls, to_us_since_boot(deadline));
         lua_replace(ls, 1);
-        return mlua_event_loop(ls, *event, &pop_loop, 1);
+        return mlua_event_loop(ls, event, &pop_loop, 1);
     }
 
     // BUG(pico-sdk): We don't use multicore_fifo_pop_timeout_us() here, because

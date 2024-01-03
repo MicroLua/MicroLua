@@ -36,7 +36,7 @@ static void launch_core(void) {
     mlua_event_unclaim(ls, &st->shutdown_event);
     lua_close(ls);
     uint32_t save = mlua_event_lock();
-    mlua_event_set_nolock(st->stopped_event);
+    mlua_event_set_nolock(&st->stopped_event);
     mlua_event_unlock(save);
 }
 
@@ -97,7 +97,7 @@ static int mod_reset_core1(lua_State* ls) {
     bool running = st->shutdown_event != MLUA_EVENT_UNSET;
     if (running) {
         st->shutdown = true;
-        mlua_event_set_nolock(st->shutdown_event);
+        mlua_event_set_nolock(&st->shutdown_event);
     }
     mlua_event_unlock(save);
     if (!running) {
@@ -111,7 +111,7 @@ static int mod_reset_core1(lua_State* ls) {
     char const* err = mlua_event_claim(ls, &st->stopped_event);
     if (err != NULL) return luaL_error(ls, "multicore: %s", err);
     lua_pushlightuserdata(ls, st);
-    return mlua_event_loop(ls, st->stopped_event, &stopped_loop, 0);
+    return mlua_event_loop(ls, &st->stopped_event, &stopped_loop, 0);
 }
 
 static int handle_shutdown_event(lua_State* ls) {

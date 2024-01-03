@@ -37,7 +37,7 @@ static void __time_critical_func(handle_i2c_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - I2C0_IRQ;
     i2c_hw_t* hw = i2c_get_hw(i2c_get_instance(num));
     hw->intr_mask = 0;
-    mlua_event_set(mlua_i2c_state[num].event);
+    mlua_event_set(&mlua_i2c_state[num].event);
 }
 
 static int I2C_enable_irq(lua_State* ls) {
@@ -150,7 +150,7 @@ static int I2C_write_blocking(lua_State* ls) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_loop(ls, *event, &write_loop, 5);
+        return mlua_event_loop(ls, event, &write_loop, 5);
     }
 
     int res;
@@ -270,7 +270,7 @@ static int I2C_read_blocking(lua_State* ls) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_loop(ls, *event, &read_loop, 5);
+        return mlua_event_loop(ls, event, &read_loop, 5);
     }
 
     bool no_deadline = lua_isnoneornil(ls, 5);

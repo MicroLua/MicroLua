@@ -79,7 +79,7 @@ static RtcState rtc_state = {.event = MLUA_EVENT_UNSET};
 static void handle_alarm() {
     uint32_t save = mlua_event_lock();
     rtc_state.pending = true;
-    mlua_event_set_nolock(rtc_state.event);
+    mlua_event_set_nolock(&rtc_state.event);
     mlua_event_unlock(save);
 }
 

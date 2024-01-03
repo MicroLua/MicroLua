@@ -30,7 +30,7 @@ static ADCState adc_state = {.event = MLUA_EVENT_UNSET};
 
 static void __time_critical_func(handle_adc_irq)(void) {
     adc_irq_set_enabled(false);
-    mlua_event_set(adc_state.event);
+    mlua_event_set(&adc_state.event);
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
@@ -54,7 +54,7 @@ static int fifo_get_loop(lua_State* ls, bool timeout) {
 static int mod_fifo_get_blocking(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
     if (mlua_event_can_wait(ls, &adc_state.event)) {
-        return mlua_event_loop(ls, adc_state.event, &fifo_get_loop, 0);
+        return mlua_event_loop(ls, &adc_state.event, &fifo_get_loop, 0);
     }
 #endif
     lua_pushinteger(ls, adc_fifo_get_blocking());

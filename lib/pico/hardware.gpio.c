@@ -58,7 +58,7 @@ static void __time_critical_func(handle_gpio_irq)(void) {
         // Disable active level-triggered events.
         hw_clear_bits(&irq_ctrl_base->inte[block], pending & LEVEL_MASK_BLOCK);
      }
-     if (notify) mlua_event_set(state->irq_event);
+     if (notify) mlua_event_set(&state->irq_event);
 }
 
 static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx);
