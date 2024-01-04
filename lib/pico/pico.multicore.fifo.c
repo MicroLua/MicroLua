@@ -39,10 +39,10 @@ static void __time_critical_func(handle_sio_irq)(void) {
 
 static int mod_enable_irq(lua_State* ls) {
     uint core = get_core_num();
-    char const* err = mlua_event_enable_irq(
-        ls, &fifo_state[core].event, SIO_IRQ_PROC0 + core,
-        &handle_sio_irq, 1, -1);
-    if (err != NULL) return luaL_error(ls, "SIO[%d]: %s", core, err);
+    if (!mlua_event_enable_irq(ls, &fifo_state[core].event,
+                              SIO_IRQ_PROC0 + core, &handle_sio_irq, 1, -1)) {
+        return luaL_error(ls, "SIO[%d]: IRQ already enabled", core);
+    }
     return 0;
 }
 

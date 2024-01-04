@@ -75,7 +75,7 @@ static int handle_user_irq_event(lua_State* ls) {
 static int user_irq_handler_done(lua_State* ls) {
     uint irq = lua_tointeger(ls, lua_upvalueindex(1));
     irq_remove_handler(irq, &handle_user_irq);
-    mlua_event_unclaim(ls, user_irq_event(irq));
+    mlua_event_disable(ls, user_irq_event(irq));
     return 0;
 }
 
@@ -83,8 +83,9 @@ static int set_handler(lua_State* ls, lua_Integer priority) {
     // Set the IRQ handler.
     uint irq = check_user_irq(ls, 1);
     MLuaEvent* ev = user_irq_event(irq);
-    char const* err = mlua_event_claim(ls, ev);
-    if (err != NULL) return luaL_error(ls, "IRQ%d: %s", irq, err);
+    if (!mlua_event_enable(ls, ev)) {
+        return luaL_error(ls, "IRQ%d: handler already set", irq);
+    }
     mlua_event_set_irq_handler(irq, &handle_user_irq, priority);
 
     // Start the event handler thread.

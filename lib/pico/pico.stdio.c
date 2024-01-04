@@ -42,22 +42,17 @@ static bool chars_available_reset() {
 }
 
 static void enable_chars_available(lua_State* ls) {
-    char const* err = mlua_event_claim(ls, &stdio_state.event);
-    if (err == NULL) {
-        uint32_t save = mlua_event_lock();
-        stdio_state.pending = false;
-        mlua_event_unlock(save);
-        stdio_set_chars_available_callback(&handle_chars_available, NULL);
-    } else if (err != mlua_event_err_already_claimed) {
-        luaL_error(ls, "stdio: %s", err);
-        return;
-    }
+    if (!mlua_event_enable(ls, &stdio_state.event)) return;
+    uint32_t save = mlua_event_lock();
+    stdio_state.pending = false;
+    mlua_event_unlock(save);
+    stdio_set_chars_available_callback(&handle_chars_available, NULL);
 }
 
 static int mod_enable_chars_available(lua_State* ls) {
     if (lua_type(ls, 1) == LUA_TBOOLEAN && !lua_toboolean(ls, 1)) {
         stdio_set_chars_available_callback(NULL, NULL);
-        mlua_event_unclaim(ls, &stdio_state.event);
+        mlua_event_disable(ls, &stdio_state.event);
         return 0;
     }
     enable_chars_available(ls);

@@ -8,7 +8,6 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Rename "claim" to "enable"
 // TODO: Make some short functions inline
 // TODO: Don't store the handler thread in the registry; it should already be
 //       available as a (single) watcher; start watching in the parent
@@ -51,9 +50,6 @@ static inline void const* handler_tag(MLuaEvent const* ev) {
     return (void const*)ev + 1;
 }
 
-char const* const mlua_event_err_already_claimed
-    = "event already claimed";
-
 EventQueue* get_queue(lua_State* ls) {
     EventQueue* q;
     if (lua_rawgetp(ls, LUA_REGISTRYINDEX, &queue) == LUA_TNIL) {
@@ -83,19 +79,19 @@ static void remove_pending_nolock(EventQueue* q, MLuaEvent const* ev) {
     }
 }
 
-char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
+bool mlua_event_enable(lua_State* ls, MLuaEvent* ev) {
     EventQueue* q = get_queue(ls);
     uint32_t save = mlua_event_lock();
     if (ev->state != 0) {
         mlua_event_unlock(save);
-        return mlua_event_err_already_claimed;
+        return false;
     }
     ev->state = (uintptr_t)q;
     mlua_event_unlock(save);
-    return NULL;
+    return true;
 }
 
-void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
+void mlua_event_disable(lua_State* ls, MLuaEvent* ev) {
     EventQueue* q = get_queue(ls);
     uint32_t save = mlua_event_lock();
     if (ev->state == 0) {
@@ -154,20 +150,19 @@ void mlua_event_set_irq_handler(uint irq, void (*handler)(void),
     }
 }
 
-char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                                  void (*handler)(void), int index,
-                                  lua_Integer priority) {
+bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                           irq_handler_t handler, int index,
+                           lua_Integer priority) {
     if (!mlua_event_enable_irq_arg(ls, index, &priority)) {  // Disable IRQ
         irq_set_enabled(irq, false);
         irq_remove_handler(irq, handler);
-        mlua_event_unclaim(ls, ev);
-        return NULL;
+        mlua_event_disable(ls, ev);
+        return true;
     }
-    char const* err = mlua_event_claim(ls, ev);
-    if (err != NULL) return err;
+    if (!mlua_event_enable(ls, ev)) return false;
     mlua_event_set_irq_handler(irq, handler, priority);
     irq_set_enabled(irq, true);
-    return NULL;
+    return true;
 }
 
 void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {

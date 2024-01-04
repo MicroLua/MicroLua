@@ -32,14 +32,11 @@ typedef struct MLuaEvent {
     uintptr_t state;
 } MLuaEvent;
 
-// The error returned by mlua_event_claim*() if the event was already claimed.
-extern char const* const mlua_event_err_already_claimed;
-
-// Enable an event. Returns NULL on success, or a message describing the error.
-char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev);
+// Enable an event. Returns false iff the event was already enabled.
+bool mlua_event_enable(lua_State* ls, MLuaEvent* ev);
 
 // Disable an event.
-void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
+void mlua_event_disable(lua_State* ls, MLuaEvent* ev);
 
 // Return true iff the event is enabled. Must be in a locked section.
 bool mlua_event_enabled_nolock(MLuaEvent const* ev);
@@ -72,14 +69,14 @@ void mlua_event_set_irq_handler(uint irq, irq_handler_t handler,
 
 // Enable or disable IRQ handling. The argument at the given index determines
 // what is done:
-//  - true, nil, none, integer: Claim an event, set the IRQ handler and enable
+//  - true, nil, none, integer: Enable the event, set the IRQ handler and enable
 //    the IRQ. If the argument is a non-negative integer, add a shared handler
 //    with the given priority. Otherwise, set an exclusive handler.
-//  - false: Disable the IRQ, remove the IRQ handler and unclaim the event.
-// Returns NULL on success, or a message describing the error.
-char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                                  irq_handler_t handler, int index,
-                                  lua_Integer priority);
+//  - false: Disable the IRQ, remove the IRQ handler and disable the event.
+// False iff the event was already enabled.
+bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                           irq_handler_t handler, int index,
+                           lua_Integer priority);
 
 // Set an event pending. Must be in a locked section.
 void mlua_event_set_nolock(MLuaEvent* ev);
@@ -118,8 +115,8 @@ __attribute__((__always_inline__))
 static inline void mlua_set_yield_enabled(lua_State* ls, bool en) {}
 #endif
 
-// Return true iff waiting for the given even is possible, i.e. yielding is
-// enabled and the event was claimed.
+// Return true iff waiting for the given event is possible, i.e. yielding is
+// enabled and the event is enabled.
 bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
 
 // Run an event loop. The loop function is called repeatedly, suspending after

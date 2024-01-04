@@ -70,11 +70,12 @@ static int SPI_enable_irq(lua_State* ls) {
     if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQ
         irq_set_enabled(irq, false);
         irq_remove_handler(irq, &handle_spi_irq);
-        mlua_event_unclaim(ls, &state->event);
+        mlua_event_disable(ls, &state->event);
         return 0;
     }
-    char const* err = mlua_event_claim(ls, &state->event);
-    if (err != NULL) return luaL_error(ls, "SPI%d: %s", num, err);
+    if (!mlua_event_enable(ls, &state->event)) {
+        return luaL_error(ls, "SPI%d: IRQ already enabled", num);
+    }
     mlua_event_set_irq_handler(irq, &handle_spi_irq, priority);
     irq_set_enabled(irq, true);
     return 0;

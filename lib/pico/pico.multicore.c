@@ -31,13 +31,11 @@ static void launch_core(void) {
     CoreState* st = &core_state[get_core_num() - 1];
     lua_State* ls = st->ls;
     mlua_run_main(ls, 0);
-    // TODO: The event should be unclaimed after closing the lua_State,
+    // TODO: The event should be disabled after closing the lua_State,
     //       otherwise the core could be reset before the state can be closed.
-    mlua_event_unclaim(ls, &st->shutdown_event);
+    mlua_event_disable(ls, &st->shutdown_event);
     lua_close(ls);
-    uint32_t save = mlua_event_lock();
-    mlua_event_set_nolock(&st->stopped_event);
-    mlua_event_unlock(save);
+    mlua_event_set(&st->stopped_event);
 }
 
 static int mod_launch_core1(lua_State* ls) {
@@ -55,14 +53,10 @@ static int mod_launch_core1(lua_State* ls) {
 
     // Set up the shutdown request event.
     CoreState* st = &core_state[core - 1];
-    char const* err = mlua_event_claim(ls1, &st->shutdown_event);
-    if (err == mlua_event_err_already_claimed) {
+    if (!mlua_event_enable(ls1, &st->shutdown_event)) {
         lua_close(ls1);
         return luaL_error(ls, "core %d is already running an interpreter",
                           core);
-    } else if (err != NULL) {
-        lua_close(ls1);
-        return luaL_error(ls, "multicore: %s", err);
     }
     st->ls = ls1;
     st->shutdown = false;
@@ -77,7 +71,7 @@ static int mod_launch_core1(lua_State* ls) {
 static int stopped_loop(lua_State* ls, bool timeout) {
     CoreState* st = (CoreState*)lua_touserdata(ls, -1);
     if (mlua_event_enabled(&st->shutdown_event)) return -1;
-    mlua_event_unclaim(ls, &st->stopped_event);
+    mlua_event_disable(ls, &st->stopped_event);
     multicore_reset_core1();
     return 0;
 }
@@ -104,9 +98,10 @@ static int mod_reset_core1(lua_State* ls) {
 
     // Wait for the interpreter to terminate.
     // TODO: This is racy. Core 1 could terminate before stopped_event is
-    //       claimed. Then the wait below will get stuck.
-    char const* err = mlua_event_claim(ls, &st->stopped_event);
-    if (err != NULL) return luaL_error(ls, "multicore: %s", err);
+    //       enabled. Then the wait below will get stuck.
+    if (!mlua_event_enable(ls, &st->stopped_event)) {
+        return luaL_error(ls, "multicore: stopped event already enabled");
+    }
     lua_pushlightuserdata(ls, st);
     return mlua_event_loop(ls, &st->stopped_event, &stopped_loop, 0);
 }

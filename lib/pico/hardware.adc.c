@@ -34,9 +34,10 @@ static void __time_critical_func(handle_adc_irq)(void) {
 }
 
 static int mod_fifo_enable_irq(lua_State* ls) {
-    char const* err = mlua_event_enable_irq(ls, &adc_state.event, ADC_IRQ_FIFO,
-                                            &handle_adc_irq, 1, -1);
-    if (err != NULL) return luaL_error(ls, "ADC: %s", err);
+    if (!mlua_event_enable_irq(ls, &adc_state.event, ADC_IRQ_FIFO,
+                               &handle_adc_irq, 1, -1)) {
+        return luaL_error(ls, "ADC: FIFO IRQ already enabled");
+    }
     return 0;
 }
 

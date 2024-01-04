@@ -60,7 +60,7 @@ static int handle_alarm_event(lua_State* ls) {
 static int alarm_handler_done(lua_State* ls) {
     uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
     hardware_alarm_set_callback(alarm, NULL);
-    mlua_event_unclaim(ls, &alarm_state.events[alarm]);
+    mlua_event_disable(ls, &alarm_state.events[alarm]);
     return 0;
 }
 
@@ -73,8 +73,9 @@ static int mod_set_callback(lua_State* ls) {
     }
 
     // Set the callback.
-    char const* err = mlua_event_claim(ls, ev);
-    if (err != NULL) return luaL_error(ls, "TIMER%d: %s", alarm, err);
+    if (!mlua_event_enable(ls, ev)) {
+        return luaL_error(ls, "TIMER%d: callback already set", alarm);
+    }
     hardware_alarm_set_callback(alarm, &handle_alarm);
 
     // Start the event handler thread.

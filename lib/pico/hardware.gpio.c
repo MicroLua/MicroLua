@@ -111,7 +111,7 @@ static int irq_handler_done(lua_State* ls) {
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &state->pending[0]);
     irq_remove_handler(IO_IRQ_BANK0, &handle_gpio_irq);
-    mlua_event_unclaim(ls, &state->irq_event);
+    mlua_event_disable(ls, &state->irq_event);
     return 0;
 }
 
@@ -125,12 +125,10 @@ static int mod_set_irq_callback(lua_State* ls) {
     }
 
     // Set the IRQ handler.
-    char const* err = mlua_event_claim(ls, event);
-    if (err == NULL) {
+    bool enabled = mlua_event_enable(ls, event);
+    if (enabled) {
         irq_add_shared_handler(IO_IRQ_BANK0, &handle_gpio_irq,
                                GPIO_IRQ_CALLBACK_ORDER_PRIORITY);
-    } else if (err != mlua_event_err_already_claimed) {
-        return luaL_error(ls, "GPIO: %s", err);
     }
 
     // Set the callback handler.
@@ -138,7 +136,7 @@ static int mod_set_irq_callback(lua_State* ls) {
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &state->pending[0]);
 
     // Start the event handler thread if it isn't already running.
-    if (err != NULL) {
+    if (!enabled) {
         mlua_event_push_handler_thread(ls, event);
         return 1;
     }

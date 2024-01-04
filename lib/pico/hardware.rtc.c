@@ -102,7 +102,7 @@ static int alarm_handler_done(lua_State* ls) {
                      .hour = -1, .min = -1, .sec = -1};
     rtc_set_alarm(&dt, NULL);
     rtc_disable_alarm();
-    mlua_event_unclaim(ls, &rtc_state.event);
+    mlua_event_disable(ls, &rtc_state.event);
     return 0;
 }
 
@@ -115,14 +115,12 @@ static int mod_set_alarm(lua_State* ls) {
     check_datetime(ls, 1, &dt);
 
     // Set the alarm and callback.
-    char const* err = mlua_event_claim(ls, &rtc_state.event);
-    if (err == NULL) {
+    bool enabled = mlua_event_enable(ls, &rtc_state.event);
+    if (enabled) {
         if (lua_isnone(ls, 2)) {  // No handler
-            mlua_event_unclaim(ls, &rtc_state.event);
+            mlua_event_disable(ls, &rtc_state.event);
             return 0;
         }
-    } else if (err != mlua_event_err_already_claimed) {
-        return luaL_error(ls, "rtc: %s", err);
     }
     uint32_t save = mlua_event_lock();
     rtc_state.pending = false;
@@ -136,7 +134,7 @@ static int mod_set_alarm(lua_State* ls) {
     }
 
     // Start the event handler thread if it isn't already running.
-    if (err != NULL) {
+    if (!enabled) {
         mlua_event_push_handler_thread(ls, &rtc_state.event);
         return 1;
     }

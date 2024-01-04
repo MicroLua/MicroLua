@@ -100,16 +100,16 @@ static int UART_enable_irq(lua_State* ls) {
     if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQ
         irq_set_enabled(irq, false);
         irq_remove_handler(irq, &handle_uart_irq);
-        mlua_event_unclaim(ls, &state->rx_event);
-        mlua_event_unclaim(ls, &state->tx_event);
+        mlua_event_disable(ls, &state->rx_event);
+        mlua_event_disable(ls, &state->tx_event);
         return 0;
     }
-    char const* err = mlua_event_claim(ls, &state->rx_event);
-    if (err != NULL) return luaL_error(ls, "UART%d Rx: %s", num, err);
-    err = mlua_event_claim(ls, &state->tx_event);
-    if (err != NULL) {
-        mlua_event_unclaim(ls, &state->rx_event);
-        return luaL_error(ls, "UART%d Tx: %s", num, err);
+    if (!mlua_event_enable(ls, &state->rx_event)) {
+        return luaL_error(ls, "UART%d Rx IRQ already enabled", num);
+    }
+    if (!mlua_event_enable(ls, &state->tx_event)) {
+        mlua_event_disable(ls, &state->rx_event);
+        return luaL_error(ls, "UART%d Tx IRQ already enabled", num);
     }
     hw_write_masked(&uart_get_hw(inst)->ifls,  // Thresholds: 1/2 FIFO capacity
                     (2 << UART_UARTIFLS_RXIFLSEL_LSB)

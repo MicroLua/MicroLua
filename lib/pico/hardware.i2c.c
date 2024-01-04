@@ -45,9 +45,10 @@ static int I2C_enable_irq(lua_State* ls) {
     uint num = i2c_hw_index(inst);
     uint irq = I2C0_IRQ + num;
     MLuaI2CState* state = &mlua_i2c_state[num];
-    char const* err = mlua_event_enable_irq(ls, &state->event, irq,
-                                            &handle_i2c_irq, 2, -1);
-    if (err != NULL) return luaL_error(ls, "I2C%d: %s", num, err);
+    if (!mlua_event_enable_irq(ls, &state->event, irq,
+                               &handle_i2c_irq, 2, -1)) {
+        return luaL_error(ls, "I2C%d: IRQ already enabled", num);
+    }
     return 0;
 }
 
