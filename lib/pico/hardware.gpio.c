@@ -44,7 +44,7 @@ io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
         : &iobank0_hw->proc0_irq_ctrl;
 }
 
-static void __time_critical_func(handle_gpio_irq)(void) {
+static void MLUA_TIME_CRITICAL(handle_gpio_irq)(void) {
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
     io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);

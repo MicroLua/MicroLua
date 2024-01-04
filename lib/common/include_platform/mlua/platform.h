@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
 // Abort the program.
-__attribute__((noreturn)) void mlua_platform_abort(void);
+__attribute__((__noreturn__)) void mlua_platform_abort(void);
 
 // Perform set up at the very beginning of main().
 void mlua_platform_setup_main(int* argc, char* argv[]);

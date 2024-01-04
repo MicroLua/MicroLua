@@ -7,10 +7,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "hardware/irq.h"
-#include "hardware/sync.h"
-#include "pico/types.h"
-
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -43,40 +39,6 @@ bool mlua_event_enabled_nolock(MLuaEvent const* ev);
 
 // Return true iff the event is enabled.
 bool mlua_event_enabled(MLuaEvent const* ev);
-
-// Lock event handling. This disables interrupts.
-__force_inline static uint32_t mlua_event_lock(void) {
-    extern spin_lock_t* mlua_event_spinlock;
-    return spin_lock_blocking(mlua_event_spinlock);
-}
-
-// Unlock event handling.
-__force_inline static void mlua_event_unlock(uint32_t save) {
-    extern spin_lock_t* mlua_event_spinlock;
-    spin_unlock(mlua_event_spinlock, save);
-}
-
-// Parse an IRQ priority argument, which must be an integer or nil.
-lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
-                                          lua_Integer def);
-
-// Parse the enable_irq argument.
-bool mlua_event_enable_irq_arg(lua_State* ls, int arg, lua_Integer* priority);
-
-// Set an IRQ handler.
-void mlua_event_set_irq_handler(uint irq, irq_handler_t handler,
-                                lua_Integer priority);
-
-// Enable or disable IRQ handling. The argument at the given index determines
-// what is done:
-//  - true, nil, none, integer: Enable the event, set the IRQ handler and enable
-//    the IRQ. If the argument is a non-negative integer, add a shared handler
-//    with the given priority. Otherwise, set an exclusive handler.
-//  - false: Disable the IRQ, remove the IRQ handler and disable the event.
-// False iff the event was already enabled.
-bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
-                           irq_handler_t handler, int index,
-                           lua_Integer priority);
 
 // Set an event pending. Must be in a locked section.
 void mlua_event_set_nolock(MLuaEvent* ev);
@@ -149,5 +111,7 @@ int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* event);
 #ifdef __cplusplus
 }
 #endif
+
+#include "mlua/event_platform.h"
 
 #endif

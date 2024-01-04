@@ -28,7 +28,7 @@ typedef struct ADCState {
 
 static ADCState adc_state;
 
-static void __time_critical_func(handle_adc_irq)(void) {
+static void MLUA_TIME_CRITICAL(handle_adc_irq)(void) {
     adc_irq_set_enabled(false);
     mlua_event_set(&adc_state.event);
 }

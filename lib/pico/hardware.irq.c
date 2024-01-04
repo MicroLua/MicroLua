@@ -47,7 +47,7 @@ static inline MLuaEvent* user_irq_event(uint irq) {
     return &uirq_state[get_core_num()].events[irq - FIRST_USER_IRQ];
 }
 
-static void __time_critical_func(handle_user_irq)(void) {
+static void MLUA_TIME_CRITICAL(handle_user_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - FIRST_USER_IRQ;
     IRQState* state = &uirq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();

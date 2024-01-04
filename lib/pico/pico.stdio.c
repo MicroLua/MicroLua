@@ -26,7 +26,7 @@ typedef struct StdioState {
 
 static StdioState stdio_state;
 
-static void __time_critical_func(handle_chars_available)(void* ud) {
+static void MLUA_TIME_CRITICAL(handle_chars_available)(void* ud) {
     uint32_t save = mlua_event_lock();
     stdio_state.pending = true;
     mlua_event_set_nolock(&stdio_state.event);

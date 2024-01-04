@@ -75,7 +75,7 @@ typedef struct UARTState {
 
 static UARTState uart_state[NUM_UARTS];
 
-static void __time_critical_func(handle_uart_irq)(void) {
+static void MLUA_TIME_CRITICAL(handle_uart_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - UART0_IRQ;
     uart_hw_t* hu = uart_get_hw(uart_get_instance(num));
     uint32_t mis = hu->mis;

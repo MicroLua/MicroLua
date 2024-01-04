@@ -347,10 +347,13 @@ mlua_add_c_module(mlua_mod_mlua_event mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
 target_link_libraries(mlua_mod_mlua_event INTERFACE
-    hardware_irq
-    hardware_sync
     mlua_mod_mlua_int64
     mlua_platform
+)
+target_sources(mlua_mod_mlua_event INTERFACE mlua.event_platform.c)
+target_link_libraries(mlua_mod_mlua_event INTERFACE
+    hardware_irq
+    hardware_sync
 )
 
 # TODO: Use a platform-specific library

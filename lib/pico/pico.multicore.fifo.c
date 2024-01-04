@@ -25,7 +25,7 @@ typedef struct FifoState {
 
 static FifoState fifo_state[NUM_CORES];
 
-static void __time_critical_func(handle_sio_irq)(void) {
+static void MLUA_TIME_CRITICAL(handle_sio_irq)(void) {
     uint core = get_core_num();
     FifoState* st = &fifo_state[core];
     uint32_t status = multicore_fifo_get_status();
