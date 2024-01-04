@@ -359,17 +359,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(_default, boolean, false),
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint i = 0; i < NUM_I2CS; ++i) {
-        MLuaI2CState* state = &mlua_i2c_state[i];
-        state->event = MLUA_EVENT_UNSET;
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(hardware.i2c) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);

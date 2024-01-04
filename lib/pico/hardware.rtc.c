@@ -74,7 +74,7 @@ typedef struct RtcState {
     bool pending;
 } RtcState;
 
-static RtcState rtc_state = {.event = MLUA_EVENT_UNSET};
+static RtcState rtc_state;
 
 static void handle_alarm() {
     uint32_t save = mlua_event_lock();

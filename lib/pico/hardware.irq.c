@@ -243,19 +243,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(user_irq_unclaim, mod_),
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint core = 0; core < NUM_CORES; ++core) {
-        IRQState* state = &uirq_state[get_core_num()];
-        for (uint i = 0; i < NUM_USER_IRQS; ++i) {
-            state->events[i] = MLUA_EVENT_UNSET;
-        }
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(hardware.irq) {
     mlua_event_require(ls);
 

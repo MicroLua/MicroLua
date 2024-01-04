@@ -24,7 +24,7 @@ typedef struct StdioState {
     bool pending;
 } StdioState;
 
-static StdioState stdio_state = {.event = MLUA_EVENT_UNSET};
+static StdioState stdio_state;
 
 static void __time_critical_func(handle_chars_available)(void* ud) {
     uint32_t save = mlua_event_lock();

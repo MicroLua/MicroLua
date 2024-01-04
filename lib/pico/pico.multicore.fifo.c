@@ -189,16 +189,6 @@ MLUA_SYMBOLS(module_syms) = {
 #endif
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint core = 0; core < NUM_CORES; ++core) {
-        fifo_state[core].event = MLUA_EVENT_UNSET;
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(pico.multicore.fifo) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);

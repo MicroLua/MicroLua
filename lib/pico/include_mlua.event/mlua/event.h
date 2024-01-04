@@ -21,27 +21,25 @@ extern "C" {
 // Require the mlua.event module.
 void mlua_event_require(lua_State* ls);
 
-// An event identifier.
-typedef uint8_t MLuaEvent;
-
-// A marker for "no event assigned".
-#define MLUA_EVENT_UNSET ((MLuaEvent)-1)
+// An event.
+typedef struct MLuaEvent {
+    uintptr_t state;
+} MLuaEvent;
 
 // The error returned by mlua_event_claim*() if the event was already claimed.
 extern char const* const mlua_event_err_already_claimed;
 
-// Claim an event for the given core. Returns NULL on success, or a message
-// describing the error.
-char const* mlua_event_claim_core(lua_State* ls, MLuaEvent* ev, uint core);
+// Enable an event. Returns NULL on success, or a message describing the error.
+char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev);
 
-// Claim an event for the calling core. Returns NULL on success, or a message
-// describing the error.
-static inline char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
-    return mlua_event_claim_core(ls, ev, get_core_num());
-}
-
-// Free an event.
+// Disable an event.
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
+
+// Return true iff the event is enabled. Must be in a locked section.
+bool mlua_event_enabled_nolock(MLuaEvent* ev);
+
+// Return true iff the event is enabled.
+bool mlua_event_enabled(MLuaEvent* ev);
 
 // Lock event handling. This disables interrupts.
 __force_inline static uint32_t mlua_event_lock(void) {
@@ -53,14 +51,6 @@ __force_inline static uint32_t mlua_event_lock(void) {
 __force_inline static void mlua_event_unlock(uint32_t save) {
     extern spin_lock_t* mlua_event_spinlock;
     spin_unlock(mlua_event_spinlock, save);
-}
-
-// Dereference an MLuaEvent* under the event lock.
-__force_inline static MLuaEvent mlua_event_deref(MLuaEvent* ev) {
-    uint32_t save = mlua_event_lock();
-    MLuaEvent e = *ev;
-    mlua_event_unlock(save);
-    return e;
 }
 
 // Parse an IRQ priority argument, which must be an integer or nil.
@@ -85,11 +75,11 @@ char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
                                   irq_handler_t handler, int index,
                                   lua_Integer priority);
 
-// Set an event pending.
-void mlua_event_set(MLuaEvent* ev);
-
 // Set an event pending. Must be in a locked section.
 void mlua_event_set_nolock(MLuaEvent* ev);
+
+// Set an event pending.
+void mlua_event_set(MLuaEvent* ev);
 
 // Clear the pending state of an event.
 void mlua_event_clear(MLuaEvent* ev);
@@ -127,7 +117,7 @@ static inline void mlua_set_yield_enabled(lua_State* ls, bool en) {}
 
 // Return true iff waiting for the given even is possible, i.e. yielding is
 // enabled and the event was claimed.
-bool mlua_event_can_wait(lua_State* ls, MLuaEvent* event);
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent* ev);
 
 // Run an event loop. The loop function is called repeatedly, suspending after
 // each call, as long as the function returns a negative value. The index is

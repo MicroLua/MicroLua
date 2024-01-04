@@ -151,16 +151,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(force_irq, mod_),
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint i = 0; i < NUM_TIMERS; ++i) {
-        alarm_state.events[i] = MLUA_EVENT_UNSET;
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(hardware.timer) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);

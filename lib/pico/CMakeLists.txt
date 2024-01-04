@@ -351,8 +351,6 @@ target_link_libraries(mlua_mod_mlua_event INTERFACE
     hardware_sync
     mlua_mod_mlua_int64
     mlua_platform
-    pico_platform
-    pico_time
 )
 
 # TODO: Use a platform-specific library

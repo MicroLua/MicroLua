@@ -382,17 +382,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(get_dir, mod_),
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint core = 0; core < NUM_CORES; ++core) {
-        IRQState* state = &irq_state[core];
-        state->irq_event = MLUA_EVENT_UNSET;
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(hardware.gpio) {
     mlua_event_require(ls);
 

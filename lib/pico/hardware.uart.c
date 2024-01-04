@@ -340,18 +340,6 @@ MLUA_SYMBOLS(module_syms) = {
     // uart_default_tx_wait_blocking: Use default.tx_wait_blocking() instead
 };
 
-#if LIB_MLUA_MOD_MLUA_EVENT
-
-static __attribute__((constructor)) void init(void) {
-    for (uint i = 0; i < NUM_UARTS; ++i) {
-        UARTState* state = &uart_state[i];
-        state->rx_event = MLUA_EVENT_UNSET;
-        state->tx_event = MLUA_EVENT_UNSET;
-    }
-}
-
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
-
 MLUA_OPEN_MODULE(hardware.uart) {
     mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);

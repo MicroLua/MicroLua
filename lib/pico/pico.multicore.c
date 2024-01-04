@@ -55,7 +55,7 @@ static int mod_launch_core1(lua_State* ls) {
 
     // Set up the shutdown request event.
     CoreState* st = &core_state[core - 1];
-    char const* err = mlua_event_claim_core(ls1, &st->shutdown_event, core);
+    char const* err = mlua_event_claim(ls1, &st->shutdown_event);
     if (err == mlua_event_err_already_claimed) {
         lua_close(ls1);
         return luaL_error(ls, "core %d is already running an interpreter",
@@ -76,10 +76,7 @@ static int mod_launch_core1(lua_State* ls) {
 
 static int stopped_loop(lua_State* ls, bool timeout) {
     CoreState* st = (CoreState*)lua_touserdata(ls, -1);
-    uint32_t save = mlua_event_lock();
-    bool stopped = st->shutdown_event == MLUA_EVENT_UNSET;
-    mlua_event_unlock(save);
-    if (!stopped) return -1;
+    if (mlua_event_enabled(&st->shutdown_event)) return -1;
     mlua_event_unclaim(ls, &st->stopped_event);
     multicore_reset_core1();
     return 0;
@@ -94,7 +91,7 @@ static int mod_reset_core1(lua_State* ls) {
 
     // Trigger the shutdown event if the other core is running an interpreter.
     uint32_t save = mlua_event_lock();
-    bool running = st->shutdown_event != MLUA_EVENT_UNSET;
+    bool running = mlua_event_enabled_nolock(&st->shutdown_event);
     if (running) {
         st->shutdown = true;
         mlua_event_set_nolock(&st->shutdown_event);
@@ -168,13 +165,6 @@ MLUA_SYMBOLS(module_syms) = {
     // multicore_launch_core1_raw: Not useful in Lua
     MLUA_SYM_F(set_shutdown_handler, mod_),
 };
-
-static __attribute__((constructor)) void init(void) {
-    for (uint core = 1; core < NUM_CORES; ++core) {
-        core_state[core - 1].shutdown_event = MLUA_EVENT_UNSET;
-        core_state[core - 1].stopped_event = MLUA_EVENT_UNSET;
-    }
-}
 
 MLUA_OPEN_MODULE(pico.multicore) {
     mlua_event_require(ls);
