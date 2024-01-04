@@ -130,7 +130,6 @@ static int mod_clear(lua_State* ls) {
         uint32_t save = save_and_disable_interrupts();
         irq_clear(irq);
         state->pending &= ~(1u << num);
-        mlua_event_clear(&state->events[num]);
         restore_interrupts(save);
     } else {
 #endif

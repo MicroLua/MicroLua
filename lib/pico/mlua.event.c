@@ -9,7 +9,6 @@
 #include "mlua/util.h"
 
 // TODO: Rename "claim" to "enable"
-// TODO: Make queue a linked list
 // TODO: Make some short functions inline
 // TODO: Don't store the handler thread in the registry; it should already be
 //       available as a (single) watcher; start watching in the parent
@@ -24,19 +23,27 @@ void mlua_event_require(lua_State* ls) {
 }
 
 spin_lock_t* mlua_event_spinlock;
+static uint8_t queue;  // Just a marker for a registry entry
+static uint8_t yield_disabled;  // Just a marker for a registry entry
 
-#define QUEUE_SIZE 32
-
+// A pending event queue. Events that are made pending are pushed to the tail,
+// and event dispatching pops from the head. The queue is a linked list, where
+// the state of each pending event contains a pointer to the next pending event,
+// with the EVENT_PENDING bit set.
 typedef struct EventQueue {
-    size_t count;
-    MLuaEvent** tail;
-    MLuaEvent* events[2][QUEUE_SIZE];
+    MLuaEvent* head;
+    MLuaEvent* tail;
 } EventQueue;
 
-static uint8_t queue;  // Just a marker
-static uint8_t yield_disabled;  // Just a marker
-
 #define EVENT_PENDING (1 << 0)
+
+static inline bool is_pending(MLuaEvent const* ev) {
+    return (ev->state & EVENT_PENDING) != 0;
+}
+
+static inline MLuaEvent* next_pending(MLuaEvent const* ev) {
+    return (MLuaEvent*)(ev->state & ~EVENT_PENDING);
+}
 
 static inline void const* watchers_tag(MLuaEvent const* ev) { return ev; }
 
@@ -51,14 +58,29 @@ EventQueue* get_queue(lua_State* ls) {
     EventQueue* q;
     if (lua_rawgetp(ls, LUA_REGISTRYINDEX, &queue) == LUA_TNIL) {
         q = lua_newuserdatauv(ls, sizeof(EventQueue), 0);
-        q->count = 0;
-        q->tail = &q->events[0][0];
+        q->head = NULL;
         lua_rawsetp(ls, LUA_REGISTRYINDEX, &queue);
     } else {
         q = lua_touserdata(ls, -1);
     }
     lua_pop(ls, 1);
     return q;
+}
+
+static void remove_pending_nolock(EventQueue* q, MLuaEvent const* ev) {
+    if (q->head == ev) {
+        q->head = next_pending(ev);
+    } else {
+        for (MLuaEvent* cur = q->head;;) {
+            MLuaEvent* next = next_pending(cur);
+            if (next == NULL) break;
+            if (next == ev) {
+                cur->state = ev->state;
+                break;
+            }
+            cur = next;
+        }
+    }
 }
 
 char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
@@ -74,22 +96,25 @@ char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev) {
 }
 
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev) {
+    EventQueue* q = get_queue(ls);
     uint32_t save = mlua_event_lock();
     if (ev->state == 0) {
         mlua_event_unlock(save);
         return;
     }
+    if (is_pending(ev)) remove_pending_nolock(q, ev);
     ev->state = 0;
     mlua_event_unlock(save);
+    // TODO: Resume watchers so that they can exit
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
 }
 
-bool mlua_event_enabled_nolock(MLuaEvent* ev) {
+bool mlua_event_enabled_nolock(MLuaEvent const* ev) {
     return ev->state != 0;
 }
 
-bool mlua_event_enabled(MLuaEvent* ev) {
+bool mlua_event_enabled(MLuaEvent const* ev) {
     uint32_t save = mlua_event_lock();
     bool en = ev->state != 0;
     mlua_event_unlock(save);
@@ -146,13 +171,16 @@ char const* mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
 }
 
 void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
-    if (ev->state != 0) {
-        ev->state |= EVENT_PENDING;
-        EventQueue* q = (EventQueue*)(ev->state & ~EVENT_PENDING);
-        if (q->count >= QUEUE_SIZE) mlua_platform_abort();
-        q->tail[q->count++] = ev;
-        __sev();
+    if (ev->state == 0 || is_pending(ev)) return;
+    EventQueue* q = (EventQueue*)ev->state;
+    ev->state = (uintptr_t)NULL | EVENT_PENDING;
+    if (q->head == NULL) {
+        q->head = q->tail = ev;
+    } else {
+        q->tail->state = (uintptr_t)ev | EVENT_PENDING;
+        q->tail = ev;
     }
+    __sev();
 }
 
 void __time_critical_func(mlua_event_set)(MLuaEvent* ev) {
@@ -161,13 +189,7 @@ void __time_critical_func(mlua_event_set)(MLuaEvent* ev) {
     mlua_event_unlock(save);
 }
 
-void mlua_event_clear(MLuaEvent* ev) {
-    uint32_t save = mlua_event_lock();
-    ev->state &= ~EVENT_PENDING;
-    mlua_event_unlock(save);
-}
-
-void mlua_event_watch(lua_State* ls, MLuaEvent* ev) {
+void mlua_event_watch(lua_State* ls, MLuaEvent const* ev) {
     if (!mlua_event_enabled(ev)) {
         luaL_error(ls, "watching disabled event");
         return;
@@ -208,7 +230,7 @@ void mlua_event_watch(lua_State* ls, MLuaEvent* ev) {
     }
 }
 
-void mlua_event_unwatch(lua_State* ls, MLuaEvent* ev) {
+void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev) {
     if (!mlua_event_enabled(ev)) return;
     switch (lua_rawgetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev))) {
     case LUA_TTHREAD:  // A single watcher
@@ -264,15 +286,15 @@ void mlua_set_yield_enabled(lua_State* ls, bool en) {
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &yield_disabled);
 }
 
-bool mlua_event_can_wait(lua_State* ls, MLuaEvent* ev) {
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev) {
     return mlua_yield_enabled(ls) && mlua_event_enabled(ev);
 }
 
-static int mlua_event_loop_1(lua_State* ls, MLuaEvent* ev,
+static int mlua_event_loop_1(lua_State* ls, MLuaEvent const* ev,
                              MLuaEventLoopFn loop, int index);
 static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx);
 
-int mlua_event_loop(lua_State* ls, MLuaEvent* ev, MLuaEventLoopFn loop,
+int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
                     int index) {
     if (!mlua_event_enabled(ev)) {
         return luaL_error(ls, "wait for disabled event");
@@ -290,8 +312,8 @@ int mlua_event_loop(lua_State* ls, MLuaEvent* ev, MLuaEventLoopFn loop,
     return mlua_event_loop_1(ls, ev, loop, index);
 }
 
-static int mlua_event_loop_1(lua_State* ls, MLuaEvent* ev, MLuaEventLoopFn loop,
-                             int index) {
+static int mlua_event_loop_1(lua_State* ls, MLuaEvent const* ev,
+                             MLuaEventLoopFn loop, int index) {
     lua_pushlightuserdata(ls, loop);
     lua_pushinteger(ls, index);
     return mlua_event_suspend(ls, &mlua_event_loop_2, (lua_KContext)ev, index);
@@ -309,7 +331,7 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
         }
         res = loop(ls, true);
     }
-    mlua_event_unwatch(ls, (MLuaEvent*)ctx);
+    mlua_event_unwatch(ls, (MLuaEvent const*)ctx);
     return res;
 }
 
@@ -368,7 +390,7 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
     return mlua_event_yield(ls, 0, cont, ctx);
 }
 
-void mlua_event_stop_handler(lua_State* ls, MLuaEvent* ev) {
+void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
     if (lua_rawgetp(ls, LUA_REGISTRYINDEX, handler_tag(ev)) == LUA_TTHREAD) {
         mlua_thread_kill(ls);
     } else {
@@ -376,7 +398,7 @@ void mlua_event_stop_handler(lua_State* ls, MLuaEvent* ev) {
     }
 }
 
-int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent* ev) {
+int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* ev) {
     return lua_rawgetp(ls, LUA_REGISTRYINDEX, handler_tag(ev));
 }
 
@@ -396,20 +418,15 @@ static int mod_dispatch(lua_State* ls) {
     for (;;) {
         // Check for pending events and resume the corresponding watcher
         // threads.
-        uint32_t save = mlua_event_lock();
-        MLuaEvent** head = q->tail;
-        size_t count = q->count;
-        q->tail = head == &q->events[0][0] ? &q->events[1][0]
-                                           : &q->events[0][0];
-        q->count = 0;
-        mlua_event_unlock(save);
-        for (; count > 0; ++head, --count) {
-            MLuaEvent* ev = *head;
+        for (;;) {
             uint32_t save = mlua_event_lock();
-            bool pending = (ev->state & EVENT_PENDING) != 0;
-            ev->state &= ~EVENT_PENDING;
+            MLuaEvent* ev = q->head;
+            if (ev != NULL) {
+                q->head = next_pending(ev);
+                ev->state = (uintptr_t)q;
+            }
             mlua_event_unlock(save);
-            if (!pending) continue;
+            if (ev == NULL) break;
             switch (lua_rawgetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev))) {
             case LUA_TTHREAD:  // A single watcher
                 lua_pushvalue(ls, 1);  // Thread.resume

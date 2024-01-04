@@ -21,7 +21,13 @@ extern "C" {
 // Require the mlua.event module.
 void mlua_event_require(lua_State* ls);
 
-// An event.
+// An event. The state is a tagged union of two pointers:
+//  - If the state is zero, the event is disabled.
+//  - If the state is non-zero and the EVENT_PENDING bit isn't set, the event is
+//    enabled and the state contains a pointer to the pending event queue.
+//  - If the state is non-zero and the EVENT_PENDING bit is set, the event is
+//    pending and the state contains a pointer to the next pending event in the
+//    queue.
 typedef struct MLuaEvent {
     uintptr_t state;
 } MLuaEvent;
@@ -36,10 +42,10 @@ char const* mlua_event_claim(lua_State* ls, MLuaEvent* ev);
 void mlua_event_unclaim(lua_State* ls, MLuaEvent* ev);
 
 // Return true iff the event is enabled. Must be in a locked section.
-bool mlua_event_enabled_nolock(MLuaEvent* ev);
+bool mlua_event_enabled_nolock(MLuaEvent const* ev);
 
 // Return true iff the event is enabled.
-bool mlua_event_enabled(MLuaEvent* ev);
+bool mlua_event_enabled(MLuaEvent const* ev);
 
 // Lock event handling. This disables interrupts.
 __force_inline static uint32_t mlua_event_lock(void) {
@@ -81,14 +87,11 @@ void mlua_event_set_nolock(MLuaEvent* ev);
 // Set an event pending.
 void mlua_event_set(MLuaEvent* ev);
 
-// Clear the pending state of an event.
-void mlua_event_clear(MLuaEvent* ev);
-
 // Register the current thread to be notified when an event triggers.
-void mlua_event_watch(lua_State* ls, MLuaEvent* ev);
+void mlua_event_watch(lua_State* ls, MLuaEvent const* ev);
 
 // Unregister the current thread from notifications for an event.
-void mlua_event_unwatch(lua_State* ls, MLuaEvent* ev);
+void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev);
 
 // Yield from the running thread.
 int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
@@ -117,12 +120,12 @@ static inline void mlua_set_yield_enabled(lua_State* ls, bool en) {}
 
 // Return true iff waiting for the given even is possible, i.e. yielding is
 // enabled and the event was claimed.
-bool mlua_event_can_wait(lua_State* ls, MLuaEvent* ev);
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
 
 // Run an event loop. The loop function is called repeatedly, suspending after
 // each call, as long as the function returns a negative value. The index is
 // passed to mlua_event_suspend as a deadline index.
-int mlua_event_loop(lua_State* ls, MLuaEvent* ev, MLuaEventLoopFn loop,
+int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
                     int index);
 
 #if !LIB_MLUA_MOD_MLUA_EVENT
@@ -141,10 +144,10 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* event, lua_KFunction cont,
                       lua_KContext ctx);
 
 // Stop the event handler thread for the given event.
-void mlua_event_stop_handler(lua_State* ls, MLuaEvent* event);
+void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* event);
 
 // Pushes the event handler thread for the given event onto the stack.
-int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent* event);
+int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* event);
 
 #ifdef __cplusplus
 }
