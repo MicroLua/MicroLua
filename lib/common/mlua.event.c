@@ -190,7 +190,7 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
     int res = loop(ls, false);
     if (res < 0) {
         if (index == 0 ||
-                !mlua_platform_ticks_reached(mlua_to_int64(ls, index))) {
+                !mlua_ticks_reached(mlua_to_int64(ls, index))) {
             return mlua_event_loop_1(ls, (MLuaEvent*)ctx, loop, index);
         }
         res = loop(ls, true);

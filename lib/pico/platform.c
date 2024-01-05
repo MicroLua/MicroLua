@@ -80,20 +80,20 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
 #endif
 }
 
-void mlua_platform_ticks_range(uint64_t* min, uint64_t* max) {
+void mlua_ticks_range(uint64_t* min, uint64_t* max) {
     *min = to_us_since_boot(nil_time);
     *max = to_us_since_boot(at_the_end_of_time);
 }
 
-uint64_t mlua_platform_ticks(void) {
+uint64_t mlua_ticks(void) {
     return to_us_since_boot(get_absolute_time());
 }
 
-bool mlua_platform_ticks_reached(uint64_t ticks) {
+bool mlua_ticks_reached(uint64_t ticks) {
     return time_reached(from_us_since_boot(ticks));
 }
 
-bool mlua_platform_wait(uint64_t deadline) {
+bool mlua_wait(uint64_t deadline) {
     if (deadline != to_us_since_boot(at_the_end_of_time)) {
         return best_effort_wfe_or_timeout(from_us_since_boot(deadline));
     }
