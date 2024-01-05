@@ -1,0 +1,28 @@
+#!/bin/bash
+# Copyright 2024 Remy Blank <remy@c-space.org>
+# SPDX-License-Identifier: MIT
+
+set -o errexit -o pipefail -o nounset
+
+die() {
+    echo "ERROR: $@" >&2
+    exit 1
+}
+
+BASE="$(dirname "$(dirname "$0")")"
+BUILD="${BASE}/build"
+[[ -e "${BUILD}" ]] || die "no build directory"
+
+# Detect platform.
+PLATFORM="$(cmake -N -B "${BUILD}" -L \
+            | sed -rne 's/^MLUA_PLATFORM:STRING=(.*)$/\1/p')"
+
+# Build tests.
+make -j9 -C "${BUILD}/bin" mlua_tests
+
+# Run tests.
+case "${PLATFORM}" in
+    host) "${BUILD}/bin/mlua_tests" "$@";;
+    pico) "${BASE}/tools/flash" "${BUILD}/bin/mlua_tests.elf";;
+    *) die "unknown platform: ${PLATFORM}";;
+esac

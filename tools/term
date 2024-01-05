@@ -2,6 +2,8 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
+set -o errexit -o pipefail -o nounset
+
 if [[ $# != 1 ]]; then
     echo "Usage: $(basename "$0") DEVICE" >&2
     exit 2
