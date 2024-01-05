@@ -13,6 +13,7 @@
 // TODO: Combine enabling an event and watching an event => always a single
 //       watcher for each event. This might be tricky, as enabling has a locking
 //       function, but it might be doable
+// TODO: Make yield status per-thread
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
 static inline void const* watchers_tag(MLuaEvent const* ev) { return ev; }
@@ -285,7 +286,12 @@ int mod_set_thread_metatable(lua_State* ls) {
 static int mod_yield_enabled(lua_State* ls) {
     bool en = mlua_yield_enabled(ls);
     if (!lua_isnoneornil(ls, 1)) {
-        mlua_set_yield_enabled(ls, lua_toboolean(ls, 1));
+        if (lua_toboolean(ls, 1)) {
+            lua_pushnil(ls);
+        } else {
+            lua_pushboolean(ls, true);
+        }
+        lua_rawsetp(ls, LUA_REGISTRYINDEX, &yield_disabled);
     }
     return lua_pushboolean(ls, en), 1;
 }
