@@ -134,6 +134,9 @@ target_link_libraries(mlua_test_mlua_list INTERFACE
 mlua_add_c_module(mlua_mod_mlua_mem mlua.mem.c)
 target_include_directories(mlua_mod_mlua_mem_headers INTERFACE
     include_mlua.mem)
+target_link_libraries(mlua_mod_mlua_mem INTERFACE
+    mlua_mod_mlua_int64
+)
 
 mlua_add_lua_modules(mlua_test_mlua_mem mlua.mem.test.lua)
 target_link_libraries(mlua_test_mlua_mem INTERFACE

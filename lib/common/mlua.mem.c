@@ -3,8 +3,10 @@
 
 #include <string.h>
 
+#include "mlua/int64.h"
 #include "mlua/mem.h"
 #include "mlua/module.h"
+#include "mlua/util.h"
 
 static int read_mem(lua_State* ls, void const* src, size_t size) {
     if (size <= 0) {
@@ -21,10 +23,7 @@ static int read_mem(lua_State* ls, void const* src, size_t size) {
 char const mlua_Buffer_name[] = "mlua.mem.Buffer";
 
 static int Buffer_addr(lua_State* ls) {
-    if (sizeof(void*) > sizeof(lua_Integer)) {
-        return luaL_error(ls, "not supported");
-    }
-    lua_pushinteger(ls, (uintptr_t)mlua_mem_check_Buffer(ls, 1));
+    mlua_push_intptr(ls, (uintptr_t)mlua_mem_check_Buffer(ls, 1));
     return 1;
 }
 
@@ -78,18 +77,12 @@ MLUA_SYMBOLS_NOHASH(Buffer_syms_nh) = {
 };
 
 static int mod_read(lua_State* ls) {
-    if (sizeof(void*) > sizeof(lua_Integer)) {
-        return luaL_error(ls, "not supported");
-    }
-    return read_mem(ls, (void const*)(uintptr_t)luaL_checkinteger(ls, 1),
+    return read_mem(ls, (void const*)mlua_check_intptr(ls, 1),
                     luaL_optinteger(ls, 2, 1));
 }
 
 static int mod_write(lua_State* ls) {
-    if (sizeof(void*) > sizeof(lua_Integer)) {
-        return luaL_error(ls, "not supported");
-    }
-    void* ptr = (void*)(uintptr_t)luaL_checkinteger(ls, 1);
+    void* ptr = (void*)mlua_check_intptr(ls, 1);
     size_t len;
     void const* src = (void const*)luaL_checklstring(ls, 2, &len);
     memcpy(ptr, src, len);
@@ -110,6 +103,10 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(mlua.mem) {
+    if (sizeof(intptr_t) > sizeof(lua_Integer)) {
+        mlua_require(ls, "mlua.int64", false);
+    }
+
     // Create the module.
     mlua_new_module(ls, 0, module_syms);
 

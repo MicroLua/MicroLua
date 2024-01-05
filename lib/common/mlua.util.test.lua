@@ -11,11 +11,11 @@ function test_repr(t)
     rec.a.c = rec
     rec.e = rec
     for _, test in ipairs{
-        {nil, 'nil'},
-        {false, 'false'},
-        {true, 'true'},
-        {123, '123'},
-        {4.5, '4.500000'},
+        {nil, tostring(nil)},
+        {false, tostring(false)},
+        {true, tostring(true)},
+        {123, tostring(123)},
+        {4.5, tostring(4.5)},
         {'abc', '"abc"'},
         {'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
          .. '\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f'

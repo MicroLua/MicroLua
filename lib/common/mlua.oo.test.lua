@@ -31,10 +31,8 @@ end
 
 function test_instance_tostring(t)
     local a, b = A(10), B(20, 30)
-    local got = tostring(a)
-    t:expect(got:find('^A: [0-9A-F]+$'), "tostring(a) = %q", got)
-    local got = tostring(b)
-    t:expect(got:find('^B: [0-9A-F]+$'), "tostring(b) = %q", got)
+    t:expect(tostring(a)):label("tostring(a)"):matches('^A: 0?x?[0-9a-fA-F]+$')
+    t:expect(tostring(b)):label("tostring(b)"):matches('^B: 0?x?[0-9a-fA-F]+$')
 end
 
 function test_class_attributes(t)

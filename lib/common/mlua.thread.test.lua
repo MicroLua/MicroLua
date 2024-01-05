@@ -10,7 +10,7 @@ function test_Thread_name(t)
     t:expect(t:expr(thread).running():name()):eq('main')
     local th1<close> = thread.start(function() end)
     t:expect(t.expr.th1:name())
-        :eq((tostring(th1):gsub('^[^:]+: ([0-9A-F]+)$', '%1')))
+        :eq((tostring(th1):gsub('^[^:]+: (0?x?[0-9a-fA-F]+)$', '%1')))
     local want = 'some-thread'
     local th2<close> = thread.start(function() end):set_name(want)
     t:expect(t.expr.th2:name()):eq(want)

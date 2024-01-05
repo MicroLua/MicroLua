@@ -8,10 +8,10 @@ local string = require 'string'
 
 function test_Buffer(t)
     local buf = mem.alloc(10)
-    t:expect(buf:addr() ~= 0, "buffer address is 0")
+    t:expect(t:expr(buf):addr()):neq(0)
     t:expect(#buf):label("#buf"):eq(10)
     t:expect(tostring(buf)):label("tostring(buf)")
-        :eq(('mlua.mem.Buffer: %08X'):format(buf:addr()))
+        :matches('^mlua.mem.Buffer: 0?x?[0-9a-fA-F]+$')
 
     buf:fill()
     t:expect(t:expr(buf):read()):eq('\0\0\0\0\0\0\0\0\0\0')

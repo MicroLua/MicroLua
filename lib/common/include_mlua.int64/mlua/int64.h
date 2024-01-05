@@ -66,6 +66,15 @@ void mlua_push_int64(lua_State* ls, int64_t value);
 // Push an integer if the value fits, or an int64 otherwise.
 void mlua_push_minint(lua_State* ls, int64_t value);
 
+// Get an intptr_t value at the given stack index, or raise an error if the
+// stack entry doesn't have the right type.
+static inline intptr_t mlua_check_intptr(lua_State* ls, int arg) {
+    if (sizeof(intptr_t) <= sizeof(lua_Integer)) {
+        return luaL_checkinteger(ls, arg);
+    }
+    return mlua_check_int64(ls, arg);
+}
+
 // Push an intptr_t to the stack.
 static inline void mlua_push_intptr(lua_State* ls, intptr_t value) {
     if (sizeof(value) <= sizeof(lua_Integer)) {
