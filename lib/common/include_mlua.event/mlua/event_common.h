@@ -23,13 +23,12 @@ void mlua_event_watch(lua_State* ls, MLuaEvent const* ev);
 // Unregister the current thread from notifications for an event.
 void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev);
 
-// Resume the watchers of an event. "resume" is the index where Thread.resume
+// Resume the watcher of an event. "resume" is the index where Thread.resume
 // can be found.
-bool mlua_event_resume_watchers(lua_State* ls, MLuaEvent const* ev,
-                                int resume);
+bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev, int resume);
 
-// Remove all watchers of an event.
-void mlua_event_remove_watchers(lua_State* ls, MLuaEvent const* ev);
+// Remove the watcher of an event.
+void mlua_event_remove_watcher(lua_State* ls, MLuaEvent const* ev);
 
 // Yield from the running thread.
 static inline int mlua_event_yield(lua_State* ls, int nresults,

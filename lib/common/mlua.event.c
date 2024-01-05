@@ -8,19 +8,10 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Don't store the handler thread in the registry; it should already be
-//       available as a (single) watcher; start watching in the parent
-// TODO: Combine enabling an event and watching an event => always a single
-//       watcher for each event. This might be tricky, as enabling has a locking
-//       function, but it might be doable
+// TODO: Combine enabling an event and watching an event. This might be tricky,
+// as enabling has a locking function, but it might be doable
 // TODO: Make yield status per-thread
 // TODO: Add "performance" counters: dispatch cycles, sleeps
-
-static inline void const* watchers_tag(MLuaEvent const* ev) { return ev; }
-
-static inline void const* handler_tag(MLuaEvent const* ev) {
-    return (void const*)ev + 1;
-}
 
 void mlua_event_require(lua_State* ls) {
     mlua_require(ls, "mlua.event", false);
@@ -31,97 +22,39 @@ void mlua_event_watch(lua_State* ls, MLuaEvent const* ev) {
         luaL_error(ls, "watching disabled event");
         return;
     }
-    if (!lua_isyieldable(ls)) {
-        luaL_error(ls, "watching event in unyieldable thread");
+    lua_pushthread(ls);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
+}
+
+void watch_from_thread(lua_State* ls, MLuaEvent const* ev, int thread) {
+    if (!mlua_event_enabled(ev)) {
+        luaL_error(ls, "watching disabled event");
         return;
     }
-    switch (lua_rawgetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev))) {
-    case LUA_TNIL:  // No watchers
-        lua_pop(ls, 1);
-        lua_pushthread(ls);
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
-        return;
-    case LUA_TTHREAD:  // A single watcher
-        lua_pushthread(ls);
-        if (lua_rawequal(ls, -2, -1)) {  // Already registered
-            lua_pop(ls, 2);
-            return;
-        }
-        lua_createtable(ls, 0, 2);
-        lua_rotate(ls, -2, 1);
-        lua_pushboolean(ls, true);
-        lua_rawset(ls, -3);
-        lua_pushboolean(ls, true);
-        lua_rawset(ls, -2);
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
-        return;
-    case LUA_TTABLE:  // Multiple watchers
-        lua_pushthread(ls);
-        lua_pushboolean(ls, true);
-        lua_rawset(ls, -3);
-        lua_pop(ls, 1);
-        return;
-    default:
-        lua_pop(ls, 1);
-        return;
-    }
+    lua_pushvalue(ls, thread);
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
 void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev) {
     if (!mlua_event_enabled(ev)) return;
-    switch (lua_rawgetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev))) {
-    case LUA_TTHREAD:  // A single watcher
-        lua_pushthread(ls);
-        if (!lua_rawequal(ls, -2, -1)) {  // Not the current thread
-            lua_pop(ls, 2);
-            return;
-        }
-        lua_pop(ls, 2);
-        lua_pushnil(ls);
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
-        return;
-    case LUA_TTABLE:  // Multiple watchers
-        lua_pushthread(ls);
-        lua_pushnil(ls);
-        lua_rawset(ls, -3);
-        lua_pop(ls, 1);
-        return;
-    default:
-        lua_pop(ls, 1);
-        return;
-    }
+    mlua_event_remove_watcher(ls, ev);
 }
 
-bool mlua_event_resume_watchers(lua_State* ls, MLuaEvent const* ev,
-                                int resume) {
+bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev, int resume) {
     bool resumed = false;
-    switch (lua_rawgetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev))) {
-    case LUA_TTHREAD:  // A single watcher
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
         lua_pushvalue(ls, resume);
         lua_rotate(ls, -2, 1);
         lua_call(ls, 1, 1);
         resumed = lua_toboolean(ls, -1);
-        break;
-    case LUA_TTABLE:  // Multiple watchers
-        lua_pushnil(ls);
-        while (lua_next(ls, -2)) {
-            lua_pop(ls, 1);
-            lua_pushvalue(ls, resume);
-            lua_pushvalue(ls, -2);
-            lua_call(ls, 1, 1);
-            resumed = resumed || lua_toboolean(ls, -1);
-            lua_pop(ls, 1);
-        }
-        break;
     }
     lua_pop(ls, 1);
     return resumed;
 }
 
-void mlua_event_remove_watchers(lua_State* ls, MLuaEvent const* ev) {
-    // TODO: Resume watchers so that they can exit
+void mlua_event_remove_watcher(lua_State* ls, MLuaEvent const* ev) {
     lua_pushnil(ls);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
+    lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
@@ -211,9 +144,7 @@ static int handler_thread(lua_State* ls) {
     lua_pushcclosure(ls, &handler_thread_done, 2);
     lua_toclose(ls, -1);
 
-    // Watch the event.
-    MLuaEvent* event = lua_touserdata(ls, lua_upvalueindex(3));
-    mlua_event_watch(ls, event);
+    // Start the event handling loop.
     return handler_thread_1(ls, LUA_OK, 0);
 }
 
@@ -234,8 +165,6 @@ static int handler_thread_done(lua_State* ls) {
     // Stop watching the event.
     MLuaEvent* ev = lua_touserdata(ls, lua_upvalueindex(2));
     mlua_event_unwatch(ls, ev);
-    lua_pushnil(ls);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, handler_tag(ev));
 
     // Call the "handler done" callback.
     if (!lua_isnil(ls, lua_upvalueindex(1))) {
@@ -250,13 +179,12 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
     lua_pushlightuserdata(ls, ev);
     lua_pushcclosure(ls, &handler_thread, 3);
     mlua_thread_start(ls);
-    lua_pushvalue(ls, -1);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, handler_tag(ev));
+    watch_from_thread(ls, ev, -1);
     return mlua_event_yield(ls, 0, cont, ctx);
 }
 
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
-    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, handler_tag(ev)) == LUA_TTHREAD) {
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
         mlua_thread_kill(ls);
     } else {
         lua_pop(ls, 1);
@@ -264,7 +192,7 @@ void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
 }
 
 int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* ev) {
-    return lua_rawgetp(ls, LUA_REGISTRYINDEX, handler_tag(ev));
+    return lua_rawgetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
 static int mod_dispatch(lua_State* ls) {

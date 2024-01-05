@@ -86,7 +86,7 @@ void mlua_event_disable(lua_State* ls, MLuaEvent* ev) {
     if (is_pending(ev)) remove_pending_nolock(q, ev);
     ev->state = 0;
     mlua_event_unlock();
-    mlua_event_remove_watchers(ls, ev);
+    mlua_event_remove_watcher(ls, ev);
 }
 
 void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
@@ -119,7 +119,7 @@ int mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume) {
             }
             mlua_event_unlock();
             if (ev == NULL) break;
-            if (mlua_event_resume_watchers(ls, ev, resume)) wake = true;
+            if (mlua_event_resume_watcher(ls, ev, resume)) wake = true;
         }
 
         // Return if at least one thread was resumed or the deadline has passed.
