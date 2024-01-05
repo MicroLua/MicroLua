@@ -5,6 +5,7 @@ _ENV = module(...)
 
 local debug = require 'debug'
 local math = require 'math'
+local cli = require 'mlua.cli'
 local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
@@ -578,18 +579,22 @@ end
 
 local Runner = oo.class('Runner')
 
-function Runner:__init()
-    self.runs = 1
+function Runner:__init(opts)
+    self.opts = opts
 end
 
 function Runner:run()
+    local failed
     while not self.exit do
         local t = Test()
-        t._full_output = self.full_output
-        t._full_results = self.full_results
-        t:_main(self.runs)
+        t._full_output = self.opts.full_output
+        t._full_results = self.opts.full_results
+        t:_main(self.opts.runs)
+        failed = t:failed()
+        if not self.opts.prompt then break end
         self:prompt()
     end
+    return not failed
 end
 
 function Runner:prompt()
@@ -620,17 +625,17 @@ end
 -- TODO: Launch repl on failure
 
 function Runner:cmd_fo()
-    self.full_output = not self.full_output
+    self.opts.full_output = not self.opts.full_output
     return true
 end
 
 function Runner:cmd_fr()
-    self.full_results = not self.full_results
+    self.opts.full_results = not self.opts.full_results
     return true
 end
 
 function Runner:cmd_r(count)
-    self.runs = math.tointeger(tonumber(count)) or 1
+    self.opts.runs = math.tointeger(tonumber(count)) or 1
     return true
 end
 
@@ -641,17 +646,28 @@ function Runner:cmd_x()
     return true
 end
 
-local function pmain()
-    local runner = Runner()
+local function pmain(opts, args)
+    local argv = util.get(_G, 'arg')
+    local opts, args = cli.parse_args(argv)
+    cli.parse_opts(opts, {
+        full_output = cli.bool_opt(false),
+        full_results = cli.bool_opt(false),
+        prompt = cli.bool_opt(argv == nil),
+        runs = cli.int_opt(1),
+    })
+    local runner = Runner(opts)
     return runner:run()
 end
 
 function main()
+    local res
     local done<close> = function()
-        if thread then thread.shutdown() end
+        if thread then thread.shutdown(res) end
     end
-    return xpcall(pmain, function(err)
+    local ok
+    ok, res = xpcall(pmain, function(err)
         io.aprintf("\n@{+RED}ERROR:@{NORM} %s\n", debug.traceback(err, 2))
         return err
     end)
+    return ok and res
 end

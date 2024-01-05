@@ -4,6 +4,7 @@
 _ENV = module(...)
 
 local debug = require 'debug'
+local math = require 'math'
 local io = require 'mlua.io'
 local list = require 'mlua.list'
 local util = require 'mlua.util'
@@ -29,16 +30,18 @@ end
 -- Parse command-line arguments into options and arguments.
 function parse_args(args)
     local opts, fargs = {}, list()
-    for i, arg in ipairs(args) do
-        if arg == '--' then
-            fargs:set_len(#fargs + (#args - i))
-            table.move(args, i + 1, #args, #fargs + 1, fargs)
-            break
+    if args then
+        for i, arg in ipairs(args) do
+            if arg == '--' then
+                fargs:set_len(#fargs + (#args - i))
+                table.move(args, i + 1, #args, #fargs + 1, fargs)
+                break
+            end
+            local n, v = arg:match('^%-%-([^=]+)=(.*)$')
+            if not n then n, v = arg:match('^%-%-([^=]+)$'), true end
+            if n then opts[n:gsub('-', '_')] = v
+            else fargs:append(arg) end
         end
-        local n, v = arg:match('^%-%-([^=]+)=(.*)$')
-        if not n then n, v = arg:match('^%-%-([^=]+)$'), true end
-        if n then opts[n:gsub('-', '_')] = v
-        else fargs:append(arg) end
     end
     return opts, fargs
 end
@@ -71,6 +74,16 @@ function str_opt(default)
         if v == nil then return default end
         if type(v) == 'string' then return v end
         raise("--%s: requires a string argument", n)
+    end
+end
+
+-- Define an integer option.
+function int_opt(default)
+    return function(n, v)
+        if v == nil then return default end
+        local vn = math.tointeger(tonumber(v))
+        if vn then return vn end
+        raise("--%s: invalid argument: %s", n, v)
     end
 end
 

@@ -26,6 +26,7 @@ target_link_libraries(mlua_mod_mlua_block_mem INTERFACE
 mlua_add_lua_modules(mlua_mod_mlua_cli mlua.cli.lua)
 target_link_libraries(mlua_mod_mlua_cli INTERFACE
     mlua_mod_debug
+    mlua_mod_math
     mlua_mod_mlua_io
     mlua_mod_mlua_list
     mlua_mod_mlua_util
@@ -181,6 +182,7 @@ mlua_add_lua_modules(mlua_mod_mlua_testing mlua.testing.lua)
 target_link_libraries(mlua_mod_mlua_testing INTERFACE
     mlua_mod_debug
     mlua_mod_math
+    mlua_mod_mlua_cli
     mlua_mod_mlua_io
     mlua_mod_mlua_list
     mlua_mod_mlua_oo
