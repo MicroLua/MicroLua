@@ -18,6 +18,9 @@ running = coroutine.running
 -- the thread is resumed at that time (unless it's resumed explicitly earlier).
 yield = coroutine.yield
 
+-- Control if yielding is enabled.
+yield_enabled = event.yield_enabled
+
 local co_resume, co_status = coroutine.resume, coroutine.status
 local co_close = coroutine.close
 local ticks, min_ticks, max_ticks = time.ticks, time.min_ticks, time.max_ticks

@@ -10,15 +10,7 @@
 __attribute__((noreturn)) void mlua_platform_abort(void) { abort(); }
 
 void mlua_platform_setup_main(int* argc, char* argv[]) {}
-
-static int global_yield_enabled(lua_State* ls) {
-    return lua_pushboolean(ls, false), 1;
-}
-
-void mlua_platform_setup_interpreter(lua_State* ls) {
-    lua_pushcfunction(ls, &global_yield_enabled);
-    lua_setglobal(ls, "yield_enabled");
-}
+void mlua_platform_setup_interpreter(lua_State* ls) {}
 
 void mlua_platform_ticks_range(uint64_t* min, uint64_t* max) {
     *min = 0;

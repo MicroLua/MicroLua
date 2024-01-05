@@ -52,7 +52,7 @@ typedef struct SPIState {
 
 static SPIState spi_state[NUM_SPIS];
 
-static void MLUA_TIME_CRITICAL(handle_spi_irq)(void) {
+static void __time_critical_func(handle_spi_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - SPI0_IRQ;
     spi_hw_t* hw = spi_get_hw(get_instance(num));
     hw_clear_bits(&hw->imsc,

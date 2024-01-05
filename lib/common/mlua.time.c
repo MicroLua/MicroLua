@@ -35,7 +35,7 @@ static int mod_sleep_until(lua_State* ls) {
     if (mlua_platform_ticks_reached(t)) return 0;
     return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
 #else
-    while (!mlua_platform_wait(t));
+    while (!mlua_platform_wait(t)) /* do nothing */;
     return 0;
 #endif
 }

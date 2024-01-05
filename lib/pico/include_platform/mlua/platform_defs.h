@@ -5,7 +5,6 @@
 #define _MLUA_LIB_PICO_PLATFORM_DEFS_H
 
 #include "pico/binary_info.h"
-#include "pico/platform.h"
 
 #define MLUA_HASH_SYMBOL_TABLES_DEFAULT 1
 
@@ -14,7 +13,5 @@
 
 #define MLUA_PLATFORM_REGISTER_MODULE(n) \
     bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n))
-
-#define MLUA_TIME_CRITICAL(fn) __time_critical_func(fn)
 
 #endif

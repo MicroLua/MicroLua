@@ -33,7 +33,7 @@ static int I2C_regs_base(lua_State* ls) {
 
 MLuaI2CState mlua_i2c_state[NUM_I2CS];
 
-static void MLUA_TIME_CRITICAL(handle_i2c_irq)(void) {
+static void __time_critical_func(handle_i2c_irq)(void) {
     uint num = __get_current_exception() - VTABLE_FIRST_IRQ - I2C0_IRQ;
     i2c_hw_t* hw = i2c_get_hw(i2c_get_instance(num));
     hw->intr_mask = 0;

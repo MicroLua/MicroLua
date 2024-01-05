@@ -1,4 +1,4 @@
-// Copyright 2023 Remy Blank <remy@c-space.org>
+// Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
 #ifndef _MLUA_LIB_PICO_EVENT_H
@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "hardware/irq.h"
+#include "hardware/sync.h"
+#include "pico/types.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -14,8 +18,21 @@
 extern "C" {
 #endif
 
-// Require the mlua.event module.
-void mlua_event_require(lua_State* ls);
+// Lock event handling. This disables interrupts.
+__attribute__((__always_inline__))
+static inline void mlua_event_lock(void) {
+    extern spin_lock_t* mlua_event_spinlock;
+    extern uint32_t mlua_event_lock_save;
+    mlua_event_lock_save = spin_lock_blocking(mlua_event_spinlock);
+}
+
+// Unlock event handling.
+__attribute__((__always_inline__))
+static inline void mlua_event_unlock(void) {
+    extern spin_lock_t* mlua_event_spinlock;
+    extern uint32_t mlua_event_lock_save;
+    spin_unlock(mlua_event_spinlock, mlua_event_lock_save);
+}
 
 // An event. The state is a tagged union of two pointers:
 //  - If the state is zero, the event is disabled.
@@ -46,72 +63,36 @@ void mlua_event_set_nolock(MLuaEvent* ev);
 // Set an event pending.
 void mlua_event_set(MLuaEvent* ev);
 
-// Register the current thread to be notified when an event triggers.
-void mlua_event_watch(lua_State* ls, MLuaEvent const* ev);
+// Dispatch pending events. "resume" is the index where Thread.resume can be
+// found.
+int mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume);
 
-// Unregister the current thread from notifications for an event.
-void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev);
+// Parse an IRQ priority argument, which must be an integer or nil.
+lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
+                                          lua_Integer def);
 
-// Yield from the running thread.
-int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
-                     lua_KContext ctx);
+// Parse the enable_irq argument.
+bool mlua_event_enable_irq_arg(lua_State* ls, int arg, lua_Integer* priority);
 
-// Suspend the running thread. If the given index is non-zero, yield the value
-// at that index, which must be a deadline in microseconds. Otherwise, yield
-// false to suspend indefinitely.
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
-                       int index);
+// Set an IRQ handler.
+void mlua_event_set_irq_handler(uint irq, irq_handler_t handler,
+                                lua_Integer priority);
 
-typedef int (*MLuaEventLoopFn)(lua_State*, bool);
-
-#if LIB_MLUA_MOD_MLUA_EVENT
-// Return true iff yielding is enabled.
-bool mlua_yield_enabled(lua_State* ls);
-void mlua_set_yield_enabled(lua_State* ls, bool en);
-// TODO: Allow force-enabling yielding => eliminate blocking code
-// TODO: Make yield status per-thread
-#else
-__attribute__((__always_inline__))
-static inline bool mlua_yield_enabled(lua_State* ls) { return false; }
-__attribute__((__always_inline__))
-static inline void mlua_set_yield_enabled(lua_State* ls, bool en) {}
-#endif
-
-// Return true iff waiting for the given event is possible, i.e. yielding is
-// enabled and the event is enabled.
-bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
-
-// Run an event loop. The loop function is called repeatedly, suspending after
-// each call, as long as the function returns a negative value. The index is
-// passed to mlua_event_suspend as a deadline index.
-int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
-                    int index);
-
-#if !LIB_MLUA_MOD_MLUA_EVENT
-#define mlua_event_require(ls) do {} while(0)
-#define mlua_event_can_wait(event) (false)
-#define mlua_event_loop(ls, event, loop, index) ((int)0)
-#endif
-
-// Start an event handler thread for the given event. The function expects two
-// arguments on the stack: the event handler and the cleanup handler. The former
-// is called from the thread every time the event is triggered. The latter is
-// called when the thread exits. Pops both arguments, pushes the thread, then
-// yields to let the thread start and ensure that the cleanup handler
-// gets called.
-int mlua_event_handle(lua_State* ls, MLuaEvent* event, lua_KFunction cont,
-                      lua_KContext ctx);
-
-// Stop the event handler thread for the given event.
-void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* event);
-
-// Pushes the event handler thread for the given event onto the stack.
-int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* event);
+// Enable or disable IRQ handling. The argument at the given index determines
+// what is done:
+//  - true, nil, none, integer: Enable the event, set the IRQ handler and enable
+//    the IRQ. If the argument is a non-negative integer, add a shared handler
+//    with the given priority. Otherwise, set an exclusive handler.
+//  - false: Disable the IRQ, remove the IRQ handler and disable the event.
+// False iff the event was already enabled.
+bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
+                           irq_handler_t handler, int index,
+                           lua_Integer priority);
 
 #ifdef __cplusplus
 }
 #endif
 
-#include "mlua/event_platform.h"
+#include "mlua/event_common.h"
 
 #endif

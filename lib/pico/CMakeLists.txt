@@ -7,7 +7,6 @@ target_sources(mlua_platform INTERFACE platform.c)
 target_link_libraries(mlua_platform INTERFACE
     hardware_sync
     hardware_timer
-    mlua_mod_mlua_event_headers
     pico_binary_info
     pico_platform
     pico_time
@@ -343,14 +342,9 @@ target_link_libraries(mlua_mod_mlua_block_flash INTERFACE
     mlua_mod_mlua_errors
 )
 
-mlua_add_c_module(mlua_mod_mlua_event mlua.event.c)
+target_sources(mlua_mod_mlua_event INTERFACE mlua.event.c)
 target_include_directories(mlua_mod_mlua_event_headers INTERFACE
     include_mlua.event)
-target_link_libraries(mlua_mod_mlua_event INTERFACE
-    mlua_mod_mlua_int64
-    mlua_platform
-)
-target_sources(mlua_mod_mlua_event INTERFACE mlua.event_platform.c)
 target_link_libraries(mlua_mod_mlua_event INTERFACE
     hardware_irq
     hardware_sync
@@ -420,22 +414,6 @@ mlua_add_lua_modules(mlua_mod_mlua_testing_uart mlua.testing.uart.lua)
 target_link_libraries(mlua_mod_mlua_testing_uart INTERFACE
     mlua_mod_hardware_gpio
     mlua_mod_hardware_uart
-)
-
-mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
-target_link_libraries(mlua_mod_mlua_thread INTERFACE
-    mlua_mod_coroutine
-    mlua_mod_mlua_event
-    mlua_mod_mlua_oo
-    mlua_mod_mlua_time
-    mlua_mod_string
-    mlua_mod_table
-)
-
-mlua_add_lua_modules(mlua_test_mlua_thread mlua.thread.test.lua)
-target_link_libraries(mlua_test_mlua_thread INTERFACE
-    mlua_mod_mlua_thread
-    mlua_mod_string
 )
 
 mlua_add_c_module(mlua_mod_pico pico.c)

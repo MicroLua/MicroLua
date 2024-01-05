@@ -8,6 +8,4 @@
 
 #define MLUA_PLATFORM_REGISTER_MODULE(n)
 
-#define MLUA_TIME_CRITICAL(fn) fn
-
 #endif

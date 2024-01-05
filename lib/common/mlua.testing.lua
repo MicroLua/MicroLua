@@ -9,6 +9,7 @@ local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
 local platform = require 'mlua.platform'
+local thread = try(require, 'mlua.thread')
 local time = require 'mlua.time'
 local util = require 'mlua.util'
 local package = require 'package'
@@ -502,12 +503,12 @@ function Test:run_module(name, pat)
         end
     end
     for _, fn in util.sort(fns, fn_comp):ipairs() do
-        local y = fn[2]:find(yield_pat)
+        local y = thread and fn[2]:find(yield_pat)
         self:run(fn[2] .. (y and " (yield)" or ""), fn[3])
         if y then
             self:run(fn[2] .. " (no yield)", function(t)
-                local save = yield_enabled(false)
-                t:cleanup(function() yield_enabled(save) end)
+                local save = thread.yield_enabled(false)
+                t:cleanup(function() thread.yield_enabled(save) end)
                 return fn[3](t)
             end)
         end
@@ -647,7 +648,6 @@ end
 
 function main()
     local done<close> = function()
-        local thread = package.loaded['mlua.thread']
         if thread then thread.shutdown() end
     end
     return xpcall(pmain, function(err)

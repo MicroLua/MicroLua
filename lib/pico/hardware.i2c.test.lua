@@ -58,7 +58,7 @@ function test_master_Y(t)
                  regs.IC_INTR_MASK_M_RD_REQ_BITS)
 
     -- Start the slave as a thread if yielding is enabled, or on core 1.
-    if yield_enabled() then
+    if thread.yield_enabled() then
         local th = thread.start(function()
             run_slave(slave, testing_i2c.mem_slave(32))
         end)

@@ -14,8 +14,6 @@
 #include "pico/platform.h"
 #include "pico/time.h"
 
-#include "mlua/event.h"
-
 bi_decl(bi_program_feature_group_with_flags(
     MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, "frozen modules",
     BI_NAMED_GROUP_SORT_ALPHA | BI_NAMED_GROUP_ADVANCED))
@@ -70,18 +68,6 @@ void isr_hardfault(void);
 
 #endif  // PICO_ON_DEVICE
 
-static int global_yield_enabled(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
-    bool en = mlua_yield_enabled(ls);
-    if (!lua_isnoneornil(ls, 1)) {
-        mlua_set_yield_enabled(ls, lua_toboolean(ls, 1));
-    }
-    return lua_pushboolean(ls, en), 1;
-#else
-    return lua_pushboolean(ls, false), 1;
-#endif
-}
-
 void mlua_platform_setup_interpreter(lua_State* ls) {
 #if PICO_ON_DEVICE
     // Set the HardFault exception handler if none was set before.
@@ -92,9 +78,6 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
                                         &hardfault_handler);
     }
 #endif
-
-    lua_pushcfunction(ls, &global_yield_enabled);
-    lua_setglobal(ls, "yield_enabled");
 }
 
 void mlua_platform_ticks_range(uint64_t* min, uint64_t* max) {
