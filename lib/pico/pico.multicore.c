@@ -84,13 +84,13 @@ static int mod_reset_core1(lua_State* ls) {
     CoreState* st = &core_state[core - 1];
 
     // Trigger the shutdown event if the other core is running an interpreter.
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     bool running = mlua_event_enabled_nolock(&st->shutdown_event);
     if (running) {
         st->shutdown = true;
         mlua_event_set_nolock(&st->shutdown_event);
     }
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     if (!running) {
         multicore_reset_core1();
         return 0;
@@ -108,9 +108,9 @@ static int mod_reset_core1(lua_State* ls) {
 
 static int handle_shutdown_event(lua_State* ls) {
     CoreState* st = &core_state[get_core_num() - 1];
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     bool shutdown = st->shutdown;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     if (shutdown) {  // Call the callback
         lua_rawgetp(ls, LUA_REGISTRYINDEX, &st->shutdown);
         lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);

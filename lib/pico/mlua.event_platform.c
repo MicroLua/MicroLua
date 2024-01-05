@@ -4,6 +4,7 @@
 #include "mlua/event.h"
 
 spin_lock_t* mlua_event_spinlock;
+uint32_t mlua_event_lock_save;
 
 lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,
                                           lua_Integer def) {
@@ -54,5 +55,5 @@ bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
 }
 
 static __attribute__((constructor)) void init(void) {
-    mlua_event_spinlock = spin_lock_instance(next_striped_spin_lock_num());
+    mlua_event_spinlock = spin_lock_init(PICO_SPINLOCK_ID_OS1);
 }

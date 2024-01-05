@@ -27,25 +27,25 @@ typedef struct StdioState {
 static StdioState stdio_state;
 
 static void MLUA_TIME_CRITICAL(handle_chars_available)(void* ud) {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     stdio_state.pending = true;
     mlua_event_set_nolock(&stdio_state.event);
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 }
 
 static bool chars_available_reset() {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     bool pending = stdio_state.pending;
     stdio_state.pending = false;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     return pending;
 }
 
 static void enable_chars_available(lua_State* ls) {
     if (!mlua_event_enable(ls, &stdio_state.event)) return;
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     stdio_state.pending = false;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     stdio_set_chars_available_callback(&handle_chars_available, NULL);
 }
 
@@ -60,9 +60,9 @@ static int mod_enable_chars_available(lua_State* ls) {
 }
 
 static int handle_chars_available_event(lua_State* ls) {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     bool pending = stdio_state.pending;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     if (pending) {  // Call the callback
         lua_rawgetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
         lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);

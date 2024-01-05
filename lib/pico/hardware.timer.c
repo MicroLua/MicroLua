@@ -36,19 +36,19 @@ static_assert(NUM_TIMERS <= 8 * sizeof(uint8_t), "pending bitmask too small");
 static AlarmState alarm_state;
 
 static void MLUA_TIME_CRITICAL(handle_alarm)(uint alarm) {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     alarm_state.pending |= 1u << alarm;
     mlua_event_set_nolock(&alarm_state.events[alarm]);
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 }
 
 static int handle_alarm_event(lua_State* ls) {
     uint alarm = lua_tointeger(ls, lua_upvalueindex(1));
     uint8_t mask = 1u << alarm;
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     uint8_t pending = alarm_state.pending;
     alarm_state.pending &= ~mask;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     if ((pending & mask) != 0) {  // Call the callback
         lua_pushvalue(ls, lua_upvalueindex(2));  // handler
         lua_pushinteger(ls, alarm);
@@ -92,9 +92,9 @@ static int mod_set_callback(lua_State* ls) {
 static void cancel_alarm(uint alarm) {
     hardware_alarm_cancel(alarm);
 #if LIB_MLUA_MOD_MLUA_EVENT
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     alarm_state.pending &= ~(1u << alarm);
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 #endif
 }
 

@@ -14,16 +14,18 @@ extern "C" {
 
 // Lock event handling. This disables interrupts.
 __attribute__((__always_inline__))
-static inline uint32_t mlua_event_lock(void) {
+static inline void mlua_event_lock(void) {
     extern spin_lock_t* mlua_event_spinlock;
-    return spin_lock_blocking(mlua_event_spinlock);
+    extern uint32_t mlua_event_lock_save;
+    mlua_event_lock_save = spin_lock_blocking(mlua_event_spinlock);
 }
 
 // Unlock event handling.
 __attribute__((__always_inline__))
-static inline void mlua_event_unlock(uint32_t save) {
+static inline void mlua_event_unlock(void) {
     extern spin_lock_t* mlua_event_spinlock;
-    spin_unlock(mlua_event_spinlock, save);
+    extern uint32_t mlua_event_lock_save;
+    spin_unlock(mlua_event_spinlock, mlua_event_lock_save);
 }
 
 // Wake the interpreter that is watching the event.

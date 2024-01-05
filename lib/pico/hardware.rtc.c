@@ -77,17 +77,17 @@ typedef struct RtcState {
 static RtcState rtc_state;
 
 static void handle_alarm() {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     rtc_state.pending = true;
     mlua_event_set_nolock(&rtc_state.event);
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 }
 
 static int handle_alarm_event(lua_State* ls) {
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     bool pending = rtc_state.pending;
     rtc_state.pending = false;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
     if (pending) {  // Call the callback
         lua_rawgetp(ls, LUA_REGISTRYINDEX, &rtc_state.pending);
         lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
@@ -122,10 +122,10 @@ static int mod_set_alarm(lua_State* ls) {
             return 0;
         }
     }
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     rtc_state.pending = false;
     rtc_set_alarm(&dt, &handle_alarm);
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 
     // Set the callback handler.
     if (!lua_isnone(ls, 2)) {
@@ -148,9 +148,9 @@ static int mod_set_alarm(lua_State* ls) {
 static int mod_disable_alarm(lua_State* ls) {
     rtc_disable_alarm();
 #if LIB_MLUA_MOD_MLUA_EVENT
-    uint32_t save = mlua_event_lock();
+    mlua_event_lock();
     rtc_state.pending = false;
-    mlua_event_unlock(save);
+    mlua_event_unlock();
 #endif
     return 0;
 }
