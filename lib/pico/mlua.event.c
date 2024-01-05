@@ -89,17 +89,6 @@ void mlua_event_disable(lua_State* ls, MLuaEvent* ev) {
     mlua_event_remove_watchers(ls, ev);
 }
 
-bool mlua_event_enabled_nolock(MLuaEvent const* ev) {
-    return ev->state != 0;
-}
-
-bool mlua_event_enabled(MLuaEvent const* ev) {
-    mlua_event_lock();
-    bool en = ev->state != 0;
-    mlua_event_unlock();
-    return en;
-}
-
 void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
     if (ev->state == 0 || is_pending(ev)) return;
     EventQueue* q = (EventQueue*)ev->state;
@@ -111,12 +100,6 @@ void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
         q->tail = ev;
     }
     __sev();
-}
-
-void __time_critical_func(mlua_event_set)(MLuaEvent* ev) {
-    mlua_event_lock();
-    mlua_event_set_nolock(ev);
-    mlua_event_unlock();
 }
 
 int mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume) {

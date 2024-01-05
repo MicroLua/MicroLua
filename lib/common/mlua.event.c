@@ -8,7 +8,6 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Make some short functions inline
 // TODO: Don't store the handler thread in the registry; it should already be
 //       available as a (single) watcher; start watching in the parent
 // TODO: Combine enabling an event and watching an event => always a single
@@ -122,12 +121,6 @@ void mlua_event_remove_watchers(lua_State* ls, MLuaEvent const* ev) {
     // TODO: Resume watchers so that they can exit
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, watchers_tag(ev));
-}
-
-int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
-                     lua_KContext ctx) {
-    lua_yieldk(ls, nresults, ctx, cont);
-    return cont(ls, LUA_OK, ctx);
 }
 
 int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,

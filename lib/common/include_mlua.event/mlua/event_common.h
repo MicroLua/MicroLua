@@ -32,8 +32,11 @@ bool mlua_event_resume_watchers(lua_State* ls, MLuaEvent const* ev,
 void mlua_event_remove_watchers(lua_State* ls, MLuaEvent const* ev);
 
 // Yield from the running thread.
-int mlua_event_yield(lua_State* ls, int nresults, lua_KFunction cont,
-                     lua_KContext ctx);
+static inline int mlua_event_yield(lua_State* ls, int nresults,
+                                   lua_KFunction cont, lua_KContext ctx) {
+    lua_yieldk(ls, nresults, ctx, cont);
+    return cont(ls, LUA_OK, ctx);
+}
 
 // Suspend the running thread. If the given index is non-zero, yield the value
 // at that index, which must be a deadline in microseconds. Otherwise, yield

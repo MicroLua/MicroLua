@@ -52,16 +52,27 @@ bool mlua_event_enable(lua_State* ls, MLuaEvent* ev);
 void mlua_event_disable(lua_State* ls, MLuaEvent* ev);
 
 // Return true iff the event is enabled. Must be in a locked section.
-bool mlua_event_enabled_nolock(MLuaEvent const* ev);
+static inline bool mlua_event_enabled_nolock(MLuaEvent const* ev) {
+    return ev->state != 0;
+}
 
 // Return true iff the event is enabled.
-bool mlua_event_enabled(MLuaEvent const* ev);
+static inline bool mlua_event_enabled(MLuaEvent const* ev) {
+    mlua_event_lock();
+    bool en = ev->state != 0;
+    mlua_event_unlock();
+    return en;
+}
 
 // Set an event pending. Must be in a locked section.
 void mlua_event_set_nolock(MLuaEvent* ev);
 
 // Set an event pending.
-void mlua_event_set(MLuaEvent* ev);
+static inline void mlua_event_set(MLuaEvent* ev) {
+    mlua_event_lock();
+    mlua_event_set_nolock(ev);
+    mlua_event_unlock();
+}
 
 // Dispatch pending events. "resume" is the index where Thread.resume can be
 // found.
