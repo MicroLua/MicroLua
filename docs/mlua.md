@@ -125,7 +125,7 @@ nothing to do with `errno` and have different numeric values.
 
 ## `mlua.event`
 
-**Module:** [`mlua.event`](../lib/pico/mlua.event.c),
+**Module:** [`mlua.event`](../lib/common/mlua.event.c),
 build target: `mlua_mod_mlua_event`
 
 This module provides the core event handling and dispatch functionality.
@@ -790,9 +790,9 @@ that value.
 
 ## `mlua.thread`
 
-**Module:** [`mlua.thread`](../lib/pico/mlua.thread.lua),
+**Module:** [`mlua.thread`](../lib/common/mlua.thread.lua),
 build target: `mlua_mod_mlua_thread`,
-tests: [`mlua.thread.test`](../lib/pico/mlua.thread.test.lua)
+tests: [`mlua.thread.test`](../lib/common/mlua.thread.test.lua)
 
 This module provides cooperative threading functionality based on coroutines.
 It sets the metaclass of the `coroutine` type to `Thread`, so coroutines are

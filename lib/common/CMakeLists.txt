@@ -214,6 +214,7 @@ target_link_libraries(mlua_test_mlua_thread INTERFACE
 
 mlua_add_c_module(mlua_mod_mlua_time mlua.time.c)
 target_link_libraries(mlua_mod_mlua_time INTERFACE
+    mlua_mod_mlua_event_headers
     mlua_mod_mlua_int64
     mlua_platform
 )

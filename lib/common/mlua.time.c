@@ -3,9 +3,7 @@
 
 #include "mlua/platform.h"
 
-#if LIB_MLUA_MOD_MLUA_EVENT
 #include "mlua/event.h"
-#endif
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
@@ -31,17 +29,17 @@ static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_sleep_until(lua_State* ls) {
     uint64_t t = mlua_check_int64(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
-    if (mlua_ticks_reached(t)) return 0;
-    return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
-#else
+    if (mlua_yield_enabled(ls)) {
+        if (mlua_ticks_reached(t)) return 0;
+        return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+    }
     while (!mlua_wait(t)) /* do nothing */;
     return 0;
-#endif
 }
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
-    return mod_sleep_until(ls);
+    if (mlua_ticks_reached(mlua_to_int64(ls, 1))) return 0;
+    return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
 }
 
 static int mod_sleep_for(lua_State* ls) {

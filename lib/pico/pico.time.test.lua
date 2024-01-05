@@ -39,7 +39,7 @@ function test_timeouts(t)
     end
 end
 
-function test_sleep(t)
+function test_sleep_Y(t)
     local start = time.get_absolute_time()
     for _, test in ipairs{
         {'sleep_until', start + 3000, start + 3000, 0},

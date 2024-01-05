@@ -71,7 +71,7 @@ int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
 
 #if !LIB_MLUA_MOD_MLUA_EVENT
 #define mlua_event_require(ls) do {} while(0)
-#define mlua_event_can_wait(event) (false)
+#define mlua_event_can_wait(ls, event) (false)
 #define mlua_event_loop(ls, event, loop, index) ((int)0)
 #endif
 
