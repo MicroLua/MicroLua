@@ -807,10 +807,10 @@ to run the configured main function, then runs `main()`.
 - `start(fn) -> Thread`\
   Start a new thread that runs `fn()`.
 
-- `shutdown()`\
-  Shut down the thread scheduler. This function yields and therefore never
-  returns. During shutdown, all threads are killed and their resources are
-  freed.
+- `shutdown(result)`\
+  Shut down the thread scheduler, and return `result` from `main()`. This
+  function yields and therefore never returns. During shutdown, all threads are
+  killed and their resources are freed.
 
 - `yield(time)`\
   Yield from the current thread. If `time` is `nil`, the thread remains in the

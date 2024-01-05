@@ -83,12 +83,11 @@ end
 
 start = Thread.start
 
-local _shutdown = false
+local _shutdown, _shutdown_res = false
 
 -- Shut down the scheduler.
-function Thread.shutdown()
-    -- TODO: Take an argument, and return it from main()
-    _shutdown = true
+function Thread.shutdown(result)
+    _shutdown, _shutdown_res = true, result
     yield()
 end
 
@@ -256,4 +255,5 @@ function main()
             end
         end
     end
+    return _shutdown_res
 end
