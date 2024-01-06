@@ -180,6 +180,11 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
     lua_pushcclosure(ls, &handler_thread, 3);
     mlua_thread_start(ls);
     watch_from_thread(ls, ev, -1);
+    // If the handler thread is killed before it gets a chance to run, it will
+    // remain as a watcher and therefore leak. Since we yield here, this can
+    // only happen from other threads that are on the active queue right now,
+    // and only during this scheduling round. This is an unlikely sequence of
+    // events, so we don't bother handling it.
     return mlua_event_yield(ls, 0, cont, ctx);
 }
 
