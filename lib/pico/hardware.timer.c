@@ -89,7 +89,7 @@ static int mod_set_callback(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_EVENT
 
-static void cancel_alarm(uint alarm) {
+static void cancel_hardware_alarm(uint alarm) {
     hardware_alarm_cancel(alarm);
 #if LIB_MLUA_MOD_MLUA_EVENT
     mlua_event_lock();
@@ -104,14 +104,14 @@ static int mod_set_target(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_EVENT
     // Cancel first to avoid that the pending flag is set between resetting it
     // and setting the new target.
-    cancel_alarm(alarm);
+    cancel_hardware_alarm(alarm);
 #endif
     lua_pushboolean(ls, hardware_alarm_set_target(alarm, t));
     return 1;
 }
 
 static int mod_cancel(lua_State* ls) {
-    cancel_alarm(check_alarm(ls, 1));
+    cancel_hardware_alarm(check_alarm(ls, 1));
     return 0;
 }
 

@@ -170,7 +170,6 @@ int mlua_run_main(lua_State* ls, int args) {
 #endif
 
 int mlua_main_core0(int argc, char* argv[]) {
-    mlua_platform_setup_main(&argc, argv);
     lua_State* ls = mlua_new_interpreter();
     if (ls == NULL) {
         mlua_writestringerror("ERROR: failed to create Lua state\n", NULL);
@@ -196,5 +195,6 @@ int mlua_main_core0(int argc, char* argv[]) {
 }
 
 __attribute__((weak)) int main(int argc, char* argv[]) {
+    mlua_platform_setup_main(&argc, argv);
     return mlua_main_core0(argc, argv);
 }
