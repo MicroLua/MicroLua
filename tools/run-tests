@@ -9,20 +9,85 @@ die() {
     exit 1
 }
 
-BASE="$(dirname "$(dirname "$0")")"
-BUILD="${BASE}/build"
-[[ -e "${BUILD}" ]] || die "no build directory"
+usage() {
+    cat >&2 <<EOT
+Usage: $(basename "$0") [option ...]
+EOT
+}
 
-# Detect platform.
-PLATFORM="$(cmake -N -B "${BUILD}" -L \
-            | sed -rne 's/^MLUA_PLATFORM:STRING=(.*)$/\1/p')"
+PLATFORM="host"
+LOOP="0"
 
-# Build tests.
-make -j9 -C "${BUILD}/bin" mlua_tests
+SRC="$(dirname "$(dirname "$0")")"
 
-# Run tests.
-case "${PLATFORM}" in
-    host) "${BUILD}/bin/mlua_tests" "$@";;
-    pico) "${BASE}/tools/flash" "${BUILD}/bin/mlua_tests.elf";;
-    *) die "unknown platform: ${PLATFORM}";;
-esac
+OPTS="$(getopt -o "hlp:" -l "help,loop,platform:" -n "$(basename "$0")" -- "$@")"
+[[ $? -ne 0 ]] && exit 2
+eval set -- "${OPTS}"
+while true; do
+    case "$1" in
+        -h|--help) usage; exit 0;;
+        -l|--loop) LOOP="1"; shift;;
+        -p|--platform)
+            PLATFORM="$2"
+            [[ -f "${SRC}/lib/${PLATFORM}/platform.cmake" ]] \
+                || die "invalid platform: ${PLATFORM}"
+            shift 2;;
+        --) shift; break;;
+        *) echo "ERROR: option parsing error" >&2; exit 2;;
+    esac
+done
+
+BUILD="${SRC}/build-${PLATFORM}"
+
+run-tests-host() {
+    local args=()
+    [[ "${LOOP}" -ne 0 ]] && args+=(--prompt)
+    "${BUILD}/bin/mlua_tests" "${args[@]}" "$@"
+}
+
+find-tty-dev() {
+    local tty_path usb_path dev
+    while true; do
+        for tty_path in /sys/class/tty/ttyACM*; do
+            usb_path="$(realpath "${tty_path}/device/..")"
+            [[ "$(cat "${usb_path}/idVendor")" == "2e8a" ]] || continue
+            [[ "$(cat "${usb_path}/idProduct")" == "000a" ]] || continue
+            dev="/dev/$(basename "${tty_path}")"
+            while [[ ! ( -r "${dev}" && -w "${dev}" ) ]]; do sleep 0.2; done
+            echo "${dev}"
+            return
+        done
+        sleep 0.2
+    done
+}
+
+run-tests-pico() {
+    # TODO: Extract test result from output
+    picotool load -u -x "${BUILD}/bin/mlua_tests.elf" -F
+    "${SRC}/tools/term" "$(find-tty-dev)"
+}
+
+on-failure-exit() {
+    [[ "$1" -eq 0 ]] && return 0
+    [[ "$1" -ge 128 ]] && exit "$1"
+    [[ "${LOOP}" -eq 0 ]] && exit "$1"
+    read
+    return 1
+}
+
+cd "${SRC}"
+while true; do
+    # Configure.
+    cmake -S "${SRC}" -B "${BUILD}" -DMLUA_PLATFORM="${PLATFORM}" \
+        && res=$? || res=$?
+    on-failure-exit "${res}" || continue
+
+    # Build tests.
+    make -j9 -C "${BUILD}/bin" mlua_tests && res=$? || res=$?
+    on-failure-exit "${res}" || continue
+
+    # Run tests.
+    "run-tests-${PLATFORM}" "$@" && res=$? || res=$?
+    [[ "${res}" -ge 128 ]] && exit "${res}"
+    [[ "${LOOP}" -ne 0 ]] || exit "${res}"
+done

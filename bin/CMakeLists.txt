@@ -71,12 +71,17 @@ if(MLUA_PLATFORM STREQUAL "pico")
         MLUA_FS_LOADER_SIZE=100<<10
         MLUA_STDIO_INIT_UART_IN=1
         MLUA_STDIO_INIT_UART_OUT=1
+        MLUA_STDIO_INIT_USB=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
         PICO_MAX_SHARED_IRQ_HANDLERS=16
         PICO_PROGRAM_NAME="MicroLua-tests"
+        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
     )
     target_link_libraries(mlua_tests PRIVATE
+        mlua_mod_mlua_stdio
         mlua_mod_mlua_thread
+        mlua_mod_pico_stdio
+        mlua_mod_pico_stdio_usb
         pico_stdlib
     )
 endif()
