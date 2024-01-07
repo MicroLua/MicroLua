@@ -546,6 +546,12 @@ target_link_libraries(mlua_mod_pico_stdio_usb INTERFACE
     pico_stdio_usb
 )
 
+mlua_add_lua_modules(mlua_test_pico_stdio_usb pico.stdio.usb.test.lua)
+target_link_libraries(mlua_test_pico_stdio_usb INTERFACE
+    mlua_mod_pico_stdio
+    mlua_mod_pico_stdio_usb
+)
+
 mlua_add_c_module(mlua_mod_pico_stdlib pico.stdlib.c)
 target_link_libraries(mlua_mod_pico_stdlib INTERFACE
     pico_stdlib

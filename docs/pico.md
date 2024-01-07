@@ -194,6 +194,7 @@ header: [`pico/stdio_semihosting.h`](https://github.com/raspberrypi/pico-sdk/blo
 sources: [`pico_stdio_semihosting`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_semihosting)\
 **Module:** [`pico.stdio.semihosting`](../lib/pico/pico.stdio.semihosting.c)
 build target: `mlua_mod_pico_stdio_semihosting`,
+tests: [`pico.stdio.semihosting.test`](../lib/pico/pico.stdio.semihosting.test.lua)
 
 - `driver: userdata`\
   The semihosting stdio driver, for use in `pico.stdio` functions.
@@ -225,6 +226,7 @@ header: [`pico/stdio_usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master
 sources: [`pico_stdio_usb`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_usb)\
 **Module:** [`pico.stdio.usb`](../lib/pico/pico.stdio.usb.c)
 build target: `mlua_mod_pico_stdio_usb`,
+tests: [`pico.stdio.usb.test`](../lib/pico/pico.stdio.usb.test.lua)
 
 - `driver: userdata`\
   The USB stdio driver, for use in `pico.stdio` functions.
