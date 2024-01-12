@@ -988,3 +988,6 @@ This module provides various utilities.
 - `table_comp(keys) -> function(a, b)`\
   Return a comparison function comparing table pairs by the elements at the
   given keys.
+
+- `percentile(values, p) -> number`\
+  Compute the `p`th percentile of a list of values. `values` must be sorted.

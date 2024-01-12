@@ -164,3 +164,15 @@ function table_comp(keys)
         return false
     end
 end
+
+-- Compute the "p"th percentile of a sorted list of values.
+function percentile(values, p)
+    local rank = #values * (0.01 * p) + 0.5
+    if rank < 1 then rank = 1.0
+    elseif rank > #values then rank = 1.0 * #values end
+    local idx = math.tointeger(math.floor(rank))
+    local perc = 1.0 * values[idx]
+    local rem = rank - idx
+    if rem > 0 then perc = perc + (values[idx + 1] - perc) * rem end
+    return perc
+end
