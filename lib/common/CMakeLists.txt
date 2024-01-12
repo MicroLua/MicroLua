@@ -208,7 +208,6 @@ target_link_libraries(mlua_mod_mlua_thread INTERFACE
     mlua_mod_mlua_oo
     mlua_mod_mlua_time
     mlua_mod_string
-    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_test_mlua_thread mlua.thread.test.lua)

@@ -8,7 +8,6 @@ local event = require 'mlua.event'
 local oo = require 'mlua.oo'
 local time = require 'mlua.time'
 local string = require 'string'
-local table = require 'table'
 
 -- Return the currently-running thread.
 running = coroutine.running
@@ -30,41 +29,44 @@ local weak_keys = {__mode = 'k'}
 local active = {}
 local head, tail = 0, 0
 local waiting = {}
-local timers = {[0] = 0}
+local timers, timers_head = {}, false
 
 -- Add a waiting thread to the timer list.
 local function add_timer(thread, deadline)
-    local len = timers[0]
-    local l, r = 1, len + 1
-    while l < r do
-        local m = (l + r) // 2
-        if waiting[timers[m]] > deadline then r = m else l = m + 1 end
+    if not timers_head or deadline < waiting[timers_head] then
+        timers[thread] = timers_head
+        timers_head = thread
+        return
     end
-    table.insert(timers, r, thread)
-    timers[0] = len + 1
+    local prev = timers_head
+    while true do
+        local next = timers[prev]
+        if not next or deadline < waiting[next] then
+            timers[thread] = next
+            timers[prev] = thread
+            return
+        end
+        prev = next
+    end
 end
 
 -- Remove a waiting thread from the timer list.
 local function remove_timer(thread)
-    local len = timers[0]
-    local deadline = waiting[thread]
-    local l, r = 1, len + 1
-    while l < r do
-        local m = (l + r) // 2
-        local t = timers[m]
-        if t == thread then
-            table.remove(timers, l)
-            timers[0] = len - 1
-            return
-        end
-        if waiting[t] < deadline then l = m + 1 else r = m end
+    if thread == timers_head then
+        timers_head = timers[thread]
+        timers[thread] = nil
+        return
     end
-    for i = l, len do
-        if timers[i] == thread then
-            table.remove(timers, i)
-            timers[0] = len - 1
+    local prev = timers_head
+    while true do
+        local next = timers[prev]
+        if not next then return end
+        if next == thread then
+            timers[prev] = timers[thread]
+            timers[thread] = nil
             return
         end
+        prev = next
     end
 end
 
@@ -183,23 +185,13 @@ Group.__close = Group.join
 
 -- Resume the threads whose deadline has elapsed.
 local function resume_deadlined()
-    local len = timers[0]
-    if len == 0 then return end
-    local i, t = 1, ticks()
-    while i <= len do
-        local thread = timers[i]
-        if waiting[thread] > t then break end
-        waiting[thread] = nil
-        active[tail] = thread
+    local t = ticks()
+    while timers_head do
+        if waiting[timers_head] > t then return end
+        waiting[timers_head] = nil
+        active[tail] = timers_head
         tail = tail + 1
-        i = i + 1
-    end
-    if i > 1 then
-        table.move(timers, i, len, 1)
-        for i = len - i + 2, len do
-            timers[i] = nil
-        end
-        timers[0] = len - i + 1
+        timers_head, timers[timers_head] = timers[timers_head], nil
     end
 end
 
@@ -213,14 +205,15 @@ function main()
             head = head + 1
         end
         for thread in pairs(waiting) do co_close(thread) end
-        active, head, tail, waiting, timers = nil, nil, nil, nil, nil
+        active, head, tail, waiting = nil, nil, nil, nil
+        timers, timers_head = nil, nil
     end
     local dispatch = event.dispatch
 
     while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
         dispatch((thread or head ~= tail) and min_ticks
-                 or waiting[timers[1]] or max_ticks)
+                 or waiting[timers_head] or max_ticks)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
