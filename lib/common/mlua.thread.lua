@@ -152,7 +152,7 @@ function Thread:join()
         else
             js[j] = true
         end
-        repeat yield() until co_status(self) == 'dead'
+        repeat yield(true) until co_status(self) == 'dead'
     end
     local term = terms[self]
     if term then error(term, 0) end
