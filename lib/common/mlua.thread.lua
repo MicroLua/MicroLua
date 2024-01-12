@@ -26,8 +26,7 @@ local ticks, min_ticks, max_ticks = time.ticks, time.min_ticks, time.max_ticks
 
 local weak_keys = {__mode = 'k'}
 
-local active = {}
-local head, tail = 0, 0
+local active, head, tail = {}
 local waiting = {}
 local timers, timers_head = {}, false
 
@@ -78,8 +77,8 @@ event.set_thread_metatable(Thread)
 -- Start a new thread calling the given function.
 function Thread.start(fn)
     local thread = coroutine.create(fn)
-    active[tail] = thread
-    tail = tail + 1
+    if tail then active[tail] = thread else head = thread end
+    tail = thread
     return thread
 end
 
@@ -118,8 +117,8 @@ function Thread:resume()
     if not deadline then return false end
     if deadline ~= true then remove_timer(self) end
     waiting[self] = nil
-    active[tail] = self
-    tail = tail + 1
+    if tail then active[tail] = self else head = self end
+    tail = self
     return true
 end
 
@@ -189,8 +188,8 @@ local function resume_deadlined()
     while timers_head do
         if waiting[timers_head] > t then return end
         waiting[timers_head] = nil
-        active[tail] = timers_head
-        tail = tail + 1
+        if tail then active[tail] = timers_head else head = timers_head end
+        tail = timers_head
         timers_head, timers[timers_head] = timers[timers_head], nil
     end
 end
@@ -200,9 +199,9 @@ function main()
     local thread
     local cleanup<close> = function()
         if thread then co_close(thread) end
-        while head ~= tail do
-            co_close(active[head])
-            head = head + 1
+        while head do
+            co_close(head)
+            head = active[head]
         end
         for thread in pairs(waiting) do co_close(thread) end
         active, head, tail, waiting = nil, nil, nil, nil
@@ -212,8 +211,8 @@ function main()
 
     while not _shutdown do
         -- Dispatch events and wait for at least one active thread.
-        dispatch((thread or head ~= tail) and min_ticks
-                 or waiting[timers_head] or max_ticks)
+        dispatch((thread or head) and min_ticks or waiting[timers_head]
+                 or max_ticks)
 
         -- Resume threads whose deadline has elapsed.
         resume_deadlined()
@@ -221,15 +220,13 @@ function main()
         -- If the previous running thread is still active, move it to the end of
         -- the active queue, after threads resumed by events. Then get the
         -- thread at the head of the active queue, skipping killed threads.
-        if head ~= tail then
-            if thread then
-                active[tail] = thread
-                tail = tail + 1
-            end
+        if head then
+            if thread then active[tail], tail = thread, thread end
             repeat
-                thread = active[head]
-                active[head] = nil
-                head = head + 1
+                thread = head
+                head = active[head]
+                if not head then tail = nil end
+                active[thread] = nil
                 if co_status(thread) == 'dead' then thread = nil end
             until thread or head == tail
         end
