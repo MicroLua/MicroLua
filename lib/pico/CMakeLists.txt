@@ -1,6 +1,7 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
+# Library: platform abstraction layer
 target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
 target_include_directories(mlua_platform INTERFACE include_platform)
 target_sources(mlua_platform INTERFACE platform.c)
@@ -17,6 +18,48 @@ if(NOT "${PICO_BOARD}" STREQUAL "host")
         hardware_flash
     )
 endif()
+
+# Executable: standalone binary
+function(mlua_platform_bin_standalone TARGET)
+    target_compile_definitions("${TARGET}" PRIVATE
+        MLUA_FS_LOADER_FLAT=1
+        MLUA_FS_LOADER_SIZE=1<<20
+        MLUA_STDIO_INIT_UART_IN=1
+        MLUA_STDIO_INIT_UART_OUT=1
+        MLUA_STDIO_INIT_USB=1
+        PICO_ENTER_USB_BOOT_ON_EXIT=1
+        PICO_MAX_SHARED_IRQ_HANDLERS=16
+        PICO_PROGRAM_NAME="MicroLua"
+        PICO_PROGRAM_URL="https://github.com/MicroLua/MicroLua"
+        PICO_PROGRAM_VERSION_STRING="0.0"
+    )
+    target_link_libraries("${TARGET}" PRIVATE
+        mlua_mod_mlua_thread
+        pico_stdlib
+    )
+endfunction()
+
+# Executable: unit tests
+function(mlua_platform_bin_tests TARGET)
+    target_compile_definitions("${TARGET}" PRIVATE
+        MLUA_FS_LOADER_FLAT=1
+        MLUA_FS_LOADER_SIZE=100<<10
+        MLUA_STDIO_INIT_UART_IN=1
+        MLUA_STDIO_INIT_UART_OUT=1
+        MLUA_STDIO_INIT_USB=1
+        PICO_ENTER_USB_BOOT_ON_EXIT=1
+        PICO_MAX_SHARED_IRQ_HANDLERS=16
+        PICO_PROGRAM_NAME="MicroLua-tests"
+        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
+    )
+    target_link_libraries("${TARGET}" PRIVATE
+        mlua_mod_mlua_stdio
+        mlua_mod_mlua_thread
+        mlua_mod_pico_stdio
+        mlua_mod_pico_stdio_usb
+        pico_stdlib
+    )
+endfunction()
 
 mlua_add_lua_modules(mlua_test_00_setup 00_setup.test.lua)
 target_link_libraries(mlua_test_00_setup INTERFACE
