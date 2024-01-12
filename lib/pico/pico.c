@@ -12,12 +12,20 @@
 extern char const __flash_binary_start[];
 extern char const __flash_binary_end[];
 
+static void mod_flash_binary_start(lua_State* ls, MLuaSymVal const* value) {
+    lua_pushinteger(ls, (uintptr_t)__flash_binary_start);
+}
+
+static void mod_flash_binary_end(lua_State* ls, MLuaSymVal const* value) {
+    lua_pushinteger(ls, (uintptr_t)__flash_binary_end);
+}
+
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(board, string, PICO_BOARD),
     MLUA_SYM_V(build_target, string, PICO_TARGET_NAME),
     MLUA_SYM_V(build_type, string, PICO_CMAKE_BUILD_TYPE),
-    MLUA_SYM_V(flash_binary_start, integer, (uintptr_t)__flash_binary_start),
-    MLUA_SYM_V(flash_binary_end, integer, (uintptr_t)__flash_binary_end),
+    MLUA_SYM_P(flash_binary_start, mod_),
+    MLUA_SYM_P(flash_binary_end, mod_),
     MLUA_SYM_V(OK, integer, PICO_OK),
     MLUA_SYM_V(ERROR_NONE, integer, PICO_ERROR_NONE),
     MLUA_SYM_V(ERROR_TIMEOUT, integer, PICO_ERROR_TIMEOUT),

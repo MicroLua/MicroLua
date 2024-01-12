@@ -8,7 +8,7 @@
 #include "mlua/module.h"
 
 static io_rw_8* check_io_rw_8(lua_State* ls, int arg) {
-    return (io_rw_8*)luaL_checkinteger(ls, arg);
+    return (io_rw_8*)(uintptr_t)luaL_checkinteger(ls, arg);
 }
 
 static io_rw_16* check_io_rw_16(lua_State* ls, int arg) {
