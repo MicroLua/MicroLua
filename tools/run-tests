@@ -39,6 +39,14 @@ done
 
 BUILD="${SRC}/build-${PLATFORM}"
 
+on-failure-exit() {
+    [[ "$1" -eq 0 ]] && return 0
+    [[ "$1" -ge 128 ]] && exit "$1"
+    [[ "${LOOP}" -eq 0 ]] && exit "$1"
+    read
+    return 1
+}
+
 run-tests-host() {
     local args=()
     [[ "${LOOP}" -ne 0 ]] && args+=(--prompt)
@@ -63,16 +71,9 @@ find-tty-dev() {
 
 run-tests-pico() {
     # TODO: Extract test result from output
-    picotool load -u -x "${BUILD}/bin/mlua_tests.elf" -F
+    picotool load -u -x "${BUILD}/bin/mlua_tests.elf" -F && res=$? || res=$?
+    on-failure-exit "${res}" || return 1
     "${SRC}/tools/term" "$(find-tty-dev)"
-}
-
-on-failure-exit() {
-    [[ "$1" -eq 0 ]] && return 0
-    [[ "$1" -ge 128 ]] && exit "$1"
-    [[ "${LOOP}" -eq 0 ]] && exit "$1"
-    read
-    return 1
 }
 
 cd "${SRC}"
