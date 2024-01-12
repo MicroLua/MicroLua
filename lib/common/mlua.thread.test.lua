@@ -3,7 +3,9 @@
 
 _ENV = module(...)
 
+local int64 = require 'mlua.int64'
 local thread = require 'mlua.thread'
+local time = require 'mlua.time'
 local string = require 'string'
 
 function test_Thread_name(t)
@@ -91,4 +93,31 @@ function test_yield(t)
                  .. '(1, 2) (2, 2) (3, 2) (4, 2) (5, 2) '
                  .. '(1, 3) (2, 3) (3, 3) (4, 3) (5, 3) ',
              "Unexpected execution sequence: %s", log)
+end
+
+function test_scheduling_latency(t)
+    local samples = 10
+    local ticks, sleep_until = time.ticks, time.sleep_until
+    for _, count in ipairs{1, 2, 4, 8, 16} do
+        local min, max, sum = int64.max, int64.min, 0
+        local threads = thread.Group()
+        for i = 1, count do
+            threads:start(function()
+                for j = 1, samples do
+                    local want = ticks() + 5000
+                    sleep_until(want)
+                    local got = ticks()
+                    local delta = got - want
+                    if delta < min then min = delta end
+                    if delta > max then max = delta end
+                    sum = sum + delta
+                end
+            end)
+            time.sleep_for(20)
+        end
+        threads:join()
+        t:printf("Threads: %s, min: %s us, max: %s us, avg: %.1f us\n",
+                 count, min, max, sum / (count * samples))
+        collectgarbage('collect')
+    end
 end
