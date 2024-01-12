@@ -17,14 +17,16 @@ EOT
 
 PLATFORM="host"
 LOOP="0"
+CMAKE_ARGS=()
 
 SRC="$(dirname "$(dirname "$0")")"
 
-OPTS="$(getopt -o "hlp:" -l "help,loop,platform:" -n "$(basename "$0")" -- "$@")"
+OPTS="$(getopt -o "c:hlp:" -l "cmake-arg:,help,loop,platform:" -n "$(basename "$0")" -- "$@")"
 [[ $? -ne 0 ]] && exit 2
 eval set -- "${OPTS}"
 while true; do
     case "$1" in
+        -c|--cmake-arg) CMAKE_ARGS+=("$2"); shift 2;;
         -h|--help) usage; exit 0;;
         -l|--loop) LOOP="1"; shift;;
         -p|--platform)
@@ -80,7 +82,7 @@ cd "${SRC}"
 while true; do
     # Configure.
     cmake -S "${SRC}" -B "${BUILD}" -DMLUA_PLATFORM="${PLATFORM}" \
-        && res=$? || res=$?
+        "${CMAKE_ARGS[@]}" && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
     # Build tests.
