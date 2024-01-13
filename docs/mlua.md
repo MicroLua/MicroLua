@@ -804,8 +804,8 @@ list are resumed either explicitly or due to their deadline expiring.
 When this module is linked in, the interpreter setup code creates a new thread
 to run the configured main function, then runs `main()`.
 
-- `start(fn) -> Thread`\
-  Start a new thread that runs `fn()`.
+- `start(fn, [name]) -> Thread`\
+  Start a new thread that runs `fn()`, optionally giving it a name.
 
 - `shutdown(result)`\
   Shut down the thread scheduler, and return `result` from `main()`. This
@@ -832,19 +832,16 @@ as coroutines, so they have to yield explicitly to allow other threads to run.
 Many blocking library functions can yield when they have to wait, and their
 documentation mentions it explicitly.
 
-- `Thread.start(fn) -> Thread`\
-  Start a new thread that runs `fn()`.
+- `Thread.start(fn, [name]) -> Thread`\
+  Start a new thread that runs `fn()`, optionally giving it a name.
 
-- `Thread.shutdown()`\
-  Shut down the thread scheduler. This function yields and therefore never
-  returns. During shutdown, all threads are killed and their resources are
-  freed.
+- `Thread.shutdown(result)`\
+  Shut down the thread scheduler, and return `result` from `main()`. This
+  function yields and therefore never returns. During shutdown, all threads are
+  killed and their resources are freed.
 
 - `Thread:name() -> string`\
   Return the name of the thread, or a generated name if none was set.
-
-- `Thread:set_name(n) -> Thread`\
-  Set the name of the thread.
 
 - `Thread:is_alive() -> boolean`\
   Return true iff the thread is alive, i.e. the status of its coroutine isn't
@@ -878,7 +875,7 @@ terminate automatically get removed from the group.
 - `Group() -> Group`\
   Create a new thread group.
 
-- `Group:start(fn) -> Thread`\
+- `Group:start(fn, [name]) -> Thread`\
   Start a new thread that runs `fn()` and add it to the group.
 
 - `Group:join()`\
@@ -902,7 +899,15 @@ This module provides platform-independent time functionality.
   The range of values that can be returned by `ticks()`.
 
 - `ticks() -> Int64`\
-  Return the current microsecond ticks, as given by a monotonic clock.
+  Return the current absolute time in microsecond ticks, as given by a monotonic
+  clock.
+
+- `sleep_until(time)` *[yields]*\
+  Suspend the current thread until the given absolute time (as returned by
+  `ticks()`).
+
+- `sleep_for(ticks)` *[yields]*\
+  Suspend the current thread for the given number of microsecond ticks.
 
 ## `mlua.uf2`
 

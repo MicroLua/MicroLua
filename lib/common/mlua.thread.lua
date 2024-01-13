@@ -73,10 +73,12 @@ end
 local Thread = {__name = 'Thread'}
 Thread.__index = Thread
 event.set_thread_metatable(Thread)
+local names = setmetatable({}, weak_keys)
 
 -- Start a new thread calling the given function.
-function Thread.start(fn)
+function Thread.start(fn, name)
     local thread = coroutine.create(fn)
+    if name then names[thread] = name end
     if tail then active[tail] = thread else head = thread end
     tail = thread
     return thread
@@ -94,16 +96,8 @@ end
 
 shutdown = Thread.shutdown
 
-local names = setmetatable({}, weak_keys)
-
 -- Return the name of the thread.
 function Thread:name() return names[self] or tostring(self):sub(9) end
-
--- Set the name of the thread.
-function Thread:set_name(name)
-    names[self] = name
-    return self
-end
 
 -- Return true iff the thread is alive.
 function Thread:is_alive() return co_status(self) ~= 'dead' end
@@ -166,8 +160,8 @@ Group = oo.class('Group')
 Group.__mode = 'k'
 
 -- Start a new thread and track it in the group.
-function Group:start(fn)
-    local thread = start(fn)
+function Group:start(fn, name)
+    local thread = start(fn, name)
     self[thread] = true
     return thread
 end

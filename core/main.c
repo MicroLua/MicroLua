@@ -75,9 +75,6 @@ static int pmain(lua_State* ls) {
     if (has_main) {
         lua_getfield(ls, -1, "start");  // Start the thread
         lua_rotate(ls, -3, -1);
-        lua_call(ls, 1, 1);
-        luaL_getmetafield(ls, -1, "set_name");  // Set the thread name
-        lua_rotate(ls, -2, 1);
         lua_pushliteral(ls, "main");
         lua_call(ls, 2, 0);
     }
