@@ -76,7 +76,7 @@ static inline void mlua_event_set(MLuaEvent* ev) {
 
 // Dispatch pending events. "resume" is the index where Thread.resume can be
 // found.
-int mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume);
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume);
 
 // Parse an IRQ priority argument, which must be an integer or nil.
 lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,

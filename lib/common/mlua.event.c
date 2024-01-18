@@ -42,7 +42,7 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev) {
 
 bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev, int resume) {
     bool resumed = false;
-    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) != LUA_TNIL) {
         lua_pushvalue(ls, resume);
         lua_rotate(ls, -2, 1);
         lua_call(ls, 1, 1);
@@ -189,7 +189,7 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
 }
 
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
-    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) == LUA_TTHREAD) {
+    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) != LUA_TNIL) {
         mlua_thread_kill(ls);
     } else {
         lua_pop(ls, 1);
@@ -206,7 +206,8 @@ static int mod_dispatch(lua_State* ls) {
     luaL_getmetafield(ls, -1, "resume");
     lua_replace(ls, 1);
     lua_settop(ls, 1);
-    return mlua_event_dispatch(ls, deadline, 1);
+    mlua_event_dispatch(ls, deadline, 1);
+    return 0;
 }
 
 int mod_set_thread_metatable(lua_State* ls) {

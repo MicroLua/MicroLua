@@ -24,7 +24,7 @@ static inline bool mlua_event_enabled(MLuaEvent const* ev) { return false; }
 
 // Dispatch pending events. "resume" is the index where Thread.resume can be
 // found.
-int mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume);
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume);
 
 #ifdef __cplusplus
 }
