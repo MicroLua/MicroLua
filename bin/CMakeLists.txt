@@ -27,6 +27,13 @@ target_compile_definitions(mlua_tests PRIVATE
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0
 )
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_compile_definitions(mlua_tests PRIVATE
+        LUA_DEBUG=1
+        LUA_USE_APICHECK=1
+        LUAI_ASSERT=1
+    )
+endif()
 mlua_target_config(mlua_tests
     HASH_SYMBOL_TABLES:integer=MLUA_HASH_SYMBOL_TABLES
     I2C_MASTER_SCL:integer=5
