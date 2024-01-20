@@ -29,7 +29,6 @@ target_compile_definitions(mlua_tests PRIVATE
 )
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_definitions(mlua_tests PRIVATE
-        LUA_DEBUG=1
         LUA_USE_APICHECK=1
         LUAI_ASSERT=1
     )

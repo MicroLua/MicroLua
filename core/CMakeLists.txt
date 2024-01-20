@@ -24,7 +24,6 @@ mlua_add_core_library(mlua_core
     lundump.c
     lvm.c
     lzio.c
-    ltests.c
 )
 target_link_libraries(mlua_core INTERFACE
     mlua_platform_luaconf
