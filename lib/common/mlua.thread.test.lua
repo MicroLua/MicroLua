@@ -50,9 +50,10 @@ function test_Thread_kill(t)
         t:expect(t:expr(th):is_alive()):eq(true)
         t:expect(th:is_alive(), "Thread is dead before kill")
         t:expect(not closed, "Cleanup has run before kill")
-        th:kill()
+        t:expect(t:expr(th):kill()):eq(true)
         t:expect(not th:is_alive(), "Killed thread is alive")
         t:expect(closed, "Cleanup hasn't run on kill")
+        t:expect(t:expr(th):kill()):eq(false)
     end
 end
 

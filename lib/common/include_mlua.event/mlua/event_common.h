@@ -1,8 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_COMMON_EVENT_COMMON_H
-#define _MLUA_LIB_COMMON_EVENT_COMMON_H
+#ifndef _MLUA_LIB_COMMON_MLUA_EVENT_COMMON_H
+#define _MLUA_LIB_COMMON_MLUA_EVENT_COMMON_H
 
 #include <stdbool.h>
 #include <stdint.h>

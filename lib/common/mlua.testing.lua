@@ -428,7 +428,9 @@ function Test:_pcall(fn, ...)
             self._error = true
             self:enable_output()
             local tb = debug.traceback(err, 2)
-            for _, pat in ipairs(tb_exclude) do tb = tb:gsub(pat, '') end
+            if type(tb) == 'string' then
+                for _, pat in ipairs(tb_exclude) do tb = tb:gsub(pat, '') end
+            end
             return self:_log(ERROR, "%s", tb)
         end
         return err

@@ -121,6 +121,7 @@ local joiners = setmetatable({}, weak_keys)
 
 -- Kill the thread.
 function Thread:kill()
+    if co_status(self) == 'dead' then return false end
     local deadline = waiting[self]
     if deadline and deadline ~= true then remove_timer(self) end
     waiting[self] = nil
@@ -132,6 +133,7 @@ function Thread:kill()
         if type(js) ~= 'table' then js:resume()
         else for _, j in ipairs(js) do j:resume() end end
     end
+    return true
 end
 
 -- Block until the thread has terminated.
@@ -230,7 +232,14 @@ function main()
         if thread then
             local _, deadline = co_resume(thread)
             if co_status(thread) == 'dead' then
-                thread:kill()
+                local ok, err = co_close(thread)
+                if not ok then terms[thread] = err end
+                local js = joiners[thread]
+                if js then
+                    joiners[thread] = nil
+                    if type(js) ~= 'table' then js:resume()
+                    else for _, j in ipairs(js) do j:resume() end end
+                end
                 thread = nil
             elseif deadline then
                 waiting[thread] = deadline

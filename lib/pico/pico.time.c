@@ -134,15 +134,8 @@ static int mod_add_alarm_in_ms(lua_State* ls) {
 static int mod_cancel_alarm(lua_State* ls) {
     lua_State* thread = lua_tothread(ls, 1);
     luaL_argexpected(ls, thread != NULL, 1, "thread");
-    if (!mlua_thread_is_alive(thread)) {
-        lua_pushboolean(ls, false);
-        return 1;
-    }
-
-    // Kill the alarm thread.
     lua_settop(ls, 1);
     mlua_thread_kill(ls);
-    lua_pushboolean(ls, true);
     return 1;
 }
 

@@ -855,10 +855,10 @@ documentation mentions it explicitly.
   Resume the thread if it is on the wait list. Returns true iff the thread was
   on the wait list.
 
-- `Thread:kill()`\
-  Kill the thread. This causes the coroutine to unwind the stack and close all
-  to-be-closed variables, then resumes any other threads waiting in a call to
-  `join()`.
+- `Thread:kill() -> boolean`\
+  Kill the thread, and return `true` iff the thread was alive. This causes the
+  coroutine to unwind the stack and close all to-be-closed variables, then
+  resumes any other threads waiting in a call to `join()`.
 
 - `Thread:join()`\
   `Thread:__close()`\

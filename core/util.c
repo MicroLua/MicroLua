@@ -73,19 +73,5 @@ void mlua_thread_kill(lua_State* ls) {
         return;
     }
     lua_rotate(ls, -2, 1);
-    lua_call(ls, 1, 0);
-}
-
-bool mlua_thread_is_alive(lua_State* thread) {
-    if (thread == NULL) return false;
-    switch (lua_status(thread)) {
-    case LUA_YIELD:
-        return true;
-    case LUA_OK: {
-        lua_Debug ar;
-        return lua_getstack(thread, 0, &ar) || lua_gettop(thread) != 0;
-    }
-    default:
-        return false;
-    }
+    lua_call(ls, 1, 1);
 }

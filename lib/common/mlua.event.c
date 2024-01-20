@@ -191,6 +191,7 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
     if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) != LUA_TNIL) {
         mlua_thread_kill(ls);
+        lua_pop(ls, 1);
     } else {
         lua_pop(ls, 1);
     }
