@@ -12,6 +12,9 @@ The test modules can be useful as usage examples.
 - `_VERSION: string = LUA_VERSION`\
   `_RELEASE: string = LUA_RELEASE`
 
+- `WeakKeys: table = {__mode = 'k'}`\
+  A metatable for weak keys.
+
 - `arg: table`\
   The arguments passed to `main()`. The table is zero-based: `arg[0]` contains
   the executable name, and the following indexes contain the command-line

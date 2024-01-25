@@ -31,6 +31,9 @@ extern "C" {
 // as an __index function for strict tables.
 int mlua_index_undefined(lua_State* ls);
 
+// The name of a metatable for weak keys.
+extern char const mlua_WeakKeys_name[];
+
 #define MLUA_FUNC_V(wp, p, n, ...)  \
 static int wp ## n(lua_State* ls) { p ## n(__VA_ARGS__); return 0; }
 #define MLUA_FUNC_R(wp, p, n, ret, ...)  \
