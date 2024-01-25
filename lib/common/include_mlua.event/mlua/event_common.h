@@ -25,7 +25,8 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev);
 
 // Resume the watcher of an event. "resume" is the index where Thread.resume
 // can be found.
-bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev, int resume);
+bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev,
+                               MLuaResume resume);
 
 // Remove the watcher of an event.
 void mlua_event_remove_watcher(lua_State* ls, MLuaEvent const* ev);

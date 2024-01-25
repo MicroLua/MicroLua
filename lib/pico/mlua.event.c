@@ -102,7 +102,7 @@ void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
     __sev();
 }
 
-void mlua_event_dispatch(lua_State* ls, uint64_t deadline, int resume) {
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume) {
     uint64_t ticks_min, ticks_max;
     mlua_ticks_range(&ticks_min, &ticks_max);
     bool wake = deadline == ticks_min || mlua_ticks_reached(deadline);

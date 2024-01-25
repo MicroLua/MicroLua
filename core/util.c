@@ -49,6 +49,12 @@ static int Function___close(lua_State* ls) {
     return 0;
 }
 
+lua_State* mlua_check_thread(lua_State* ls, int arg) {
+    lua_State* thread = lua_tothread(ls, arg);
+    luaL_argexpected(ls, thread != NULL, arg, "thread");
+    return thread;
+}
+
 int mlua_thread_meta(lua_State* ls, char const* name) {
     lua_pushthread(ls);
     int res = luaL_getmetafield(ls, -1, name);
