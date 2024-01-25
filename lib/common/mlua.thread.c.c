@@ -43,9 +43,8 @@ static char const mlua_Thread_name[] = "mlua.Thread";
 #define UV_TIMERS 3
 #define UV_THREADS 4
 #define UV_JOINERS 5
-#define UV_TERMS 6
-#define UV_NAMES 7
-#define MAIN_UV_COUNT 7
+#define UV_NAMES 6
+#define MAIN_UV_COUNT 6
 
 static uint8_t main_tag;
 
@@ -242,19 +241,10 @@ static int Thread_kill(lua_State* ls) {
     // TODO: Remove from active queue if STATE_ACTIVE
     if (state == STATE_TIMER) remove_timer(main, self);
 
-    // Close the Lua thread and set a possible error in main.TERMS.
-    // TODO: Keep the termination in FP_DEADLINE
+    // Close the Lua thread and store the termination in self.DEADLINE.
     lua_xmove(self, ls, 1);  // next = self.NEXT
     lua_pop(self, FP_COUNT - 1);
-    if (lua_closethread(self, ls) != LUA_OK) {
-        // main.TERMS[self] = error
-        push_main_value(ls, lua_upvalueindex(UV_TERMS));
-        lua_pushvalue(ls, 1);
-        lua_xmove(self, ls, 1);
-        lua_rawset(ls, -3);
-        lua_pop(ls, 1);
-    }
-    lua_pushnil(self);  // self.DEADLINE = nil
+    if (lua_closethread(self, ls) == LUA_OK) lua_pushnil(self);
     lua_pushinteger(self, STATE_DEAD);  // self.FLAGS = STATE_DEAD
     lua_xmove(ls, self, 1);  // self.NEXT = next
 
@@ -293,13 +283,13 @@ static int Thread_kill(lua_State* ls) {
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx);
-static int Thread_join_2(lua_State* ls);
+static int Thread_join_2(lua_State* ls, lua_State* self);
 
 static int Thread_join(lua_State* ls) {
     // TODO: Remove from joiners list on exit
     lua_State* self = mlua_check_thread(ls, 1);
     lua_settop(ls, 1);
-    if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls);
+    if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
 
     // Add the running thread to main.JOINERS[self].
     push_main_value(ls, lua_upvalueindex(UV_JOINERS));
@@ -339,16 +329,16 @@ static int Thread_join(lua_State* ls) {
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_State* self = (lua_State*)ctx;
-    if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls);
+    if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
     lua_pushboolean(ls, true);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
-static int Thread_join_2(lua_State* ls) {
-    push_main_value(ls, lua_upvalueindex(UV_TERMS));
-    lua_pushvalue(ls, 1);
-    if (lua_rawget(ls, -2) != LUA_TNIL) lua_error(ls);
-    return 0;
+static int Thread_join_2(lua_State* ls, lua_State* self) {
+    if (lua_isnil(self, FP_DEADLINE)) return 0;
+    lua_pushvalue(self, FP_DEADLINE);
+    lua_xmove(self, ls, 1);
+    return lua_error(ls);
 }
 
 static int mod_running(lua_State* ls) {
@@ -524,6 +514,9 @@ static int mod_main(lua_State* ls) {
                 running = head;
                 head = lua_tothread(head, FP_NEXT);
                 if (thread_state(running) != STATE_DEAD) break;
+                // running.NEXT = nil
+                lua_pop(running, 1);
+                lua_pushnil(running);
                 if (head == NULL) {
                     running = NULL;
                     break;
@@ -547,13 +540,10 @@ static int mod_main(lua_State* ls) {
         lua_pop(running, FP_COUNT);
         int nres;
         if (lua_resume(running, ls, 0, &nres) != LUA_YIELD) {
-            // Close the Lua thread and set a possible error in main.TERMS.
-            if (lua_closethread(running, ls) != LUA_OK) {
-                // TERMS[running] = error
-                push_thread(ls, running);
-                lua_xmove(running, ls, 1);
-                lua_rawset(ls, lua_upvalueindex(UV_TERMS));
-            }
+            // Close the Lua thread and store the termination in DEADLINE.
+            if (lua_closethread(running, ls) == LUA_OK) lua_pushnil(running);
+            lua_pushinteger(running, STATE_DEAD);
+            lua_pushnil(running);
 
             // Resume joiners.
             // joiners = JOINERS[running]
@@ -681,8 +671,6 @@ MLUA_OPEN_MODULE(mlua.thread.c) {
     lua_pushnil(ls);
     lua_createtable(ls, 0, 0);  // THREADS
     lua_createtable(ls, 0, 0);  // JOINERS
-    luaL_setmetatable(ls, mlua_WeakKeys_name);
-    lua_createtable(ls, 0, 0);  // TERMS
     luaL_setmetatable(ls, mlua_WeakKeys_name);
     lua_createtable(ls, 0, 0);  // NAMES
     luaL_setmetatable(ls, mlua_WeakKeys_name);
