@@ -4,6 +4,7 @@
 _ENV = module(...)
 
 local adc = require 'hardware.adc'
+local thread = require 'mlua.thread'
 local time = require 'pico.time'
 
 local function to_celsius(value)
@@ -39,12 +40,12 @@ function test_fifo_Y(t)
     local got = adc.fifo_get_level()
     t:expect(got == 0, "FIFO has %s values, want 0")
 
-    adc.fifo_enable_irq()
+    if thread.yield_enabled() then
+        adc.fifo_enable_irq()
+        t:cleanup(function() adc.fifo_enable_irq(false) end)
+    end
     adc.run(true)
-    t:cleanup(function()
-        adc.run(false)
-        adc.fifo_enable_irq(false)
-    end)
+    t:cleanup(function() adc.run(false) end)
     time.sleep_ms(5)
     t:expect(not adc.fifo_is_empty(), "FIFO remains empty")
     t:expect(adc.fifo_get_level() ~= 0, "FIFO level remains 0")

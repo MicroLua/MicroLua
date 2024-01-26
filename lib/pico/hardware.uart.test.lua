@@ -37,7 +37,7 @@ local function setup(t)
     t:expect(t:expr(inst):init(baud)):close_to_rel(baud, 0.05)
     t:cleanup(function() inst:deinit() end)
     inst:enable_loopback(true)
-    inst:enable_irq()
+    if thread.yield_enabled() then inst:enable_irq() end
     inst:tx_wait_blocking()
     while inst:is_readable() do inst:read_blocking(1) end
     return inst

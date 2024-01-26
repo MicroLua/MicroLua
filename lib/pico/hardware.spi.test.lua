@@ -6,6 +6,7 @@ _ENV = module(...)
 local addressmap = require 'hardware.regs.addressmap'
 local spi = require 'hardware.spi'
 local config = require 'mlua.config'
+local thread = require 'mlua.thread'
 local string = require 'string'
 
 function test_strict(t)
@@ -33,7 +34,7 @@ local function setup(t, bits)
     t:cleanup(function() inst:deinit() end)
     inst:set_format(bits, spi.CPOL_0, spi.CPHA_0);
     inst:enable_loopback(true)
-    inst:enable_irq()
+    if thread.yield_enabled() then inst:enable_irq() end
     return inst
 end
 

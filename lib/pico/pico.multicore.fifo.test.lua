@@ -15,8 +15,10 @@ function set_up(t)
 end
 
 function test_status_Y(t)
-    fifo.enable_irq()
-    t:cleanup(function() fifo.enable_irq(false) end)
+    if thread.yield_enabled() then
+        fifo.enable_irq()
+        t:cleanup(function() fifo.enable_irq(false) end)
+    end
 
     -- Initial state
     fifo.drain()
@@ -53,9 +55,10 @@ end
 function test_push_pop_Y(t)
     multicore.launch_core1(module_name, 'core1_echo')
     t:cleanup(multicore.reset_core1)
-
-    fifo.enable_irq()
-    t:cleanup(function() fifo.enable_irq(false) end)
+    if thread.yield_enabled() then
+        fifo.enable_irq()
+        t:cleanup(function() fifo.enable_irq(false) end)
+    end
     for i = 1, 10 do
         fifo.push_blocking(i)
         t:expect(t:expr(fifo).pop_blocking()):eq(i)

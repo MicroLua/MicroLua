@@ -78,6 +78,7 @@ target_link_libraries(mlua_mod_hardware_adc INTERFACE
 mlua_add_lua_modules(mlua_test_hardware_adc hardware.adc.test.lua)
 target_link_libraries(mlua_test_hardware_adc INTERFACE
     mlua_mod_hardware_adc
+    mlua_mod_mlua_thread
     mlua_mod_pico_time
 )
 
@@ -280,6 +281,7 @@ mlua_add_lua_modules(mlua_test_hardware_spi hardware.spi.test.lua)
 target_link_libraries(mlua_test_hardware_spi INTERFACE
     mlua_mod_hardware_regs_addressmap
     mlua_mod_hardware_spi
+    mlua_mod_mlua_thread
     mlua_mod_string
 )
 
@@ -508,6 +510,7 @@ target_link_libraries(mlua_test_pico_multicore INTERFACE
 mlua_add_c_module(mlua_mod_pico_multicore_fifo pico.multicore.fifo.c)
 target_link_libraries(mlua_mod_pico_multicore_fifo INTERFACE
     hardware_structs
+    hardware_sync
     mlua_mod_mlua_event_headers
     mlua_mod_mlua_int64
     pico_multicore

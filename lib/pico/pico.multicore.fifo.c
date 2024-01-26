@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "hardware/structs/sio.h"
+#include "hardware/sync.h"
 #include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/time.h"
@@ -62,6 +63,7 @@ static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx) {
     // Busy loop, as there is no interrupt for RDY.
     if (multicore_fifo_wready()) {
         sio_hw->fifo_wr = luaL_checkinteger(ls, 1);
+        __sev();  // In case the other end is doing blocking reads
         return 0;
     }
     return mlua_event_yield(ls, 0, &mod_push_blocking_1, 0);

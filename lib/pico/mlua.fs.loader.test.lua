@@ -19,6 +19,7 @@ function set_up(t)
     if loader.fs:is_mounted() then loader.fs:unmount() end
     t:assert(t:expr(loader.fs):format()):eq(true)
     t:assert(t:expr(loader.fs):mount()):eq(true)
+    assert(loader.fs:mkdir('/lua'))
 end
 
 function test_block_device(t)
@@ -40,7 +41,6 @@ function test_loading(t)
     end)
     package.path = '/lua/?.lua;/?.lua'
 
-    assert(loader.fs:mkdir('/lua'))
     write_file(loader.fs, ('/lua/%s.a.lua'):format(prefix), [[
         _ENV = module(...)
         value = 'a'
@@ -86,6 +86,8 @@ function test_loading_multicore(t)
 
     multicore.launch_core1(prefix .. '.c', 'core1_echo')
     t:cleanup(multicore.reset_core1)
+    fifo.enable_irq()
+    t:cleanup(function() fifo.enable_irq(false) end)
     for i = 1, 10 do
         fifo.push_blocking(i)
         t:expect(t:expr(fifo).pop_blocking()):eq(i)
