@@ -197,7 +197,12 @@ static int write_read_loop(lua_State* ls, bool timeout) {
             hw_set_bits(&hw->imsc,
                 (tx > 0 && rx < tx + WR_FIFO_DEPTH ? SPI_SSPIMSC_TXIM_BITS : 0)
                 | (rx > 0 ? SPI_SSPIMSC_RXIM_BITS | SPI_SSPIMSC_RTIM_BITS : 0));
-            if (dst != NULL && luaL_bufflen(&buf) > 0) luaL_pushresult(&buf);
+            if (dst != NULL && luaL_bufflen(&buf) > 0) {
+                luaL_pushresult(&buf);
+                if (lua_gettop(ls) >= LUA_MINSTACK - 1) {
+                    lua_concat(ls, lua_gettop(ls) - 5);
+                }
+            }
             lua_pushinteger(ls, tx);
             lua_replace(ls, 4);
             lua_pushinteger(ls, rx);

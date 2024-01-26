@@ -180,6 +180,7 @@ static int I2C_write_timeout_us(lua_State* ls) {
 
 static int read_loop(lua_State* ls, bool timeout) {
     if (timeout) {
+        lua_settop(ls, 0);
         luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
         return 2;
@@ -228,6 +229,9 @@ static int read_loop(lua_State* ls, bool timeout) {
 
         // Read received data.
         if (offset < rend) {
+            if (lua_gettop(ls) >= LUA_MINSTACK - 2) {
+                lua_concat(ls, lua_gettop(ls) - 7);
+            }
             size_t cnt = rend - offset;
             luaL_Buffer buf;
             uint8_t* dst = (uint8_t*)luaL_buffinitsize(ls, &buf, cnt);
@@ -252,6 +256,7 @@ static int read_loop(lua_State* ls, bool timeout) {
     // Compute the call result.
     if ((abort_reason & (I2C_IC_TX_ABRT_SOURCE_ABRT_7B_ADDR_NOACK_BITS |
                          I2C_IC_TX_ABRT_SOURCE_ABRT_TXDATA_NOACK_BITS)) != 0) {
+        lua_settop(ls, 0);
         luaL_pushfail(ls);
         lua_pushinteger(ls, PICO_ERROR_GENERIC);
         return 2;

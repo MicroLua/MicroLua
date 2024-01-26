@@ -185,6 +185,9 @@ static int read_loop(lua_State* ls, bool timeout) {
     while (offset < len) {
         if (!uart_is_readable(inst)) {
             luaL_pushresult(&buf);
+            if (lua_gettop(ls) >= LUA_MINSTACK - 1) {
+                lua_concat(ls, lua_gettop(ls) - 3);
+            }
             lua_pushinteger(ls, offset);
             lua_replace(ls, 3);
             enable_rx_irq(inst);

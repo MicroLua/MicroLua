@@ -8,6 +8,10 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Rename Buffer to Block, and create a Buffer that includes a size
+// TODO: Use Buffer for read operations (I2C, SPI, UART, stdio). Allow providing
+//       a buffer when reading, so that it can be re-used.
+
 static int read_mem(lua_State* ls, void const* src, size_t size) {
     if (size <= 0) {
         lua_pushliteral(ls, "");
