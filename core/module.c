@@ -261,7 +261,7 @@ static int Function___close(lua_State* ls) {
     return 0;
 }
 
-char const mlua_WeakKeys_name[] = "mlua.WeakKeys";
+char const mlua_WeakK_name[] = "mlua.WeakK";
 
 void mlua_register_modules(lua_State* ls) {
     // Require library "base".
@@ -319,9 +319,9 @@ void mlua_register_modules(lua_State* ls) {
     lua_pop(ls, 1);
 
     // Create a metatable for weak keys.
-    luaL_newmetatable(ls, mlua_WeakKeys_name);
+    luaL_newmetatable(ls, mlua_WeakK_name);
     lua_pushliteral(ls, "__mode");
     lua_pushliteral(ls, "k");
     lua_rawset(ls, -3);
-    lua_setglobal(ls, "WeakKeys");
+    lua_setglobal(ls, "WeakK");
 }

@@ -24,8 +24,6 @@ local co_resume, co_status = coroutine.resume, coroutine.status
 local co_close = coroutine.close
 local ticks, min_ticks, max_ticks = time.ticks, time.min_ticks, time.max_ticks
 
-local weak_keys = {__mode = 'k'}
-
 local active, head, tail = {}
 local waiting = {}
 local timers, timers_head = {}, false
@@ -73,7 +71,7 @@ end
 local Thread = {__name = 'Thread'}
 Thread.__index = Thread
 event.set_thread_metatable(Thread)
-local names = setmetatable({}, weak_keys)
+local names = setmetatable({}, WeakK)
 
 -- Start a new thread calling the given function.
 function Thread.start(fn, name)
@@ -116,8 +114,8 @@ function Thread:resume()
     return true
 end
 
-local terms = setmetatable({}, weak_keys)
-local joiners = setmetatable({}, weak_keys)
+local terms = setmetatable({}, WeakK)
+local joiners = setmetatable({}, WeakK)
 
 -- Kill the thread.
 function Thread:kill()
@@ -156,27 +154,6 @@ end
 
 -- Join the thread on closure.
 Thread.__close = Thread.join
-
--- A group of threads managed together.
-Group = oo.class('Group')
-Group.__mode = 'k'
-
--- Start a new thread and track it in the group.
-function Group:start(fn, name)
-    local thread = start(fn, name)
-    self[thread] = true
-    return thread
-end
-
--- Join all threads in the group.
-function Group:join()
-    -- TODO: Allow adding new threads while the group is being joined
-    -- TODO: Wait for all threads even if one of them throws
-    for thread in pairs(self) do thread:join() end
-end
-
--- Join the threads in the group on closure.
-Group.__close = Group.join
 
 -- Resume the threads whose deadline has elapsed.
 local function resume_deadlined()

@@ -12,7 +12,7 @@ The test modules can be useful as usage examples.
 - `_VERSION: string = LUA_VERSION`\
   `_RELEASE: string = LUA_RELEASE`
 
-- `WeakKeys: table = {__mode = 'k'}`\
+- `WeakK: table = {__mode = 'k'}`\
   A metatable for weak keys.
 
 - `arg: table`\
@@ -67,7 +67,7 @@ error code from [`mlua.errors`](#mluaerrors).
   Return the size of the block device in bytes, as well as `read_size`,
   `write_size` and `erase_size`.
 
-### `mlua.block.flash`
+## `mlua.block.flash`
 
 **Module:** [`mlua.block.flash`](../lib/pico/mlua.block.flash.c),
 build target: `mlua_mod_mlua_block_flash`
@@ -79,7 +79,7 @@ This module provides a block device that uses the QSPI flash for storage.
   is rounded up to the next multiple of `FLASH_SECTOR_SIZE`. `size` is adjusted so that `offset + size` is rounded down to the previous multiple of
   `FLASH_SECTOR_SIZE`.
 
-### `mlua.block.mem`
+## `mlua.block.mem`
 
 **Module:** [`mlua.block.mem`](../lib/common/mlua.block.mem.c),
 build target: `mlua_mod_mlua_block_mem`
@@ -170,7 +170,7 @@ This module provides functionality that is common across all filesystems.
 - `split(path) -> (string, string)`\
   Split a path into containing directory and basename.
 
-### `mlua.fs.loader`
+## `mlua.fs.loader`
 
 **Module:** [`mlua.fs.loader`](../lib/pico/mlua.fs.loader.c),
 build target: `mlua_mod_mlua_fs_loader`,
@@ -208,7 +208,7 @@ info, and can be viewed with `picotool info -a`.
 - `fs: mlua.fs.lfs.Filesystem`\
   The filesystem from which modules are loaded.
 
-### `mlua.fs.lfs`
+## `mlua.fs.lfs`
 
 **Module:** [`mlua.fs.lfs`](../lib/common/mlua.fs.lfs.c),
 build target: `mlua_mod_mlua_fs_lfs`,
@@ -241,7 +241,7 @@ Functions that fail return `fail`, an error message and an error code from
   Create a filesystem object operating on the given block device. This doesn't
   format or mount the filesystem; it only binds a filesystem to a device.
 
-#### `Filesystem`
+### `Filesystem`
 
 The `Filesystem` type (`mlua.fs.lfs.Filesystem`) represents a filesystem.
 
@@ -312,7 +312,7 @@ The `Filesystem` type (`mlua.fs.lfs.Filesystem`) represents a filesystem.
 - `Filesystem:rename(old_path, new_path) -> true | (fail, msg, err)`\
   Rename a file.
 
-#### `File`
+### `File`
 
 The `File` type (`mlua.fs.lfs.File`) represents an open file.
 
@@ -868,6 +868,14 @@ documentation mentions it explicitly.
   Wait for the thread to terminate. If the thread terminates with an error, the
   function re-raises the error. If the thread is assigned to a to-be-closed
   variable, it is joined when the variable is closed.
+
+## `mlua.thread.group`
+
+**Module:** [`mlua.thread.group`](../lib/common/mlua.thread.group.lua),
+build target: `mlua_mod_mlua_thread_group`
+
+This module provides functionality to facilitate thread management. The symbols
+exported by this module are automatically added to `mlua.thread`.
 
 ### `Group`
 

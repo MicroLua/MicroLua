@@ -5,6 +5,7 @@ _ENV = module(...)
 
 local int64 = require 'mlua.int64'
 local thread = require 'mlua.thread'
+local group = require 'mlua.thread.group'
 local time = require 'mlua.time'
 local string = require 'string'
 

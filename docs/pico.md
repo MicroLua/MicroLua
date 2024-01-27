@@ -102,7 +102,7 @@ a memory leak.
   function must be called in core 1. The shutdown handler can be removed by
   killing the thread or calling the function with a `nil` handler.
 
-### `pico.multicore.fifo`
+## `pico.multicore.fifo`
 
 **Library:** [`pico_multicore_fifo`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#multicore_fifo),
 header: [`pico/multicore.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_multicore/include/pico/multicore.h),
@@ -187,7 +187,7 @@ tests: [`pico.stdio.test`](../lib/pico/pico.stdio.test.lua)
   Enable the "characters available" event if `enable` is true, or disable it
   otherwise.
 
-### `pico.stdio.semihosting`
+## `pico.stdio.semihosting`
 
 **Library:** [`pico_stdio_semihosting`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_semihosting),
 header: [`pico/stdio_semihosting.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_semihosting/include/pico/stdio_semihosting.h),
@@ -199,7 +199,7 @@ tests: [`pico.stdio.semihosting.test`](../lib/pico/pico.stdio.semihosting.test.l
 - `driver: userdata`\
   The semihosting stdio driver, for use in `pico.stdio` functions.
 
-### `pico.stdio.uart`
+## `pico.stdio.uart`
 
 **Library:** [`pico_stdio_uart`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_uart),
 header: [`pico/stdio_uart.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_uart/include/pico/stdio_uart.h),
@@ -219,7 +219,7 @@ tests: [`pico.stdio.uart.test`](../lib/pico/pico.stdio.uart.test.lua)
   Initialize the UART driver for input only, and add it to the current set of
   stdio drivers.
 
-### `pico.stdio.usb`
+## `pico.stdio.usb`
 
 **Library:** [`pico_stdio_usb`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio_usb),
 header: [`pico/stdio_usb.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_usb/include/pico/stdio_usb.h),
