@@ -381,6 +381,8 @@ static int mod_start(lua_State* ls) {
     lua_pushnil(thread);                    // FP_NEXT
 
     // Set the name if provided.
+    // TODO: Convert to direct access to main() upvalues. This requires a
+    //       special case for when main() isn't running yet (ls == main).
     push_main(ls);
     if (has_name) {
         lua_getupvalue(ls, -1, UV_NAMES);
@@ -413,7 +415,11 @@ static int mod_shutdown(lua_State* ls) {
 
 static int main_done(lua_State* ls) {
     lua_settop(ls, 0);
-    push_main(ls);
+
+    // Get a reference to main.
+    lua_Debug ar;
+    lua_getstack(ls, 2, &ar);  // main is 2 levels above
+    lua_getinfo(ls, "f", &ar);
 
     // Close all threads.
     lua_getupvalue(ls, 1, UV_THREADS);
@@ -427,6 +433,7 @@ static int main_done(lua_State* ls) {
     lua_pop(ls, 1);  // Remove THREADS
 
     // Clear main upvalues.
+    // TODO: Create a new THREADS
     for (int i = 1; i <= MAIN_UV_COUNT; ++i) {
         lua_pushnil(ls);
         lua_setupvalue(ls, 1, i);
@@ -442,12 +449,7 @@ static int mod_main(lua_State* ls) {
 
     // Run the main scheduling loop.
     lua_State* running = NULL;
-    int round = 0;
     for (;;) {
-        if (round++ % 1000 == 0 /*&& get_core_num() == 0*/) {
-            // print_state(ls, running, "Start of loop");
-        }
-
         // Dispatch events.
         uint64_t min_ticks, deadline;
         mlua_ticks_range(&min_ticks, &deadline);
@@ -481,8 +483,8 @@ static int mod_main(lua_State* ls) {
                 replace_flags(tail, STATE_ACTIVE);
                 // timers = tail.NEXT
                 timers = lua_tothread(tail, FP_NEXT);
-                if (timers == NULL
-                        || (uint64_t)mlua_to_int64(timers, FP_DEADLINE) > ticks) {
+                if (timers == NULL ||
+                        (uint64_t)mlua_to_int64(timers, FP_DEADLINE) > ticks) {
                     // TIMERS = timers
                     push_thread_or_nil(ls, timers);
                     lua_replace(ls, lua_upvalueindex(UV_TIMERS));
@@ -603,8 +605,8 @@ static int mod_main(lua_State* ls) {
         deadline = mlua_check_int64(running, -1);
         lua_pushinteger(running, STATE_TIMER);
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
-        if (timers == NULL
-                || deadline < (uint64_t)mlua_to_int64(timers, FP_DEADLINE)) {
+        if (timers == NULL ||
+                deadline < (uint64_t)mlua_to_int64(timers, FP_DEADLINE)) {
             push_thread_or_nil(running, timers);  // running.NEXT = timers
             // TIMERS = running
             push_thread(ls, running);
@@ -615,7 +617,8 @@ static int mod_main(lua_State* ls) {
         for (;;) {
             // next = timers.NEXT
             lua_State* next = lua_tothread(timers, FP_NEXT);
-            if (next == NULL || deadline < (uint64_t)mlua_to_int64(next, FP_DEADLINE)) {
+            if (next == NULL ||
+                    deadline < (uint64_t)mlua_to_int64(next, FP_DEADLINE)) {
                 push_thread_or_nil(running, next);  // running.NEXT = next
                 replace_next(timers, running);  // timers.NEXT = running
                 break;
@@ -671,9 +674,9 @@ MLUA_OPEN_MODULE(mlua.thread.c) {
     lua_pushnil(ls);
     lua_createtable(ls, 0, 0);  // THREADS
     lua_createtable(ls, 0, 0);  // JOINERS
-    luaL_setmetatable(ls, mlua_WeakKeys_name);
+    luaL_setmetatable(ls, mlua_WeakK_name);
     lua_createtable(ls, 0, 0);  // NAMES
-    luaL_setmetatable(ls, mlua_WeakKeys_name);
+    luaL_setmetatable(ls, mlua_WeakK_name);
     lua_pushcclosure(ls, &mod_main, MAIN_UV_COUNT);
     lua_pushvalue(ls, -1);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &main_tag);
