@@ -655,7 +655,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(shutdown, mod_),
 };
 
-MLUA_OPEN_MODULE(mlua.thread.c) {
+MLUA_OPEN_MODULE(mlua.thread) {
     mlua_event_require(ls);
 
     // Create the module.

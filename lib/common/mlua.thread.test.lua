@@ -3,11 +3,17 @@
 
 _ENV = module(...)
 
+local coroutine = require 'coroutine'
 local int64 = require 'mlua.int64'
 local thread = require 'mlua.thread'
 local group = require 'mlua.thread.group'
 local time = require 'mlua.time'
 local string = require 'string'
+
+function set_up(t)
+    t:printf("Threads: %s\n",
+             thread.running == coroutine.running and "Lua" or "C")
+end
 
 function test_Thread_name(t)
     t:expect(t:expr(thread).running():name()):eq('main')
@@ -79,7 +85,7 @@ function test_Thread_join(t)
     t:expect(err):label('error'):eq("boom")
 end
 
-function test_yield(t)
+function test_active(t)
     local log = ''
     local ths<close> = thread.Group()
     for t = 1, 5 do
@@ -90,11 +96,70 @@ function test_yield(t)
             end
         end)
     end
-    ths.join(ths)
+    ths:join()
     t:expect(log == '(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) '
                  .. '(1, 2) (2, 2) (3, 2) (4, 2) (5, 2) '
                  .. '(1, 3) (2, 3) (3, 3) (4, 3) (5, 3) ',
              "Unexpected execution sequence: %s", log)
+end
+
+function test_active_spinning(t)
+    local i = 0
+    local th<close> = thread.start(function()
+        while i < 1000 do
+            i = i + 1
+            thread.yield()
+        end
+    end)
+    th:join()
+    t:expect(i):label("i"):eq(1000)
+end
+
+function test_timers(t)
+    local log = ''
+    local ths<close> = thread.Group()
+    local start = time.ticks()
+    for t = 1, 5 do
+        ths:start(function()
+            for i = 1, 3 do
+                log = log .. ('(%s, %s) '):format(t, i)
+                thread.yield(start + i * 5000 + ((t + 2) % 5) * 500)
+            end
+        end)
+    end
+    ths:join()
+    t:expect(log == '(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) '
+                 .. '(3, 2) (4, 2) (5, 2) (1, 2) (2, 2) '
+                 .. '(3, 3) (4, 3) (5, 3) (1, 3) (2, 3) ',
+             "Unexpected execution sequence: %s", log)
+end
+
+function test_active_and_timers(t)
+    local log = ''
+    local ths<close> = thread.Group()
+    ths:start(function()
+        log = log .. 'a'
+        thread.yield()
+        log = log .. 'b'
+        thread.yield()
+        log = log .. 'c'
+    end)
+    ths:start(function()
+        log = log .. 'd'
+        thread.yield(time.min_ticks + 1)
+        log = log .. 'e'
+        thread.yield(time.min_ticks + 3)
+        log = log .. 'f'
+    end)
+    ths:start(function()
+        log = log .. 'g'
+        thread.yield(time.min_ticks + 2)
+        log = log .. 'h'
+        thread.yield(time.min_ticks + 4)
+        log = log .. 'i'
+    end)
+    ths:join()
+    t:expect(log):label("log"):eq('adgbehcfi')
 end
 
 function test_scheduling_latency(t)

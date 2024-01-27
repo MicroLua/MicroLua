@@ -201,17 +201,33 @@ target_link_libraries(mlua_test_mlua_testing INTERFACE
     mlua_mod_table
 )
 
-mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
-target_link_libraries(mlua_mod_mlua_thread INTERFACE
-    mlua_mod_coroutine
-    mlua_mod_mlua_event
-    mlua_mod_mlua_oo
-    mlua_mod_mlua_time
-    mlua_mod_string
-)
+mlua_set(MLUA_THREADS "c" CACHE STRING
+    "The thread implementation, one of (c, lua)")
+set_property(CACHE MLUA_THREADS PROPERTY STRINGS c lua)
+
+if("${MLUA_THREADS}" STREQUAL "c")
+    mlua_add_c_module(mlua_mod_mlua_thread mlua.thread.c)
+    target_include_directories(mlua_mod_mlua_thread_headers INTERFACE
+        include_mlua.thread)
+    target_link_libraries(mlua_mod_mlua_thread INTERFACE
+        mlua_mod_mlua_event
+        mlua_mod_mlua_int64
+        mlua_platform
+    )
+else()
+    mlua_add_lua_modules(mlua_mod_mlua_thread mlua.thread.lua)
+    target_link_libraries(mlua_mod_mlua_thread INTERFACE
+        mlua_mod_coroutine
+        mlua_mod_mlua_event
+        mlua_mod_mlua_oo
+        mlua_mod_mlua_time
+        mlua_mod_string
+    )
+endif()
 
 mlua_add_lua_modules(mlua_test_mlua_thread mlua.thread.test.lua)
 target_link_libraries(mlua_test_mlua_thread INTERFACE
+    mlua_mod_coroutine
     mlua_mod_mlua_int64
     mlua_mod_mlua_thread
     mlua_mod_mlua_thread_group

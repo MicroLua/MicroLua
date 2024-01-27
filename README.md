@@ -54,24 +54,18 @@ both.
 
 ### Performance
 
-Performance is adequate for applications that don't require very low latency,
-but it could be better. Event dispatch latency is currently in the hundreds of
-microseconds, which is fairly slow. This is mainly due to a naive threading
-implementation, and it can be improved.
-
-So it probably isn't realistic to try bit-banging high-speed serial protocols
-or PWM in Lua, but that's what the PIO and PWM peripherals are for. Anything
-that requires precise timings should probably be implemented in C. But Lua is
-a great glue language for the non timing-critical logic, and very easy to
-interface to C code.
+Performance is adequate for applications that don't require very low latency.
+Event dispatch latency is on the order of 20 microseconds when running from
+flash at 250 MHz. So it probably isn't realistic to try bit-banging high-speed
+serial protocols or PWM in Lua, but that's what the PIO and PWM peripherals are
+for. Anything that requires precise timings should probably be implemented in C.
+But Lua is a great glue language for the non timing-critical logic, and very
+easy to interface to C code.
 
 ### Roadmap
 
 - **Add more bindings for the Pico SDK.** PIO is high on the list, followed by
   USB, Wifi and Bluetooth. Eventually, most SDK libraries should have a binding.
-- **Improve threading performance.** A C implementation of the
-  [`mlua.thread`](docs/mlua.md#mluathread) module, with a less naive timer list,
-  could significantly improve event dispatch latency.
 - **Tune garbage collection.** Garbage collection parameters are currently left
   at their default value, which may not be ideal for a memory-constrained
   target.

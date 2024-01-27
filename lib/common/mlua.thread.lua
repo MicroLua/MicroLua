@@ -88,6 +88,7 @@ local _shutdown, _shutdown_res = false
 
 -- Shut down the scheduler.
 function Thread.shutdown(result)
+    -- TODO: Pass result in yield()
     _shutdown, _shutdown_res = true, result
     yield()
 end
