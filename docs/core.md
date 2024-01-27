@@ -38,7 +38,7 @@ Here's how to get started with a new project based on MicroLua:
     # Add a library for the main module.
     mlua_add_lua_modules(my_project_main main.lua)
     target_link_libraries(my_project_main INTERFACE
-        mlua_mod_mlua_stdio
+        mlua_mod_mlua.stdio
     )
 
     # Add the executable.
@@ -91,8 +91,8 @@ dependencies must be declared:
 ```cmake
 mlua_add_lua_modules(mod_example example.lua)
 target_link_libraries(mod_example INTERFACE
-    mlua_mod_hardware_adc
-    mlua_mod_hardware_gpio
+    mlua_mod_hardware.adc
+    mlua_mod_hardware.gpio
 )
 ```
 

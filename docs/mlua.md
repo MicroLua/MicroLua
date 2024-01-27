@@ -42,7 +42,7 @@ The test modules can be useful as usage examples.
 ## `mlua.block`
 
 **Module:** [`mlua.block`](../lib/common/mlua.block.c),
-build target: `mlua_mod_mlua_block`
+build target: `mlua_mod_mlua.block`
 
 This module provides an abstraction for defining block devices in C
 (`mlua.block.Dev`). Functions that fail return `fail`, an error message and an
@@ -70,7 +70,7 @@ error code from [`mlua.errors`](#mluaerrors).
 ## `mlua.block.flash`
 
 **Module:** [`mlua.block.flash`](../lib/pico/mlua.block.flash.c),
-build target: `mlua_mod_mlua_block_flash`
+build target: `mlua_mod_mlua.block.flash`
 
 This module provides a block device that uses the QSPI flash for storage.
 
@@ -82,7 +82,7 @@ This module provides a block device that uses the QSPI flash for storage.
 ## `mlua.block.mem`
 
 **Module:** [`mlua.block.mem`](../lib/common/mlua.block.mem.c),
-build target: `mlua_mod_mlua_block_mem`
+build target: `mlua_mod_mlua.block.mem`
 
 This module provides a block device that uses a `mlua.mem.Buffer` for storage,
 i.e. a contiguous block of RAM.
@@ -116,7 +116,7 @@ mlua_target_config(example_executable
 ## `mlua.errors`
 
 **Module:** [`mlua.errors`](../lib/common/mlua.errors.c),
-build target: `mlua_mod_mlua_errors`,
+build target: `mlua_mod_mlua.errors`,
 tests: [`mlua.errors.test`](../lib/common/mlua.errors.test.lua)
 
 This module provides a common set of error codes, for use by other modules. Note
@@ -129,7 +129,7 @@ nothing to do with `errno` and have different numeric values.
 ## `mlua.event`
 
 **Module:** [`mlua.event`](../lib/common/mlua.event.c),
-build target: `mlua_mod_mlua_event`
+build target: `mlua_mod_mlua.event`
 
 This module provides the core event handling and dispatch functionality.
 
@@ -140,7 +140,7 @@ This module provides the core event handling and dispatch functionality.
 ## `mlua.fs`
 
 **Module:** [`mlua.fs`](../lib/common/mlua.fs.c),
-build target: `mlua_mod_mlua_fs`,
+build target: `mlua_mod_mlua.fs`,
 tests: [`mlua.fs.test`](../lib/common/mlua.fs.test.lua)
 
 This module provides functionality that is common across all filesystems.
@@ -173,7 +173,7 @@ This module provides functionality that is common across all filesystems.
 ## `mlua.fs.loader`
 
 **Module:** [`mlua.fs.loader`](../lib/pico/mlua.fs.loader.c),
-build target: `mlua_mod_mlua_fs_loader`,
+build target: `mlua_mod_mlua.fs.loader`,
 tests: [`mlua.fs.loader.test`](../lib/pico/mlua.fs.loader.test.lua)
 
 This module creates a global filesystem early in the boot process, and registers
@@ -211,7 +211,7 @@ info, and can be viewed with `picotool info -a`.
 ## `mlua.fs.lfs`
 
 **Module:** [`mlua.fs.lfs`](../lib/common/mlua.fs.lfs.c),
-build target: `mlua_mod_mlua_fs_lfs`,
+build target: `mlua_mod_mlua.fs.lfs`,
 tests: [`mlua.fs.lfs.test`](../lib/common/mlua.fs.lfs.test.lua)
 
 This module provides bindings for the
@@ -350,7 +350,7 @@ The `File` type (`mlua.fs.lfs.File`) represents an open file.
 ## `mlua.int64`
 
 **Module:** [`mlua.int64`](../lib/common/mlua.int64.c),
-build target: `mlua_mod_mlua_int64`,
+build target: `mlua_mod_mlua.int64`,
 tests: [`mlua.int64.test`](../lib/common/mlua.int64.test.lua)
 
 This module provides a 64-bit signed integer type (`mlua.Int64`). When
@@ -408,7 +408,7 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 ## `mlua.io`
 
 **Module:** [`mlua.io`](../lib/common/mlua.io.lua),
-build target: `mlua_mod_mlua_io`,
+build target: `mlua_mod_mlua.io`,
 tests: [`mlua.io.test`](../lib/common/mlua.io.test.lua)
 
 This module provides helpers for input / output processing.
@@ -462,7 +462,7 @@ The `Buffer` type records writes and allows replaying them on another stream.
 ## `mlua.list`
 
 **Module:** [`mlua.list`](../lib/common/mlua.list.c),
-build target: `mlua_mod_mlua_list`,
+build target: `mlua_mod_mlua.list`,
 tests: [`mlua.list.test`](../lib/common/mlua.list.test.lua)
 
 This module provides functions to operate on lists that can contain `nil`
@@ -513,7 +513,7 @@ functions as methods.
 ## `mlua.mem`
 
 **Module:** [`mlua.mem`](../lib/common/mlua.mem.c),
-build target: `mlua_mod_mlua_mem`,
+build target: `mlua_mod_mlua.mem`,
 tests: [`mlua.mem.test`](../lib/common/mlua.mem.test.lua)
 
 This module provides functionality to access raw memory (ROM, RAM).
@@ -553,7 +553,7 @@ The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
 ## `mlua.oo`
 
 **Module:** [`mlua.oo`](../lib/common/mlua.oo.lua),
-build target: `mlua_mod_mlua_oo`,
+build target: `mlua_mod_mlua.oo`,
 tests: [`mlua.oo.test`](../lib/common/mlua.oo.test.lua)
 
 This module provides a simple object model for object-oriented programming.
@@ -576,7 +576,7 @@ necessary because Lua gets metamethods using a raw access.
 ## `mlua.platform`
 
 **Module:** [`mlua.platform`](../lib/common/mlua.platform.c),
-build target: `mlua_mod_mlua_platform`,
+build target: `mlua_mod_mlua.platform`,
 tests: [`mlua.platform.test`](../lib/common/mlua.platform.test.lua)
 
 This module exposes platform-specific functionality under a common interface.
@@ -595,7 +595,7 @@ This module exposes platform-specific functionality under a common interface.
 ## `mlua.stdio`
 
 **Module:** [`mlua.stdio`](../lib/common/mlua.stdio.c),
-build target: `mlua_mod_mlua_stdio`,
+build target: `mlua_mod_mlua.stdio`,
 tests: [`mlua.stdio.test`](../lib/common/mlua.stdio.test.lua)
 
 This module manages stdio input and output. When linked in, it is automatically
@@ -634,7 +634,7 @@ The `OutStream` type (`mlua.OutStream`) represents an output stream.
 ## `mlua.testing`
 
 **Module:** [`mlua.testing`](../lib/common/mlua.testing.lua),
-build target: `mlua_mod_mlua_testing`,
+build target: `mlua_mod_mlua.testing`,
 tests: [`mlua.testing.test`](../lib/common/mlua.testing.test.lua)
 
 This module is a unit-testing library inspired by the Go
@@ -794,7 +794,7 @@ that value.
 ## `mlua.thread`
 
 **Module:** [`mlua.thread`](../lib/common/mlua.thread.lua),
-build target: `mlua_mod_mlua_thread`,
+build target: `mlua_mod_mlua.thread`,
 tests: [`mlua.thread.test`](../lib/common/mlua.thread.test.lua)
 
 This module provides cooperative threading functionality based on coroutines.
@@ -872,7 +872,7 @@ documentation mentions it explicitly.
 ## `mlua.thread.group`
 
 **Module:** [`mlua.thread.group`](../lib/common/mlua.thread.group.lua),
-build target: `mlua_mod_mlua_thread_group`
+build target: `mlua_mod_mlua.thread.group`
 
 This module provides functionality to facilitate thread management. The symbols
 exported by this module are automatically added to `mlua.thread`.
@@ -897,7 +897,7 @@ terminate automatically get removed from the group.
 ## `mlua.time`
 
 **Module:** [`mlua.time`](../lib/common/mlua.time.c),
-build target: `mlua_mod_mlua_time`,
+build target: `mlua_mod_mlua.time`,
 tests: [`mlua.time.test`](../lib/common/mlua.time.test.lua)
 
 This module provides platform-independent time functionality.
@@ -923,7 +923,7 @@ This module provides platform-independent time functionality.
 ## `mlua.uf2`
 
 **Module:** [`mlua.uf2`](../lib/common/mlua.uf2.lua),
-build target: `mlua_mod_mlua_uf2`
+build target: `mlua_mod_mlua.uf2`
 
 This module provides helpers to parse and generate
 [UF2 files](https://github.com/microsoft/uf2).
@@ -954,7 +954,7 @@ This module provides helpers to parse and generate
 ## `mlua.util`
 
 **Module:** [`mlua.util`](../lib/common/mlua.util.lua),
-build target: `mlua_mod_mlua_util`,
+build target: `mlua_mod_mlua.util`,
 tests: [`mlua.util.test`](../lib/common/mlua.util.test.lua)
 
 This module provides various utilities.

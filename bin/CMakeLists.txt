@@ -9,13 +9,13 @@ target_compile_definitions(mlua_standalone PRIVATE
 mlua_target_config(mlua_standalone
 )
 target_link_libraries(mlua_standalone PRIVATE
-    mlua_mod_mlua_stdio
+    mlua_mod_mlua.stdio
 )
 mlua_list_targets(modules
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
     INCLUDE "^mlua_mod_.*$"
     EXCLUDE "^mlua_mod_.*_headers$"
-            "^mlua_mod_mlua_testing_.*$"
+            "^mlua_mod_mlua\\.testing\\..*$"
 )
 list(SORT modules COMPARE NATURAL)
 target_link_libraries(mlua_standalone PRIVATE ${modules})
@@ -43,8 +43,8 @@ mlua_target_config(mlua_tests
     b:string="test"
 )
 target_link_libraries(mlua_tests PRIVATE
-    mlua_mod_mlua_stdio
-    mlua_mod_mlua_testing
+    mlua_mod_mlua.stdio
+    mlua_mod_mlua.testing
 )
 mlua_list_targets(tests
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
