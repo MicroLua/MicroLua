@@ -86,14 +86,8 @@ end
 
 start = Thread.start
 
-local _shutdown, _shutdown_res = false
-
 -- Shut down the scheduler.
-function Thread.shutdown(result)
-    -- TODO: Pass result in yield()
-    _shutdown, _shutdown_res = true, result
-    yield()
-end
+function Thread.shutdown(result) yield(false, result) end
 
 shutdown = Thread.shutdown
 
@@ -186,7 +180,7 @@ function main()
     end
     local dispatch = event.dispatch
 
-    while not _shutdown do
+    while true do
         -- Dispatch events and wait for at least one active thread.
         dispatch((thread or head) and min_ticks or waiting[timers_head]
                  or max_ticks)
@@ -211,7 +205,8 @@ function main()
         -- Resume the next thread, then close it if it's dead, or move it to the
         -- wait list if it's suspended.
         if thread then
-            local _, deadline = co_resume(thread)
+            local _, deadline, res = co_resume(thread)
+            if deadline == false then return res end
             if co_status(thread) == 'dead' then
                 local ok, err = co_close(thread)
                 if not ok then terms[thread] = err end
@@ -229,5 +224,4 @@ function main()
             end
         end
     end
-    return _shutdown_res
 end
