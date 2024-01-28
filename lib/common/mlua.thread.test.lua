@@ -45,7 +45,7 @@ function test_Thread_suspend_resume(t)
 end
 
 function test_Thread_kill(t)
-    t:expect(t:expr(thread).running():kill()):raises("running coroutine")
+    t:expect(t:expr(thread).running():kill()):raises("kill itself")
     for _, suspend in ipairs{false, true} do
         local closed = false
         local th<close> = thread.start(function()

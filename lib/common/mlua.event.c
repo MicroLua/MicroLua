@@ -60,7 +60,7 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     if (index != 0) {
         lua_pushvalue(ls, index);
     } else {
-        lua_pushnil(ls);
+        lua_pushboolean(ls, true);
     }
     return mlua_event_yield(ls, 1, cont, ctx);
 }
@@ -155,7 +155,7 @@ static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
 
 static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
     // Suspend until the event gets pending.
-    lua_pushnil(ls);
+    lua_pushboolean(ls, true);
     return mlua_event_yield(ls, 1, &handler_thread_1, 0);
 }
 

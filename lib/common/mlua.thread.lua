@@ -122,6 +122,7 @@ local joiners = setmetatable({}, WeakK)
 
 -- Kill the thread.
 function Thread:kill()
+    if self == running() then error("thread cannot kill itself", 0) end
     if co_status(self) == 'dead' then return false end
     local deadline = waiting[self]
     if deadline and deadline ~= true then remove_timer(self) end

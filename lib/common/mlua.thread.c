@@ -231,8 +231,7 @@ static int Thread_resume(lua_State* ls) {
 
 static int Thread_kill(lua_State* ls) {
     lua_State* self = mlua_check_thread(ls, 1);
-    // TODO: Better error message
-    if (self == ls) return luaL_error(ls, "cannot close a running coroutine");
+    if (self == ls) return luaL_error(ls, "thread cannot kill itself");
     int state = thread_state(self);
     if (state == STATE_DEAD) return lua_pushboolean(ls, false), 1;
 
@@ -323,14 +322,14 @@ static int Thread_join(lua_State* ls) {
         break;
     }
     lua_settop(ls, 1);
-    lua_pushnil(ls);
+    lua_pushboolean(ls, true);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_State* self = (lua_State*)ctx;
     if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
-    lua_pushnil(ls);
+    lua_pushboolean(ls, true);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
@@ -591,7 +590,8 @@ static int mod_main(lua_State* ls) {
         }
 
         // Suspend running.
-        if (lua_isnil(running, -1)) {
+        int typ = lua_type(running, -1);
+        if (typ == LUA_TNIL || typ == LUA_TBOOLEAN) {
             // Suspend indefinitely.
             lua_pushinteger(running, STATE_SUSPENDED);
             lua_pushnil(running);
