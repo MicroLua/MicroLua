@@ -815,12 +815,13 @@ to run the configured main function, then runs `main()`.
   function yields and therefore never returns. During shutdown, all threads are
   killed and their resources are freed.
 
-- `yield(time)`\
-  Yield from the current thread. If `time` is `nil`, the thread remains in the
-  active queue and is resumed after other active threads have run and yielded.
-  Otherwise it is moved to the wait list. If `time` is `false`, the thread can
-  only be resumed by a call to `resume()`. Otherwise, the thread is resumed when
-  the given time has passed, or by a call to `resume()`.
+- `yield()`\
+  Yield from the running thread. The thread remains in the active queue, and is
+  resumed after other active threads have run and yielded.
+
+- `suspend([deadline])`\
+  Suspend the running thread. If a deadline is provided, the thread is resumed
+  at that time. Otherwise, it is suspended indefinitely.
 
 - `running() -> Thread`\
   Return the currently-running thread.

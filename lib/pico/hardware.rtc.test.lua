@@ -45,6 +45,6 @@ function test_alarm(t)
         parent:resume()
     end)
     t:cleanup(function() rtc.set_alarm({}, nil) end)
-    thread.yield(true)
+    thread.suspend()
     t:expect(triggered):label("triggered"):eq(true)
 end

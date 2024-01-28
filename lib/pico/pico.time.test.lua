@@ -133,7 +133,7 @@ function test_cancel_alarm(t)
         thread.yield()
         triggered = true
     end)
-    thread.yield(true)
+    thread.suspend()
     t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
     t:expect(triggered):label("triggered"):eq(false)
 

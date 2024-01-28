@@ -12,10 +12,12 @@ local string = require 'string'
 -- Return the currently-running thread.
 running = coroutine.running
 
--- Make the running thread yield. If the argument is true, the thread is moved
--- from the active queue to the wait list. If the argument is an absolute time,
--- the thread is resumed at that time (unless it's resumed explicitly earlier).
+-- Yield from the running thread. The thread remains in the active queue.
 yield = coroutine.yield
+
+-- Suspend the running thread. If a deadline is provided, the thread is resumed
+-- at that time. Otherwise, it is suspended indefinitely.
+function suspend(deadline) return yield(deadline or true) end
 
 -- Control if yielding is enabled.
 yield_enabled = event.yield_enabled

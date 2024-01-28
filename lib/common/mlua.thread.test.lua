@@ -29,7 +29,7 @@ function test_Thread_suspend_resume(t)
     local want
     local th<close> = thread.start(function()
         t:expect(t:expr(thread).running()):eq(want)
-        thread.yield(true)
+        thread.suspend()
     end)
     want = th
     t:expect(not th:is_waiting(), "Started thread is waiting")
@@ -50,7 +50,7 @@ function test_Thread_kill(t)
         local closed = false
         local th<close> = thread.start(function()
             local done<close> = function() closed = true end
-            thread.yield(suspend)
+            if suspend then thread.suspend() else thread.yield() end
             error("never reached")
         end)
         thread.yield()
@@ -123,7 +123,7 @@ function test_timers(t)
         ths:start(function()
             for i = 1, 3 do
                 log = log .. ('(%s, %s) '):format(t, i)
-                thread.yield(start + i * 5000 + ((t + 2) % 5) * 500)
+                thread.suspend(start + i * 5000 + ((t + 2) % 5) * 500)
             end
         end)
     end
@@ -146,16 +146,16 @@ function test_active_and_timers(t)
     end)
     ths:start(function()
         log = log .. 'd'
-        thread.yield(time.min_ticks + 1)
+        thread.suspend(time.min_ticks + 1)
         log = log .. 'e'
-        thread.yield(time.min_ticks + 3)
+        thread.suspend(time.min_ticks + 3)
         log = log .. 'f'
     end)
     ths:start(function()
         log = log .. 'g'
-        thread.yield(time.min_ticks + 2)
+        thread.suspend(time.min_ticks + 2)
         log = log .. 'h'
-        thread.yield(time.min_ticks + 4)
+        thread.suspend(time.min_ticks + 4)
         log = log .. 'i'
     end)
     ths:join()

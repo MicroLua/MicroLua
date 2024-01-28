@@ -64,7 +64,7 @@ function test_timer(t)
     for delta = 10000, 50000, 3000 do
         local err = timer.set_target(alarm, start + delta)
         t:assert(not err, "Failed to set alarm at +%s us", delta)
-        thread.yield(true)
+        thread.suspend()
         t:expect(got - start):label("alarm time"):gte(delta):lt(delta + 200)
     end
 end

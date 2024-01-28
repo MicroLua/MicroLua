@@ -323,14 +323,14 @@ static int Thread_join(lua_State* ls) {
         break;
     }
     lua_settop(ls, 1);
-    lua_pushboolean(ls, true);
+    lua_pushnil(ls);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_State* self = (lua_State*)ctx;
     if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
-    lua_pushboolean(ls, true);
+    lua_pushnil(ls);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
@@ -346,14 +346,12 @@ static int mod_running(lua_State* ls) {
 }
 
 static int mod_yield(lua_State* ls) {
-    // TODO: Make yield yield 0 values => stay on active queue
-    lua_settop(ls, 1);
-    return lua_yield(ls, 1);
+    lua_settop(ls, 0);
+    return lua_yield(ls, 0);
 }
 
 static int mod_suspend(lua_State* ls) {
-    // TODO: Make suspend yield 1 value => suspend
-    // TODO: Check argument type
+    if (!lua_isnoneornil(ls, 1)) mlua_check_int64(ls, 1);
     lua_settop(ls, 1);
     return lua_yield(ls, 1);
 }
@@ -584,16 +582,16 @@ static int mod_main(lua_State* ls) {
             lua_xmove(running, ls, 1);
             return 1;
         }
-        if (nres == 0) lua_pushnil(running);
-        if (!lua_toboolean(running, -1)) {
+        if (nres == 0) {
             // Keep running in the active queue.
+            lua_pushnil(running);
             lua_pushinteger(running, STATE_ACTIVE);
             lua_pushnil(running);
             continue;
         }
 
         // Suspend running.
-        if (lua_type(running, -1) == LUA_TBOOLEAN) {
+        if (lua_isnil(running, -1)) {
             // Suspend indefinitely.
             lua_pushinteger(running, STATE_SUSPENDED);
             lua_pushnil(running);
@@ -602,7 +600,7 @@ static int mod_main(lua_State* ls) {
         }
 
         // Add running to the timer list.
-        deadline = mlua_check_int64(running, -1);
+        deadline = mlua_to_int64(running, -1);
         lua_pushinteger(running, STATE_TIMER);
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
         if (timers == NULL ||

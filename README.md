@@ -100,7 +100,7 @@ $ cmake -S . -B build -DPICO_BOARD=pico
 $ make -j9 -C build/bin
 
 # Start the target in BOOTSEL mode and flash it with picotool.
-$ picotool load -v -x build/bin/mlua_tests.elf
+$ picotool load -x build/bin/mlua_tests.elf
 
 # Alternatively, start the target in BOOTSEL mode and copy to its boot drive.
 $ cp build/bin/mlua_tests.uf2 /mnt/RPI-RP2/
