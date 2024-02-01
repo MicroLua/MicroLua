@@ -201,8 +201,10 @@ target_link_libraries(mlua_test_hardware.pll INTERFACE
 
 mlua_add_c_module(mlua_mod_hardware.pwm hardware.pwm.c)
 target_link_libraries(mlua_mod_hardware.pwm INTERFACE
+    hardware_irq
     hardware_pwm
     mlua_mod_hardware.gpio_headers
+    mlua_mod_mlua.event_headers
     pico_platform
 )
 
@@ -212,6 +214,8 @@ target_link_libraries(mlua_test_hardware.pwm INTERFACE
     mlua_mod_hardware.pwm
     mlua_mod_hardware.regs.addressmap
     mlua_mod_hardware.regs.pwm
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.util
     mlua_mod_pico
 )
 

@@ -7,6 +7,8 @@ local gpio = require 'hardware.gpio'
 local pwm = require 'hardware.pwm'
 local addressmap = require 'hardware.regs.addressmap'
 local regs = require 'hardware.regs.pwm'
+local thread = require 'mlua.thread'
+local util = require 'mlua.util'
 local pico = require 'pico'
 
 function test_introspect(t)
@@ -64,4 +66,34 @@ function test_free_running(t)
     t:expect(t:expr(gpio).get_pad(pin)):eq(false)
     while pwm.get_counter(slice) >= value do end
     t:expect(t:expr(gpio).get_pad(pin)):eq(true)
+end
+
+function test_irq_handler(t)
+    local slice_mask, want_counts = 0, {}
+    for slice = 0, 7 do
+        slice_mask = slice_mask | (1 << slice)
+        pwm.set_clkdiv_int_frac(slice, 250)
+        pwm.set_clkdiv_mode(slice, pwm.DIV_FREE_RUNNING)
+        pwm.set_counter(slice, 0)
+        pwm.set_wrap(slice, 4 * (3 * 5 * 7 * 8) / (1 + slice) - 1)
+        want_counts[slice] = 1 + slice
+        pwm.clear_irq(slice)
+        pwm.set_irq_enabled(slice, true)
+        t:cleanup(function() pwm.set_irq_enabled(slice, false) end)
+    end
+
+    local counts, parent = {}, thread.running()
+    pwm.set_irq_handler(function(mask)
+        if counts[0] then return end
+        for i = 0, 7 do
+            if mask & (1 << i) ~= 0 then counts[i] = (counts[i] or 0) + 1 end
+        end
+        if mask & 0x01 ~= 0 then parent:resume() end
+    end)
+    t:cleanup(function() pwm.set_irq_handler(nil) end)
+
+    pwm.set_mask_enabled(slice_mask)
+    t:cleanup(function() pwm.set_mask_enabled(0) end)
+    thread.suspend()
+    t:expect(counts):label("counts"):eq(want_counts, util.table_eq)
 end

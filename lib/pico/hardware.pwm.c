@@ -1,9 +1,11 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include "hardware/irq.h"
 #include "hardware/pwm.h"
 #include "pico/platform.h"
 
+#include "mlua/event.h"
 #include "mlua/hardware.gpio.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
@@ -32,6 +34,84 @@ static int mod_reg_base(lua_State* ls) {
     lua_pushinteger(ls, lua_isnoneornil(ls, 1) ? (uintptr_t)pwm_hw
                         : (uintptr_t)&pwm_hw->slice[check_slice(ls, 1)]);
     return 1;
+}
+
+#if LIB_MLUA_MOD_MLUA_EVENT
+
+typedef struct PWMState {
+    MLuaEvent event;
+    uint8_t pending;
+} PWMState;
+
+static PWMState pwm_state;
+
+static_assert(NUM_PWM_SLICES <= 8 * sizeof(uint8_t),
+              "pending bitmask too small");
+
+static void __time_critical_func(handle_pwm_irq)(void) {
+    uint32_t mask = pwm_get_irq_status_mask();
+    pwm_hw->intr = mask;  // Clear IRQ sources
+    uint32_t save = save_and_disable_interrupts();
+    pwm_state.pending |= mask;
+    restore_interrupts(save);
+    mlua_event_set(&pwm_state.event);
+}
+
+static int handle_pwm_event(lua_State* ls) {
+    uint32_t save = save_and_disable_interrupts();
+    uint8_t pending = pwm_state.pending;
+    pwm_state.pending = 0;
+    restore_interrupts(save);
+    if (pending != 0) {  // Call the handler
+        lua_pushvalue(ls, lua_upvalueindex(1));  // handler
+        lua_pushinteger(ls, pending);
+        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
+    }
+    return 0;
+}
+
+static int pwm_handler_done(lua_State* ls) {
+    irq_set_enabled(PWM_IRQ_WRAP, false);
+    irq_remove_handler(PWM_IRQ_WRAP, &handle_pwm_irq);
+    mlua_event_disable(ls, &pwm_state.event);
+    return 0;
+}
+
+static int mod_set_irq_handler(lua_State* ls) {
+    if (lua_isnone(ls, 1)) return 0;  // No argument => no change
+    if (lua_isnil(ls, 1)) {  // Nil callback, kill the handler thread
+        mlua_event_stop_handler(ls, &pwm_state.event);
+        return 0;
+    }
+
+    // Set the IRQ handler.
+    lua_Integer priority = mlua_event_parse_irq_priority(ls, 2, -1);
+    if (!mlua_event_enable(ls, &pwm_state.event)) {
+        return luaL_error(ls, "PWM: handler already set");
+    }
+    mlua_event_set_irq_handler(PWM_IRQ_WRAP, &handle_pwm_irq, priority);
+    irq_set_enabled(PWM_IRQ_WRAP, true);
+
+    // Start the event handler thread.
+    lua_pushvalue(ls, 1);  // handler
+    lua_pushcclosure(ls, &handle_pwm_event, 1);
+    lua_pushcfunction(ls, &pwm_handler_done);
+    return mlua_event_handle(ls, &pwm_state.event, &mlua_cont_return_ctx, 1);
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_EVENT
+
+static int mod_clear_irq(lua_State* ls) {
+    uint slice = check_slice(ls, 1);
+#if LIB_MLUA_MOD_MLUA_EVENT
+    uint32_t save = save_and_disable_interrupts();
+    pwm_clear_irq(slice);
+    pwm_state.pending &= ~(1u << slice);
+    restore_interrupts(save);
+#else
+    pwm_clear_irq(slice);
+#endif
+    return 0;
 }
 
 MLUA_FUNC_V2(Config_, pwm_config_, set_phase_correct, check_Config,
@@ -67,7 +147,8 @@ MLUA_FUNC_V2(mod_, pwm_, set_clkdiv_mode, check_slice, luaL_checkinteger)
 MLUA_FUNC_V2(mod_, pwm_, set_phase_correct, check_slice, mlua_to_cbool)
 MLUA_FUNC_V2(mod_, pwm_, set_enabled, check_slice, mlua_to_cbool)
 MLUA_FUNC_V1(mod_, pwm_, set_mask_enabled, luaL_checkinteger)
-MLUA_FUNC_V1(mod_, pwm_, clear_irq, check_slice)
+MLUA_FUNC_V2(mod_, pwm_, set_irq_enabled, check_slice, mlua_to_cbool)
+MLUA_FUNC_V2(mod_, pwm_, set_irq_mask_enabled, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_R0(mod_, pwm_, get_irq_status_mask, lua_pushinteger)
 MLUA_FUNC_V1(mod_, pwm_, force_irq, check_slice)
 MLUA_FUNC_R1(mod_, pwm_, get_dreq, lua_pushinteger, check_slice)
@@ -112,8 +193,13 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_phase_correct, mod_),
     MLUA_SYM_F(set_enabled, mod_),
     MLUA_SYM_F(set_mask_enabled, mod_),
-    // TODO: MLUA_SYM_F(set_irq_enabled, mod_),
-    // TODO: MLUA_SYM_F(set_irq_mask_enabled, mod_),
+#if LIB_MLUA_MOD_MLUA_EVENT
+    MLUA_SYM_F(set_irq_handler, mod_),
+#else
+    MLUA_SYM_V(set_irq_handler, boolean, false),
+#endif
+    MLUA_SYM_F(set_irq_enabled, mod_),
+    MLUA_SYM_F(set_irq_mask_enabled, mod_),
     MLUA_SYM_F(clear_irq, mod_),
     MLUA_SYM_F(get_irq_status_mask, mod_),
     MLUA_SYM_F(force_irq, mod_),

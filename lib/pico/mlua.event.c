@@ -23,7 +23,7 @@ typedef struct EventQueue {
     MLuaEvent* tail;
 } EventQueue;
 
-#define EVENT_PENDING (1 << 0)
+#define EVENT_PENDING (1u << 0)
 
 static inline bool is_pending(MLuaEvent const* ev) {
     return (ev->state & EVENT_PENDING) != 0;

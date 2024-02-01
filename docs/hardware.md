@@ -228,13 +228,20 @@ This module defines the `hardware.pwm.Config` class, which exposes PWM
 configuration functionality. All library functions that take an
 `pwm_config*` as a first argument are exposed as methods on the `Config` class.
 
-> [!NOTE]
-> IRQ functionality isn't implemented yet.
-
 - `reg_base(slice = nil) -> integer`\
   When `slice` is `nil`, return the base address of the peripheral registers
   (`PWM_BASE`). Otherwise, return the base address of the registers for the
   given slice.
+
+- `set_irq_handler(handler) -> Thread`\
+  Set a PWM wrap IRQ handler, or remove the handler if `handler`is `nil`.
+  Returns the [event handler thread](core.md#callbacks).
+
+  - `handler(slice_mask)`\
+    The handler to be called on PWM IRQ events.
+
+  The handler can be removed either by killing the returned thread, or by
+  calling `set_irq_handler()` with a `nil` handler.
 
 ## `hardware.regs.*`
 

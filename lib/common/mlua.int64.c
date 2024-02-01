@@ -23,7 +23,7 @@ bool mlua_int64_fits_number(int64_t value) {
     return
 #if ((((INT64_MAX >> (MLUA_MDIG / 4)) >> (MLUA_MDIG / 4)) >> (MLUA_MDIG / 4)) \
      >> (MLUA_MDIG - (3 * (MLUA_MDIG / 4)))) > 0
-#define MLUA_MAX_INT64_IN_NUMBER ((uint64_t)1 << MLUA_MDIG)
+#define MLUA_MAX_INT64_IN_NUMBER ((uint64_t)1u << MLUA_MDIG)
         (MLUA_MAX_INT64_IN_NUMBER + (uint64_t)value)
                 <= (2 * MLUA_MAX_INT64_IN_NUMBER);
 #else

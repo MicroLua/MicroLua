@@ -133,10 +133,10 @@ static int mod_clear(lua_State* ls) {
         state->pending &= ~(1u << num);
         restore_interrupts(save);
     } else {
-#endif
         irq_clear(irq);
-#if LIB_MLUA_MOD_MLUA_EVENT
     }
+#else
+    irq_clear(irq);
 #endif
     return 0;
 }
