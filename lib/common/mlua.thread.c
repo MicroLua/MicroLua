@@ -301,14 +301,14 @@ static int Thread_join(lua_State* ls) {
         break;
     }
     lua_settop(ls, 1);
-    lua_pushboolean(ls, true);
+    lua_pushnil(ls);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_State* self = (lua_State*)ctx;
     if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
-    lua_pushboolean(ls, true);
+    lua_pushnil(ls);
     return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
@@ -612,8 +612,7 @@ static int mod_main(lua_State* ls) {
         }
 
         // Suspend running.
-        int typ = lua_type(running, -1);
-        if (typ == LUA_TNIL || typ == LUA_TBOOLEAN) {
+        if (lua_isnil(running, -1)) {
             // Suspend indefinitely.
             lua_pop(running, 1);  // Remove deadline
             thread_extra(running)->state = STATE_SUSPENDED;

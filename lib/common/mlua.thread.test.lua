@@ -10,11 +10,6 @@ local group = require 'mlua.thread.group'
 local time = require 'mlua.time'
 local string = require 'string'
 
-function set_up(t)
-    t:printf("Threads: %s\n",
-             thread.running == coroutine.running and "Lua" or "C")
-end
-
 function test_Thread_name(t)
     t:expect(t:expr(thread).running():name()):eq('main')
     local th1<close> = thread.start(function() end)

@@ -60,26 +60,9 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     if (index != 0) {
         lua_pushvalue(ls, index);
     } else {
-        lua_pushboolean(ls, true);
+        lua_pushnil(ls);
     }
     return mlua_event_yield(ls, 1, cont, ctx);
-}
-
-static uint8_t yield_disabled;  // Just a marker for a registry entry
-
-bool mlua_yield_enabled(lua_State* ls) {
-    bool dis = lua_rawgetp(ls, LUA_REGISTRYINDEX, &yield_disabled) != LUA_TNIL;
-    lua_pop(ls, 1);
-    return !dis;
-}
-
-void mlua_set_yield_enabled(lua_State* ls, bool en) {
-    if (en) {
-        lua_pushnil(ls);
-    } else {
-        lua_pushboolean(ls, true);
-    }
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, &yield_disabled);
 }
 
 bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev) {
@@ -155,7 +138,7 @@ static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
 
 static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
     // Suspend until the event gets pending.
-    lua_pushboolean(ls, true);
+    lua_pushnil(ls);
     return mlua_event_yield(ls, 1, &handler_thread_1, 0);
 }
 
@@ -199,30 +182,12 @@ int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* ev) {
     return lua_rawgetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
-static bool resume_thread(lua_State* ls, lua_State* thread) {
-    lua_pushvalue(ls, 1);
-    lua_pushvalue(ls, -2);
-    lua_call(ls, 1, 1);
-    bool resumed = lua_toboolean(ls, -1);
+static uint8_t yield_disabled;  // Just a marker for a registry entry
+
+bool mlua_yield_enabled(lua_State* ls) {
+    bool dis = lua_rawgetp(ls, LUA_REGISTRYINDEX, &yield_disabled) != LUA_TNIL;
     lua_pop(ls, 1);
-    return resumed;
-}
-
-static int mod_dispatch(lua_State* ls) {
-    uint64_t deadline = mlua_check_int64(ls, 1);
-    lua_pushthread(ls);
-    luaL_getmetafield(ls, -1, "resume");
-    lua_replace(ls, 1);
-    lua_settop(ls, 1);
-    mlua_event_dispatch(ls, deadline, &resume_thread);
-    return 0;
-}
-
-int mod_set_thread_metatable(lua_State* ls) {
-    lua_pushthread(ls);
-    lua_pushvalue(ls, 1);
-    lua_setmetatable(ls, -2);
-    return 0;
+    return !dis;
 }
 
 static int mod_yield_enabled(lua_State* ls) {
@@ -239,8 +204,6 @@ static int mod_yield_enabled(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_F(dispatch, mod_),
-    MLUA_SYM_F(set_thread_metatable, mod_),
     MLUA_SYM_F(yield_enabled, mod_),
 };
 

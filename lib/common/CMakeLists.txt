@@ -201,32 +201,17 @@ target_link_libraries(mlua_test_mlua.testing INTERFACE
     mlua_mod_table
 )
 
-mlua_set(MLUA_THREADS "c" CACHE STRING
-    "The thread implementation, one of (c, lua)")
-set_property(CACHE MLUA_THREADS PROPERTY STRINGS c lua)
-
-if("${MLUA_THREADS}" STREQUAL "c")
-    mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
-    target_compile_definitions(mlua_mod_mlua.thread INTERFACE
-        MLUA_EXTRASPACE=16
-    )
-    target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
-        include_mlua.thread)
-    target_link_libraries(mlua_mod_mlua.thread INTERFACE
-        mlua_mod_mlua.event
-        mlua_mod_mlua.int64
-        mlua_platform
-    )
-else()
-    mlua_add_lua_modules(mlua_mod_mlua.thread mlua.thread.lua)
-    target_link_libraries(mlua_mod_mlua.thread INTERFACE
-        mlua_mod_coroutine
-        mlua_mod_mlua.event
-        mlua_mod_mlua.oo
-        mlua_mod_mlua.time
-        mlua_mod_string
-    )
-endif()
+mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
+target_compile_definitions(mlua_mod_mlua.thread INTERFACE
+    MLUA_EXTRASPACE=16
+)
+target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
+    include_mlua.thread)
+target_link_libraries(mlua_mod_mlua.thread INTERFACE
+    mlua_mod_mlua.event
+    mlua_mod_mlua.int64
+    mlua_platform
+)
 
 mlua_add_lua_modules(mlua_test_mlua.thread mlua.thread.test.lua)
 target_link_libraries(mlua_test_mlua.thread INTERFACE
