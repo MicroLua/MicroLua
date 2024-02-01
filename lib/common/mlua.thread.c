@@ -44,9 +44,6 @@ static char const mlua_Thread_name[] = "mlua.Thread";
 #define UV_THREADS 4
 #define UV_JOINERS 5
 #define UV_NAMES 6
-#define MAIN_UV_COUNT 6
-
-static uint8_t main_tag;
 
 static inline lua_State* main_thread(lua_State* ls) {
     return G(ls)->mainthread;
@@ -88,11 +85,8 @@ static inline void replace_flags(lua_State* thread, lua_Integer flags) {
     lua_replace(thread, FP_FLAGS - 1);
 }
 
-static inline void push_main(lua_State* ls) {
-    lua_rawgetp(ls, LUA_REGISTRYINDEX, &main_tag);
-}
-
-static void print_state(lua_State* ls, lua_State* running, char const* msg) {
+static void print_main_state(lua_State* ls, lua_State* running,
+                             char const* msg) {
     printf("# %s\n#   Running: %p\n#   Active:", msg, running);
     lua_State* main = main_thread(ls);
     lua_State* tail = lua_tothread(main, lua_upvalueindex(UV_TAIL));
@@ -130,17 +124,17 @@ static int thread_state(lua_State* thread) {
     }
 }
 
-static void remove_timer(lua_State* ls, lua_State* thread) {
-    lua_State* prev = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
-    if (thread == prev) {  // thread == prev?
-        lua_xmove(thread, ls, 1);
-        lua_replace(ls, lua_upvalueindex(UV_TIMERS));  // TIMERS = thread.NEXT
+static void remove_timer(lua_State* main, lua_State* thread) {
+    // prev = TIMERS
+    lua_State* prev = lua_tothread(main, lua_upvalueindex(UV_TIMERS));
+    if (thread == prev) {
+        lua_xmove(thread, main, 1);
+        lua_replace(main, lua_upvalueindex(UV_TIMERS));  // TIMERS = thread.NEXT
         lua_pushnil(thread);  // thread.NEXT = nil
         return;
     }
     for (;;) {
-        // next = prev.NEXT
-        lua_State* next = lua_tothread(prev, FP_NEXT);
+        lua_State* next = lua_tothread(prev, FP_NEXT);  // next = prev.NEXT
         if (next == NULL) return;
         if (next == thread) {  // next == thread?
             lua_pop(prev, 1);
@@ -152,51 +146,30 @@ static void remove_timer(lua_State* ls, lua_State* thread) {
     }
 }
 
-static void activate(lua_State* ls, lua_State* thread, int main) {
-    // thread.FLAGS = STATE_ACTIVE
-    replace_flags(thread, STATE_ACTIVE);
+static void activate(lua_State* main, lua_State* thread) {
     // tail = TAIL
-    lua_getupvalue(ls, main, UV_TAIL);
-    lua_State* tail = lua_tothread(ls, -1);
-    lua_pop(ls, 1);
-    if (tail == NULL) {
-        // main.HEAD = thread
-        push_thread(ls, thread);
-        lua_setupvalue(ls, main, UV_HEAD);
-    } else {
-        // tail.NEXT = thread
-        lua_pop(tail, 1);
-        push_thread(tail, thread);
-    }
-    // main.TAIL = thread
-    push_thread(ls, thread);
-    lua_setupvalue(ls, main, UV_TAIL);
-}
-
-static void main_activate(lua_State* ls, lua_State* thread) {
-    // thread.FLAGS = STATE_ACTIVE
-    replace_flags(thread, STATE_ACTIVE);
-    // tail = TAIL
-    lua_State* tail = lua_tothread(ls, lua_upvalueindex(UV_TAIL));
+    lua_State* tail = lua_tothread(main, lua_upvalueindex(UV_TAIL));
     if (tail == NULL) {
         // HEAD = thread
-        push_thread(ls, thread);
-        lua_replace(ls, lua_upvalueindex(UV_HEAD));
+        push_thread(main, thread);
+        lua_replace(main, lua_upvalueindex(UV_HEAD));
     } else {
         // tail.NEXT = thread
         lua_pop(tail, 1);
         push_thread(tail, thread);
     }
     // TAIL = thread
-    push_thread(ls, thread);
-    lua_replace(ls, lua_upvalueindex(UV_TAIL));
+    push_thread(main, thread);
+    lua_replace(main, lua_upvalueindex(UV_TAIL));
 }
 
-static bool resume(lua_State* ls, lua_State* thread) {
+static bool resume(lua_State* main, lua_State* thread) {
     int state = thread_state(thread);
     if (state == STATE_ACTIVE || state == STATE_DEAD) return false;
-    if (state == STATE_TIMER) remove_timer(ls, thread);
-    main_activate(ls, thread);
+    if (state == STATE_TIMER) remove_timer(main, thread);
+    // thread.FLAGS = STATE_ACTIVE
+    replace_flags(thread, STATE_ACTIVE);
+    activate(main, thread);
     return true;
 }
 
@@ -237,7 +210,6 @@ static int Thread_kill(lua_State* ls) {
 
     // Remove the thread from the timer list if necessary.
     lua_State* main = main_thread(ls);
-    // TODO: Remove from active queue if STATE_ACTIVE
     if (state == STATE_TIMER) remove_timer(main, self);
 
     // Close the Lua thread and store the termination in self.DEADLINE.
@@ -377,16 +349,41 @@ static int mod_start(lua_State* ls) {
     lua_pushinteger(thread, STATE_ACTIVE);  // FP_FLAGS
     lua_pushnil(thread);                    // FP_NEXT
 
+    lua_State* main = main_thread(ls);
+    if (luai_likely(ls != main)) {
+        // Set the name if provided.
+        if (has_name) {
+            push_main_value(ls, lua_upvalueindex(UV_NAMES));
+            push_thread(ls, thread);
+            lua_pushvalue(ls, 2);
+            lua_rawset(ls, -3);  // main.NAMES[thread] = name
+            lua_pop(ls, 1);  // Remove NAMES
+        }
+
+        // Add the thread to main.THREADS.
+        push_main_value(ls, lua_upvalueindex(UV_THREADS));
+        push_thread(ls, thread);
+        lua_pushboolean(ls, true);
+        lua_rawset(ls, -3);  // main.THREADS[thread] = true
+        lua_pop(ls, 1);  // Remove THREADS
+
+        // Add the thread to the active queue.
+        activate(main, thread);
+        return 1;
+    }
+
+    // main() hasn't been called yet. Get a reference to it through the module.
+    mlua_require(ls, "mlua.thread", true);
+    lua_getfield(ls, -1, "main");
+    lua_remove(ls, -2);
+
     // Set the name if provided.
-    // TODO: Convert to direct access to main() upvalues. This requires a
-    //       special case for when main() isn't running yet (ls == main).
-    push_main(ls);
     if (has_name) {
         lua_getupvalue(ls, -1, UV_NAMES);
         push_thread(ls, thread);
         lua_pushvalue(ls, 2);
-        lua_rawset(ls, -3);
-        lua_pop(ls, 1);
+        lua_rawset(ls, -3);  // main.NAMES[thread] = name
+        lua_pop(ls, 1);  // Remove NAMES
     }
 
     // Add the thread to main.THREADS.
@@ -397,8 +394,22 @@ static int mod_start(lua_State* ls) {
     lua_pop(ls, 1);  // Remove THREADS
 
     // Add the thread to the active queue.
-    // TODO: Add to queue directly, as FLAGS is already set
-    activate(ls, thread, lua_absindex(ls, -1));
+    // tail = main.TAIL
+    lua_getupvalue(ls, -1, UV_TAIL);
+    lua_State* tail = lua_tothread(ls, -1);
+    lua_pop(ls, 1);
+    if (tail == NULL) {
+        // main.HEAD = thread
+        push_thread(ls, thread);
+        lua_setupvalue(ls, -2, UV_HEAD);
+    } else {
+        // tail.NEXT = thread
+        lua_pop(tail, 1);
+        push_thread(tail, thread);
+    }
+    // main.TAIL = thread
+    push_thread(ls, thread);
+    lua_setupvalue(ls, -2, UV_TAIL);
     lua_pop(ls, 1);  // Remove main
     return 1;
 }
@@ -408,6 +419,21 @@ static int mod_shutdown(lua_State* ls) {
     lua_pushnil(ls);
     lua_rotate(ls, 1, 1);
     return lua_yield(ls, 2);
+}
+
+static void reset_main_state(lua_State* ls, int arg) {
+    for (int i = UV_HEAD; i <= UV_TIMERS; ++i) {
+        lua_pushnil(ls);
+        lua_setupvalue(ls, arg, i);
+    }
+    lua_createtable(ls, 0, 0);
+    lua_setupvalue(ls, arg, UV_THREADS);
+    lua_createtable(ls, 0, 0);
+    luaL_setmetatable(ls, mlua_WeakK_name);
+    lua_setupvalue(ls, arg, UV_JOINERS);
+    lua_createtable(ls, 0, 0);
+    luaL_setmetatable(ls, mlua_WeakK_name);
+    lua_setupvalue(ls, arg, UV_NAMES);
 }
 
 static int main_done(lua_State* ls) {
@@ -429,12 +455,7 @@ static int main_done(lua_State* ls) {
     }
     lua_pop(ls, 1);  // Remove THREADS
 
-    // Clear main upvalues.
-    // TODO: Create a new THREADS
-    for (int i = 1; i <= MAIN_UV_COUNT; ++i) {
-        lua_pushnil(ls);
-        lua_setupvalue(ls, 1, i);
-    }
+    reset_main_state(ls, 1);
     return 0;
 }
 
@@ -667,17 +688,9 @@ MLUA_OPEN_MODULE(mlua.thread) {
     lua_pop(ls, 1);
 
     // Create the main() closure.
-    lua_pushnil(ls);
-    lua_pushnil(ls);
-    lua_pushnil(ls);
-    lua_createtable(ls, 0, 0);  // THREADS
-    lua_createtable(ls, 0, 0);  // JOINERS
-    luaL_setmetatable(ls, mlua_WeakK_name);
-    lua_createtable(ls, 0, 0);  // NAMES
-    luaL_setmetatable(ls, mlua_WeakK_name);
-    lua_pushcclosure(ls, &mod_main, MAIN_UV_COUNT);
-    lua_pushvalue(ls, -1);
-    lua_rawsetp(ls, LUA_REGISTRYINDEX, &main_tag);
+    for (int i = UV_HEAD; i <= UV_NAMES; ++i) lua_pushnil(ls);
+    lua_pushcclosure(ls, &mod_main, UV_NAMES - UV_HEAD + 1);
+    reset_main_state(ls, lua_absindex(ls, -1));
     lua_setfield(ls, -2, "main");
     return 1;
 }
