@@ -97,10 +97,9 @@ function test_active(t)
         end)
     end
     ths:join()
-    t:expect(log == '(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) '
-                 .. '(1, 2) (2, 2) (3, 2) (4, 2) (5, 2) '
-                 .. '(1, 3) (2, 3) (3, 3) (4, 3) (5, 3) ',
-             "Unexpected execution sequence: %s", log)
+    t:expect(log):label("log"):eq('(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) ' ..
+                                  '(1, 2) (2, 2) (3, 2) (4, 2) (5, 2) ' ..
+                                  '(1, 3) (2, 3) (3, 3) (4, 3) (5, 3) ')
 end
 
 function test_active_spinning(t)
@@ -123,15 +122,14 @@ function test_timers(t)
         ths:start(function()
             for i = 1, 3 do
                 log = log .. ('(%s, %s) '):format(t, i)
-                thread.suspend(start + i * 5000 + ((t + 2) % 5) * 500)
+                thread.suspend(start + (i * 5000 + ((t + 2) % 5) * 500))
             end
         end)
     end
     ths:join()
-    t:expect(log == '(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) '
-                 .. '(3, 2) (4, 2) (5, 2) (1, 2) (2, 2) '
-                 .. '(3, 3) (4, 3) (5, 3) (1, 3) (2, 3) ',
-             "Unexpected execution sequence: %s", log)
+    t:expect(log):label("log"):eq('(1, 1) (2, 1) (3, 1) (4, 1) (5, 1) ' ..
+                                  '(3, 2) (4, 2) (5, 2) (1, 2) (2, 2) ' ..
+                                  '(3, 3) (4, 3) (5, 3) (1, 3) (2, 3) ')
 end
 
 function test_active_and_timers(t)

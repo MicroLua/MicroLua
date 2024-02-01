@@ -36,6 +36,12 @@
 #define LUAI_MAXSTACK MLUA_MAXSTACK
 #endif
 
+// The size of the raw extra per-thread memory.
+#ifdef MLUA_EXTRASPACE
+#undef LUA_EXTRASPACE
+#define LUA_EXTRASPACE MLUA_EXTRASPACE
+#endif
+
 // The initial buffer size used by lauxlib. When <= 0, use the default.
 #ifndef MLUA_BUFFERSIZE
 #define MLUA_BUFFERSIZE MLUA_BUFFERSIZE_DEFAULT

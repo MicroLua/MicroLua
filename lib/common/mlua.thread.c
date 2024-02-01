@@ -25,17 +25,26 @@
 
 static char const mlua_Thread_name[] = "mlua.Thread";
 
+// Data stored in the per-thread extra space returned by lua_getextraspace().
+typedef struct ThreadExtra {
+    uint64_t deadline;
+    uint8_t state;
+} ThreadExtra;
+
+static_assert(sizeof(ThreadExtra) <= LUA_EXTRASPACE,
+              "LUA_EXTRASPACE too small");
+
+// Thread states, as stored in ThreadExtra.state.
+enum ThreadState {
+    STATE_ACTIVE,
+    STATE_SUSPENDED,
+    STATE_TIMER,
+    STATE_DEAD,
+};
+
 // Non-running thread stack indexes.
 #define FP_NEXT (-1)
-#define FP_FLAGS (-2)
-#define FP_DEADLINE (-3)
-#define FP_COUNT 3
-
-#define FLAGS_STATE 0x3
-#define STATE_ACTIVE 0
-#define STATE_SUSPENDED 1
-#define STATE_TIMER 2
-#define STATE_DEAD 3
+#define FP_COUNT 1
 
 // Upvalue indexes for main.
 #define UV_HEAD 1
@@ -45,6 +54,7 @@ static char const mlua_Thread_name[] = "mlua.Thread";
 #define UV_JOINERS 5
 #define UV_NAMES 6
 
+// Return a reference to the main thread.
 static inline lua_State* main_thread(lua_State* ls) {
     return G(ls)->mainthread;
 }
@@ -73,16 +83,15 @@ static inline void push_main_value(lua_State* ls, int arg) {
     lua_xmove(main, ls, 1);
 }
 
+// Return the ThreadExtra structure for a thread.
+static inline ThreadExtra* thread_extra(lua_State* thread) {
+    return (ThreadExtra*)lua_getextraspace(thread);
+}
+
 // Replace the NEXT value of a non-running thread.
 static inline void replace_next(lua_State* thread, lua_State* next) {
     lua_pop(thread, 1);
     push_thread(thread, next);
-}
-
-// Replace the FLAGS value of a non-running thread.
-static inline void replace_flags(lua_State* thread, lua_Integer flags) {
-    lua_pushinteger(thread, flags);
-    lua_replace(thread, FP_FLAGS - 1);
 }
 
 static void print_main_state(lua_State* ls, lua_State* running,
@@ -118,7 +127,7 @@ static int thread_state(lua_State* thread) {
         __attribute__((fallthrough));
     }
     case LUA_YIELD:
-        return lua_tointeger(thread, FP_FLAGS) & FLAGS_STATE;
+        return thread_extra(thread)->state;
     default:
         return STATE_DEAD;
     }
@@ -167,8 +176,7 @@ static bool resume(lua_State* main, lua_State* thread) {
     int state = thread_state(thread);
     if (state == STATE_ACTIVE || state == STATE_DEAD) return false;
     if (state == STATE_TIMER) remove_timer(main, thread);
-    // thread.FLAGS = STATE_ACTIVE
-    replace_flags(thread, STATE_ACTIVE);
+    thread_extra(thread)->state = STATE_ACTIVE;
     activate(main, thread);
     return true;
 }
@@ -214,9 +222,8 @@ static int Thread_kill(lua_State* ls) {
 
     // Close the Lua thread and store the termination in self.DEADLINE.
     lua_xmove(self, ls, 1);  // next = self.NEXT
-    lua_pop(self, FP_COUNT - 1);
     if (lua_closethread(self, ls) == LUA_OK) lua_pushnil(self);
-    lua_pushinteger(self, STATE_DEAD);  // self.FLAGS = STATE_DEAD
+    thread_extra(self)->state = STATE_DEAD;
     lua_xmove(ls, self, 1);  // self.NEXT = next
 
     // Resume joiners.
@@ -306,8 +313,8 @@ static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int Thread_join_2(lua_State* ls, lua_State* self) {
-    if (lua_isnil(self, FP_DEADLINE)) return 0;
-    lua_pushvalue(self, FP_DEADLINE);
+    if (lua_isnil(self, FP_NEXT - 1)) return 0;
+    lua_pushvalue(self, FP_NEXT - 1);
     lua_xmove(self, ls, 1);
     return lua_error(ls);
 }
@@ -343,11 +350,10 @@ static int mod_start(lua_State* ls) {
 
     // Create the thread.
     lua_State* thread = lua_newthread(ls);
+    thread_extra(thread)->state = STATE_ACTIVE;
     lua_pushvalue(ls, 1);
     lua_xmove(ls, thread, 1);
-    lua_pushnil(thread);                    // FP_DEADLINE
-    lua_pushinteger(thread, STATE_ACTIVE);  // FP_FLAGS
-    lua_pushnil(thread);                    // FP_NEXT
+    lua_pushnil(thread);  // thread.NEXT = nil
 
     lua_State* main = main_thread(ls);
     if (luai_likely(ls != main)) {
@@ -475,7 +481,7 @@ static int mod_main(lua_State* ls) {
         if (running != NULL || !lua_isnil(ls, lua_upvalueindex(UV_TAIL))) {
             deadline = min_ticks;
         } else if (timers != NULL) {
-            deadline = mlua_to_int64(timers, FP_DEADLINE);
+            deadline = thread_extra(timers)->deadline;
         }
         mlua_event_dispatch(ls, deadline, &resume);
 
@@ -483,8 +489,7 @@ static int mod_main(lua_State* ls) {
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
         lua_State* tail = lua_tothread(ls, lua_upvalueindex(UV_TAIL));
         uint64_t ticks = mlua_ticks();
-        if (timers != NULL
-                && (uint64_t)mlua_to_int64(timers, FP_DEADLINE) <= ticks) {
+        if (timers != NULL && thread_extra(timers)->deadline <= ticks) {
             // Append the timer list to the tail of the active queue, then cut
             // the combined list at the first thread whose deadline hasn't
             // elapsed yet.
@@ -497,12 +502,10 @@ static int mod_main(lua_State* ls) {
             }
             for (;;) {
                 tail = timers;
-                // tail.FLAGS = STATE_ACTIVE
-                replace_flags(tail, STATE_ACTIVE);
+                thread_extra(tail)->state = STATE_ACTIVE;
                 // timers = tail.NEXT
                 timers = lua_tothread(tail, FP_NEXT);
-                if (timers == NULL ||
-                        (uint64_t)mlua_to_int64(timers, FP_DEADLINE) > ticks) {
+                if (timers == NULL || thread_extra(timers)->deadline > ticks) {
                     // TIMERS = timers
                     push_thread_or_nil(ls, timers);
                     lua_replace(ls, lua_upvalueindex(UV_TIMERS));
@@ -560,10 +563,10 @@ static int mod_main(lua_State* ls) {
         lua_pop(running, FP_COUNT);
         int nres;
         if (lua_resume(running, ls, 0, &nres) != LUA_YIELD) {
-            // Close the Lua thread and store the termination in DEADLINE.
+            // Close the Lua thread and store the termination below NEXT.
             if (lua_closethread(running, ls) == LUA_OK) lua_pushnil(running);
-            lua_pushinteger(running, STATE_DEAD);
-            lua_pushnil(running);
+            thread_extra(running)->state = STATE_DEAD;
+            lua_pushnil(running);  // running.NEXT = nil
 
             // Resume joiners.
             // joiners = JOINERS[running]
@@ -604,9 +607,7 @@ static int mod_main(lua_State* ls) {
         }
         if (nres == 0) {
             // Keep running in the active queue.
-            lua_pushnil(running);
-            lua_pushinteger(running, STATE_ACTIVE);
-            lua_pushnil(running);
+            lua_pushnil(running);  // running.NEXT = nil
             continue;
         }
 
@@ -614,18 +615,20 @@ static int mod_main(lua_State* ls) {
         int typ = lua_type(running, -1);
         if (typ == LUA_TNIL || typ == LUA_TBOOLEAN) {
             // Suspend indefinitely.
-            lua_pushinteger(running, STATE_SUSPENDED);
-            lua_pushnil(running);
+            lua_pop(running, 1);  // Remove deadline
+            thread_extra(running)->state = STATE_SUSPENDED;
+            lua_pushnil(running);  // running.NEXT = nil
             running = NULL;
             continue;
         }
 
         // Add running to the timer list.
-        deadline = mlua_to_int64(running, -1);
-        lua_pushinteger(running, STATE_TIMER);
+        ThreadExtra* extra = thread_extra(running);
+        deadline = extra->deadline = mlua_to_int64(running, -1);
+        lua_pop(running, 1);  // Remove deadline
+        extra->state = STATE_TIMER;
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
-        if (timers == NULL ||
-                deadline < (uint64_t)mlua_to_int64(timers, FP_DEADLINE)) {
+        if (timers == NULL || deadline < thread_extra(timers)->deadline) {
             push_thread_or_nil(running, timers);  // running.NEXT = timers
             // TIMERS = running
             push_thread(ls, running);
@@ -636,8 +639,7 @@ static int mod_main(lua_State* ls) {
         for (;;) {
             // next = timers.NEXT
             lua_State* next = lua_tothread(timers, FP_NEXT);
-            if (next == NULL ||
-                    deadline < (uint64_t)mlua_to_int64(next, FP_DEADLINE)) {
+            if (next == NULL || deadline < thread_extra(next)->deadline) {
                 push_thread_or_nil(running, next);  // running.NEXT = next
                 replace_next(timers, running);  // timers.NEXT = running
                 break;

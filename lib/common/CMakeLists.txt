@@ -207,6 +207,9 @@ set_property(CACHE MLUA_THREADS PROPERTY STRINGS c lua)
 
 if("${MLUA_THREADS}" STREQUAL "c")
     mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
+    target_compile_definitions(mlua_mod_mlua.thread INTERFACE
+        MLUA_EXTRASPACE=16
+    )
     target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
         include_mlua.thread)
     target_link_libraries(mlua_mod_mlua.thread INTERFACE
