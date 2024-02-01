@@ -474,7 +474,7 @@ target_link_libraries(mlua_test_pico INTERFACE
 
 mlua_add_header_module(mlua_mod_pico.board pico.board
     "${CMAKE_BINARY_DIR}/generated/pico_base/pico/config_autogen.h")
-target_link_libraries(mlua_mod_pico INTERFACE
+target_link_libraries(mlua_mod_pico.board INTERFACE
     pico_base
 )
 
