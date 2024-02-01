@@ -309,6 +309,7 @@ target_link_libraries(mlua_mod_hardware.timer INTERFACE
 mlua_add_lua_modules(mlua_test_hardware.timer hardware.timer.test.lua)
 target_link_libraries(mlua_test_hardware.timer INTERFACE
     mlua_mod_hardware.timer
+    mlua_mod_math
     mlua_mod_mlua.int64
     mlua_mod_table
 )
