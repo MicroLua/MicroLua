@@ -137,6 +137,7 @@ lua_State* mlua_new_interpreter(void) {
     if (ls == NULL) return NULL;
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
+    memset(lua_getextraspace(ls), 0, LUA_EXTRASPACE);
     return ls;
 }
 

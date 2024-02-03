@@ -3,11 +3,11 @@
 
 #include "mlua/thread.h"
 
+#include "lstate.h"
+
 #include "pico/platform.h"
 
 #include "mlua/platform.h"
-
-// TODO: Move the event queue to the main thread extraspace
 
 spin_lock_t* mlua_event_spinlock;
 uint32_t mlua_event_lock_save;
@@ -25,6 +25,8 @@ typedef struct EventQueue {
     MLuaEvent* tail;
 } EventQueue;
 
+static_assert(sizeof(EventQueue) <= LUA_EXTRASPACE, "LUA_EXTRASPACE too small");
+
 #define EVENT_PENDING (1u << 0)
 
 static inline bool is_pending(MLuaEvent const* ev) {
@@ -35,19 +37,8 @@ static inline MLuaEvent* next_pending(MLuaEvent const* ev) {
     return (MLuaEvent*)(ev->state & ~EVENT_PENDING);
 }
 
-static uint8_t queue;  // Just a marker for a registry entry
-
-EventQueue* get_queue(lua_State* ls) {
-    EventQueue* q;
-    if (lua_rawgetp(ls, LUA_REGISTRYINDEX, &queue) == LUA_TNIL) {
-        q = lua_newuserdatauv(ls, sizeof(EventQueue), 0);
-        q->head = NULL;
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, &queue);
-    } else {
-        q = lua_touserdata(ls, -1);
-    }
-    lua_pop(ls, 1);
-    return q;
+static inline EventQueue* get_queue(lua_State* ls) {
+    return (EventQueue*)lua_getextraspace(G(ls)->mainthread);
 }
 
 static void remove_pending_nolock(EventQueue* q, MLuaEvent const* ev) {
