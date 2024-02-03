@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-// Require the mlua.event module.
+// Require the mlua.thread module.
 void mlua_event_require(lua_State* ls);
 
 // Register the current thread to be notified when an event triggers.
@@ -49,11 +49,6 @@ typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 // Return true iff yielding is enabled.
 bool mlua_yield_enabled(lua_State* ls);
 
-#if !LIB_MLUA_MOD_MLUA_THREAD
-// TODO: Allow force-enabling yielding => eliminate blocking code
-#define mlua_yield_enabled(ls) (false)
-#endif
-
 // Return true iff waiting for the given event is possible, i.e. yielding is
 // enabled and the event is enabled.
 bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
@@ -66,7 +61,9 @@ int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
 
 #if !LIB_MLUA_MOD_MLUA_THREAD
 #define mlua_event_require(ls) do {} while(0)
-#define mlua_event_can_wait(ls, event) (false)
+// TODO: Allow force-enabling yielding => eliminate blocking code
+#define mlua_yield_enabled(ls) (0)
+#define mlua_event_can_wait(ls, event) (0)
 #define mlua_event_loop(ls, event, loop, index) ((int)0)
 #endif
 

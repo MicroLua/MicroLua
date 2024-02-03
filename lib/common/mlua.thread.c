@@ -335,13 +335,19 @@ static int mod_suspend(lua_State* ls) {
     return lua_yield(ls, 1);
 }
 
+extern uint8_t mlua_yield_disabled;
+
 static int mod_yield_enabled(lua_State* ls) {
-    mlua_require(ls, "mlua.event", true);
-    lua_getfield(ls, -1, "yield_enabled");
-    lua_rotate(ls, 1, 1);
-    lua_pop(ls, 1);
-    lua_call(ls, lua_gettop(ls) - 1, 1);
-    return 1;
+    bool en = mlua_yield_enabled(ls);
+    if (!lua_isnoneornil(ls, 1)) {
+        if (lua_toboolean(ls, 1)) {
+            lua_pushnil(ls);
+        } else {
+            lua_pushboolean(ls, true);
+        }
+        lua_rawsetp(ls, LUA_REGISTRYINDEX, &mlua_yield_disabled);
+    }
+    return lua_pushboolean(ls, en), 1;
 }
 
 static int mod_start(lua_State* ls) {
@@ -677,7 +683,6 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(mlua.thread) {
-    mlua_event_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

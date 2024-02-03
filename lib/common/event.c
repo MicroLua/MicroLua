@@ -4,7 +4,6 @@
 #include "mlua/event.h"
 
 #include "mlua/int64.h"
-#include "mlua/module.h"
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
@@ -14,7 +13,7 @@
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
 void mlua_event_require(lua_State* ls) {
-    mlua_require(ls, "mlua.event", false);
+    mlua_require(ls, "mlua.thread", false);
 }
 
 void mlua_event_watch(lua_State* ls, MLuaEvent const* ev) {
@@ -182,33 +181,11 @@ int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* ev) {
     return lua_rawgetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
-static uint8_t yield_disabled;  // Just a marker for a registry entry
+uint8_t mlua_yield_disabled;  // Just a marker for a registry entry
 
 bool mlua_yield_enabled(lua_State* ls) {
-    bool dis = lua_rawgetp(ls, LUA_REGISTRYINDEX, &yield_disabled) != LUA_TNIL;
+    bool dis = lua_rawgetp(ls, LUA_REGISTRYINDEX, &mlua_yield_disabled)
+               != LUA_TNIL;
     lua_pop(ls, 1);
     return !dis;
-}
-
-static int mod_yield_enabled(lua_State* ls) {
-    bool en = mlua_yield_enabled(ls);
-    if (!lua_isnoneornil(ls, 1)) {
-        if (lua_toboolean(ls, 1)) {
-            lua_pushnil(ls);
-        } else {
-            lua_pushboolean(ls, true);
-        }
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, &yield_disabled);
-    }
-    return lua_pushboolean(ls, en), 1;
-}
-
-MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_F(yield_enabled, mod_),
-};
-
-MLUA_OPEN_MODULE(mlua.event) {
-    mlua_require(ls, "mlua.int64", false);
-    mlua_new_module(ls, 0, module_syms);
-    return 1;
 }

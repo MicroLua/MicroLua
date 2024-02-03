@@ -193,12 +193,13 @@ target_link_libraries(mlua_test_mlua.testing INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c mlua.event.c)
+mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
 target_compile_definitions(mlua_mod_mlua.thread INTERFACE
     MLUA_EXTRASPACE=16
 )
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
+target_sources(mlua_mod_mlua.thread INTERFACE event.c)
 target_link_libraries(mlua_mod_mlua.thread INTERFACE
     mlua_mod_mlua.int64
     mlua_platform

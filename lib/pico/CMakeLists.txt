@@ -457,9 +457,9 @@ target_link_libraries(mlua_mod_mlua.testing.uart INTERFACE
     mlua_mod_hardware.uart
 )
 
-target_sources(mlua_mod_mlua.thread INTERFACE event.c)
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
+target_sources(mlua_mod_mlua.thread INTERFACE event.c)
 target_link_libraries(mlua_mod_mlua.thread INTERFACE
     hardware_irq
     hardware_sync

@@ -14,6 +14,6 @@ endfunction()
 function(mlua_platform_bin_tests TARGET)
 endfunction()
 
-target_sources(mlua_mod_mlua.thread INTERFACE event.c)
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
+target_sources(mlua_mod_mlua.thread INTERFACE event.c)
