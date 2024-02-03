@@ -815,6 +815,15 @@ to run the configured main function, then runs `main()`.
 - `running() -> Thread`\
   Return the currently-running thread.
 
+- `blocking([enable]) -> boolean`\
+  When `enable` is `true`, request blocking event processing for the running
+  thread (i.e. don't yield to other threads while waiting for events). When
+  `enable` is `false`, request non-blocking event processing. If `enable` isn't
+  provided, don't modify the flag. Returns the previous value of the flag.
+
+  The "blocking" flag is inherited from the running thread when starting a new
+  thread.
+
 - `main()`\
   Run the thread scheduler loop.
 

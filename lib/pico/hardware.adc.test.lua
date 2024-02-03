@@ -29,7 +29,7 @@ function test_polling(t)
     end
 end
 
-function test_fifo_Y(t)
+function test_fifo_BNB(t)
     adc.init()
     adc.set_temp_sensor_enabled(true)
     adc.select_input(input)
@@ -40,7 +40,7 @@ function test_fifo_Y(t)
     local got = adc.fifo_get_level()
     t:expect(got == 0, "FIFO has %s values, want 0")
 
-    if thread.yield_enabled() then
+    if not thread.blocking() then
         adc.fifo_enable_irq()
         t:cleanup(function() adc.fifo_enable_irq(false) end)
     end

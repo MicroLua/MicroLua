@@ -21,8 +21,11 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Merge mlua.event into mlua.thread
 // TODO: Stop using uint64_t for deadlines; use only lower 32 bits of clock
+
+void mlua_thread_require(lua_State* ls) {
+    mlua_require(ls, "mlua.thread", false);
+}
 
 static char const mlua_Thread_name[] = "mlua.Thread";
 
@@ -335,17 +338,23 @@ static int mod_suspend(lua_State* ls) {
     return lua_yield(ls, 1);
 }
 
-extern uint8_t mlua_yield_disabled;
+static uint8_t blocking;  // Just a marker for a registry entry
 
-static int mod_yield_enabled(lua_State* ls) {
-    bool en = mlua_yield_enabled(ls);
+bool mlua_thread_blocking(lua_State* ls) {
+    bool b = lua_rawgetp(ls, LUA_REGISTRYINDEX, &blocking) != LUA_TNIL;
+    lua_pop(ls, 1);
+    return b;
+}
+
+static int mod_blocking(lua_State* ls) {
+    bool en = mlua_thread_blocking(ls);
     if (!lua_isnoneornil(ls, 1)) {
         if (lua_toboolean(ls, 1)) {
-            lua_pushnil(ls);
-        } else {
             lua_pushboolean(ls, true);
+        } else {
+            lua_pushnil(ls);
         }
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, &mlua_yield_disabled);
+        lua_rawsetp(ls, LUA_REGISTRYINDEX, &blocking);
     }
     return lua_pushboolean(ls, en), 1;
 }
@@ -677,7 +686,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(running, mod_),
     MLUA_SYM_F(yield, mod_),
     MLUA_SYM_F(suspend, mod_),
-    MLUA_SYM_F(yield_enabled, mod_),
+    MLUA_SYM_F(blocking, mod_),
     MLUA_SYM_F(start, mod_),
     MLUA_SYM_F(shutdown, mod_),
 };

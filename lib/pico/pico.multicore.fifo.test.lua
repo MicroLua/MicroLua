@@ -14,8 +14,8 @@ function set_up(t)
     fifo.drain()
 end
 
-function test_status_Y(t)
-    if thread.yield_enabled() then
+function test_status_BNB(t)
+    if not thread.blocking() then
         fifo.enable_irq()
         t:cleanup(function() fifo.enable_irq(false) end)
     end
@@ -52,10 +52,10 @@ function core1_push_one()
     fifo.push_blocking(1)
 end
 
-function test_push_pop_Y(t)
+function test_push_pop_BNB(t)
     multicore.launch_core1(module_name, 'core1_echo')
     t:cleanup(multicore.reset_core1)
-    if thread.yield_enabled() then
+    if not thread.blocking() then
         fifo.enable_irq()
         t:cleanup(function() fifo.enable_irq(false) end)
     end

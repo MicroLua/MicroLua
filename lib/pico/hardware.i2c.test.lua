@@ -48,7 +48,7 @@ local function run_slave(inst, on_receive, on_request)
     end
 end
 
-function test_master_Y(t)
+function test_master_BNB(t)
     local slave_addr = 0x17
     local master, slave = testing_i2c.set_up(
         t, 1000000, config.I2C_MASTER_SDA, config.I2C_MASTER_SCL,
@@ -57,17 +57,17 @@ function test_master_Y(t)
     base.write32(slave:regs_base() + regs.IC_INTR_MASK_OFFSET,
                  regs.IC_INTR_MASK_M_RD_REQ_BITS)
 
-    -- Start the slave as a thread if yielding is enabled, or on core 1.
-    if thread.yield_enabled() then
+    -- Start the slave on core 1 if blocking is enabled, or as a thread.
+    if thread.blocking() then
+        multicore.launch_core1(module_name, 'core1_slave')
+        t:cleanup(multicore.reset_core1)
+    else
         local th = thread.start(function()
             run_slave(slave, testing_i2c.mem_slave(32))
         end)
         t:cleanup(function() th:kill() end)
         master:enable_irq()
         t:cleanup(function() master:enable_irq(false) end)
-    else
-        multicore.launch_core1(module_name, 'core1_slave')
-        t:cleanup(multicore.reset_core1)
     end
 
     -- Write some data, then read it back.

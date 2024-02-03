@@ -34,7 +34,7 @@ local function setup(t, bits)
     t:cleanup(function() inst:deinit() end)
     inst:set_format(bits, spi.CPOL_0, spi.CPHA_0);
     inst:enable_loopback(true)
-    if thread.yield_enabled() then inst:enable_irq() end
+    if not thread.blocking() then inst:enable_irq() end
     return inst
 end
 
@@ -52,7 +52,7 @@ function test_configuration(t)
         :eq('\x28\x37\x06\x15\x24\x33')
 end
 
-function test_write_read_blocking_8bit_Y(t)
+function test_write_read_blocking_8bit_BNB(t)
     local inst = setup(t, 8)
     local data = 'abcdefghijklmnopqrstuvwxyz0'
     t:expect(t:expr(inst):write_read_blocking(data)):eq(data)
@@ -60,7 +60,7 @@ function test_write_read_blocking_8bit_Y(t)
     t:expect(t:expr(inst):read_blocking(0x42, 13)):eq(('\x42'):rep(13))
 end
 
-function test_write_read_blocking_12bit_Y(t)
+function test_write_read_blocking_12bit_BNB(t)
     local inst = setup(t, 12)
     local data = '\x01\x23\x45\x67\x89\xab\xcd\xef\xf0\xe1\xd2\xc3\xb4\xa5'
                  .. '\x96\x87\x78\x69\x5a\x4b\x3c\x2d\x1e\x0f'

@@ -6,6 +6,7 @@
 #include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 static void mod_min_ticks(lua_State* ls, MLuaSymVal const* value) {
@@ -29,7 +30,7 @@ static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_sleep_until(lua_State* ls) {
     uint64_t t = mlua_check_int64(ls, 1);
-    if (mlua_yield_enabled(ls)) {
+    if (!mlua_thread_blocking(ls)) {
         if (mlua_ticks_reached(t)) return 0;
         return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
     }

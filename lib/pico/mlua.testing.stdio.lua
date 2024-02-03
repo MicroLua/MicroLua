@@ -18,7 +18,7 @@ function enable_loopback(t, crlf)
     stdio.set_driver_enabled(stdio_uart.driver, true)
     stdio.filter_driver(stdio_uart.driver)
     stdio.set_translate_crlf(stdio_uart.driver, crlf)
-    if thread and thread.yield_enabled() then stdio.enable_chars_available() end
+    if thread and not thread.blocking() then stdio.enable_chars_available() end
 
     -- Enable UART loopback, and prevent output data from actually appearing at
     -- the Tx pin.
@@ -37,7 +37,7 @@ function enable_loopback(t, crlf)
         while stdio.getchar_timeout_us(1000) >= 0 do end
         u:enable_loopback(false)
         if tx then gpio.set_outover(tx, gpio.OVERRIDE_NORMAL) end
-        if thread and thread.yield_enabled() then
+        if thread and not thread.blocking() then
             stdio.enable_chars_available(false)
         end
         stdio.set_translate_crlf(stdio_uart.driver, stdio.DEFAULT_CRLF)

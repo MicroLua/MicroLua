@@ -9,7 +9,7 @@ local stdio = require 'mlua.stdio'
 local testing_stdio = require 'mlua.testing.stdio'
 local util = require 'mlua.util'
 
-function test_streams_Y(t)
+function test_streams_BNB(t)
     for _, test in ipairs{
         {false, stdio.stdout, {'a', '', 'bc\n', 'def'}, 'abc\ndef'},
         {true, stdio.stdout, {'a', '', 'bc\n', 'def'}, 'abc\r\ndef'},

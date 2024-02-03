@@ -15,6 +15,7 @@
 #include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 // TODO: Accept and return mutable buffers when writing and reading
@@ -47,7 +48,7 @@ static int UART_tx_wait_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int UART_tx_wait_blocking(lua_State* ls) {
     uart_inst_t* inst = mlua_check_UART(ls, 1);
-    if (mlua_yield_enabled(ls)) {
+    if (!mlua_thread_blocking(ls)) {
         return UART_tx_wait_blocking_1(ls, 0, (lua_KContext)inst);
     }
     uart_tx_wait_blocking(inst);

@@ -19,7 +19,7 @@ local table = require 'table'
 
 local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
-local yield_pat = '_Y$'
+local blocking_pat = '_BNB$'
 local err_terminate = {}
 
 local module_name = ...
@@ -506,12 +506,12 @@ function Test:run_module(name, pat)
         end
     end
     for _, fn in util.sort(fns, fn_comp):ipairs() do
-        local y = thread and fn[2]:find(yield_pat)
-        self:run(fn[2] .. (y and " (yield)" or ""), fn[3])
-        if y then
-            self:run(fn[2] .. " (no yield)", function(t)
-                local save = thread.yield_enabled(false)
-                t:cleanup(function() thread.yield_enabled(save) end)
+        local b = thread and fn[2]:find(blocking_pat)
+        self:run(fn[2] .. (b and " (non-blocking)" or ""), fn[3])
+        if b then
+            self:run(fn[2] .. " (blocking)", function(t)
+                local save = thread.blocking(true)
+                t:cleanup(function() thread.blocking(save) end)
                 return fn[3](t)
             end)
         end

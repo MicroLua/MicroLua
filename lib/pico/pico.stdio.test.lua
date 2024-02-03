@@ -14,7 +14,7 @@ local string = require 'string'
 -- xhci_hcd driver to lock up and terminate, thereby disconnecting all USB
 -- devices and requiring a reboot.
 
-function test_putchar_getchar_Y(t)
+function test_putchar_getchar_BNB(t)
     for _, test in ipairs{
         {false, {65, 10, 66, 13, 10, 67},
                 {65, 10, 66, 13, 10, 67, 65, 10, 66, 13, 10, 67, -1}},
@@ -51,7 +51,7 @@ function test_puts(t)
     end
 end
 
-function test_write_read_Y(t)
+function test_write_read_BNB(t)
     for _, test in ipairs{
         {false, {'a', '', 'bc\n', 'def', 'gh\nij'}, 'abc\ndefgh\nij'},
         {true, {'a', '', 'bc\n', 'def', 'gh\nij'}, 'abc\r\ndefgh\r\nij'},

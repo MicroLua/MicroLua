@@ -37,7 +37,7 @@ local function setup(t)
     t:expect(t:expr(inst):init(baud)):close_to_rel(baud, 0.05)
     t:cleanup(function() inst:deinit() end)
     inst:enable_loopback(true)
-    if thread.yield_enabled() then inst:enable_irq() end
+    if not thread.blocking() then inst:enable_irq() end
     inst:tx_wait_blocking()
     while inst:is_readable() do inst:read_blocking(1) end
     return inst
@@ -56,7 +56,7 @@ function test_configuration(t)
     t:expect(t:expr(inst):read_blocking(#data)):eq('abc\x01\x12\x23')
 end
 
-function test_blocking_write_read_Y(t)
+function test_blocking_write_read_BNB(t)
     local inst = setup(t)
     local data = '0123456789abcdefghijklmnopqrstuv'  -- Fits the FIFO
     t:expect(t:expr(inst):is_enabled()):eq(true)
@@ -100,7 +100,7 @@ function test_threaded_write_read(t)
     t:expect(t:expr(inst):is_readable()):eq(false)
 end
 
-function test_putc_getc_Y(t)
+function test_putc_getc_BNB(t)
     local inst = setup(t)
     for _, test in ipairs{
         {false, {65, 10, 66, 13, 10, 67},

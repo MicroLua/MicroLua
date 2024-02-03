@@ -15,6 +15,7 @@
 #include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 #if LIB_MLUA_MOD_MLUA_THREAD
@@ -52,7 +53,7 @@ static int mod_enable_irq(lua_State* ls) {
 static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_push_blocking(lua_State* ls) {
-    if (mlua_yield_enabled(ls)) return mod_push_blocking_1(ls, 0, 0);
+    if (!mlua_thread_blocking(ls)) return mod_push_blocking_1(ls, 0, 0);
     multicore_fifo_push_blocking(luaL_checkinteger(ls, 1));
     return 0;
 }
@@ -75,7 +76,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_push_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 2);
-    if (mlua_yield_enabled(ls)) {
+    if (!mlua_thread_blocking(ls)) {
         mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
         lua_replace(ls, 2);
         return mod_push_timeout_us_1(ls, 0, 0);

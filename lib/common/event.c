@@ -5,6 +5,7 @@
 
 #include "mlua/int64.h"
 #include "mlua/platform.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 // TODO: Combine enabling an event and watching an event. This might be tricky,
@@ -13,7 +14,7 @@
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
 void mlua_event_require(lua_State* ls) {
-    mlua_require(ls, "mlua.thread", false);
+    mlua_thread_require(ls);
 }
 
 void mlua_event_watch(lua_State* ls, MLuaEvent const* ev) {
@@ -65,7 +66,7 @@ int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
 }
 
 bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev) {
-    return mlua_yield_enabled(ls) && mlua_event_enabled(ev);
+    return !mlua_thread_blocking(ls) && mlua_event_enabled(ev);
 }
 
 static int mlua_event_loop_1(lua_State* ls, MLuaEvent const* ev,
@@ -179,13 +180,4 @@ void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {
 
 int mlua_event_push_handler_thread(lua_State* ls, MLuaEvent const* ev) {
     return lua_rawgetp(ls, LUA_REGISTRYINDEX, ev);
-}
-
-uint8_t mlua_yield_disabled;  // Just a marker for a registry entry
-
-bool mlua_yield_enabled(lua_State* ls) {
-    bool dis = lua_rawgetp(ls, LUA_REGISTRYINDEX, &mlua_yield_disabled)
-               != LUA_TNIL;
-    lua_pop(ls, 1);
-    return !dis;
 }
