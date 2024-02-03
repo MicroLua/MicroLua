@@ -12,8 +12,8 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 #if LIB_MLUA_MOD_MLUA_THREAD
@@ -381,7 +381,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.gpio) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;

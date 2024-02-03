@@ -199,7 +199,6 @@ target_compile_definitions(mlua_mod_mlua.thread INTERFACE
 )
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
-target_sources(mlua_mod_mlua.thread INTERFACE event.c)
 target_link_libraries(mlua_mod_mlua.thread INTERFACE
     mlua_mod_mlua.int64
     mlua_platform

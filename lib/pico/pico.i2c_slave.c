@@ -6,9 +6,9 @@
 
 #include "hardware/i2c.h"
 
-#include "mlua/event.h"
 #include "mlua/hardware.i2c.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 // BUG(pico-sdk): This module doesn't use the pico_i2c_slave library, because
@@ -81,7 +81,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(pico.i2c_slave) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;

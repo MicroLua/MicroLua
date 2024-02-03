@@ -366,7 +366,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.i2c) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

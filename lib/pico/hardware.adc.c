@@ -9,8 +9,8 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 static uint check_channel(lua_State* ls, int arg) {
@@ -102,7 +102,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.adc) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;

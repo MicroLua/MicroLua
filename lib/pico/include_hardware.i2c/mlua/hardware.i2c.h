@@ -8,7 +8,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
+#include "mlua/thread.h"
 
 #ifdef __cplusplus
 extern "C" {

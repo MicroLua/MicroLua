@@ -12,7 +12,6 @@
 #include "pico/platform.h"
 #include "pico/time.h"
 
-#include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/thread.h"
@@ -345,7 +344,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.uart) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     // Create the module.

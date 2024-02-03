@@ -7,8 +7,8 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 static lua_Integer get_datetime_field(lua_State* ls, int arg,
@@ -174,7 +174,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.rtc) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;

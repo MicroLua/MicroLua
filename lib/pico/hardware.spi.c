@@ -10,8 +10,8 @@
 #include "hardware/spi.h"
 #include "pico/platform.h"
 
-#include "mlua/event.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 static char const SPI_name[] = "hardware.spi.SPI";
@@ -317,7 +317,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.spi) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     // Create the module.
     mlua_new_module(ls, NUM_SPIS, module_syms);

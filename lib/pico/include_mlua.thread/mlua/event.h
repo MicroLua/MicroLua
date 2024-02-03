@@ -107,6 +107,4 @@ bool mlua_event_enable_irq(lua_State* ls, MLuaEvent* ev, uint irq,
 }
 #endif
 
-#include "mlua/event_common.h"
-
 #endif

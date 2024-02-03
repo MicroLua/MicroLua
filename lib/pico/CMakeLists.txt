@@ -149,10 +149,13 @@ target_link_libraries(mlua_test_hardware.gpio INTERFACE
 mlua_add_c_module(mlua_mod_hardware.i2c hardware.i2c.c)
 target_include_directories(mlua_mod_hardware.i2c_headers INTERFACE
     include_hardware.i2c)
+target_link_libraries(mlua_mod_hardware.i2c_headers INTERFACE
+    hardware_i2c_headers
+    mlua_mod_mlua.thread_headers
+)
 target_link_libraries(mlua_mod_hardware.i2c INTERFACE
     hardware_i2c
     mlua_mod_mlua.int64
-    mlua_mod_mlua.thread_headers
     pico_base
     pico_time
 )

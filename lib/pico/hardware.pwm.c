@@ -5,9 +5,9 @@
 #include "hardware/pwm.h"
 #include "pico/platform.h"
 
-#include "mlua/event.h"
 #include "mlua/hardware.gpio.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 char const Config_name[] = "hardware.pwm.Config";

@@ -12,7 +12,6 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/thread.h"
@@ -193,7 +192,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(pico.multicore.fifo) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
     mlua_require(ls, "mlua.int64", false);
 
     mlua_new_module(ls, 0, module_syms);

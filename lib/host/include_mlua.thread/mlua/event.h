@@ -33,6 +33,4 @@ void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume);
 }
 #endif
 
-#include "mlua/event_common.h"
-
 #endif

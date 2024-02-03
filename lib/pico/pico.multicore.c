@@ -11,9 +11,9 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/event.h"
 #include "mlua/main.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
 
 // TODO: Allow passing arguments to main() on core 1
@@ -162,7 +162,7 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(pico.multicore) {
-    mlua_event_require(ls);
+    mlua_thread_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
     return 1;

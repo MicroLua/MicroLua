@@ -1,7 +1,7 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "mlua/event.h"
+#include "mlua/thread.h"
 
 #include "mlua/platform.h"
 

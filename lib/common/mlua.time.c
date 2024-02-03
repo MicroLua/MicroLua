@@ -3,7 +3,6 @@
 
 #include "mlua/platform.h"
 
-#include "mlua/event.h"
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/thread.h"
