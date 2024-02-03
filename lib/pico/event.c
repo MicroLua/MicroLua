@@ -104,7 +104,7 @@ void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
     __sev();
 }
 
-void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume) {
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
     uint64_t ticks_min, ticks_max;
     mlua_ticks_range(&ticks_min, &ticks_max);
     bool wake = deadline == ticks_min;
@@ -120,7 +120,7 @@ void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume) {
             }
             mlua_event_unlock();
             if (ev == NULL) break;
-            if (mlua_event_resume_watcher(ls, ev, resume)) wake = true;
+            if (mlua_event_resume_watcher(ls, ev)) wake = true;
         }
 
         // Return if at least one thread was resumed or the deadline has passed.

@@ -22,12 +22,8 @@ typedef struct MLuaEvent {
 // Return true iff the event is enabled.
 static inline bool mlua_event_enabled(MLuaEvent const* ev) { return false; }
 
-// A function that resumes a thread, and returns true iff the thread was
-// actually resumed.
-typedef bool (*MLuaResume)(lua_State*, lua_State*);
-
 // Dispatch pending events.
-void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume);
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline);
 
 #ifdef __cplusplus
 }

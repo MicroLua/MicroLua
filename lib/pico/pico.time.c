@@ -35,7 +35,7 @@ static int mod_sleep_until(lua_State* ls) {
     absolute_time_t t = check_absolute_time(ls, 1);
     if (!mlua_thread_blocking(ls)) {
         if (time_reached(t)) return 0;
-        return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+        return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }
     sleep_until(t);
     return 0;
@@ -43,7 +43,7 @@ static int mod_sleep_until(lua_State* ls) {
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
     if (time_reached(from_us_since_boot(mlua_to_int64(ls, 1)))) return 0;
-    return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+    return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
 }
 
 static int mod_sleep_us(lua_State* ls) {

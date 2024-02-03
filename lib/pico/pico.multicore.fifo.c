@@ -66,7 +66,7 @@ static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx) {
         __sev();  // In case the other end is doing blocking reads
         return 0;
     }
-    return mlua_event_yield(ls, 0, &mod_push_blocking_1, 0);
+    return mlua_thread_yield(ls, 0, &mod_push_blocking_1, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD
@@ -97,7 +97,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
         lua_pushboolean(ls, false);
         return 1;
     }
-    return mlua_event_yield(ls, 0, &mod_push_timeout_us_1, 0);
+    return mlua_thread_yield(ls, 0, &mod_push_timeout_us_1, 0);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD

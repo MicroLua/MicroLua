@@ -74,12 +74,8 @@ static inline void mlua_event_set(MLuaEvent* ev) {
     mlua_event_unlock();
 }
 
-// A function that resumes a thread, and returns true iff the thread was
-// actually resumed.
-typedef bool (*MLuaResume)(lua_State*, lua_State*);
-
 // Dispatch pending events.
-void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume);
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline);
 
 // Parse an IRQ priority argument, which must be an integer or nil.
 lua_Integer mlua_event_parse_irq_priority(lua_State* ls, int arg,

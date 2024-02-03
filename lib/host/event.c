@@ -5,7 +5,7 @@
 
 #include "mlua/platform.h"
 
-void mlua_event_dispatch(lua_State* ls, uint64_t deadline, MLuaResume resume) {
+void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
     uint64_t ticks_min, ticks_max;
     mlua_ticks_range(&ticks_min, &ticks_max);
     bool wake = deadline == ticks_min;

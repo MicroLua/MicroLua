@@ -140,6 +140,16 @@ static int thread_state(lua_State* thread) {
     }
 }
 
+int mlua_thread_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
+                        int index) {
+    if (index == 0) {
+        lua_pushnil(ls);
+    } else {
+        lua_pushvalue(ls, index);
+    }
+    return mlua_thread_yield(ls, 1, cont, ctx);
+}
+
 static void remove_timer(lua_State* main, lua_State* thread) {
     // prev = TIMERS
     lua_State* prev = lua_tothread(main, lua_upvalueindex(UV_TIMERS));
@@ -309,14 +319,14 @@ static int Thread_join(lua_State* ls) {
     }
     lua_settop(ls, 1);
     lua_pushnil(ls);
-    return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
+    return mlua_thread_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_State* self = (lua_State*)ctx;
     if (thread_state(self) == STATE_DEAD) return Thread_join_2(ls, self);
     lua_pushnil(ls);
-    return mlua_event_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
+    return mlua_thread_yield(ls, 1, &Thread_join_1, (lua_KContext)self);
 }
 
 static int Thread_join_2(lua_State* ls, lua_State* self) {
@@ -502,7 +512,7 @@ static int mod_main(lua_State* ls) {
         } else if (timers != NULL) {
             deadline = thread_extra(timers)->deadline;
         }
-        mlua_event_dispatch(ls, deadline, &resume);
+        mlua_event_dispatch(ls, deadline);
 
         // Resume threads whose deadline has elapsed.
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
@@ -738,8 +748,7 @@ void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev) {
     mlua_event_remove_watcher(ls, ev);
 }
 
-bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev,
-                               MLuaResume resume) {
+bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev) {
     bool res = false;
     if (lua_rawgetp(ls, LUA_REGISTRYINDEX, ev) != LUA_TNIL) {
         res = resume(ls, lua_tothread(ls, -1));
@@ -751,16 +760,6 @@ bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev,
 void mlua_event_remove_watcher(lua_State* ls, MLuaEvent const* ev) {
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
-}
-
-int mlua_event_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
-                       int index) {
-    if (index != 0) {
-        lua_pushvalue(ls, index);
-    } else {
-        lua_pushnil(ls);
-    }
-    return mlua_event_yield(ls, 1, cont, ctx);
 }
 
 bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev) {
@@ -793,7 +792,7 @@ static int mlua_event_loop_1(lua_State* ls, MLuaEvent const* ev,
                              MLuaEventLoopFn loop, int index) {
     lua_pushlightuserdata(ls, loop);
     lua_pushinteger(ls, index);
-    return mlua_event_suspend(ls, &mlua_event_loop_2, (lua_KContext)ev, index);
+    return mlua_thread_suspend(ls, &mlua_event_loop_2, (lua_KContext)ev, index);
 }
 
 static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
@@ -837,7 +836,7 @@ static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
 static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
     // Suspend until the event gets pending.
     lua_pushnil(ls);
-    return mlua_event_yield(ls, 1, &handler_thread_1, 0);
+    return mlua_thread_yield(ls, 1, &handler_thread_1, 0);
 }
 
 static int handler_thread_done(lua_State* ls) {
@@ -864,7 +863,7 @@ int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,
     // only happen from other threads that are on the active queue right now,
     // and only during this scheduling round. This is an unlikely sequence of
     // events, so we don't bother handling it.
-    return mlua_event_yield(ls, 0, cont, ctx);
+    return mlua_thread_yield(ls, 0, cont, ctx);
 }
 
 void mlua_event_stop_handler(lua_State* ls, MLuaEvent const* ev) {

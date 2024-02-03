@@ -31,7 +31,7 @@ static int mod_sleep_until(lua_State* ls) {
     uint64_t t = mlua_check_int64(ls, 1);
     if (!mlua_thread_blocking(ls)) {
         if (mlua_ticks_reached(t)) return 0;
-        return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+        return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }
     while (!mlua_wait(t)) /* do nothing */;
     return 0;
@@ -39,7 +39,7 @@ static int mod_sleep_until(lua_State* ls) {
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
     if (mlua_ticks_reached(mlua_to_int64(ls, 1))) return 0;
-    return mlua_event_suspend(ls, &mod_sleep_until_1, 0, 1);
+    return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
 }
 
 static int mod_sleep_for(lua_State* ls) {
