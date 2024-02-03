@@ -22,7 +22,6 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Make yield status per-thread
 // TODO: Stop using uint64_t for deadlines; use only lower 32 bits of clock
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
@@ -36,6 +35,7 @@ static char const mlua_Thread_name[] = "mlua.Thread";
 typedef struct ThreadExtra {
     uint64_t deadline;
     uint8_t state;
+    uint8_t flags;
 } ThreadExtra;
 
 static_assert(sizeof(ThreadExtra) <= LUA_EXTRASPACE,
@@ -47,6 +47,11 @@ enum ThreadState {
     STATE_SUSPENDED,
     STATE_TIMER,
     STATE_DEAD,
+};
+
+// Thread flags, as stored in ThreadExtra.flags.
+enum ThreadFlags {
+    FLAGS_BLOCKING = 1 << 0,
 };
 
 // Non-running thread stack indexes.
@@ -351,25 +356,20 @@ static int mod_suspend(lua_State* ls) {
     return lua_yield(ls, 1);
 }
 
-static uint8_t blocking;  // Just a marker for a registry entry
-
 bool mlua_thread_blocking(lua_State* ls) {
-    bool b = lua_rawgetp(ls, LUA_REGISTRYINDEX, &blocking) != LUA_TNIL;
-    lua_pop(ls, 1);
-    return b;
+    return (thread_extra(ls)->flags & FLAGS_BLOCKING) != 0;
 }
 
 static int mod_blocking(lua_State* ls) {
-    bool en = mlua_thread_blocking(ls);
+    bool b = mlua_thread_blocking(ls);
     if (!lua_isnoneornil(ls, 1)) {
         if (lua_toboolean(ls, 1)) {
-            lua_pushboolean(ls, true);
+            thread_extra(ls)->flags |= FLAGS_BLOCKING;
         } else {
-            lua_pushnil(ls);
+            thread_extra(ls)->flags &= ~FLAGS_BLOCKING;
         }
-        lua_rawsetp(ls, LUA_REGISTRYINDEX, &blocking);
     }
-    return lua_pushboolean(ls, en), 1;
+    return lua_pushboolean(ls, b), 1;
 }
 
 static int mod_start(lua_State* ls) {
@@ -379,7 +379,9 @@ static int mod_start(lua_State* ls) {
 
     // Create the thread.
     lua_State* thread = lua_newthread(ls);
-    thread_extra(thread)->state = STATE_ACTIVE;
+    ThreadExtra* ext = thread_extra(thread);
+    ext->state = STATE_ACTIVE;
+    ext->flags = thread_extra(ls)->flags;
     lua_pushvalue(ls, 1);
     lua_xmove(ls, thread, 1);
     lua_pushnil(thread);  // thread.NEXT = nil
@@ -411,6 +413,7 @@ static int mod_start(lua_State* ls) {
     mlua_require(ls, "mlua.thread", true);
     lua_getfield(ls, -1, "main");
     lua_remove(ls, -2);
+    ext->flags = 0;  // Don't inherit flags from main thread
 
     // Set the name if provided.
     if (has_name) {

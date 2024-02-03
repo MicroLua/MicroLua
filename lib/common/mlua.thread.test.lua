@@ -155,6 +155,26 @@ function test_active_and_timers(t)
     t:expect(log):label("log"):eq('adgbehcfi')
 end
 
+function test_blocking(t)
+    t:cleanup(function() thread.blocking(false) end)
+    local ths<close> = thread.Group()
+    t:expect(t:expr(thread).blocking()):eq(false)
+    ths:start(function()
+        t:expect(t:expr(thread).blocking()):eq(false)
+    end)
+    t:expect(t:expr(thread).blocking(true)):eq(false)
+    t:expect(t:expr(thread).blocking()):eq(true)
+    ths:start(function()
+        t:expect(t:expr(thread).blocking()):eq(true)
+    end)
+    t:expect(t:expr(thread).blocking(false)):eq(true)
+    t:expect(t:expr(thread).blocking()):eq(false)
+    ths:start(function()
+        t:expect(t:expr(thread).blocking()):eq(false)
+    end)
+    ths:join()
+end
+
 function test_scheduling_latency(t)
     local samples = 10
     local ticks, sleep_until = time.ticks, time.sleep_until
