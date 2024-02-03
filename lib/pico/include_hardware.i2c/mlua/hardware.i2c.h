@@ -26,7 +26,7 @@ static inline i2c_inst_t* mlua_to_I2C(lua_State* ls, int arg) {
     return *((i2c_inst_t**)lua_touserdata(ls, arg));
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct MLuaI2CState {
     MLuaEvent event;
@@ -34,7 +34,7 @@ typedef struct MLuaI2CState {
 
 extern MLuaI2CState mlua_i2c_state[NUM_I2CS];
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 #ifdef __cplusplus
 }

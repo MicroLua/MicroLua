@@ -71,7 +71,7 @@ mlua_add_c_module(mlua_mod_hardware.adc hardware.adc.c)
 target_link_libraries(mlua_mod_hardware.adc INTERFACE
     hardware_adc
     hardware_irq
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -130,7 +130,7 @@ target_link_libraries(mlua_mod_hardware.gpio INTERFACE
     hardware_gpio
     hardware_structs
     hardware_sync
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -151,8 +151,8 @@ target_include_directories(mlua_mod_hardware.i2c_headers INTERFACE
     include_hardware.i2c)
 target_link_libraries(mlua_mod_hardware.i2c INTERFACE
     hardware_i2c
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     pico_base
     pico_time
 )
@@ -173,7 +173,7 @@ target_link_libraries(mlua_mod_hardware.irq INTERFACE
     hardware_irq
     hardware_structs
     hardware_sync
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -204,7 +204,7 @@ target_link_libraries(mlua_mod_hardware.pwm INTERFACE
     hardware_irq
     hardware_pwm
     mlua_mod_hardware.gpio_headers
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -258,7 +258,7 @@ target_link_libraries(mlua_test_hardware.resets INTERFACE
 mlua_add_c_module(mlua_mod_hardware.rtc hardware.rtc.c)
 target_link_libraries(mlua_mod_hardware.rtc INTERFACE
     hardware_rtc
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
 )
 
 mlua_add_lua_modules(mlua_test_hardware.rtc hardware.rtc.test.lua)
@@ -277,7 +277,7 @@ target_link_libraries(mlua_mod_hardware.spi INTERFACE
     hardware_irq
     hardware_regs
     hardware_spi
-    mlua_mod_mlua.event_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -304,7 +304,6 @@ target_link_libraries(mlua_test_hardware.sync INTERFACE
 mlua_add_c_module(mlua_mod_hardware.timer hardware.timer.c)
 target_link_libraries(mlua_mod_hardware.timer INTERFACE
     hardware_timer
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread
     pico_platform
@@ -326,8 +325,8 @@ target_link_libraries(mlua_mod_hardware.uart INTERFACE
     hardware_irq
     hardware_regs
     hardware_uart
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     pico_platform
     pico_time
 )
@@ -390,14 +389,6 @@ target_link_libraries(mlua_mod_mlua.block.flash INTERFACE
     hardware_sync
     mlua_mod_mlua.block
     mlua_mod_mlua.errors
-)
-
-target_sources(mlua_mod_mlua.event INTERFACE mlua.event.c)
-target_include_directories(mlua_mod_mlua.event_headers INTERFACE
-    include_mlua.event)
-target_link_libraries(mlua_mod_mlua.event INTERFACE
-    hardware_irq
-    hardware_sync
 )
 
 # TODO: Use a platform-specific library
@@ -466,6 +457,14 @@ target_link_libraries(mlua_mod_mlua.testing.uart INTERFACE
     mlua_mod_hardware.uart
 )
 
+target_sources(mlua_mod_mlua.thread INTERFACE event.c)
+target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
+    include_mlua.thread)
+target_link_libraries(mlua_mod_mlua.thread INTERFACE
+    hardware_irq
+    hardware_sync
+)
+
 mlua_add_c_module(mlua_mod_pico pico.c)
 target_link_libraries(mlua_mod_pico INTERFACE
     pico_base
@@ -491,7 +490,7 @@ mlua_add_c_module(mlua_mod_pico.i2c_slave pico.i2c_slave.c)
 target_link_libraries(mlua_mod_pico.i2c_slave INTERFACE
     hardware_i2c
     mlua_mod_hardware.i2c
-    mlua_mod_mlua.event
+    mlua_mod_mlua.thread
 )
 
 mlua_add_lua_modules(mlua_test_pico.i2c_slave pico.i2c_slave.test.lua)
@@ -502,7 +501,7 @@ target_link_libraries(mlua_test_pico.i2c_slave INTERFACE
 
 mlua_add_c_module(mlua_mod_pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico.multicore INTERFACE
-    mlua_mod_mlua.event
+    mlua_mod_mlua.thread
     pico_multicore
     pico_platform
 )
@@ -516,8 +515,8 @@ mlua_add_c_module(mlua_mod_pico.multicore.fifo pico.multicore.fifo.c)
 target_link_libraries(mlua_mod_pico.multicore.fifo INTERFACE
     hardware_structs
     hardware_sync
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     pico_multicore
     pico_platform
     pico_time
@@ -547,8 +546,8 @@ mlua_add_c_module(mlua_mod_pico.stdio pico.stdio.c)
 target_include_directories(mlua_mod_pico.stdio_headers INTERFACE
     include_pico.stdio)
 target_link_libraries(mlua_mod_pico.stdio INTERFACE
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     pico_stdio
     pico_time
 )
@@ -618,8 +617,8 @@ target_link_libraries(mlua_test_pico.stdlib INTERFACE
 mlua_add_c_module(mlua_mod_pico.time pico.time.c)
 target_link_libraries(mlua_mod_pico.time INTERFACE
     hardware_timer
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     pico_time
 )
 

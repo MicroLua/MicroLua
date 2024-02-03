@@ -54,7 +54,7 @@ static int UART_tx_wait_blocking(lua_State* ls) {
     return 0;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 static int UART_tx_wait_blocking_1(lua_State* ls, int status,
                                    lua_KContext ctx) {
@@ -64,9 +64,9 @@ static int UART_tx_wait_blocking_1(lua_State* ls, int status,
     return mlua_event_yield(ls, 0, &UART_tx_wait_blocking_1, ctx);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct UARTState {
     MLuaEvent rx_event;
@@ -120,11 +120,11 @@ static int UART_enable_irq(lua_State* ls) {
     return 0;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int UART_deinit(lua_State* ls) {
     uart_inst_t* inst = mlua_check_UART(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     lua_pushcfunction(ls, &UART_enable_irq);
     lua_pushvalue(ls, 1);
     lua_pushboolean(ls, false);
@@ -324,7 +324,7 @@ MLUA_SYMBOLS(UART_syms) = {
     MLUA_SYM_F(is_readable_within_us, UART_),
     MLUA_SYM_F(get_dreq, UART_),
     MLUA_SYM_F(enable_loopback, UART_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_irq, UART_),
 #else
     MLUA_SYM_V(enable_irq, boolean, false),

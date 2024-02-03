@@ -49,7 +49,7 @@ typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 // Return true iff yielding is enabled.
 bool mlua_yield_enabled(lua_State* ls);
 
-#if !LIB_MLUA_MOD_MLUA_EVENT
+#if !LIB_MLUA_MOD_MLUA_THREAD
 // TODO: Allow force-enabling yielding => eliminate blocking code
 #define mlua_yield_enabled(ls) (false)
 #endif
@@ -64,7 +64,7 @@ bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
 int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
                     int index);
 
-#if !LIB_MLUA_MOD_MLUA_EVENT
+#if !LIB_MLUA_MOD_MLUA_THREAD
 #define mlua_event_require(ls) do {} while(0)
 #define mlua_event_can_wait(ls, event) (false)
 #define mlua_event_loop(ls, event, loop, index) ((int)0)

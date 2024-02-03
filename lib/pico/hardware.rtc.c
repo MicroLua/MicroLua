@@ -67,7 +67,7 @@ static int mod_get_datetime(lua_State* ls) {
     return 1;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct RtcState {
     MLuaEvent event;
@@ -143,11 +143,11 @@ static int mod_set_alarm(lua_State* ls) {
     return mlua_event_handle(ls, &rtc_state.event, &mlua_cont_return_ctx, 1);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_disable_alarm(lua_State* ls) {
     rtc_disable_alarm();
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     mlua_event_lock();
     rtc_state.pending = false;
     mlua_event_unlock();
@@ -164,7 +164,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_datetime, mod_),
     MLUA_SYM_F(get_datetime, mod_),
     MLUA_SYM_F(running, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_alarm, mod_),
 #else
     MLUA_SYM_V(set_alarm, boolean, false),

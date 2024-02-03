@@ -31,7 +31,7 @@ static uint check_user_irq(lua_State* ls, int index) {
     return irq;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct IRQState {
     MLuaEvent events[NUM_USER_IRQS];
@@ -120,11 +120,11 @@ static int mod_remove_handler(lua_State* ls) {
     return 0;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_clear(lua_State* ls) {
     uint irq = check_irq(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     if (is_user_irq(irq)) {
         IRQState* state = &uirq_state[get_core_num()];
         uint num = irq - FIRST_USER_IRQ;
@@ -144,7 +144,7 @@ static int mod_clear(lua_State* ls) {
 static int mod_is_pending(lua_State* ls) {
     uint irq = check_irq(ls, 1);
     bool pending = (nvic_hw->icpr & (1u << irq)) != 0;
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     if (!pending && is_user_irq(irq)) {
         IRQState* state = &uirq_state[get_core_num()];
         uint num = irq - FIRST_USER_IRQ;
@@ -160,7 +160,7 @@ static int mod_is_pending(lua_State* ls) {
 static int mod_set_enabled(lua_State* ls) {
     uint irq = check_irq(ls, 1);
     bool enabled = mlua_to_cbool(ls, 2);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     if (enabled && is_user_irq(irq)) {
         // Clear pending state before enabling. irq_set_enabled() does the same.
         mod_clear(ls);
@@ -221,7 +221,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_enabled, mod_),
     MLUA_SYM_F(is_enabled, mod_),
     MLUA_SYM_F(set_mask_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_handler, mod_),
     MLUA_SYM_F(set_exclusive_handler, mod_),
     // irq_get_exclusive_handler: not useful in Lua

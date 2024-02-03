@@ -36,7 +36,7 @@ static int mod_reg_base(lua_State* ls) {
     return 1;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct PWMState {
     MLuaEvent event;
@@ -99,11 +99,11 @@ static int mod_set_irq_handler(lua_State* ls) {
     return mlua_event_handle(ls, &pwm_state.event, &mlua_cont_return_ctx, 1);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_clear_irq(lua_State* ls) {
     uint slice = check_slice(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     uint32_t save = save_and_disable_interrupts();
     pwm_clear_irq(slice);
     pwm_state.pending &= ~(1u << slice);
@@ -193,7 +193,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_phase_correct, mod_),
     MLUA_SYM_F(set_enabled, mod_),
     MLUA_SYM_F(set_mask_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_irq_handler, mod_),
 #else
     MLUA_SYM_V(set_irq_handler, boolean, false),

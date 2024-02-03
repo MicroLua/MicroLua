@@ -24,7 +24,7 @@ static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
     return from_us_since_boot(mlua_check_int64(ls, arg));
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct AlarmState {
     MLuaEvent events[NUM_TIMERS];
@@ -87,11 +87,11 @@ static int mod_set_callback(lua_State* ls) {
     return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static void cancel_hardware_alarm(uint alarm) {
     hardware_alarm_cancel(alarm);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     mlua_event_lock();
     alarm_state.pending &= ~(1u << alarm);
     mlua_event_unlock();
@@ -101,7 +101,7 @@ static void cancel_hardware_alarm(uint alarm) {
 static int mod_set_target(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
     absolute_time_t t = check_absolute_time(ls, 2);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     // Cancel first to avoid that the pending flag is set between resetting it
     // and setting the new target.
     cancel_hardware_alarm(alarm);
@@ -142,7 +142,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(claim_unused, mod_),
     MLUA_SYM_F(unclaim, mod_),
     MLUA_SYM_F(is_claimed, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_callback, mod_),
 #else
     MLUA_SYM_V(set_callback, boolean, false),

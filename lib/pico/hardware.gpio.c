@@ -16,7 +16,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 #define EVENTS_SIZE ((NUM_BANK0_GPIOS + 7) / 8)
 
@@ -171,7 +171,7 @@ static int mod_set_irq_enabled_with_callback_1(lua_State* ls, int status,
     return ctx;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 typedef void (*IRQEnabler)(uint, uint32_t, bool);
 
@@ -179,7 +179,7 @@ static int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
     uint gpio = mlua_check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
     bool enabled = mlua_to_cbool(ls, 3);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
@@ -211,7 +211,7 @@ static int mod_get_irq_event_mask(lua_State* ls) {
     uint gpio = mlua_check_gpio(ls, 1);
     uint block = gpio / 8;
     uint32_t pending = iobank0_hw->intr[block];  // Raw state
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     IRQState* state = &irq_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     pending |= state->pending[block];  // Mix in stored edge state
@@ -225,7 +225,7 @@ static int mod_get_irq_event_mask(lua_State* ls) {
 static int mod_acknowledge_irq(lua_State* ls) {
     uint gpio = mlua_check_gpio(ls, 1);
     uint32_t event_mask = luaL_checkinteger(ls, 2);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     IRQState* state = &irq_state[get_core_num()];
     uint block = gpio / 8;
     uint32_t mask = event_mask << 4 * (gpio % 8);
@@ -343,7 +343,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_drive_strength, mod_),
     MLUA_SYM_F(get_drive_strength, mod_),
     MLUA_SYM_F(set_irq_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_irq_callback, mod_),
     MLUA_SYM_F(set_irq_enabled_with_callback, mod_),
 #else

@@ -29,7 +29,7 @@ static int I2C_regs_base(lua_State* ls) {
     return 1;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 MLuaI2CState mlua_i2c_state[NUM_I2CS];
 
@@ -52,11 +52,11 @@ static int I2C_enable_irq(lua_State* ls) {
     return 0;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int I2C_deinit(lua_State* ls) {
     i2c_inst_t* inst = mlua_check_I2C(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     lua_pushcfunction(ls, &I2C_enable_irq);
     lua_pushvalue(ls, 1);
     lua_pushboolean(ls, false);
@@ -353,7 +353,7 @@ MLUA_SYMBOLS(I2C_syms) = {
     MLUA_SYM_F(read_byte_raw, I2C_),
     MLUA_SYM_F(write_byte_raw, I2C_),
     MLUA_SYM_F(get_dreq, I2C_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_irq, I2C_),
 #else
     MLUA_SYM_V(enable_irq, boolean, false),

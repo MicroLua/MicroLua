@@ -17,7 +17,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct StdioState {
     MLuaEvent event;
@@ -102,7 +102,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return_ctx, 1);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int getchar_loop(lua_State* ls, bool timeout) {
     if (timeout) {
@@ -203,14 +203,14 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(putchar_raw, mod_),
     MLUA_SYM_F(puts, mod_),
     MLUA_SYM_F(puts_raw, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(set_chars_available_callback, mod_),
 #else
     MLUA_SYM_V(set_chars_available_callback, boolean, false),
 #endif
     MLUA_SYM_F(read, mod_),
     MLUA_SYM_F(write, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_chars_available, mod_),
 #else
     MLUA_SYM_V(enable_chars_available, boolean, false),

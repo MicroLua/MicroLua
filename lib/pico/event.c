@@ -7,6 +7,8 @@
 
 #include "mlua/platform.h"
 
+// TODO: Move the event queue to the main thread extraspace
+
 spin_lock_t* mlua_event_spinlock;
 uint32_t mlua_event_lock_save;
 

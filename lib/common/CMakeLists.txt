@@ -45,14 +45,6 @@ target_link_libraries(mlua_test_mlua.errors INTERFACE
     mlua_mod_mlua.errors
 )
 
-mlua_add_c_module(mlua_mod_mlua.event mlua.event.c)
-target_include_directories(mlua_mod_mlua.event_headers INTERFACE
-    include_mlua.event)
-target_link_libraries(mlua_mod_mlua.event INTERFACE
-    mlua_mod_mlua.int64
-    mlua_platform
-)
-
 mlua_add_c_module(mlua_mod_mlua.fs mlua.fs.c)
 target_include_directories(mlua_mod_mlua.fs_headers INTERFACE
     include_mlua.fs)
@@ -201,14 +193,13 @@ target_link_libraries(mlua_test_mlua.testing INTERFACE
     mlua_mod_table
 )
 
-mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
+mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c mlua.event.c)
 target_compile_definitions(mlua_mod_mlua.thread INTERFACE
     MLUA_EXTRASPACE=16
 )
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
 target_link_libraries(mlua_mod_mlua.thread INTERFACE
-    mlua_mod_mlua.event
     mlua_mod_mlua.int64
     mlua_platform
 )
@@ -231,8 +222,8 @@ target_link_libraries(mlua_mod_mlua.thread.group INTERFACE
 
 mlua_add_c_module(mlua_mod_mlua.time mlua.time.c)
 target_link_libraries(mlua_mod_mlua.time INTERFACE
-    mlua_mod_mlua.event_headers
     mlua_mod_mlua.int64
+    mlua_mod_mlua.thread_headers
     mlua_platform
 )
 

@@ -17,7 +17,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct FifoState {
     MLuaEvent event;
@@ -47,7 +47,7 @@ static int mod_enable_irq(lua_State* ls) {
     return 0;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
@@ -57,7 +57,7 @@ static int mod_push_blocking(lua_State* ls) {
     return 0;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx) {
     // Busy loop, as there is no interrupt for RDY.
@@ -69,7 +69,7 @@ static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx) {
     return mlua_event_yield(ls, 0, &mod_push_blocking_1, 0);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx);
 
@@ -85,7 +85,7 @@ static int mod_push_timeout_us(lua_State* ls) {
     return 1;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
     // Busy loop, as there is no interrupt for RDY.
@@ -100,7 +100,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
     return mlua_event_yield(ls, 0, &mod_push_timeout_us_1, 0);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int pop_loop(lua_State* ls, bool timeout) {
     if (timeout) return 0;
@@ -140,7 +140,7 @@ static int mod_pop_timeout_us(lua_State* ls) {
 }
 
 static int mod_clear_irq(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     FifoState* st = &fifo_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     multicore_fifo_clear_irq();
@@ -153,7 +153,7 @@ static int mod_clear_irq(lua_State* ls) {
 }
 
 static int mod_get_status(lua_State* ls) {
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     FifoState* st = &fifo_state[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     uint32_t status = multicore_fifo_get_status() | st->status;
@@ -184,7 +184,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(drain, mod_),
     MLUA_SYM_F(clear_irq, mod_),
     MLUA_SYM_F(get_status, mod_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_irq, mod_),
 #else
     MLUA_SYM_V(enable_irq, boolean, false),

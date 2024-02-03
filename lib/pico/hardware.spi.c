@@ -44,7 +44,7 @@ static int SPI_regs_base(lua_State* ls) {
     return 1;
 }
 
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct SPIState {
     MLuaEvent event;
@@ -81,11 +81,11 @@ static int SPI_enable_irq(lua_State* ls) {
     return 0;
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_EVENT
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int SPI_deinit(lua_State* ls) {
     spi_inst_t* inst = check_SPI(ls, 1);
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     lua_pushcfunction(ls, &SPI_enable_irq);
     lua_pushvalue(ls, 1);
     lua_pushboolean(ls, false);
@@ -298,7 +298,7 @@ MLUA_SYMBOLS(SPI_syms) = {
     MLUA_SYM_F(read_blocking, SPI_),
     MLUA_SYM_F(get_dreq, SPI_),
     MLUA_SYM_F(enable_loopback, SPI_),
-#if LIB_MLUA_MOD_MLUA_EVENT
+#if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_irq, SPI_),
 #else
     MLUA_SYM_V(enable_irq, boolean, false),

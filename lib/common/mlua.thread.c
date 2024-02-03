@@ -21,6 +21,7 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
+// TODO: Merge mlua.event into mlua.thread
 // TODO: Stop using uint64_t for deadlines; use only lower 32 bits of clock
 
 static char const mlua_Thread_name[] = "mlua.Thread";
@@ -677,6 +678,7 @@ MLUA_SYMBOLS(module_syms) = {
 
 MLUA_OPEN_MODULE(mlua.thread) {
     mlua_event_require(ls);
+    mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

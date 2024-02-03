@@ -126,17 +126,6 @@ nothing to do with `errno` and have different numeric values.
 - `message(code) -> string`\
   Return a string describing the given error code.
 
-## `mlua.event`
-
-**Module:** [`mlua.event`](../lib/common/mlua.event.c),
-build target: `mlua_mod_mlua.event`
-
-This module provides the core event handling and dispatch functionality.
-
-- `dispatch(time)`\
-  Wait for events to fire or the given time to pass. This function is used by
-  the thread scheduler.
-
 ## `mlua.fs`
 
 **Module:** [`mlua.fs`](../lib/common/mlua.fs.c),
