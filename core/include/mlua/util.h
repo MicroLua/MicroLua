@@ -44,21 +44,6 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 // Push a failure and an error message, and return the number of pushed values.
 int mlua_push_fail(lua_State* ls, char const* err);
 
-// Return the given argument as a thread. Raises an error if the argument is not
-// a thread.
-lua_State* mlua_check_thread(lua_State* ls, int arg);
-
-// Push the thread metatable field with the given name. Returns the type of the
-// field, or LUA_TNIL if the metatable doesn't have this field.
-int mlua_thread_meta(lua_State* ls, char const* name);
-
-// Start a new thread calling the function at the top of the stack. Pops the
-// function from the stack and pushes the thread.
-void mlua_thread_start(lua_State* ls);
-
-// Kill the thread at the top of the stack. Pops the thread from the stack.
-void mlua_thread_kill(lua_State* ls);
-
 #ifdef __cplusplus
 }
 #endif

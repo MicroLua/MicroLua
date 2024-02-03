@@ -44,6 +44,25 @@ static inline int mlua_thread_yield(lua_State* ls, int nresults,
 int mlua_thread_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
                         int index);
 
+// Return the given argument as a thread. Raises an error if the argument is not
+// a thread.
+lua_State* mlua_check_thread(lua_State* ls, int arg);
+
+// Push the thread metatable field with the given name. Returns the type of the
+// field, or LUA_TNIL if the metatable doesn't have this field.
+int mlua_thread_meta(lua_State* ls, char const* name);
+
+// Start a new thread calling the function at the top of the stack. Pops the
+// function from the stack and pushes the thread.
+void mlua_thread_start(lua_State* ls);
+
+// Kill the thread at the top of the stack. Pops the thread from the stack, and
+// pushes a boolean indicating if the thread was alive.
+void mlua_thread_kill(lua_State* ls);
+
+// Shut down the thread scheduler.
+void mlua_thread_shutdown(lua_State* ls);
+
 // Register the current thread to be notified when an event triggers.
 void mlua_event_watch(lua_State* ls, MLuaEvent const* ev);
 

@@ -5,11 +5,6 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-#include "lua.h"
-#include "lauxlib.h"
 
 #include "lapi.h"
 #include "lgc.h"
@@ -155,6 +150,19 @@ int mlua_thread_suspend(lua_State* ls, lua_KFunction cont, lua_KContext ctx,
     return mlua_thread_yield(ls, 1, cont, ctx);
 }
 
+lua_State* mlua_check_thread(lua_State* ls, int arg) {
+    lua_State* thread = lua_tothread(ls, arg);
+    luaL_argexpected(ls, thread != NULL, arg, "thread");
+    return thread;
+}
+
+int mlua_thread_meta(lua_State* ls, char const* name) {
+    lua_pushthread(ls);
+    int res = luaL_getmetafield(ls, -1, name);
+    lua_remove(ls, res != LUA_TNIL ? -2 : -1);
+    return res;
+}
+
 static void remove_timer(lua_State* main, lua_State* thread) {
     // prev = TIMERS
     lua_State* prev = lua_tothread(main, lua_upvalueindex(UV_TIMERS));
@@ -280,6 +288,12 @@ static int Thread_kill(lua_State* ls) {
     lua_pushnil(ls);
     lua_rawset(ls, -3);
     return lua_pushboolean(ls, true), 1;
+}
+
+void mlua_thread_kill(lua_State* ls) {
+    lua_pushcfunction(ls, &Thread_kill);
+    lua_rotate(ls, -2, 1);
+    lua_call(ls, 1, 1);
 }
 
 static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx);
@@ -450,6 +464,12 @@ static int mod_start(lua_State* ls) {
     lua_setupvalue(ls, -2, UV_TAIL);
     lua_pop(ls, 1);  // Remove main
     return 1;
+}
+
+void mlua_thread_start(lua_State* ls) {
+    lua_pushcfunction(ls, &mod_start);
+    lua_rotate(ls, -2, 1);
+    lua_call(ls, 1, 1);
 }
 
 static int mod_shutdown(lua_State* ls) {
