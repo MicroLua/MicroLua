@@ -540,7 +540,7 @@ static int mod_main(lua_State* ls) {
         // Resume threads whose deadline has elapsed.
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
         lua_State* tail = lua_tothread(ls, lua_upvalueindex(UV_TAIL));
-        uint64_t ticks = mlua_ticks();
+        uint64_t ticks = mlua_ticks64();
         if (timers != NULL && thread_extra(timers)->deadline <= ticks) {
             // Append the timer list to the tail of the active queue, then cut
             // the combined list at the first thread whose deadline hasn't
@@ -825,7 +825,7 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
     int res = loop(ls, false);
     if (res < 0) {
         if (index == 0 ||
-                !mlua_ticks_reached(mlua_to_int64(ls, index))) {
+                !mlua_ticks64_reached(mlua_to_int64(ls, index))) {
             return mlua_event_loop_1(ls, (MLuaEvent*)ctx, loop, index);
         }
         res = loop(ls, true);

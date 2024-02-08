@@ -47,20 +47,34 @@ static inline void mlua_platform_setup_main(int* argc, char* argv[]) {
 // Perform set up after creating an interpreter.
 void mlua_platform_setup_interpreter(lua_State* ls);
 
-// Return the range of values that can be returned by mlua_ticks().
+// Return the range of values that can be returned by mlua_ticks64().
 static inline void mlua_ticks_range(uint64_t* min, uint64_t* max) {
     *min = to_us_since_boot(nil_time);
     *max = to_us_since_boot(at_the_end_of_time);
 }
 
 // Return the current microsecond ticks, as given by a monotonic clock.
-static inline uint64_t mlua_ticks(void) {
+static inline uint64_t mlua_ticks64(void) {
     return to_us_since_boot(get_absolute_time());
 }
 
-// Return true iff the given ticks value has been reached.
-static inline bool mlua_ticks_reached(uint64_t ticks) {
+// Return the low-order bits of mlua_ticks64() that fit a lua_Unsigned.
+static inline lua_Unsigned mlua_ticks(void) {
+#if MLUA_IS64INT
+    return mlua_ticks64();
+#else
+    return time_us_32();
+#endif
+}
+
+// Return true iff the given ticks64 value has been reached.
+static inline bool mlua_ticks64_reached(uint64_t ticks) {
     return time_reached(from_us_since_boot(ticks));
+}
+
+// Return true iff the given ticks value has been reached.
+static inline bool mlua_ticks_reached(lua_Unsigned ticks) {
+    return (mlua_ticks() - ticks) <= LUA_MAXINTEGER;
 }
 
 // Wait for an event, up to the given deadline. Returns true iff the deadline

@@ -112,7 +112,7 @@ end
 function test_timers(t)
     local log = ''
     local ths<close> = thread.Group()
-    local start = time.ticks()
+    local start = time.ticks64()
     for t = 1, 5 do
         ths:start(function()
             for i = 1, 3 do
@@ -177,7 +177,7 @@ end
 
 function test_scheduling_latency(t)
     local samples = 10
-    local ticks, sleep_until = time.ticks, time.sleep_until
+    local ticks, sleep_until = time.ticks64, time.sleep_until
     for _, count in ipairs{1, 2, 4, 8, 16} do
         local min, max, sum = int64.max, int64.min, 0
         local threads = thread.Group()
