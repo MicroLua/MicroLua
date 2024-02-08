@@ -9,6 +9,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/platform.h"
 
 #ifdef __cplusplus
 extern "C" {

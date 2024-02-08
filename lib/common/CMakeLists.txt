@@ -60,7 +60,7 @@ target_include_directories(mlua_mod_mlua.fs.lfs_headers INTERFACE
     "${MLUA_LITTLEFS_SOURCE_DIR}"
     include_mlua.fs.lfs
 )
-target_compile_definitions(mlua_mod_mlua.fs.lfs INTERFACE
+target_compile_definitions(mlua_mod_mlua.fs.lfs_headers INTERFACE
     LFS_NO_ASSERT=1
     LFS_NO_DEBUG=1
     LFS_NO_ERROR=1
@@ -71,8 +71,10 @@ target_sources(mlua_mod_mlua.fs.lfs INTERFACE
     "${MLUA_LITTLEFS_SOURCE_DIR}/lfs.c"
     "${MLUA_LITTLEFS_SOURCE_DIR}/lfs_util.c"
 )
-target_link_libraries(mlua_mod_mlua.fs.lfs INTERFACE
+mlua_mirrored_target_link_libraries(mlua_mod_mlua.fs.lfs INTERFACE
     mlua_mod_mlua.block
+)
+target_link_libraries(mlua_mod_mlua.fs.lfs INTERFACE
     mlua_mod_mlua.errors
     mlua_mod_mlua.fs_headers
 )
@@ -92,6 +94,9 @@ target_link_libraries(mlua_test_mlua.fs.lfs INTERFACE
 mlua_add_c_module(mlua_mod_mlua.int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua.int64_headers INTERFACE
     include_mlua.int64)
+mlua_mirrored_target_link_libraries(mlua_mod_mlua.int64 INTERFACE
+    mlua_platform
+)
 
 mlua_add_lua_modules(mlua_test_mlua.int64 mlua.int64.test.lua)
 target_link_libraries(mlua_test_mlua.int64 INTERFACE
@@ -146,11 +151,11 @@ target_link_libraries(mlua_test_mlua.oo INTERFACE
 )
 
 add_library(mlua_platform_luaconf INTERFACE)
-add_library(mlua_platform INTERFACE)
-target_compile_definitions(mlua_platform INTERFACE
+mlua_add_library(mlua_platform INTERFACE)
+target_compile_definitions(mlua_platform_headers INTERFACE
     MLUA_PLATFORM=${MLUA_PLATFORM}
 )
-target_include_directories(mlua_platform INTERFACE include_platform)
+target_include_directories(mlua_platform_headers INTERFACE include_platform)
 
 mlua_add_c_module(mlua_mod_mlua.platform mlua.platform.c)
 target_link_libraries(mlua_mod_mlua.platform INTERFACE
@@ -194,7 +199,7 @@ target_link_libraries(mlua_test_mlua.testing INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua.thread mlua.thread.c)
-target_compile_definitions(mlua_mod_mlua.thread INTERFACE
+target_compile_definitions(mlua_mod_mlua.thread_headers INTERFACE
     MLUA_EXTRASPACE=16
 )
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE

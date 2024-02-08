@@ -42,16 +42,18 @@ mlua_add_core_c_module(table ltablib.c)
 mlua_add_core_c_module(utf8 lutf8lib.c)
 
 # The entry point of the Lua interpreter.
-add_library(mlua_core_main INTERFACE)
+mlua_add_library(mlua_core_main INTERFACE)
 target_sources(mlua_core_main INTERFACE
     main.c
     module.c
     util.c
 )
-target_include_directories(mlua_core_main INTERFACE include)
+target_include_directories(mlua_core_main_headers INTERFACE include)
+mlua_mirrored_target_link_libraries(mlua_core_main INTERFACE
+    mlua_platform
+)
 target_link_libraries(mlua_core_main INTERFACE
     mlua_core
     mlua_mod_base
     mlua_mod_package
-    mlua_platform
 )

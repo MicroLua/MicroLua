@@ -3,7 +3,7 @@
 
 # Library: platform abstraction layer
 target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
-target_include_directories(mlua_platform INTERFACE include_platform)
+target_include_directories(mlua_platform_headers INTERFACE include_platform)
 target_sources(mlua_platform INTERFACE platform.c)
 
 # Executable: standalone binary

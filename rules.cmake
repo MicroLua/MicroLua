@@ -143,6 +143,13 @@ function(mlua_add_library TARGET)
     target_link_libraries("${TARGET}" INTERFACE "${TARGET}_headers")
 endfunction()
 
+function(mlua_mirrored_target_link_libraries TARGET SCOPE)
+    foreach(dep IN LISTS ARGN)
+        target_link_libraries("${TARGET}_headers" "${SCOPE}" "${dep}_headers")
+        target_link_libraries("${TARGET}" "${SCOPE}" "${dep}")
+    endforeach()
+endfunction()
+
 function(mlua_add_core_library TARGET)
     mlua_add_library("${TARGET}")
     target_include_directories("${TARGET}_headers" INTERFACE

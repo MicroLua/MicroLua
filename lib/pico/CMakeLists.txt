@@ -3,9 +3,9 @@
 
 # Library: platform abstraction layer
 target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
-target_include_directories(mlua_platform INTERFACE include_platform)
+target_include_directories(mlua_platform_headers INTERFACE include_platform)
 target_sources(mlua_platform INTERFACE platform.c)
-target_link_libraries(mlua_platform INTERFACE
+mlua_mirrored_target_link_libraries(mlua_platform INTERFACE
     hardware_sync
     hardware_timer
     pico_binary_info
@@ -126,12 +126,14 @@ target_link_libraries(mlua_test_hardware.flash INTERFACE
 mlua_add_c_module(mlua_mod_hardware.gpio hardware.gpio.c)
 target_include_directories(mlua_mod_hardware.gpio_headers INTERFACE
     include_hardware.gpio)
+mlua_mirrored_target_link_libraries(mlua_mod_hardware.gpio INTERFACE
+    pico_platform
+)
 target_link_libraries(mlua_mod_hardware.gpio INTERFACE
     hardware_gpio
     hardware_structs
     hardware_sync
     mlua_mod_mlua.thread_headers
-    pico_platform
 )
 
 mlua_add_lua_modules(mlua_test_hardware.gpio hardware.gpio.test.lua)
@@ -150,11 +152,12 @@ mlua_add_c_module(mlua_mod_hardware.i2c hardware.i2c.c)
 target_include_directories(mlua_mod_hardware.i2c_headers INTERFACE
     include_hardware.i2c)
 target_link_libraries(mlua_mod_hardware.i2c_headers INTERFACE
-    hardware_i2c_headers
     mlua_mod_mlua.thread_headers
 )
-target_link_libraries(mlua_mod_hardware.i2c INTERFACE
+mlua_mirrored_target_link_libraries(mlua_mod_hardware.i2c INTERFACE
     hardware_i2c
+)
+target_link_libraries(mlua_mod_hardware.i2c INTERFACE
     mlua_mod_mlua.int64
     pico_base
     pico_time
@@ -323,11 +326,13 @@ target_link_libraries(mlua_test_hardware.timer INTERFACE
 mlua_add_c_module(mlua_mod_hardware.uart hardware.uart.c)
 target_include_directories(mlua_mod_hardware.uart_headers INTERFACE
     include_hardware.uart)
+mlua_mirrored_target_link_libraries(mlua_mod_hardware.uart INTERFACE
+    hardware_uart
+)
 target_link_libraries(mlua_mod_hardware.uart INTERFACE
     hardware_base
     hardware_irq
     hardware_regs
-    hardware_uart
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread_headers
     pico_platform
@@ -387,10 +392,12 @@ target_link_libraries(mlua_test_hardware.xosc INTERFACE
 mlua_add_c_module(mlua_mod_mlua.block.flash mlua.block.flash.c)
 target_include_directories(mlua_mod_mlua.block.flash_headers INTERFACE
     include_mlua.block.flash)
+mlua_mirrored_target_link_libraries(mlua_mod_mlua.block.flash INTERFACE
+    mlua_mod_mlua.block
+)
 target_link_libraries(mlua_mod_mlua.block.flash INTERFACE
     hardware_flash
     hardware_sync
-    mlua_mod_mlua.block
     mlua_mod_mlua.errors
 )
 
@@ -400,7 +407,7 @@ target_link_libraries(mlua_mod_mlua.fs.lfs INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua.fs.loader mlua.fs.loader.c)
-target_compile_definitions(mlua_mod_mlua.fs.loader INTERFACE
+target_compile_definitions(mlua_mod_mlua.fs.loader_headers INTERFACE
     LFS_THREADSAFE=1
 )
 target_link_libraries(mlua_mod_mlua.fs.loader INTERFACE
