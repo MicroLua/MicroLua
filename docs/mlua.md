@@ -916,8 +916,9 @@ This module provides platform-independent time functionality.
 
 - `to_ticks64(time, [now]) -> Int64`\
   Convert an integer [absolute time](#absolute-time) to a 64-bit absolute time.
-  If `now` is missing, the current absolute time is used. The result is always
-  within the range `[now + math.mininteger; now + math.maxinteger]`.
+  If `now` is specified, it must be a 64-bit absolute time. If it is missing,
+  the current absolute time is used. The result is always within the range
+  `[now + math.mininteger; now + math.maxinteger]`.
 
 - `sleep_until(time)` *[yields]*\
   Suspend the current thread until the given [absolute time](#absolute-time).

@@ -27,7 +27,7 @@ static inline uint64_t mlua_to_ticks64(lua_Unsigned ticks, uint64_t now) {
 
 #if MLUA_IS64INT
 // Ensure that the expression computing "now" is elided.
-#define mlua_to_ticks64(ticks, now) (ticks)
+#define mlua_to_ticks64(ticks, now) ((uint64_t)(ticks))
 #endif
 
 // A description of flash memory.

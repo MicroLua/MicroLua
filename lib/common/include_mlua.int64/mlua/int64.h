@@ -9,6 +9,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
+#include "mlua/platform.h"
 #include "mlua/util.h"
 
 #ifdef __cplusplus
@@ -49,33 +50,43 @@ int mlua_int64_to_string(int64_t value, char* s, size_t size);
 // false if the conversion fails.
 bool mlua_string_to_int64(char const* s, int base, int64_t* value);
 
-// Get an int64 value at the given stack index. Returns false if the stack
-// entry is not an int64.
-bool mlua_test_int64(lua_State* ls, int arg, int64_t* value);
+// Push an int64 to the stack.
+#if MLUA_IS64INT
+static inline void mlua_push_int64(lua_State* ls, int64_t value) {
+    lua_pushinteger(ls, value);
+}
+#else
+void mlua_push_int64(lua_State* ls, int64_t value);
+#endif
+
+// Push an integer if the value fits, or an int64 otherwise.
+#if MLUA_IS64INT
+static inline void mlua_push_minint(lua_State* ls, int64_t value) {
+    lua_pushinteger(ls, value);
+}
+#else
+void mlua_push_minint(lua_State* ls, int64_t value);
+#endif
+
+// Get an int64 value at the given stack index. The value must be an integer or
+// an int64.
+#if MLUA_IS64INT
+static inline int64_t mlua_to_int64(lua_State* ls, int arg) {
+    return lua_tointeger(ls, arg);
+}
+#else
+int64_t mlua_to_int64(lua_State* ls, int arg);
+#endif
 
 // Get an int64 value at the given stack index. Raises an error if the stack
 // entry is not an integer or an int64.
-int64_t mlua_check_int64(lua_State* ls, int arg);
-
-// Get an int64 value at the given stack index. The value must be an integer or
-// an int64, otherwise the function returns zero.
-int64_t mlua_to_int64(lua_State* ls, int arg);
-
-// Get an int64 value at the given stack index. The value must be an int64.
-static inline int64_t mlua_to_int64_strict(lua_State* ls, int arg) {
 #if MLUA_IS64INT
-    return lua_tointeger(ls, arg);
-#else
-    int64_t* v = lua_touserdata(ls, arg);
-    return v != NULL ? *v : 0;
-#endif
+static inline int64_t mlua_check_int64(lua_State* ls, int arg) {
+    return luaL_checkinteger(ls, arg);
 }
-
-// Push an int64 to the stack.
-void mlua_push_int64(lua_State* ls, int64_t value);
-
-// Push an integer if the value fits, or an int64 otherwise.
-void mlua_push_minint(lua_State* ls, int64_t value);
+#else
+int64_t mlua_check_int64(lua_State* ls, int arg);
+#endif
 
 // Get an intptr_t value at the given stack index, or raise an error if the
 // stack entry doesn't have the right type.
@@ -93,6 +104,52 @@ static inline void mlua_push_intptr(lua_State* ls, intptr_t value) {
     } else {
         mlua_push_int64(ls, value);
     }
+}
+
+// Return true iff the given argument is an absolute time value.
+static inline bool mlua_is_time(lua_State* ls, int arg) {
+#if MLUA_IS64INT
+    return lua_isinteger(ls, arg);
+#else
+    extern char const mlua_int64_name[];
+    return lua_isinteger(ls, arg)
+           || luaL_testudata(ls, arg, mlua_int64_name) != NULL;
+#endif
+}
+
+// Get an absolute time. The value must be an integer or an int64.
+static inline uint64_t mlua_to_time(lua_State* ls, int arg) {
+#if MLUA_IS64INT
+    return lua_tointeger(ls, arg);
+#else
+    if (lua_isinteger(ls, arg)) {
+        return mlua_to_ticks64(lua_tointeger(ls, arg), mlua_ticks64());
+    }
+    return *(int64_t*)lua_touserdata(ls, arg);
+#endif
+}
+
+// Get an absolute time. Raises an error if the argument is not an integer or an
+// int64.
+#if MLUA_IS64INT
+static inline uint64_t mlua_check_time(lua_State* ls, int arg) {
+    return luaL_checkinteger(ls, arg);
+}
+#else
+uint64_t mlua_check_time(lua_State* ls, int arg);
+#endif
+
+// Return true iff the absolute time at the given index has been reached. The
+// argument must be an integer or an int64.
+static inline bool mlua_time_reached(lua_State* ls, int arg) {
+#if MLUA_IS64INT
+    return mlua_ticks_reached(lua_tointeger(ls, arg));
+#else
+    if (lua_isinteger(ls, arg)) {
+        return mlua_ticks_reached(lua_tointeger(ls, arg));
+    }
+    return mlua_ticks64_reached(*(int64_t*)lua_touserdata(ls, arg));
+#endif
 }
 
 #ifdef __cplusplus

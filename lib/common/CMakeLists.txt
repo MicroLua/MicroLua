@@ -1,6 +1,13 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
+add_library(mlua_platform_luaconf INTERFACE)
+mlua_add_library(mlua_platform INTERFACE)
+target_compile_definitions(mlua_platform_headers INTERFACE
+    MLUA_PLATFORM=${MLUA_PLATFORM}
+)
+target_include_directories(mlua_platform_headers INTERFACE include_platform)
+
 mlua_add_lua_modules(mlua_test_mlua mlua.test.lua)
 target_link_libraries(mlua_test_mlua INTERFACE
     mlua_mod_mlua.io
@@ -147,17 +154,9 @@ target_link_libraries(mlua_test_mlua.oo INTERFACE
     mlua_mod_string
 )
 
-add_library(mlua_platform_luaconf INTERFACE)
-mlua_add_library(mlua_platform INTERFACE)
-target_compile_definitions(mlua_platform_headers INTERFACE
-    MLUA_PLATFORM=${MLUA_PLATFORM}
-)
-target_include_directories(mlua_platform_headers INTERFACE include_platform)
-
 mlua_add_c_module(mlua_mod_mlua.platform mlua.platform.c)
 target_link_libraries(mlua_mod_mlua.platform INTERFACE
     mlua_mod_mlua.int64
-    mlua_platform
 )
 
 mlua_add_lua_modules(mlua_test_mlua.platform mlua.platform.test.lua)
@@ -203,7 +202,6 @@ target_include_directories(mlua_mod_mlua.thread_headers INTERFACE
     include_mlua.thread)
 target_link_libraries(mlua_mod_mlua.thread INTERFACE
     mlua_mod_mlua.int64
-    mlua_platform
 )
 
 mlua_add_lua_modules(mlua_test_mlua.thread mlua.thread.test.lua)
@@ -227,7 +225,6 @@ mlua_add_c_module(mlua_mod_mlua.time mlua.time.c)
 target_link_libraries(mlua_mod_mlua.time INTERFACE
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread_headers
-    mlua_platform
 )
 
 mlua_add_lua_modules(mlua_test_mlua.time mlua.time.test.lua)

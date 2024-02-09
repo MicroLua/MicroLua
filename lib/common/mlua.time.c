@@ -35,37 +35,21 @@ static int mod_to_ticks64(lua_State* ls) {
 }
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
-static int mod_sleep_until64_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_sleep_until(lua_State* ls) {
-    int64_t t64;
-    if (lua_isinteger(ls, 1)) {
-        lua_Unsigned t = lua_tointeger(ls, 1);
-        if (!mlua_thread_blocking(ls)) {
-            if (mlua_ticks_reached(t)) return 0;
-            return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
-        }
-        t64 = mlua_to_ticks64(t, mlua_ticks64());
-    } else if (mlua_test_int64(ls, 1, &t64)) {
-        if (!mlua_thread_blocking(ls)) {
-            if (mlua_ticks64_reached(t64)) return 0;
-            return mlua_thread_suspend(ls, &mod_sleep_until64_1, 0, 1);
-        }
-    } else {
-        return luaL_typeerror(ls, 1, "integer or Int64");
+    if (!mlua_thread_blocking(ls)) {
+        luaL_argexpected(ls, mlua_is_time(ls, 1), 1, "integer or Int64");
+        if (mlua_time_reached(ls, 1)) return 0;
+        return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }
-    while (!mlua_wait(t64)) {}
+    uint64_t time = mlua_check_time(ls, 1);
+    while (!mlua_wait(time)) {}
     return 0;
 }
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx) {
-    if (mlua_ticks_reached(lua_tointeger(ls, 1))) return 0;
+    if (mlua_time_reached(ls, 1)) return 0;
     return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
-}
-
-static int mod_sleep_until64_1(lua_State* ls, int status, lua_KContext ctx) {
-    if (mlua_ticks64_reached(mlua_to_int64(ls, 1))) return 0;
-    return mlua_thread_suspend(ls, &mod_sleep_until64_1, 0, 1);
 }
 
 static int mod_sleep_for(lua_State* ls) {
