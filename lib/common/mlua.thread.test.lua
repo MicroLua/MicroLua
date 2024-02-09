@@ -4,6 +4,7 @@
 _ENV = module(...)
 
 local coroutine = require 'coroutine'
+local math = require 'math'
 local int64 = require 'mlua.int64'
 local thread = require 'mlua.thread'
 local group = require 'mlua.thread.group'
@@ -177,9 +178,9 @@ end
 
 function test_scheduling_latency(t)
     local samples = 10
-    local ticks, sleep_until = time.ticks64, time.sleep_until
+    local ticks, sleep_until = time.ticks, time.sleep_until
     for _, count in ipairs{1, 2, 4, 8, 16} do
-        local min, max, sum = int64.max, int64.min, 0
+        local min, max, sum = math.maxinteger, math.mininteger, 0
         local threads = thread.Group()
         for i = 1, count do
             threads:start(function()

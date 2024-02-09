@@ -159,44 +159,6 @@ This module provides functionality that is common across all filesystems.
 - `split(path) -> (string, string)`\
   Split a path into containing directory and basename.
 
-## `mlua.fs.loader`
-
-**Module:** [`mlua.fs.loader`](../lib/pico/mlua.fs.loader.c),
-build target: `mlua_mod_mlua.fs.loader`,
-tests: [`mlua.fs.loader.test`](../lib/pico/mlua.fs.loader.test.lua)
-
-This module creates a global filesystem early in the boot process, and registers
-a module searcher that looks up modules in that filesystem. When the module is
-linked-in, it is auto-loaded during interpreter creation, which enables loading
-the main module from the filesystem, for both cores.
-
-The filesystem is mounted as littlefs ([`mlua.fs.lfs`](#mluafslfs)) and uses the
-QSPI flash for storage ([`mlua.block.flash`](#mluablockflash)). It can be
-customized with the following compile definitions:
-
-- `MLUA_FS_LOADER_OFFSET` (default: `PICO_FLASH_SIZE_BYTES -
-  MLUA_FS_LOADER_SIZE`): The offset in flash memory where the filesystem starts.
-  Must be aligned on a `FLASH_SECTOR_SIZE` boundary. The default value places it
-  at the end of the flash memory.
-- `MLUA_FS_LOADER_SIZE` (default: 1 MiB): The size of the filesystem. Must be a
-  multiple of `FLASH_SECTOR_SIZE`.
-- `MLUA_FS_LOADER_BASE` (default: `"/lua"`): The path below which to look for
-  modules.
-- `MLUA_FS_LOADER_FLAT` (default: 1): When true, look up modules in the
-  directory `MLUA_FS_LOADER_BASE`, i.e. the module `a.b.c` is loaded from the
-  file `/lua/a.b.c.lua`. When false, look up modules in `MLUA_FS_LOADER_BASE`
-  and its subdirectories, i.e. the module `a.b.c` is loaded either from
-  `/lua/a/b/c.lua` or `/lua/a/b/c/init.lua`.
-
-Information about the filesystem (flash range, type) is available as binary
-info, and can be viewed with `picotool info -a`.
-
-- `block: mlua.block.Dev`\
-  The block device on which the filesystem operates.
-
-- `fs: mlua.fs.lfs.Filesystem`\
-  The filesystem from which modules are loaded.
-
 ## `mlua.fs.lfs`
 
 **Module:** [`mlua.fs.lfs`](../lib/common/mlua.fs.lfs.c),
@@ -336,6 +298,44 @@ The `File` type (`mlua.fs.lfs.File`) represents an open file.
 - `File:truncate(size) -> true | (fail, msg, err)`\
   Truncate the file at the given size.
 
+## `mlua.fs.loader`
+
+**Module:** [`mlua.fs.loader`](../lib/pico/mlua.fs.loader.c),
+build target: `mlua_mod_mlua.fs.loader`,
+tests: [`mlua.fs.loader.test`](../lib/pico/mlua.fs.loader.test.lua)
+
+This module creates a global filesystem early in the boot process, and registers
+a module searcher that looks up modules in that filesystem. When the module is
+linked-in, it is auto-loaded during interpreter creation, which enables loading
+the main module from the filesystem, for both cores.
+
+The filesystem is mounted as littlefs ([`mlua.fs.lfs`](#mluafslfs)) and uses the
+QSPI flash for storage ([`mlua.block.flash`](#mluablockflash)). It can be
+customized with the following compile definitions:
+
+- `MLUA_FS_LOADER_OFFSET` (default: `PICO_FLASH_SIZE_BYTES -
+  MLUA_FS_LOADER_SIZE`): The offset in flash memory where the filesystem starts.
+  Must be aligned on a `FLASH_SECTOR_SIZE` boundary. The default value places it
+  at the end of the flash memory.
+- `MLUA_FS_LOADER_SIZE` (default: 1 MiB): The size of the filesystem. Must be a
+  multiple of `FLASH_SECTOR_SIZE`.
+- `MLUA_FS_LOADER_BASE` (default: `"/lua"`): The path below which to look for
+  modules.
+- `MLUA_FS_LOADER_FLAT` (default: 1): When true, look up modules in the
+  directory `MLUA_FS_LOADER_BASE`, i.e. the module `a.b.c` is loaded from the
+  file `/lua/a.b.c.lua`. When false, look up modules in `MLUA_FS_LOADER_BASE`
+  and its subdirectories, i.e. the module `a.b.c` is loaded either from
+  `/lua/a/b/c.lua` or `/lua/a/b/c/init.lua`.
+
+Information about the filesystem (flash range, type) is available as binary
+info, and can be viewed with `picotool info -a`.
+
+- `block: mlua.block.Dev`\
+  The block device on which the filesystem operates.
+
+- `fs: mlua.fs.lfs.Filesystem`\
+  The filesystem from which modules are loaded.
+
 ## `mlua.int64`
 
 **Module:** [`mlua.int64`](../lib/common/mlua.int64.c),
@@ -365,11 +365,9 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
     (default: 0). When the base is 0, it is inferred from the value prefix
     (`0x`, `0X`: 16, `0o`: 8, `0b`: 2, otherwise: 10).
 
-- `max: Int64`\
-  The maximum value that an `Int64` can hold (`2^63-1`)
-
-- `min: Int64`\
-  The minimum value that an `Int64` can hold (`-2^63`).
+- `min: Int64 = -2^63`\
+  `max: Int64 = 2^63-1`\
+  The minimum and maximum values that an `Int64` can hold.
 
 - `ashr(value, num) -> Int64`\
   Returns the result of performing an arithmetic (i.e. sign-extending) right
@@ -387,8 +385,8 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
   exactly as an `integer`.
 
 - `tonumber(value) -> number | nil`\
-  Convert `value` to a `number`. Fails if `value` cannot be represented
-  exactly as a `number`.
+  Convert `value` to a `number`. Fails if `value` cannot be represented exactly
+  as a `number`.
 
 - `ult(lhs, rhs) -> boolean`\
   Return true iff `lhs` is less than `rhs` when they are compared as unsigned
@@ -608,7 +606,7 @@ initializes the stdio libraries as defined in the compile-time configuration.
 
 The `InStream` type (`mlua.InStream`) represents an input stream.
 
-- `read(count) -> string | nil`\
+- `read(count) -> string | nil` *[yields]*\
   Read at least one and at most `count` characters from the stream. Uses
   [`pico.stdio`](pico.md#picostdio) if the module is available, or blocks
   without yielding if no data is available.
@@ -799,18 +797,19 @@ to run the configured main function, then runs `main()`.
 - `start(fn, [name]) -> Thread`\
   Start a new thread that runs `fn()`, optionally giving it a name.
 
-- `shutdown(result)`\
+- `shutdown(result)` *[yields]*\
   Shut down the thread scheduler, and return `result` from `main()`. This
   function yields and therefore never returns. During shutdown, all threads are
   killed and their resources are freed.
 
-- `yield()`\
+- `yield()` *[yields]*\
   Yield from the running thread. The thread remains in the active queue, and is
   resumed after other active threads have run and yielded.
 
-- `suspend([deadline])`\
-  Suspend the running thread. If a deadline is provided, the thread is resumed
-  at that time. Otherwise, it is suspended indefinitely.
+- `suspend([time])` *[yields]*\
+  Suspend the running thread. If `time` is specified, the thread is resumed at
+  that [absolute time](#absolute-time) at the latest. Otherwise, it is suspended
+  indefinitely.
 
 - `running() -> Thread`\
   Return the currently-running thread.
@@ -837,7 +836,7 @@ documentation mentions it explicitly.
 - `Thread.start(fn, [name]) -> Thread`\
   Start a new thread that runs `fn()`, optionally giving it a name.
 
-- `Thread.shutdown(result)`\
+- `Thread.shutdown(result)` *[yields]*\
   Shut down the thread scheduler, and return `result` from `main()`. This
   function yields and therefore never returns. During shutdown, all threads are
   killed and their resources are freed.
@@ -851,7 +850,7 @@ documentation mentions it explicitly.
 
 - `Thread:is_waiting() -> boolean`\
   Return true iff the thread is waiting to be resumed, either by a call to
-  `resume()` or by a deadline given to `yield()`.
+  `resume()` or by a deadline given to `suspend()`.
 
 - `Thread:resume() -> boolean`\
   Resume the thread if it is on the wait list. Returns true iff the thread was
@@ -906,18 +905,40 @@ This module provides platform-independent time functionality.
 
 - `ticks_min: Int64`\
   `ticks_max: Int64`\
-  The range of values that can be returned by `ticks()`.
+  The range of values that can be returned by `ticks64()`.
 
-- `ticks() -> Int64`\
-  Return the current absolute time in microsecond ticks, as given by a monotonic
-  clock.
+- `ticks64() -> Int64`\
+  Return the current [absolute time](#absolute-time).
+
+- `ticks() -> integer`\
+  Return the low-order bits of the current [absolute time](#absolute-time) that
+  fit a Lua integer.
+
+- `to_ticks64(time, [now]) -> Int64`\
+  Convert an integer [absolute time](#absolute-time) to a 64-bit absolute time.
+  If `now` is missing, the current absolute time is used. The result is always
+  within the range `[now + math.mininteger; now + math.maxinteger]`.
 
 - `sleep_until(time)` *[yields]*\
-  Suspend the current thread until the given absolute time (as returned by
-  `ticks()`).
+  Suspend the current thread until the given [absolute time](#absolute-time).
 
-- `sleep_for(ticks)` *[yields]*\
-  Suspend the current thread for the given number of microsecond ticks.
+- `sleep_for(duration)` *[yields]*\
+  Suspend the current thread for the given duration (microsecond ticks).
+
+### Absolute time
+
+An absolute time is a number of microseconds since an arbitrary point in time in
+the past (usually the time when the system was started), measured with a
+monotonic clock, and represented as a 64-bit integer.
+
+When Lua integers are smaller than 64 bits, `Int64` is implemented as a full
+userdata. This makes many operations on 64-bit integers expensive, because they
+cause memory allocations. To reduce the number of allocations, most functions
+taking an absolute time accept both 64-bit times and integer times. The latter
+are interpreted as the low-order bits of the absolute time, while the high-order
+bits are taken from the current time. This allows specifying absolute times
+within 35.79 minutes of the current time (`[now + math.mininteger; now +
+math.maxinteger]`) as Lua integers,
 
 ## `mlua.uf2`
 

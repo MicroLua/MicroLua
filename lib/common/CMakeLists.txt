@@ -209,6 +209,7 @@ target_link_libraries(mlua_mod_mlua.thread INTERFACE
 mlua_add_lua_modules(mlua_test_mlua.thread mlua.thread.test.lua)
 target_link_libraries(mlua_test_mlua.thread INTERFACE
     mlua_mod_coroutine
+    mlua_mod_math
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread
     mlua_mod_mlua.thread.group
@@ -232,7 +233,9 @@ target_link_libraries(mlua_mod_mlua.time INTERFACE
 mlua_add_lua_modules(mlua_test_mlua.time mlua.time.test.lua)
 target_link_libraries(mlua_test_mlua.time INTERFACE
     mlua_mod_math
+    mlua_mod_mlua.int64
     mlua_mod_mlua.time
+    mlua_mod_string
     mlua_mod_table
 )
 

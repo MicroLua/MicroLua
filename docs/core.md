@@ -179,15 +179,15 @@ out arguments, which map to multiple return values. Function argument types are
 mapped as follows:
 
 C type                | Lua type
---------------------- | ----------
+--------------------- | --------------------
 `bool`                | `boolean`
 integer (<=32 bits)   | `integer`
-`int64_t`, `uint64_t` | `Int64`
+`int64_t`, `uint64_t` | `Int64` or `integer`
 `float`, `double`     | `number`
 `char*`               | `string`
 pointer + size        | `string`
 pointer to struct     | `userdata`
-`absolute_time_t`     | `Int64`
+`absolute_time_t`     | `Int64` or `integer`
 
 As a convenience, `bool` function arguments accept `0` as `false`.
 

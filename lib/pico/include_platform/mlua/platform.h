@@ -74,7 +74,11 @@ static inline bool mlua_ticks64_reached(uint64_t ticks) {
 
 // Return true iff the given ticks value has been reached.
 static inline bool mlua_ticks_reached(lua_Unsigned ticks) {
+#if MLUA_IS64INT
+    return time_reached(from_us_since_boot(ticks));
+#else
     return (mlua_ticks() - ticks) <= LUA_MAXINTEGER;
+#endif
 }
 
 // Wait for an event, up to the given deadline. Returns true iff the deadline

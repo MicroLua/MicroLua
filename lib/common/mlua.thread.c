@@ -17,7 +17,6 @@
 #include "mlua/platform.h"
 #include "mlua/util.h"
 
-// TODO: Stop using uint64_t for deadlines; use only lower 32 bits of clock
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
 void mlua_thread_require(lua_State* ls) {
@@ -365,7 +364,9 @@ static int mod_yield(lua_State* ls) {
 }
 
 static int mod_suspend(lua_State* ls) {
-    if (!lua_isnoneornil(ls, 1)) mlua_check_int64(ls, 1);
+    luaL_argexpected(ls, lua_isnoneornil(ls, 1) || lua_isinteger(ls, 1)
+                         || mlua_test_int64(ls, 1, NULL),
+                     1, "integer or Int64");
     lua_settop(ls, 1);
     return lua_yield(ls, 1);
 }
@@ -674,9 +675,15 @@ static int mod_main(lua_State* ls) {
         }
 
         // Add running to the timer list.
-        ThreadExtra* extra = thread_extra(running);
-        deadline = extra->deadline = mlua_to_int64(running, -1);
+        if (lua_isinteger(running, -1)) {
+            deadline = mlua_to_ticks64(lua_tointeger(running, -1),
+                                       mlua_ticks64());
+        } else {
+            deadline = mlua_to_int64_strict(running, -1);
+        }
         lua_pop(running, 1);  // Remove deadline
+        ThreadExtra* extra = thread_extra(running);
+        extra->deadline = deadline;
         extra->state = STATE_TIMER;
         timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
         if (timers == NULL || deadline < thread_extra(timers)->deadline) {
@@ -804,7 +811,9 @@ int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
         if (lua_isnoneornil(ls, index)) {
             index = 0;
         } else {
-            mlua_check_int64(ls, index);
+            luaL_argexpected(ls, lua_isinteger(ls, index)
+                                 || mlua_test_int64(ls, index, NULL),
+                             index, "integer or Int64");
         }
     }
     mlua_event_watch(ls, ev);
@@ -824,8 +833,15 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
     lua_pop(ls, 2);  // Restore the stack for loop
     int res = loop(ls, false);
     if (res < 0) {
-        if (index == 0 ||
-                !mlua_ticks64_reached(mlua_to_int64(ls, index))) {
+        bool wait = index == 0;
+        if (!wait) {
+            if (lua_isinteger(ls, index)) {
+                wait = !mlua_ticks_reached(lua_tointeger(ls, index));
+            } else {
+                wait = !mlua_ticks64_reached(mlua_to_int64(ls, index));
+            }
+        }
+        if (wait) {
             return mlua_event_loop_1(ls, (MLuaEvent*)ctx, loop, index);
         }
         res = loop(ls, true);

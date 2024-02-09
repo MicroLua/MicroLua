@@ -7,11 +7,28 @@
 #include <stdint.h>
 
 #include "lua.h"
+#include "mlua/util.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// Convert an integer-sized ticks value to a 64-bit ticks value.
+static inline uint64_t mlua_to_ticks64(lua_Unsigned ticks, uint64_t now) {
+    uint64_t res = (now & ~(uint64_t)LUA_MAXUNSIGNED) | ticks;
+    lua_Unsigned t = now & LUA_MAXUNSIGNED;
+    if (t < ticks && ticks - t > LUA_MAXINTEGER) {
+        res -= ((uint64_t)LUA_MAXUNSIGNED + 1u);
+    } else if (ticks < t && t - ticks > (lua_Unsigned)LUA_MININTEGER) {
+        res += ((uint64_t)LUA_MAXUNSIGNED + 1u);
+    }
+    return res;
+}
+
+#if MLUA_IS64INT
+// Ensure that the expression computing "now" is elided.
+#define mlua_to_ticks64(ticks, now) (ticks)
+#endif
 
 // A description of flash memory.
 typedef struct MLuaFlash {
