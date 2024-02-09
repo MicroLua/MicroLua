@@ -96,12 +96,12 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
 bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
 #if MLUA_IS64INT
     if (!lua_isinteger(ls, arg)) return false;
-    *value = lua_tointeger(ls, arg);
+    if (value != NULL) *value = lua_tointeger(ls, arg);
     return true;
 #else
     int64_t* v = luaL_testudata(ls, arg, int64_name);
     if (v == NULL) return false;
-    *value = *v;
+    if (value != NULL) *value = *v;
     return true;
 #endif
 }
@@ -113,7 +113,7 @@ int64_t mlua_check_int64(lua_State* ls, int arg) {
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
     int64_t v;
     if (mlua_test_int64(ls, arg, &v)) return v;
-    return luaL_argerror(ls, arg, "integer or int64 expected");
+    return luaL_typeerror(ls, arg, "integer or Int64");
 #endif
 }
 
@@ -122,8 +122,7 @@ int64_t mlua_to_int64(lua_State* ls, int arg) {
     return lua_tointeger(ls, arg);
 #else
     if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
-    int64_t* v = lua_touserdata(ls, arg);
-    return v != NULL ? *v : 0;
+    return mlua_to_int64_strict(ls, arg);
 #endif
 }
 

@@ -12,8 +12,6 @@
 extern "C" {
 #endif
 
-// MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
-#define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
 // A description of flash memory.
 typedef struct MLuaFlash {

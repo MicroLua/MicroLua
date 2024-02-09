@@ -94,9 +94,6 @@ target_link_libraries(mlua_test_mlua.fs.lfs INTERFACE
 mlua_add_c_module(mlua_mod_mlua.int64 mlua.int64.c)
 target_include_directories(mlua_mod_mlua.int64_headers INTERFACE
     include_mlua.int64)
-mlua_mirrored_target_link_libraries(mlua_mod_mlua.int64 INTERFACE
-    mlua_platform
-)
 
 mlua_add_lua_modules(mlua_test_mlua.int64 mlua.int64.test.lua)
 target_link_libraries(mlua_test_mlua.int64 INTERFACE

@@ -20,6 +20,9 @@ extern "C" {
 // Return the number of elements in the given array.
 #define MLUA_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+// MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
+#define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
+
 // Initialize the functionality contained in this module.
 void mlua_util_init(lua_State* ls);
 

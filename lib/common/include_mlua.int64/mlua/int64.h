@@ -9,7 +9,7 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/platform.h"
+#include "mlua/util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,17 +49,27 @@ int mlua_int64_to_string(int64_t value, char* s, size_t size);
 // false if the conversion fails.
 bool mlua_string_to_int64(char const* s, int base, int64_t* value);
 
-// Get an int64 value at the given stack index, or return false if the stack
+// Get an int64 value at the given stack index. Returns false if the stack
 // entry is not an int64.
 bool mlua_test_int64(lua_State* ls, int arg, int64_t* value);
 
-// Get an int64 value at the given stack index, or raise an error if the stack
-// entry is not an int64.
+// Get an int64 value at the given stack index. Raises an error if the stack
+// entry is not an integer or an int64.
 int64_t mlua_check_int64(lua_State* ls, int arg);
 
 // Get an int64 value at the given stack index. The value must be an integer or
 // an int64, otherwise the function returns zero.
 int64_t mlua_to_int64(lua_State* ls, int arg);
+
+// Get an int64 value at the given stack index. The value must be an int64.
+static inline int64_t mlua_to_int64_strict(lua_State* ls, int arg) {
+#if MLUA_IS64INT
+    return lua_tointeger(ls, arg);
+#else
+    int64_t* v = lua_touserdata(ls, arg);
+    return v != NULL ? *v : 0;
+#endif
+}
 
 // Push an int64 to the stack.
 void mlua_push_int64(lua_State* ls, int64_t value);
