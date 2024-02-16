@@ -700,6 +700,11 @@ The `Test` class represents a single unit test.
   expectations can be declared. If the expectation fails, the current test is
   aborted.
 
+- `Test:context(table)`\
+  Set context information. The contents of `table` are printed as `key: value`
+  lines with each logged message or failure. Table values of type `function` are
+  called, and the return value is used for formatting.
+
 - `Test:failed() -> boolean`\
   Return true iff the test has failed.
 

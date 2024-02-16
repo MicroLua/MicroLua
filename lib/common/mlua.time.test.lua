@@ -9,21 +9,28 @@ local time = require 'mlua.time'
 local string = require 'string'
 local table = require 'table'
 
+local function for_each_ticks(t, fn)
+    local done<close> = function() t:context() end
+    for _, tfn in ipairs{'ticks', 'ticks64'} do
+        t:context{ticks = tfn}
+        fn(time[tfn], tfn)
+    end
+end
+
 function test_ticks(t)
     t:expect(t:expr(time).ticks_per_second):eq(1e6)
     t:expect(t:expr(time).ticks64())
         :gte(time.min_ticks):lte(time.max_ticks)
     t:expect(t:expr(time).ticks()):apply(math.type):op('type is'):eq('integer')
 
-    for _, fn in ipairs{'ticks', 'ticks64'} do
-        local ticks = time[fn]
+    for_each_ticks(t, function(ticks)
         for i = 1, 10 do
             local t1 = ticks()
             local t2 = ticks()
             while t2 == t1 do t2 = ticks() end
-            t:expect(t2 - t1):label("t2 - t1 (%s)", fn):gt(0):lt(100)
+            t:expect(t2 - t1):label("t2 - t1"):gt(0):lt(100)
         end
-    end
+    end)
 end
 
 local integer_bits = string.packsize('j') * 8
@@ -51,18 +58,17 @@ end
 
 function test_sleep_BNB(t)
     local delay = 2000
-    for _, fn in ipairs{'ticks', 'ticks64'} do
-        local ticks = time[fn]
+    for_each_ticks(t, function(ticks)
         local t1 = ticks()
         time.sleep_until(t1 + delay)
         local t2 = ticks()
-        t:expect(t2 - t1):label("sleep_until(%s) duration (%s)", t1 + delay, fn)
+        t:expect(t2 - t1):label("sleep_until(%s) duration", t1 + delay)
             :gte(delay):lt(delay + 250)
+    end)
 
-        local t1 = ticks()
-        time.sleep_for(0 * t1 + delay)
-        local t2 = ticks()
-        t:expect(t2 - t1):label("sleep_for(%s) duration (%s)", delay, fn)
-            :gte(delay):lt(delay + 250)
-    end
+    local t1 = time.ticks()
+    time.sleep_for(delay)
+    local t2 = time.ticks()
+    t:expect(t2 - t1):label("sleep_for(%s) duration", delay)
+        :gte(delay):lt(delay + 200)
 end

@@ -70,7 +70,7 @@ local function locals(level)
     if info then
         local f = info.func
         setmetatable(loc, {__index = function(_, k)
-            local env, i = nil, 1
+            local i, env = 1
             while true do
                 local name, value = debug.getupvalue(f, i)
                 if not name then break end
@@ -341,14 +341,18 @@ function Test:_expect(cond, fail, format, ...)
     if not cond then return fail(self, format, ...) end
 end
 
+function Test:context(ctx) self._ctx = ctx end
+
 function Test:_log(prefix, format, ...)
     local args = list.pack(...)
     for i, arg in args:ipairs() do
         if type(arg) == 'function' then args[i] = arg() end
     end
     local msg = io.aformat(format, args:unpack())
-    return io.printf('%s%s%s%s%s', io.ansi(prefix), prefix ~= '' and ': ' or '',
-                     self:_location(1), msg, msg:sub(-1) ~= '\n' and '\n' or '')
+    return io.printf('%s%s%s%s%s%s',
+                     io.ansi(prefix), prefix ~= '' and ': ' or '',
+                     self:_location(1), msg, msg:sub(-1) ~= '\n' and '\n' or '',
+                     self:_context())
 end
 
 function Test:_location(level)
@@ -370,6 +374,19 @@ function Test:_location(level)
         end
         level = level + 1
     end
+end
+
+function Test:_context()
+    local ctx = self._ctx
+    if not ctx then return '' end
+    local parts = list()
+    for _, k in util.sort(util.keys(ctx)):ipairs() do
+        local v = ctx[k]
+        if type(v) == 'function' then v = v() end
+        if type(v) ~= 'string' then v = util.repr(v) end
+        parts:append(io.aformat('  @{+MAGENTA}%s@{NORM}: %s\n', k, v))
+    end
+    return parts:concat()
 end
 
 function Test:failed()
@@ -398,10 +415,11 @@ function Test:_run(fn)
     local start = time.ticks64()
     self:_pcall(fn, self)
     self.duration = time.ticks64() - start
+    self._ctx = nil
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
-    self._cleanups = nil
+    self._cleanups, self._ctx = nil
     self:_restore_output()
     local keep = self.children or self:failed()
     self:_up(function(t)
@@ -412,7 +430,7 @@ function Test:_run(fn)
         elseif self._skip then t.nskip = t.nskip + 1
         else t.npass = t.npass + 1 end
     end)
-    self._parent, self._out, self._old_out = nil, nil, nil
+    self._parent, self._out, self._old_out = nil
     return keep
 end
 
@@ -608,7 +626,7 @@ function Runner:prompt()
             if c == '\n' then break end
             line = line .. c
         end
-        local cmd, args = nil, list()
+        local args, cmd = list()
         for t in line:gmatch('[^%s]+') do
             if not cmd then cmd = t else args:append(t) end
         end
