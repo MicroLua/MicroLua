@@ -921,7 +921,8 @@ This module provides platform-independent time functionality.
   `[now + math.mininteger; now + math.maxinteger]`.
 
 - `sleep_until(time)` *[yields]*\
-  Suspend the current thread until the given [absolute time](#absolute-time).
+  Suspend the current thread until the given [absolute time](#absolute-time) is
+  reached.
 
 - `sleep_for(duration)` *[yields]*\
   Suspend the current thread for the given duration (microsecond ticks).

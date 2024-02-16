@@ -410,7 +410,7 @@ tests: [`hardware.sync.test`](../lib/pico/hardware.sync.test.lua)
 
 > [!NOTE]
 > Spin lock functionality isn't exposed to Lua, because spin locks are supposed
-> to be held for a short duration only, but this can't be achieved from Lua.
+> to be held for a short duration only, which can't be achieved from Lua.
 
 ## `hardware.timer`
 
@@ -421,16 +421,68 @@ sources: [`hardware_timer`](https://github.com/raspberrypi/pico-sdk/blob/master/
 build target: `mlua_mod_hardware.timer`,
 tests: [`hardware.timer.test`](../lib/pico/hardware.timer.test.lua)
 
-- `set_callback(alarm_num, callback) -> Thread`\
-  Set the callback for the hardware timer `alarm_num`. The callback is called
-  with the arguments `(alarm_num)`. Returns the
-  [event handler thread](core.md#callbacks).
+- `time_us() -> integer`\
+  Return the low-order bits of the current
+  [absolute time](mlua.md#absolute-time) that fit a Lua integer.
 
-  - `callback(alarm_num)`\
+- `time_us_32() -> integer`\
+  Return the 32 lower-order bits of the current
+  [absolute time](mlua.md#absolute-time).
+
+- `time_us_64() -> Int64`\
+  Return the current [absolute time](mlua.md#absolute-time).
+
+- `busy_wait_us_32(duration)`\
+  Busy wait wasting cycles for the given (32-bit) number of microseconds.
+  `duration` must be an integer.
+
+- `busy_wait_us(duration)`\
+  Busy wait wasting cycles for the given (64-bit) number of microseconds.
+  `duration` must be an integer or an `Int64`.
+
+- `busy_wait_ms(duration)`\
+  Busy wait wasting cycles for the given number of milliseconds. `duration` must
+  be an integer.
+
+- `busy_wait_until(time)`\
+  Busy wait wasting cycles until the given
+  [absolute time](mlua.md#absolute-time) is reached.
+
+- `time_reached(time) -> boolean`\
+  Return true iff the given [absolute time](mlua.md#absolute-time) has been
+  reached.
+
+- `claim(alarm)`\
+  Cooperatively claim a hardware timer. Panics if the timer is already claimed.
+
+- `claim_unused() -> integer`\
+  Cooperatively claim an unused hardware timer.
+
+- `unclaim(alarm)`\
+  Cooperatively release the claim of a hardware timer.
+
+- `is_claimed(alarm) -> boolean`\
+  Return `true` iff the given hardware timer is claimed.
+
+- `set_callback(alarm, callback) -> Thread`\
+  Set the callback for the hardware timer `alarm`. Returns the
+  [event handler thread](core.md#callbacks). The callback can be removed either
+  by killing the returned thread, or by calling `set_callback()` with a `nil`
+  callback.
+
+  - `callback(alarm)`\
     The callback to be called when the timer triggers.
 
-  The callback can be removed either by killing the returned thread, or by
-  calling `set_callback()` with a `nil` callback.
+- `set_target(alarm, time) -> boolean`\
+  Set the current target [absolute time](mlua.md#absolute-time) for a hardware
+  timer. Returns `true` iff the target was missed, i.e. it was in the past or
+  occurred before the target could be set.
+
+- `cancel(alarm)`\
+  Cancel a hardware timer, if it was set.
+
+- `force_irq(alarm)`\
+  Force an IRQ for a hardware timer.
 
 ## `hardware.uart`
 

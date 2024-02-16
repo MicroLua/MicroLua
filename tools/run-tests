@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 set -o errexit -o pipefail -o nounset
+shopt -s nullglob
 
 die() {
     echo "ERROR: $@" >&2

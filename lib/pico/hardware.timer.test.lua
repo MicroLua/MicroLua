@@ -10,34 +10,47 @@ local thread = require 'mlua.thread'
 local table = require 'table'
 
 function test_time_us(t)
-    local t32, t64 = timer.time_us_32(), timer.time_us_64()
+    local ti = timer.time_us()
+    local t32 = timer.time_us_32()
+    local t64 = timer.time_us_64()
     t32 = int64(t32) + (t32 < 0 and (int64(1) << 32) or 0)
     t64 = t64 & ((int64(1) << 32) - 1)
     t:expect(t64 - t32):label("t64 - t32"):gte(0):lt(100)
+    if math.maxinteger <= 0x7fffffff then
+        t:expect(t32 - ti):label("t32 - ti"):gte(0):lt(100)
+    else
+        t:expect(t64 - ti):label("t64 - ti"):gte(0):lt(100)
+    end
 end
 
 function test_time_reached(t)
-    local now = timer.time_us_64()
-    t:expect(timer.time_reached(now), "Current time not reached: %s", now)
-    local now = timer.time_us_64()
-    t:expect(not timer.time_reached(now + 100), "Reached now + 100")
+    for _, fn in ipairs{'time_us', 'time_us_64'} do
+        local time_us = timer[fn]
+        local now = time_us()
+        t:expect(timer.time_reached(now))
+            :label("time_reached(%s())", fn):eq(true)
+        local now = time_us()
+        t:expect(timer.time_reached(now + 150))
+            :label("time_reached(%s() + 150)", fn):eq(false)
+    end
 end
 
 function test_busy_wait(t)
-    local start = timer.time_us_64()
-    for _, test in ipairs{
-        {'busy_wait_until', start + 3000, start + 3000, 0},
-        {'busy_wait_us', 4000, 0, 4000},
-        {'busy_wait_us_32', 5000, 0, 5000},
-        {'busy_wait_ms', 6, 0, 6000},
-    } do
-        local fn, arg, want, want_delta = table.unpack(test)
-        local t1 = timer.time_us_64()
-        timer[fn](arg)
-        local t2 = timer.time_us_64()
-        if want == 0 then want = t1 + want_delta end
-        t:expect(t2 >= want, "%s(%s) waited from %s to %s, want >= %s", fn, arg,
-                 t1, t2, want)
+    for _, tfn in ipairs{'time_us', 'time_us_64'} do
+        local time_us = timer[tfn]
+        for _, test in ipairs{
+            {'busy_wait_until', 1, 3000, 3000},
+            {'busy_wait_us', 0, 4000, 4000},
+            {'busy_wait_us_32', nil, 5000, 5000},
+            {'busy_wait_ms', nil, 6, 6000},
+        } do
+            local fn, orig, delta, delay = table.unpack(test)
+            local t1 = time_us()
+            timer[fn]((orig and orig * t1 or 0) + delta)
+            local t2 = time_us()
+            t:expect(t2 - t1):label("%s(%s) duration (%s)", fn, delta, tfn)
+                :gte(delay):lt(delay + 250)
+        end
     end
 end
 
@@ -51,22 +64,27 @@ function test_timer(t)
     t:expect(timer.is_claimed(alarm), "Claimed alarm reported as unclaimed")
 
     -- Set up the alarm callback.
-    local parent, got = thread.running(), nil
+    local parent, got, time_us = thread.running()
     timer.set_callback(alarm, function(a)
-        got = timer.time_us_64()
+        got = time_us()
         t:expect(a):label("alarm"):eq(alarm)
         parent:resume()
     end)
     t:cleanup(function() timer.set_callback(alarm, nil) end)
 
     -- Trigger alarms.
-    local start = timer.time_us_64()
-    t:expect(timer.set_target(alarm, start), "Setting missed alarm succeeded")
-    for delta = 10000, 50000, 3000 do
-        local err = timer.set_target(alarm, start + delta)
-        t:assert(not err, "Failed to set alarm at +%s us", delta)
-        thread.suspend()
-        t:expect(got - start):label("alarm time"):gte(delta):lt(delta + 200)
+    for _, fn in ipairs{'time_us', 'time_us_64'} do
+        time_us = timer[fn]
+        local start = time_us()
+        t:expect(timer.set_target(alarm, start),
+                 "Setting missed alarm succeeded (%s)", fn)
+        for delta = 10000, 40000, 3000 do
+            local err = timer.set_target(alarm, start + delta)
+            t:assert(not err, "Failed to set alarm at +%s us (%s)", delta, fn)
+            thread.suspend()
+            t:expect(got - start):label("alarm time (%s)", fn)
+                :gte(delta):lt(delta + 200)
+        end
     end
 end
 
@@ -75,8 +93,7 @@ function test_irq_scheduling_latency(t)
     local alarm = timer.claim_unused()
     t:cleanup(function() timer.unclaim(alarm) end)
     local time_us_32 = timer.time_us_32
-    local parent, want = thread.running()
-    local count, min, max, sum = 0, math.maxinteger, math.mininteger, 0
+    local parent, want, count, min, max, sum = thread.running()
     timer.set_callback(alarm, function()
         local got = time_us_32()
         local delta = got - int64.tointeger(want & 0xffffffff)
@@ -92,9 +109,14 @@ function test_irq_scheduling_latency(t)
         timer.set_target(alarm, want)
     end)
     t:cleanup(function() timer.set_callback(alarm, nil) end)
-    want = timer.time_us_64() + 1000
-    timer.set_target(alarm, want)
-    thread.suspend()
-    t:printf("Samples: %2s, min: %2s us, max: %2s us, avg: %2.1f us\n",
-             count, min, max, sum / count)
+
+    for _, fn in ipairs{'time_us', 'time_us_64'} do
+        local time_us = timer[fn]
+        count, min, max, sum = 0, math.maxinteger, math.mininteger, 0
+        want = time_us() + 1000
+        timer.set_target(alarm, want)
+        thread.suspend()
+        t:printf("Samples: %2s, min: %2s us, max: %2s us, avg: %2.1f us (%s)\n",
+                 count, min, max, sum / count, fn)
+    end
 end

@@ -20,8 +20,16 @@ static uint check_alarm(lua_State* ls, int index) {
     return alarm;
 }
 
-static absolute_time_t check_absolute_time(lua_State* ls, int arg) {
-    return from_us_since_boot(mlua_check_int64(ls, arg));
+static inline absolute_time_t check_absolute_time(lua_State* ls, int arg) {
+    return from_us_since_boot(mlua_check_time(ls, arg));
+}
+
+static int mod_time_us(lua_State* ls) {
+#if MLUA_IS64INT
+    return lua_pushinteger(ls, time_us_64()), 1;
+#else
+    return lua_pushinteger(ls, time_us_32()), 1;
+#endif
 }
 
 #if LIB_MLUA_MOD_MLUA_THREAD
@@ -100,13 +108,13 @@ static void cancel_hardware_alarm(uint alarm) {
 
 static int mod_set_target(lua_State* ls) {
     uint alarm = check_alarm(ls, 1);
-    absolute_time_t t = check_absolute_time(ls, 2);
+    absolute_time_t time = check_absolute_time(ls, 2);
 #if LIB_MLUA_MOD_MLUA_THREAD
     // Cancel first to avoid that the pending flag is set between resetting it
     // and setting the new target.
     cancel_hardware_alarm(alarm);
 #endif
-    lua_pushboolean(ls, hardware_alarm_set_target(alarm, t));
+    lua_pushboolean(ls, hardware_alarm_set_target(alarm, time));
     return 1;
 }
 
@@ -131,6 +139,7 @@ MLUA_FUNC_R1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
 MLUA_FUNC_V1(mod_, hardware_alarm_, force_irq, check_alarm)
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_F(time_us, mod_),
     MLUA_SYM_F(time_us_32, mod_),
     MLUA_SYM_F(time_us_64, mod_),
     MLUA_SYM_F(busy_wait_us_32, mod_),

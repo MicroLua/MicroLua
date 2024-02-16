@@ -55,7 +55,7 @@ static inline void mlua_ticks_range(uint64_t* min, uint64_t* max) {
 
 // Return the current microsecond ticks, as given by a monotonic clock.
 static inline uint64_t mlua_ticks64(void) {
-    return to_us_since_boot(get_absolute_time());
+    return time_us_64();
 }
 
 // Return the low-order bits of mlua_ticks64() that fit a lua_Unsigned.
