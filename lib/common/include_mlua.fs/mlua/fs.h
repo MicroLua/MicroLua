@@ -12,14 +12,14 @@ extern "C" {
 #endif
 
 // File types.
-enum MLuaFileType {
+typedef enum MLuaFileType {
     MLUA_FS_TYPE_UNKNOWN = 0,
     MLUA_FS_TYPE_REG = 1,
     MLUA_FS_TYPE_DIR = 2,
-};
+} MLuaFileType;
 
 // Flags that can be provided to open().
-enum MLuaOpenFlag {
+typedef enum MLuaOpenFlag {
     MLUA_FS_O_RDONLY    = 0x0001,
     MLUA_FS_O_WRONLY    = 0x0002,
     MLUA_FS_O_RDWR      = 0x0003,
@@ -27,14 +27,14 @@ enum MLuaOpenFlag {
     MLUA_FS_O_EXCL      = 0x0200,
     MLUA_FS_O_TRUNC     = 0x0400,
     MLUA_FS_O_APPEND    = 0x0800,
-};
+} MLuaOpenFlag;
 
 // Values that can be passed to seek() as "whence".
-enum MLuaSeek {
+typedef enum MLuaSeek {
     MLUA_FS_SEEK_SET = 0,
     MLUA_FS_SEEK_CUR = 1,
     MLUA_FS_SEEK_END = 2,
-};
+} MLuaSeek;
 
 #ifdef __cplusplus
 }

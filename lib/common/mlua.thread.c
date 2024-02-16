@@ -36,17 +36,17 @@ static_assert(sizeof(ThreadExtra) <= LUA_EXTRASPACE,
               "LUA_EXTRASPACE too small");
 
 // Thread states, as stored in ThreadExtra.state.
-enum ThreadState {
+typedef enum ThreadState {
     STATE_ACTIVE,
     STATE_SUSPENDED,
     STATE_TIMER,
     STATE_DEAD,
-};
+} ThreadState;
 
 // Thread flags, as stored in ThreadExtra.flags.
-enum ThreadFlags {
+typedef enum ThreadFlags {
     FLAGS_BLOCKING = 1 << 0,
-};
+} ThreadFlags;
 
 // Non-running thread stack indexes.
 #define FP_NEXT (-1)

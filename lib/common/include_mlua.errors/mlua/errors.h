@@ -33,7 +33,7 @@ extern "C" {
     MLUA_ERR(EROFS, 15, "read-only filesystem") \
 
 // Error codes.
-enum MLuaErrno {
+typedef enum MLuaErrno {
     MLUA_EOK = 0,
     MLUA_ERR_MASK = -0x00010000,    // 0xffff0000
     MLUA_ERR_MARKER = -0x14530000,  // 0xebad0000
@@ -41,7 +41,7 @@ enum MLuaErrno {
 #define MLUA_ERR(name, value, msg) MLUA_ ## name = MLUA_ERR_MARKER + value,
 MLUA_ERRORS
 #undef MLUA_ERR
-};
+} MLuaErrno;
 
 // Return a string describing an error code.
 char const* mlua_err_msg(int err);
