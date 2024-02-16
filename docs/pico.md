@@ -259,18 +259,69 @@ Alarms and repeating timers are implemented using threads and thread timers.
 This allows for unlimited timers, without using alarm pools. Alarm pool
 functionality is therefore not exposed to Lua and left for use by C code.
 
+- `nil_time: Int64`\
+  `at_the_end_of_time: Int64`\
+  The minimum and maximum values returned by `get_absolute_time()`,
+  respectively.
+
+- `get_absolute_time() -> Int64`\
+  Return the current [absolute time](mlua.md#absolute-time).
+
+- `get_absolute_time_int() -> integer`\
+  Return the low-order bits of the current
+  [absolute time](mlua.md#absolute-time) that fit a Lua integer.
+
+- `to_ms_since_boot(time) -> integer`\
+  Convert an [absolute time](mlua.md#absolute-time) into a number of
+  milliseconds since boot.
+
+- `delayed_by_us(time, delay_us) -> Int64`\
+  Return an [absolute time](mlua.md#absolute-time) calculated by adding a
+  microsecond delay to the given time. `delay_us` is interpreted as a
+  `uint64_t`.
+
+- `delayed_by_ms(time, delay_ms) -> Int64`\
+  Return an [absolute time](mlua.md#absolute-time) calculated by adding a
+  millisecond delay to the given time. `delay_ms` is interpreted as a
+  `uint32_t`.
+
+- `make_timeout_time_us(delay_us) -> integer | Int64`\
+  Return an [absolute time](mlua.md#absolute-time) that is `delay_us`
+  microseconds in the future. `delay_us` is interpreted as a `uint64_t`.
+
+- `make_timeout_time_ms(delay_ms) -> integer | Int64`\
+  Return an [absolute time](mlua.md#absolute-time) that is `delay_ms`
+  milliseconds in the future. `delay_ms` is interpreted as a `uint32_t`.
+
+- `absolute_time_diff_us(from, to) -> integer | Int64`\
+  Return the difference in microseconds between the
+  [absolute times](mlua.md#absolute-time) `from` and `to`.
+
+- `absolute_time_min(a, b) -> Int64`\
+  Return the earlier of two [absolute times](mlua.md#absolute-time).
+
+- `is_at_the_end_of_time(time) -> boolean`\
+  `is_nil_time(time) -> boolean`\
+  Return `true` iff the given [absolute time](mlua.md#absolute-time) is equal to
+  `at_the_end_of_time` or `nil_time`, respectively.
+
 - `sleep_until(time)` *[yields]*\
-  `sleep_us(duration)` *[yields]*\
-  `sleep_ms(duration)` *[yields]*\
-  These functions yield until the sleep completes.
+  Suspend the current thread until the given
+  [absolute time](mlua.md#absolute-time) is reached.
+
+- `sleep_us(duration_us)` *[yields]*\
+  `sleep_ms(duration_ms)` *[yields]*\
+  Suspend the current thread for the given duration.
 
 - `best_effort_wfe_or_timeout(time) -> boolean`\
-  This function blocks with a `WFE` without yielding.
+  Block with a `WFE` instruction, at most until the given
+  [absolute time](mlua.md#absolute-time) is reached.
 
 - `add_alarm_at(time, callback, fire_if_past) -> Thread`\
   `add_alarm_in_us(delay_us, callback, fire_if_past) -> Thread`\
   `add_alarm_in_ms(delay_ms, callback, fire_if_past) -> Thread`\
   Add an alarm callback to be called at a specific time or after a delay.
+  Returns the [event handler thread](core.md#callbacks).
 
   - `callback(thread) -> integer | nil`\
     The callback to be called when the alarm fires. The return value determines
@@ -288,6 +339,7 @@ functionality is therefore not exposed to Lua and left for use by C code.
 - `add_repeating_timer_us(delay_us, callback) -> Thread`\
   `add_repeating_timer_ms(delay_ms, callback) -> Thread`\
   Add a repeating timer that calls the callback at a specific interval.
+  Returns the [event handler thread](core.md#callbacks).
 
   - `callback(thread) -> integer | boolean | nil`\
     The callback to be called when the timer fires. The return value determines

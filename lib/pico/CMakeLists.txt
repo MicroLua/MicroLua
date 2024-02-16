@@ -634,6 +634,7 @@ target_link_libraries(mlua_mod_pico.time INTERFACE
 
 mlua_add_lua_modules(mlua_test_pico.time pico.time.test.lua)
 target_link_libraries(mlua_test_pico.time INTERFACE
+    mlua_mod_math
     mlua_mod_mlua.int64
     mlua_mod_mlua.list
     mlua_mod_mlua.thread
