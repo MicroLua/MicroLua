@@ -144,14 +144,6 @@ uint64_t mlua_check_time(lua_State* ls, int arg) {
 
 #endif  // !MLUA_IS64INT
 
-static void int64_max(lua_State* ls, MLuaSymVal const* value) {
-    mlua_push_int64(ls, INT64_MAX);
-}
-
-static void int64_min(lua_State* ls, MLuaSymVal const* value) {
-    mlua_push_int64(ls, INT64_MIN);
-}
-
 #define INT64_OP(lhs, op, rhs) ((int64_t)((uint64_t)(lhs) op (uint64_t)(rhs)))
 
 static int64_t shift_left(int64_t lhs, int64_t rhs, bool arith) {
@@ -454,9 +446,6 @@ static int int64___call(lua_State* ls) {
 #define int64_eq int64___eq
 
 MLUA_SYMBOLS(int64_syms) = {
-    MLUA_SYM_P(max, int64_),
-    MLUA_SYM_P(min, int64_),
-
     MLUA_SYM_F(ashr, int64_),
     MLUA_SYM_F(eq, int64_),
     MLUA_SYM_F(hex, int64_),
@@ -500,5 +489,9 @@ MLUA_OPEN_MODULE(mlua.int64) {
     mlua_new_class(ls, mlua_int64_name, int64_syms, true);
     mlua_set_fields(ls, int64_syms_nh);
     mlua_set_meta_fields(ls, int64_meta_syms);
+    mlua_push_int64(ls, INT64_MAX);
+    lua_setfield(ls, -2, "max");
+    mlua_push_int64(ls, INT64_MIN);
+    lua_setfield(ls, -2, "min");
     return 1;
 }
