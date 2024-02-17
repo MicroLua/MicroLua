@@ -275,23 +275,21 @@ functionality is therefore not exposed to Lua and left for use by C code.
   Convert an [absolute time](mlua.md#absolute-time) into a number of
   milliseconds since boot.
 
-- `delayed_by_us(time, delay_us) -> Int64`\
+- `delayed_by_us(time, delay) -> Int64`\
   Return an [absolute time](mlua.md#absolute-time) calculated by adding a
-  microsecond delay to the given time. `delay_us` is interpreted as a
-  `uint64_t`.
+  microsecond delay to the given time. `delay` is interpreted as a `uint64_t`.
 
-- `delayed_by_ms(time, delay_ms) -> Int64`\
+- `delayed_by_ms(time, delay) -> Int64`\
   Return an [absolute time](mlua.md#absolute-time) calculated by adding a
-  millisecond delay to the given time. `delay_ms` is interpreted as a
-  `uint32_t`.
+  millisecond delay to the given time. `delay` is interpreted as a `uint32_t`.
 
-- `make_timeout_time_us(delay_us) -> integer | Int64`\
-  Return an [absolute time](mlua.md#absolute-time) that is `delay_us`
-  microseconds in the future. `delay_us` is interpreted as a `uint64_t`.
+- `make_timeout_time_us(delay) -> integer | Int64`\
+  Return an [absolute time](mlua.md#absolute-time) that is `delay` microseconds
+  in the future. `delay` is interpreted as a `uint64_t`.
 
-- `make_timeout_time_ms(delay_ms) -> integer | Int64`\
-  Return an [absolute time](mlua.md#absolute-time) that is `delay_ms`
-  milliseconds in the future. `delay_ms` is interpreted as a `uint32_t`.
+- `make_timeout_time_ms(delay) -> integer | Int64`\
+  Return an [absolute time](mlua.md#absolute-time) that is `delay` milliseconds
+  in the future. `delay` is interpreted as a `uint32_t`.
 
 - `absolute_time_diff_us(from, to) -> integer | Int64`\
   Return the difference in microseconds between the
@@ -309,8 +307,8 @@ functionality is therefore not exposed to Lua and left for use by C code.
   Suspend the current thread until the given
   [absolute time](mlua.md#absolute-time) is reached.
 
-- `sleep_us(duration_us)` *[yields]*\
-  `sleep_ms(duration_ms)` *[yields]*\
+- `sleep_us(duration)` *[yields]*\
+  `sleep_ms(duration)` *[yields]*\
   Suspend the current thread for the given duration.
 
 - `best_effort_wfe_or_timeout(time) -> boolean`\
@@ -318,8 +316,8 @@ functionality is therefore not exposed to Lua and left for use by C code.
   [absolute time](mlua.md#absolute-time) is reached.
 
 - `add_alarm_at(time, callback, fire_if_past) -> Thread`\
-  `add_alarm_in_us(delay_us, callback, fire_if_past) -> Thread`\
-  `add_alarm_in_ms(delay_ms, callback, fire_if_past) -> Thread`\
+  `add_alarm_in_us(delay, callback, fire_if_past) -> Thread`\
+  `add_alarm_in_ms(delay, callback, fire_if_past) -> Thread`\
   Add an alarm callback to be called at a specific time or after a delay.
   Returns the [event handler thread](core.md#callbacks).
 
@@ -336,8 +334,8 @@ functionality is therefore not exposed to Lua and left for use by C code.
 - `cancel_alarm(thread) -> boolean`\
   Cancel an alarm.
 
-- `add_repeating_timer_us(delay_us, callback) -> Thread`\
-  `add_repeating_timer_ms(delay_ms, callback) -> Thread`\
+- `add_repeating_timer_us(delay, callback) -> Thread`\
+  `add_repeating_timer_ms(delay, callback) -> Thread`\
   Add a repeating timer that calls the callback at a specific interval.
   Returns the [event handler thread](core.md#callbacks).
 

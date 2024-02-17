@@ -148,16 +148,19 @@ default I2C peripheral, if defined, can be accessed as `default`.
 - `I2C:regs_base() -> integer`\
   Return the base address of the peripheral registers (`I2Cx_BASE`).
 
-- `I2C:write_blocking_until(addr, src, nostop, until) -> integer | nil` *[yields]*\
-  `I2C:write_timeout_us(addr, src, nostop, timeout_us) -> integer | nil` *[yields]*\
-  `I2C:write_blocking(addr, src, nostop) -> integer | nil` *[yields]*\
+- `I2C:write_blocking(addr, src, nostop) -> integer | nil` *[yields]*\
+  `I2C:write_blocking_until(addr, src, nostop, time) -> integer | nil` *[yields]*\
+  `I2C:write_timeout_us(addr, src, nostop, timeout) -> integer | nil` *[yields]*\
   If the write fails, returns `fail` and an error code. Yields until the write
-  completes if the IRQ handler is enabled.
+  completes if the IRQ handler is enabled. `time` is an
+  [absolute time](mlua.md#absolute-time).
 
-- `I2C:read_blocking_until(addr, len, nostop, until) -> string | nil` *[yields]*\
-  `I2C:read_timeout_us(addr, len, nostop, until) -> string | nil` *[yields]*\
-  `I2C:read_blocking(addr, len, nostop) -> string | nil` *[yields]*\
-  If the read fails, returns `fail` and an error code. Yields until the read completes if the IRQ handler is enabled.
+- `I2C:read_blocking(addr, len, nostop) -> string | nil` *[yields]*\
+  `I2C:read_blocking_until(addr, len, nostop, time) -> string | nil` *[yields]*\
+  `I2C:read_timeout_us(addr, len, nostop, timeout) -> string | nil` *[yields]*\
+  If the read fails, returns `fail` and an error code. Yields until the read
+  completes if the IRQ handler is enabled. `time` is an
+  [absolute time](mlua.md#absolute-time).
 
 - `I2C:read_data_cmd() -> integer`\
   Read the `IC_DATA_CMD` register. This is identical to `I2C:read_byte_raw()`,
@@ -532,7 +535,7 @@ default UART peripheral, if defined, can be accessed as `default`.
   `UART:puts(c)`\
   These functions block without yielding if the TX FIFO is full.
 
-- `UART:is_readable_within_us(us) -> boolean` *[yields]*\
+- `UART:is_readable_within_us(timeout) -> boolean` *[yields]*\
   Wait until the RX FIFO is non-empty, or until the timeout elapses. Yields if
   the FIFO is empty and the IRQ handler is enabled.
 
