@@ -143,7 +143,7 @@ uint64_t mlua_check_time(lua_State* ls, int arg);
 // time if the timeout is small enough, or an int64 time otherwise.
 #if MLUA_IS64INT
 static inline void mlua_push_timeout_time(lua_State* ls, uint64_t timeout) {
-    lua_pushinteger(ls, mlua_ticks() + timeout);
+    lua_pushinteger(ls, mlua_timeout_time(mlua_ticks(), timeout));
 }
 #else
 void mlua_push_timeout_time(lua_State* ls, uint64_t timeout);

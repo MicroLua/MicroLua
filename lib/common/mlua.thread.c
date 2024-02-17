@@ -527,11 +527,10 @@ static int mod_main(lua_State* ls) {
     lua_State* running = NULL;
     for (;;) {
         // Dispatch events.
-        uint64_t min_ticks, deadline;
-        mlua_ticks_range(&min_ticks, &deadline);
+        uint64_t deadline = MLUA_TICKS_MAX;
         lua_State* timers = lua_tothread(ls, lua_upvalueindex(UV_TIMERS));
         if (running != NULL || !lua_isnil(ls, lua_upvalueindex(UV_TAIL))) {
-            deadline = min_ticks;
+            deadline = MLUA_TICKS_MIN;
         } else if (timers != NULL) {
             deadline = thread_extra(timers)->deadline;
         }

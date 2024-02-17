@@ -23,9 +23,11 @@ function test_strict(t)
     if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
     t:expect(function() return int64.UNKNOWN end)
         :label("int64 class attribute access"):raises("undefined symbol")
-    local i = int64(0)
-    t:expect(function() return i.UNKNOWN end)
-        :label("int64 instance attribute access"):raises("undefined symbol")
+    if math.maxinteger < int64.max then
+        local i = int64(0)
+        t:expect(function() return i.UNKNOWN end)
+            :label("int64 instance attribute access"):raises("undefined symbol")
+    end
 end
 
 function test_limits(t)

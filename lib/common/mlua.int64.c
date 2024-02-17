@@ -146,11 +146,7 @@ void mlua_push_timeout_time(lua_State* ls, uint64_t timeout) {
     if (timeout <= LUA_MAXINTEGER) {
         lua_pushinteger(ls, mlua_ticks() + (lua_Unsigned)timeout);
     } else {
-        uint64_t t = mlua_ticks64() + timeout;
-        uint64_t min, max;
-        mlua_ticks_range(&min, &max);
-        if (t > max) t = max;
-        mlua_push_int64(ls, t);
+        mlua_push_int64(ls, mlua_timeout_time(mlua_ticks64(), timeout));
     }
 }
 

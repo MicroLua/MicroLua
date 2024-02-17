@@ -6,9 +6,7 @@
 #include "mlua/platform.h"
 
 void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
-    uint64_t ticks_min, ticks_max;
-    mlua_ticks_range(&ticks_min, &ticks_max);
-    bool wake = deadline == ticks_min;
+    bool wake = deadline == MLUA_TICKS_MIN;
     for (;;) {
         // Return if at least one thread was resumed or the deadline has passed.
         if (wake || mlua_ticks64_reached(deadline)) return;

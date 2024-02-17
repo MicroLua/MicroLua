@@ -61,11 +61,9 @@ MLUA_SYMBOLS(module_syms) = {
 MLUA_OPEN_MODULE(mlua.time) {
     mlua_require(ls, "mlua.int64", false);
     mlua_new_module(ls, 0, module_syms);
-    uint64_t min, max;
-    mlua_ticks_range(&min, &max);
-    mlua_push_int64(ls, min);
+    mlua_push_int64(ls, MLUA_TICKS_MIN);
     lua_setfield(ls, -2, "min_ticks");
-    mlua_push_int64(ls, max);
+    mlua_push_int64(ls, MLUA_TICKS_MAX);
     lua_setfield(ls, -2, "max_ticks");
     return 1;
 }

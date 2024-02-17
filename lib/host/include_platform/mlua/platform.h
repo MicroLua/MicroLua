@@ -30,12 +30,6 @@ static inline void mlua_platform_setup_main(int* argc, char* argv[]) {}
 // Perform set up after creating an interpreter.
 static inline void mlua_platform_setup_interpreter(lua_State* ls) {}
 
-// Return the range of values that can be returned by mlua_ticks64().
-static inline void mlua_ticks_range(uint64_t* min, uint64_t* max) {
-    *min = 0;
-    *max = INT64_MAX;
-}
-
 // Return the current microsecond ticks, as given by a monotonic clock.
 uint64_t mlua_ticks64(void);
 

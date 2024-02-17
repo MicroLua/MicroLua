@@ -13,6 +13,16 @@
 extern "C" {
 #endif
 
+// The range of valid tick values.
+#define MLUA_TICKS_MIN ((uint64_t)0)
+#define MLUA_TICKS_MAX ((uint64_t)INT64_MAX)
+
+// Return the absolute time corresponding to a timeout, relative to a time.
+static inline uint64_t mlua_timeout_time(uint64_t time, uint64_t timeout) {
+    uint64_t t = time + timeout;
+    return t <= MLUA_TICKS_MAX ? t : MLUA_TICKS_MAX;
+}
+
 // Convert an integer-sized ticks value to a 64-bit ticks value.
 static inline uint64_t mlua_to_ticks64(lua_Unsigned ticks, uint64_t now) {
     uint64_t res = (now & ~(uint64_t)LUA_MAXUNSIGNED) | ticks;
