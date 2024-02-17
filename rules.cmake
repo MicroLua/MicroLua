@@ -61,6 +61,8 @@ function(mlua_add_compile_options)
     add_compile_options(
         -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
         -Wno-unused-function -Wno-unused-parameter
+        # For Debug builds:
+        # -Wno-maybe-uninitialized -Wno-type-limits
     )
 endfunction()
 

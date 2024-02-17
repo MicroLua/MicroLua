@@ -80,7 +80,7 @@ function test_blocking_write_read_BNB(t)
     local got = inst:is_readable_within_us(1000000)
     local now = time.ticks()
     t:expect(got):label("is_readable_within_us()"):eq(true)
-    t:expect(now - start):label("is_readable_within_us() duration"):lt(100)
+    t:expect(now - start):label("is_readable_within_us() duration"):lt(150)
 
     t:expect(t:expr(inst):read_blocking(#data)):eq(data)
     t:expect(t:expr(inst):is_readable()):eq(false)

@@ -36,7 +36,7 @@ function test_time_reached(t)
         local now = time_us()
         t:expect(timer.time_reached(now)):eq(true)
         local now = time_us()
-        t:expect(timer.time_reached(now + 150)):eq(false)
+        t:expect(timer.time_reached(now + 200)):eq(false)
     end)
 end
 

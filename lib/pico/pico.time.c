@@ -31,7 +31,7 @@ static int mod_make_timeout_time_us(lua_State* ls) {
     if (delta <= LUA_MAXINTEGER) {
         lua_pushinteger(ls, mlua_ticks() + (lua_Integer)delta);
     } else {
-        mlua_push_int64(ls, make_timeout_time_us(delta));
+        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(delta)));
     }
     return 1;
 }
@@ -41,7 +41,7 @@ static int mod_make_timeout_time_ms(lua_State* ls) {
     if (delta <= LUA_MAXINTEGER / 1000) {
         lua_pushinteger(ls, mlua_ticks() + (lua_Integer)delta * 1000);
     } else {
-        mlua_push_int64(ls, make_timeout_time_ms(delta));
+        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_ms(delta)));
     }
     return 1;
 }
@@ -71,7 +71,7 @@ static int mod_sleep_us(lua_State* ls) {
         if (delay <= LUA_MAXINTEGER) {
             lua_pushinteger(ls, mlua_ticks() + (lua_Integer)delay);
         } else {
-            mlua_push_int64(ls, make_timeout_time_us(delay));
+            mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(delay)));
         }
         return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }
@@ -87,7 +87,7 @@ static int mod_sleep_ms(lua_State* ls) {
         if (delay <= LUA_MAXINTEGER / 1000) {
             lua_pushinteger(ls, mlua_ticks() + (lua_Integer)delay * 1000);
         } else {
-            mlua_push_int64(ls, make_timeout_time_ms(delay));
+            mlua_push_int64(ls, to_us_since_boot(make_timeout_time_ms(delay)));
         }
         return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }

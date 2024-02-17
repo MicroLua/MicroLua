@@ -48,7 +48,7 @@ end
 
 function test_free_running(t)
     pin, slice, chan = setup(t)
-    pwm.set_clkdiv_int_frac(slice, 8)
+    pwm.set_clkdiv_int_frac(slice, 10)
     pwm.set_output_polarity(slice, false, false)
     pwm.set_clkdiv_mode(slice, pwm.DIV_FREE_RUNNING)
     pwm.set_phase_correct(slice, false)
