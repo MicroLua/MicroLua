@@ -5,6 +5,6 @@
 set -o errexit -o pipefail -o nounset
 
 gdb --eval-command="target extended-remote localhost:3333" \
-    --eval-command="monitor reset halt" \
-    --eval-command="monitor arm semihosting enable" \
+    --eval-command="layout asm" \
+    --eval-command="layout regs" \
     "$@"
