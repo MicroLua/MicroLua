@@ -11,6 +11,33 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
+// BUG(pico-sdk): rtc_disable_alarm() and rtc_enable_alarm() change the state of
+// the RTC, then wait for the new state to be applied. They are called by both
+// the RTC IRQ handler and non-IRQ code, but have no internal locking. This
+// causes a race condition where non-IRQ code can get blocked indefinitely if
+// the RTC IRQ happens between the state change and the wait. As a workaround,
+// we disable the RTC IRQ around all calls to these functions, as well as before
+// calls to rtc_set_alarm(), which itself calls both.
+
+static inline void enable_alarm() {
+    uint32_t save = rtc_hw->inte;
+    rtc_hw->inte = 0;
+    rtc_enable_alarm();
+    rtc_hw->inte = save;
+}
+
+static inline void disable_alarm() {
+    uint32_t save = rtc_hw->inte;
+    rtc_hw->inte = 0;
+    rtc_disable_alarm();
+    rtc_hw->inte = save;
+}
+
+static inline void set_alarm(datetime_t* dt, rtc_callback_t callback) {
+    rtc_hw->inte = 0;
+    rtc_set_alarm(dt, callback);
+}
+
 static lua_Integer get_datetime_field(lua_State* ls, int arg,
                                       char const* name) {
     switch (lua_getfield(ls, arg, name)) {
@@ -98,10 +125,11 @@ static int handle_alarm_event(lua_State* ls) {
 static int alarm_handler_done(lua_State* ls) {
     lua_pushnil(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, &rtc_state.pending);
-    datetime_t dt = {.year = 4095, .month = -1, .day = -1, .dotw = -1,
-                     .hour = -1, .min = -1, .sec = -1};
-    rtc_set_alarm(&dt, NULL);
-    rtc_disable_alarm();
+    datetime_t dt = {.year = 4095, .month = 1, .day = 1, .dotw = 0,
+                     .hour = 0, .min = 0, .sec = 0};
+    set_alarm(&dt, NULL);
+    rtc_hw->inte = 0;
+    disable_alarm();
     mlua_event_disable(ls, &rtc_state.event);
     return 0;
 }
@@ -122,10 +150,11 @@ static int mod_set_alarm(lua_State* ls) {
             return 0;
         }
     }
+    rtc_hw->inte = 0;
     mlua_event_lock();
     rtc_state.pending = false;
-    rtc_set_alarm(&dt, &handle_alarm);
     mlua_event_unlock();
+    set_alarm(&dt, &handle_alarm);
 
     // Set the callback handler.
     if (!lua_isnone(ls, 2)) {
@@ -145,8 +174,13 @@ static int mod_set_alarm(lua_State* ls) {
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD
 
+static int mod_enable_alarm(lua_State* ls) {
+    enable_alarm();
+    return 0;
+}
+
 static int mod_disable_alarm(lua_State* ls) {
-    rtc_disable_alarm();
+    disable_alarm();
 #if LIB_MLUA_MOD_MLUA_THREAD
     mlua_event_lock();
     rtc_state.pending = false;
@@ -157,7 +191,6 @@ static int mod_disable_alarm(lua_State* ls) {
 
 MLUA_FUNC_V0(mod_, rtc_, init)
 MLUA_FUNC_R0(mod_, rtc_, running, lua_pushboolean)
-MLUA_FUNC_V0(mod_, rtc_, enable_alarm)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),
