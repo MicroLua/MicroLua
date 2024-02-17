@@ -412,9 +412,9 @@ end
 function Test:_run(fn)
     self:_progress_tick()
     self:_capture_output()
-    local start = time.ticks64()
+    local start = time.ticks()
     self:_pcall(fn, self)
-    self.duration = time.ticks64() - start
+    self.duration = time.ticks() - start
     self._ctx = nil
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
@@ -549,7 +549,7 @@ end
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._progress = stdout
-    local start = time.ticks64()
+    local start = time.ticks()
     if runs > 1 then
         for i = 1, runs do
             self:run(("Run #%s"):format(i), function(t) t:run_modules() end)
@@ -557,7 +557,7 @@ function Test:_main(runs)
     else
         self:run_modules()
     end
-    local dt = time.ticks64() - start
+    local dt = time.ticks() - start
     local mem = math.tointeger(collectgarbage('count') * 1024)
     self:_progress_end()
     io.write("\n")
