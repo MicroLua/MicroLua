@@ -44,15 +44,7 @@ static int mod_sleep_for(lua_State* ls) {
     int64_t delay = mlua_check_int64(ls, 1);
     if (delay <= 0) return 0;
     lua_settop(ls, 0);
-    if (delay <= LUA_MAXINTEGER) {
-        lua_pushinteger(ls, mlua_ticks() + (lua_Unsigned)delay);
-    } else {
-        uint64_t t = mlua_ticks64() + delay;
-        uint64_t min, max;
-        mlua_ticks_range(&min, &max);
-        if (t > max) t = max;
-        mlua_push_int64(ls, t);
-    }
+    mlua_push_timeout_time(ls, delay);
     return mod_sleep_until(ls);
 }
 

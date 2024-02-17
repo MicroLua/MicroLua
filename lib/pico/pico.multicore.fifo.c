@@ -76,8 +76,8 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx);
 static int mod_push_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 2);
     if (!mlua_thread_blocking(ls)) {
-        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
-        lua_replace(ls, 2);
+        lua_settop(ls, 1);
+        mlua_push_timeout_time(ls, timeout);
         return mod_push_timeout_us_1(ls, 0, 0);
     }
     uint32_t data = luaL_checkinteger(ls, 1);
@@ -93,7 +93,7 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
         sio_hw->fifo_wr = luaL_checkinteger(ls, 1);
         lua_pushboolean(ls, true);
         return 1;
-    } else if (time_reached(from_us_since_boot(mlua_check_int64(ls, 2)))) {
+    } else if (mlua_time_reached(ls, 2)) {
         lua_pushboolean(ls, false);
         return 1;
     }
@@ -122,16 +122,17 @@ static int mod_pop_blocking(lua_State* ls) {
 }
 
 static int mod_pop_timeout_us(lua_State* ls) {
-    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 1));
+    uint64_t timeout = mlua_check_int64(ls, 1);
     MLuaEvent* event = &fifo_state[get_core_num()].event;
     if (mlua_event_can_wait(ls, event)) {
-        mlua_push_int64(ls, to_us_since_boot(deadline));
-        lua_replace(ls, 1);
+        lua_settop(ls, 0);
+        mlua_push_timeout_time(ls, timeout);
         return mlua_event_loop(ls, event, &pop_loop, 1);
     }
 
     // BUG(pico-sdk): We don't use multicore_fifo_pop_timeout_us() here, because
     // of <https://github.com/raspberrypi/pico-sdk/issues/1142>.
+    absolute_time_t deadline = make_timeout_time_us(timeout);
     while (!multicore_fifo_rvalid()) {
         if (best_effort_wfe_or_timeout(deadline)) return false;
     }

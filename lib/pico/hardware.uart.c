@@ -254,7 +254,7 @@ static int UART_is_readable_within_us(lua_State* ls) {
     uint32_t timeout = luaL_checkinteger(ls, 2);
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(ls, event)) {
-        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_us(timeout)));
+        mlua_push_timeout_time(ls, timeout);
         lua_replace(ls, 2);
         return mlua_event_loop(ls, event, &is_readable_loop, 2);
     }

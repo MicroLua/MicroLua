@@ -139,6 +139,16 @@ static inline uint64_t mlua_check_time(lua_State* ls, int arg) {
 uint64_t mlua_check_time(lua_State* ls, int arg);
 #endif
 
+// Push the absolute time corresponding to a timeout value. Pushes an integer
+// time if the timeout is small enough, or an int64 time otherwise.
+#if MLUA_IS64INT
+static inline void mlua_push_timeout_time(lua_State* ls, uint64_t timeout) {
+    lua_pushinteger(ls, mlua_ticks() + timeout);
+}
+#else
+void mlua_push_timeout_time(lua_State* ls, uint64_t timeout);
+#endif
+
 // Return true iff the absolute time at the given index has been reached. The
 // argument must be an integer or an int64.
 static inline bool mlua_time_reached(lua_State* ls, int arg) {

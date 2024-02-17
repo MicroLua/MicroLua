@@ -160,7 +160,7 @@ static int I2C_write_blocking(lua_State* ls) {
     } else {
         res = i2c_write_blocking_until(
             inst, addr, src, len, nostop,
-            from_us_since_boot(mlua_check_int64(ls, 5)));
+            from_us_since_boot(mlua_check_time(ls, 5)));
     }
     if (res < 0) {
         luaL_pushfail(ls);
@@ -172,9 +172,9 @@ static int I2C_write_blocking(lua_State* ls) {
 }
 
 static int I2C_write_timeout_us(lua_State* ls) {
-    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 5));
+    uint64_t timeout = mlua_check_int64(ls, 5);
     lua_settop(ls, 4);
-    mlua_push_int64(ls, to_us_since_boot(deadline));
+    mlua_push_timeout_time(ls, timeout);
     return I2C_write_blocking(ls);
 }
 
@@ -288,7 +288,7 @@ static int I2C_read_blocking(lua_State* ls) {
     } else {
         count = i2c_read_blocking_until(
             inst, addr, dst, len, nostop,
-            from_us_since_boot(mlua_check_int64(ls, 5)));
+            from_us_since_boot(mlua_check_time(ls, 5)));
     }
     if (count < 0) {
         luaL_pushfail(ls);
@@ -300,9 +300,9 @@ static int I2C_read_blocking(lua_State* ls) {
 }
 
 static int I2C_read_timeout_us(lua_State* ls) {
-    absolute_time_t deadline = make_timeout_time_us(mlua_check_int64(ls, 5));
+    uint64_t timeout = mlua_check_int64(ls, 5);
     lua_settop(ls, 4);
-    mlua_push_int64(ls, to_us_since_boot(deadline));
+    mlua_push_timeout_time(ls, timeout);
     return I2C_read_blocking(ls);
 }
 

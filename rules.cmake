@@ -60,9 +60,9 @@ configure_file("${MLUA_PATH}/core/luaconf.in.h"
 function(mlua_add_compile_options)
     add_compile_options(
         -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
-        -Wno-unused-function -Wno-unused-parameter
+        -Wno-unused-function -Wno-unused-parameter -Wno-type-limits
         # For Debug builds:
-        # -Wno-maybe-uninitialized -Wno-type-limits
+        # -Wno-maybe-uninitialized
     )
 endfunction()
 
