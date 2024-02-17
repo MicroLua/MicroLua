@@ -10,7 +10,7 @@ local config = require 'mlua.config'
 local list = require 'mlua.list'
 local testing_uart = require 'mlua.testing.uart'
 local thread = require 'mlua.thread'
-local time = require 'pico.time'
+local time = require 'mlua.time'
 local string = require 'string'
 
 function test_strict(t)
@@ -63,9 +63,9 @@ function test_blocking_write_read_BNB(t)
     t:expect(t:expr(inst):is_writable()):eq(true)
     t:expect(t:expr(inst):is_tx_busy()):eq(false)
     t:expect(t:expr(inst):is_readable()):eq(false)
-    local start = time.get_absolute_time()
+    local start = time.ticks()
     local got = inst:is_readable_within_us(1000)
-    local now = time.get_absolute_time()
+    local now = time.ticks()
     t:expect(got):label("is_readable_within_us()"):eq(false)
     t:expect(now - start):label("is_readable_within_us() duration"):gte(1000)
 
@@ -76,9 +76,9 @@ function test_blocking_write_read_BNB(t)
     t:expect(t:expr(inst):is_tx_busy()):eq(false)
 
     t:expect(t:expr(inst):is_readable()):eq(true)
-    local start = time.get_absolute_time()
+    local start = time.ticks()
     local got = inst:is_readable_within_us(1000000)
-    local now = time.get_absolute_time()
+    local now = time.ticks()
     t:expect(got):label("is_readable_within_us()"):eq(true)
     t:expect(now - start):label("is_readable_within_us() duration"):lt(100)
 

@@ -8,7 +8,7 @@ local addressmap = require 'hardware.regs.addressmap'
 local psm = require 'hardware.regs.psm'
 local regs = require 'hardware.regs.watchdog'
 local watchdog = require 'hardware.watchdog'
-local time = require 'pico.time'
+local time = require 'mlua.time'
 
 -- Return true iff the watchdog is enabled.
 local function is_enabled()
@@ -50,7 +50,7 @@ function test_watchdog(t)
     t:expect(t:expr(watchdog).get_count()):gt(0)
     t:expect(scratch4()):label("SCRATCH4"):eq(0x6ab73121)
     watchdog.update()
-    time.sleep_ms(1)
+    time.sleep_for(1000)
     t:expect(t:expr(watchdog).caused_reboot()):eq(true)
     t:expect(t:expr(watchdog).enable_caused_reboot()):eq(true)
 end

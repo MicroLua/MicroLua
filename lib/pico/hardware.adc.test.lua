@@ -5,7 +5,7 @@ _ENV = module(...)
 
 local adc = require 'hardware.adc'
 local thread = require 'mlua.thread'
-local time = require 'pico.time'
+local time = require 'mlua.time'
 
 local function to_celsius(value)
     return 27.0 - (value * (3.3 / (1 << 12)) - 0.706) / 0.001721
@@ -25,7 +25,7 @@ function test_polling(t)
         local temp = to_celsius(adc.read())
         t:expect(minT <= temp and temp <= maxT,
                  "Temperature outside of [%.1f, %.1f]: %.1f", minT, maxT, temp)
-        time.sleep_ms(1)
+        time.sleep_for(1000)
     end
 end
 
@@ -46,7 +46,7 @@ function test_fifo_BNB(t)
     end
     adc.run(true)
     t:cleanup(function() adc.run(false) end)
-    time.sleep_ms(5)
+    time.sleep_for(5000)
     t:expect(not adc.fifo_is_empty(), "FIFO remains empty")
     t:expect(adc.fifo_get_level() ~= 0, "FIFO level remains 0")
 

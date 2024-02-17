@@ -79,7 +79,7 @@ mlua_add_lua_modules(mlua_test_hardware.adc hardware.adc.test.lua)
 target_link_libraries(mlua_test_hardware.adc INTERFACE
     mlua_mod_hardware.adc
     mlua_mod_mlua.thread
-    mlua_mod_pico.time
+    mlua_mod_mlua.time
 )
 
 mlua_add_c_module(mlua_mod_hardware.base hardware.base.c)
@@ -347,7 +347,7 @@ target_link_libraries(mlua_test_hardware.uart INTERFACE
     mlua_mod_mlua.list
     mlua_mod_mlua.testing.uart
     mlua_mod_mlua.thread
-    mlua_mod_pico.time
+    mlua_mod_mlua.time
     mlua_mod_string
 )
 
@@ -376,7 +376,7 @@ target_link_libraries(mlua_test_hardware.watchdog INTERFACE
     mlua_mod_hardware.regs.psm
     mlua_mod_hardware.regs.watchdog
     mlua_mod_hardware.watchdog
-    mlua_mod_pico.time
+    mlua_mod_mlua.time
 )
 
 mlua_add_c_module(mlua_mod_hardware.xosc hardware.xosc.c)
@@ -548,8 +548,8 @@ mlua_add_lua_modules(mlua_test_pico.platform pico.platform.test.lua)
 target_link_libraries(mlua_test_pico.platform INTERFACE
     mlua_mod_hardware.clocks
     mlua_mod_math
+    mlua_mod_mlua.time
     mlua_mod_pico.platform
-    mlua_mod_pico.time
 )
 
 mlua_add_c_module(mlua_mod_pico.stdio pico.stdio.c)

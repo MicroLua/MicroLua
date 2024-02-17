@@ -41,7 +41,7 @@ both.
   in each core. They don't share state except through C libraries.
 - **Cooperative multithreading through Lua coroutines:** MicroLua implements
   cooperative threads as coroutines. This enables multitasking without the need
-  for locks. Blocking library calls (e.g. `pico.time.sleep_us()`) yield to
+  for locks. Blocking library calls (e.g. `mlua.time.sleep_for()`) yield to
   other threads.
 - **Thin bindings to C libraries:** MicroLua exposes a growing subset of the
   functionality provided by the Pico SDK. The bindings are designed with a
