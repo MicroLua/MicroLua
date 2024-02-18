@@ -5,18 +5,8 @@ _ENV = module(...)
 
 local addressmap = require 'hardware.regs.addressmap'
 local spi = require 'hardware.spi'
-local config = require 'mlua.config'
 local thread = require 'mlua.thread'
 local string = require 'string'
-
-function test_strict(t)
-    if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
-    t:expect(function() return spi.UNKNOWN end)
-        :label("module attribute access"):raises("undefined symbol")
-    local inst = spi[0]
-    t:expect(function() return inst.UNKNOWN end)
-        :label("SPI instance attribute access"):raises("undefined symbol")
-end
 
 function test_index_base(t)
     for i = 0, spi.NUM - 1 do

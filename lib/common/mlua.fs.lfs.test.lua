@@ -107,12 +107,6 @@ function test_rename(t)
     t:expect(t:expr(dfs):stat('/dir-new')):neq(nil)
 end
 
-function test_migrate(t)
-    if not dfs.migrate then t:skip("LFS_MIGRATE undefined") end
-    -- Testing this requires an existing LFS1 filesystem, which I don't happen
-    -- to have at hand. So I'm going to trust visual inspection for now.
-end
-
 function test_file(t)
     do
         local f<close> = assert(dfs:open('/file', fs.O_WRONLY | fs.O_CREAT))

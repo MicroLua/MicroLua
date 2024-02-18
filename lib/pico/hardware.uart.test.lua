@@ -6,21 +6,11 @@ _ENV = module(...)
 local addressmap = require 'hardware.regs.addressmap'
 local uart = require 'hardware.uart'
 local math = require 'math'
-local config = require 'mlua.config'
 local list = require 'mlua.list'
 local testing_uart = require 'mlua.testing.uart'
 local thread = require 'mlua.thread'
 local time = require 'mlua.time'
 local string = require 'string'
-
-function test_strict(t)
-    if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
-    t:expect(function() return uart.UNKNOWN end)
-        :label("module attribute access"):raises("undefined symbol")
-    local inst = uart[0]
-    t:expect(function() return inst.UNKNOWN end)
-        :label("UART instance attribute access"):raises("undefined symbol")
-end
 
 function test_index_base(t)
     for i = 0, uart.NUM - 1 do

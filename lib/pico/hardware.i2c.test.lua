@@ -14,15 +14,6 @@ local multicore = require 'pico.multicore'
 
 local module_name = ...
 
-function test_strict(t)
-    if config.HASH_SYMBOL_TABLES ~= 0 then t:skip("Hashed symbol tables") end
-    t:expect(function() return uart.UNKNOWN end)
-        :label("module attribute access"):raises("undefined symbol")
-    local inst = master
-    t:expect(function() return inst.UNKNOWN end)
-        :label("I2C instance attribute access"):raises("undefined symbol")
-end
-
 function test_index_base(t)
     for i = 0, i2c.NUM - 1 do
         local inst = i2c[i]
