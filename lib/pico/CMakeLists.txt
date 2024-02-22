@@ -191,6 +191,17 @@ target_link_libraries(mlua_test_hardware.irq INTERFACE
     mlua_mod_string
 )
 
+mlua_add_c_module(mlua_mod_hardware.pio hardware.pio.c)
+target_link_libraries(mlua_mod_hardware.pio INTERFACE
+    hardware_pio
+)
+
+mlua_add_lua_modules(mlua_test_hardware.pio hardware.pio.test.lua)
+target_link_libraries(mlua_test_hardware.pio INTERFACE
+    mlua_mod_hardware.pio
+    mlua_mod_hardware.regs.addressmap
+)
+
 mlua_add_c_module(mlua_mod_hardware.pll hardware.pll.c)
 target_link_libraries(mlua_mod_hardware.pll INTERFACE
     hardware_pll
