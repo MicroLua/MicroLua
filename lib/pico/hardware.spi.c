@@ -306,14 +306,14 @@ MLUA_SYMBOLS(SPI_syms) = {
 };
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_V(NUM, integer, NUM_SPIS),
+    MLUA_SYM_V(_default, boolean, false),
     MLUA_SYM_V(CPHA_0, integer, SPI_CPHA_0),
     MLUA_SYM_V(CPHA_1, integer, SPI_CPHA_1),
     MLUA_SYM_V(CPOL_0, integer, SPI_CPOL_0),
     MLUA_SYM_V(CPOL_1, integer, SPI_CPOL_1),
     MLUA_SYM_V(LSB_FIRST, integer, SPI_LSB_FIRST),
     MLUA_SYM_V(MSB_FIRST, integer, SPI_MSB_FIRST),
-    MLUA_SYM_V(NUM, integer, NUM_SPIS),
-    MLUA_SYM_V(_default, boolean, false),
 };
 
 MLUA_OPEN_MODULE(hardware.spi) {

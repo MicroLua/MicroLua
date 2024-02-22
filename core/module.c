@@ -163,8 +163,7 @@ static int hashed_index(lua_State* ls) {
         return 1;
     }
     if (lua_toboolean(ls, lua_upvalueindex(5))) return mlua_index_undefined(ls);
-    lua_pushnil(ls);
-    return 1;
+    return 0;
 }
 
 static int key_bits(uint16_t nkeys) {
@@ -185,8 +184,8 @@ static void set_hashed_metatable(lua_State* ls, MLuaSymH const* fields, int cnt,
     lua_pushlightuserdata(ls, (void*)h);
     lua_pushlightuserdata(ls, (void*)g);
     lua_pushinteger(ls, key_bits(h->nkeys));
-    lua_pushboolean(ls, strict);
-    lua_pushcclosure(ls, &hashed_index, 5);
+    if (strict) lua_pushboolean(ls, strict);
+    lua_pushcclosure(ls, &hashed_index, strict ? 5 : 4);
     lua_setfield(ls, -2, "__index");
     lua_setmetatable(ls, -2);
 }

@@ -332,14 +332,14 @@ MLUA_SYMBOLS(UART_syms) = {
 };
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_V(NUM, integer, NUM_UARTS),
+    MLUA_SYM_V(_default, boolean, false),
     MLUA_SYM_V(ENABLE_CRLF_SUPPORT, boolean, PICO_UART_ENABLE_CRLF_SUPPORT),
     MLUA_SYM_V(DEFAULT_CRLF, boolean, PICO_UART_DEFAULT_CRLF),
     MLUA_SYM_V(DEFAULT_BAUD_RATE, boolean, PICO_DEFAULT_UART_BAUD_RATE),
     MLUA_SYM_V(PARITY_NONE, integer, UART_PARITY_NONE),
     MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
-    MLUA_SYM_V(NUM, integer, NUM_UARTS),
-    MLUA_SYM_V(_default, boolean, false),
     // uart_default_tx_wait_blocking: Use default.tx_wait_blocking() instead
 };
 

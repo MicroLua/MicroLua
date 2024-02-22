@@ -37,16 +37,16 @@ static int Config_top(lua_State* ls) {
     return lua_pushinteger(ls, cfg->top), 1;
 }
 
-MLUA_FUNC_V2(Config_, pwm_config_, set_phase_correct, check_Config,
+MLUA_FUNC_S2(Config_, pwm_config_, set_phase_correct, check_Config,
              mlua_to_cbool)
-MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
-MLUA_FUNC_V(Config_, pwm_config_, set_clkdiv_int_frac, check_Config(ls, 1),
+MLUA_FUNC_S2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
+MLUA_FUNC_S(Config_, pwm_config_, set_clkdiv_int_frac, check_Config(ls, 1),
             luaL_checkinteger(ls, 2), luaL_optinteger(ls, 3, 0));
-MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
+MLUA_FUNC_S2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
              luaL_checkinteger)
-MLUA_FUNC_V3(Config_, pwm_config_, set_output_polarity, check_Config,
+MLUA_FUNC_S3(Config_, pwm_config_, set_output_polarity, check_Config,
              mlua_to_cbool, mlua_to_cbool)
-MLUA_FUNC_V2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
+MLUA_FUNC_S2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
 
 #define Config_set_clkdiv_int Config_set_clkdiv_int_frac
 
