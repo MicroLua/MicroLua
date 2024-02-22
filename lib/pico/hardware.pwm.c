@@ -10,17 +10,58 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
-char const Config_name[] = "hardware.pwm.Config";
-
 static uint check_slice(lua_State* ls, int arg) {
     uint num = luaL_checkinteger(ls, arg);
     luaL_argcheck(ls, num < NUM_PWM_SLICES, arg, "invalid PWM slice number");
     return num;
 }
 
+static char const Config_name[] = "hardware.pwm.Config";
+
 static inline pwm_config* check_Config(lua_State* ls, int arg) {
     return (pwm_config*)luaL_checkudata(ls, arg, Config_name);
 }
+
+static int Config_csr(lua_State* ls) {
+    pwm_config const* cfg = check_Config(ls, 1);
+    return lua_pushinteger(ls, cfg->csr), 1;
+}
+
+static int Config_div(lua_State* ls) {
+    pwm_config const* cfg = check_Config(ls, 1);
+    return lua_pushinteger(ls, cfg->div), 1;
+}
+
+static int Config_top(lua_State* ls) {
+    pwm_config const* cfg = check_Config(ls, 1);
+    return lua_pushinteger(ls, cfg->top), 1;
+}
+
+MLUA_FUNC_V2(Config_, pwm_config_, set_phase_correct, check_Config,
+             mlua_to_cbool)
+MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
+MLUA_FUNC_V(Config_, pwm_config_, set_clkdiv_int_frac, check_Config(ls, 1),
+            luaL_checkinteger(ls, 2), luaL_optinteger(ls, 3, 0));
+MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
+             luaL_checkinteger)
+MLUA_FUNC_V3(Config_, pwm_config_, set_output_polarity, check_Config,
+             mlua_to_cbool, mlua_to_cbool)
+MLUA_FUNC_V2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
+
+#define Config_set_clkdiv_int Config_set_clkdiv_int_frac
+
+MLUA_SYMBOLS(Config_syms) = {
+    MLUA_SYM_F(csr, Config_),
+    MLUA_SYM_F(div, Config_),
+    MLUA_SYM_F(top, Config_),
+    MLUA_SYM_F(set_phase_correct, Config_),
+    MLUA_SYM_F(set_clkdiv, Config_),
+    MLUA_SYM_F(set_clkdiv_int_frac, Config_),
+    MLUA_SYM_F(set_clkdiv_int, Config_),
+    MLUA_SYM_F(set_clkdiv_mode, Config_),
+    MLUA_SYM_F(set_output_polarity, Config_),
+    MLUA_SYM_F(set_wrap, Config_),
+};
 
 static int mod_get_default_config(lua_State* ls) {
     pwm_config* cfg = lua_newuserdatauv(ls, sizeof(pwm_config), 0);
@@ -114,17 +155,6 @@ static int mod_clear_irq(lua_State* ls) {
     return 0;
 }
 
-MLUA_FUNC_V2(Config_, pwm_config_, set_phase_correct, check_Config,
-             mlua_to_cbool)
-MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv, check_Config, luaL_checknumber)
-MLUA_FUNC_V(Config_, pwm_config_, set_clkdiv_int_frac, check_Config(ls, 1),
-            luaL_checkinteger(ls, 2), luaL_optinteger(ls, 3, 0));
-MLUA_FUNC_V2(Config_, pwm_config_, set_clkdiv_mode, check_Config,
-             luaL_checkinteger)
-MLUA_FUNC_V3(Config_, pwm_config_, set_output_polarity, check_Config,
-             mlua_to_cbool, mlua_to_cbool)
-MLUA_FUNC_V2(Config_, pwm_config_, set_wrap, check_Config, luaL_checkinteger)
-
 MLUA_FUNC_R1(mod_, pwm_, gpio_to_slice_num, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_R1(mod_, pwm_, gpio_to_channel, lua_pushinteger, luaL_checkinteger)
 MLUA_FUNC_V3(mod_, pwm_, init, check_slice, check_Config, mlua_to_cbool)
@@ -152,18 +182,6 @@ MLUA_FUNC_V2(mod_, pwm_, set_irq_mask_enabled, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_R0(mod_, pwm_, get_irq_status_mask, lua_pushinteger)
 MLUA_FUNC_V1(mod_, pwm_, force_irq, check_slice)
 MLUA_FUNC_R1(mod_, pwm_, get_dreq, lua_pushinteger, check_slice)
-
-#define Config_set_clkdiv_int Config_set_clkdiv_int_frac
-
-MLUA_SYMBOLS(Config_syms) = {
-    MLUA_SYM_F(set_phase_correct, Config_),
-    MLUA_SYM_F(set_clkdiv, Config_),
-    MLUA_SYM_F(set_clkdiv_int_frac, Config_),
-    MLUA_SYM_F(set_clkdiv_int, Config_),
-    MLUA_SYM_F(set_clkdiv_mode, Config_),
-    MLUA_SYM_F(set_output_polarity, Config_),
-    MLUA_SYM_F(set_wrap, Config_),
-};
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(DIV_FREE_RUNNING, integer, PWM_DIV_FREE_RUNNING),
@@ -207,8 +225,11 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(hardware.pwm) {
+    // Create the module.
+    mlua_new_module(ls, 0, module_syms);
+
+    // Create the Config class.
     mlua_new_class(ls, Config_name, Config_syms, true);
     lua_pop(ls, 1);
-    mlua_new_module(ls, 0, module_syms);
     return 1;
 }
