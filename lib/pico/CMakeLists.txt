@@ -202,6 +202,22 @@ target_link_libraries(mlua_test_hardware.pio INTERFACE
     mlua_mod_hardware.regs.addressmap
 )
 
+mlua_add_lua_modules(mlua_mod_hardware.pio.asm hardware.pio.asm.lua)
+target_link_libraries(mlua_mod_hardware.pio.asm INTERFACE
+    mlua_mod_hardware.pio
+    mlua_mod_mlua.oo
+    mlua_mod_string
+)
+
+mlua_add_lua_modules(mlua_test_hardware.pio.asm hardware.pio.asm.test.lua)
+target_link_libraries(mlua_test_hardware.pio.asm INTERFACE
+    mlua_mod_hardware.pio
+    mlua_mod_hardware.pio.asm
+    mlua_mod_mlua.list
+    mlua_mod_mlua.util
+    mlua_mod_package
+)
+
 mlua_add_c_module(mlua_mod_hardware.pll hardware.pll.c)
 target_link_libraries(mlua_mod_hardware.pll INTERFACE
     hardware_pll
