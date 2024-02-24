@@ -7,7 +7,6 @@ local pio = require 'hardware.pio'
 local oo = require 'mlua.oo'
 local string = require 'string'
 
--- TODO: Rename label() to public(), and don't export : labels
 -- TODO: Reduce delay() to ()
 -- TODO: Add origin()
 -- TODO: Add repr()
@@ -35,7 +34,7 @@ sym_mt = {
         local self = rawget(s, 1)
         local fn = self['i_' .. k]
         return function(s, ...)
-            self:i_label(s)
+            self:i_public(s, true)
             return fn(self, ...)
         end
     end,
@@ -52,7 +51,7 @@ local env_mt = {
 
 function Program:__init(prog)
     local env = setmetatable({self}, env_mt)
-    self.labels = {}
+    self.labels = setmetatable({}, {__index = {}})
     self.ss, self.sm, self.pc = 0, 0, 0
     prog(env)  -- Collect directives and labels
     if self.pc == 0 then return error("empty program", 0) end
@@ -62,6 +61,7 @@ function Program:__init(prog)
     self.pc = nil
     self.wrap_target = self.wrap_target or 0
     self.wrap = self.wrap or #self - 1
+    setmetatable(self.labels, nil)
 end
 
 function Program:config(offset)
@@ -105,11 +105,15 @@ function Program:i_wrap()
     self.wrap = self.pc - 1
 end
 
-function Program:i_label(label)
+function Program:i_public(label, private)
     if not self.sm then return end
     label = sym_name(label)
-    if self.labels[label] then return raise(2, "duplicate label: %s", label) end
-    self.labels[label] = self.pc
+    if self.labels[label] then
+        return raise(private and 3 or 2, "duplicate label: %s", label)
+    end
+    local labels = self.labels
+    if private then labels = getmetatable(labels).__index end
+    labels[label] = self.pc
 end
 
 -- Instructions.

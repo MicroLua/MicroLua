@@ -19,7 +19,7 @@ function test_run(t)
         mov(isr, x)
         push()
         jmp(x_dec, loop)
-    start:
+    public(start)
     wrap_target()
         pull()
         mov(x, osr)
@@ -84,7 +84,7 @@ want_pio_addition = {
         0x80a0, 0xa02f, 0x80a0, 0xa047, 0x0006, 0x0046, 0x0085, 0xa0c9,
         0x8020,
     },
-    labels = {incr = 5, test = 6},
+    labels = {},
     config = function(cfg) cfg:set_wrap(0, 8) end,
 }
 
@@ -120,7 +120,7 @@ want_pio_clocked_input = {
 function pio_differential_manchester_tx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/master/pio/differential_manchester/differential_manchester.pio
     side_set(1)
-label(start)
+public(start)
 initial_high:
     out(x, 1)
     jmp(not_x, high_0)  side(1) delay(6)
@@ -145,8 +145,7 @@ want_pio_differential_manchester_tx = {
         0x6021, 0x1e24, 0xa042, 0x1600, 0x0705, 0x6021, 0x1629, 0xa042,
         0x1e05, 0x0700,
     },
-    labels = {start = 0, initial_high = 0, high_1 = 2, high_0 = 4,
-              initial_low = 5, low_1 = 7, low_0 = 9},
+    labels = {start = 0},
     config = function(cfg)
         cfg:set_wrap(0, 9)
         cfg:set_sideset(2, true, false)
@@ -155,7 +154,7 @@ want_pio_differential_manchester_tx = {
 
 function pio_differential_manchester_rx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/master/pio/differential_manchester/differential_manchester.pio
-label(start)
+public(start)
 initial_high:
     wait(1, pin, 0)     delay(11)
     jmp(pin, high_0)
@@ -182,8 +181,7 @@ want_pio_differential_manchester_rx = {
         0x2ba0, 0x00c4, 0x4021, 0x0000, 0x4141, 0x2b20, 0x00c9, 0x4041,
         0x0000, 0x4121,
     },
-    labels = {start = 0, initial_high = 0, high_1 = 2, high_0 = 4,
-              initial_low = 5, low_0 = 7, low_1 = 9},
+    labels = {start = 0},
     config = function(cfg) cfg:set_wrap(5, 9) end,
 }
 
@@ -226,8 +224,7 @@ want_pio_i2c = {
         0x6781, 0xbf42, 0x27a1, 0x12c0, 0x6026, 0x6041, 0x0022, 0x6060,
         0x60f0, 0x0050,
     },
-    labels = {do_nack = 0, do_byte = 2, bitloop = 3, entry_point = 12,
-              do_exec = 16},
+    labels = {},
     config = function(cfg)
         cfg:set_wrap(12, 17)
         cfg:set_sideset(2, true, true)
