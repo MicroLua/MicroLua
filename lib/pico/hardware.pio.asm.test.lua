@@ -15,11 +15,11 @@ local function hex8(v) return ('0x%08x'):format(v) end
 
 function test_run(t)
     local prog = asm.assemble(function(_ENV)
-    label(loop)
+    loop:
         mov(isr, x)
         push()
         jmp(x_dec, loop)
-    label(start)
+    start:
     wrap_target()
         pull()
         mov(x, osr)
@@ -71,9 +71,9 @@ function pio_addition(_ENV)
     pull()
     mov(y, osr)
     jmp(test)
-label(incr)
+incr:
     jmp(x_dec, test)
-label(test)
+test:
     jmp(y_dec, incr)
     mov(isr, invert(x))
     push()
@@ -121,22 +121,22 @@ function pio_differential_manchester_tx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/master/pio/differential_manchester/differential_manchester.pio
     side_set(1)
 label(start)
-label(initial_high)
+initial_high:
     out(x, 1)
     jmp(not_x, high_0)  side(1) delay(6)
-label(high_1)
+high_1:
     nop()
     jmp(initial_high)   side(0) delay(6)
-label(high_0)
+high_0:
     jmp(initial_low)            delay(7)
 
-label(initial_low)
+initial_low:
     out(x, 1)
     jmp(not_x, low_0)   side(0) delay(6)
-label(low_1)
+low_1:
     nop()
     jmp(initial_low)    side(1) delay(6)
-label(low_0)
+low_0:
     jmp(initial_high)           delay(7)
 end
 
@@ -156,23 +156,23 @@ want_pio_differential_manchester_tx = {
 function pio_differential_manchester_rx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/master/pio/differential_manchester/differential_manchester.pio
 label(start)
-label(initial_high)
+initial_high:
     wait(1, pin, 0)     delay(11)
     jmp(pin, high_0)
-label(high_1)
+high_1:
     in_(x, 1)
     jmp(initial_high)
-label(high_0)
+high_0:
     in_(y, 1)           delay(1)
 
 wrap_target()
-label(initial_low)
+initial_low:
     wait(0, pin, 0)     delay(11)
     jmp(pin, low_1)
-label(low_0)
+low_0:
     in_(y, 1)
     jmp(initial_high)
-label(low_1)
+low_1:
     in_(x, 1)           delay(1)
 wrap()
 end
@@ -190,13 +190,13 @@ want_pio_differential_manchester_rx = {
 function pio_i2c(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/master/pio/i2c/i2c.pio
     side_set(1, pindirs)
-label(do_nack)
+do_nack:
     jmp(y_dec, entry_point)
     irq(wait, rel(0))
 
-label(do_byte)
+do_byte:
     set(x, 7)
-label(bitloop)
+bitloop:
     out(pindirs, 1)             delay(7)
     nop()               side(1) delay(2)
     wait(1, pin, 1)             delay(4)
@@ -208,13 +208,13 @@ label(bitloop)
     wait(1, pin, 1)             delay(7)
     jmp(pin, do_nack)   side(0) delay(2)
 
-label(entry_point)
+entry_point:
 wrap_target()
     out(x, 6)
     out(y, 1)
     jmp(not_x, do_byte)
     out(null, 32)
-label(do_exec)
+do_exec:
     out(exec, 16)
     jmp(x_dec, do_exec)
 wrap()

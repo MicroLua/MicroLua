@@ -7,8 +7,10 @@ local pio = require 'hardware.pio'
 local oo = require 'mlua.oo'
 local string = require 'string'
 
+-- TODO: Rename label() to public(), and don't export : labels
+-- TODO: Reduce delay() to ()
 -- TODO: Add origin()
--- TODO: Try to implement "foo:" syntax for labels. Or shorten label() to l()
+-- TODO: Add repr()
 
 local function raise(level, format, ...)
     return error(format:format(...), level)
@@ -18,17 +20,38 @@ local Program = oo.class('Program')
 
 function assemble(prog) return Program(prog) end
 
-local env_mt = {
-    __index = function(p, k)
-        local self = p.p
+local sym_mt
+
+local function sym(p, n) return setmetatable({p, n}, sym_mt) end
+local function sym_name(s) return rawget(s, 2) end
+
+local function prefix_sym(s, p)
+    rawset(s, 2, p .. rawget(s, 2))
+    return s
+end
+
+sym_mt = {
+    __index = function(s, k)
+        local self = rawget(s, 1)
         local fn = self['i_' .. k]
-        if not fn then return k end
+        return function(s, ...)
+            self:i_label(s)
+            return fn(self, ...)
+        end
+    end,
+}
+
+local env_mt = {
+    __index = function(e, k)
+        local self = rawget(e, 1)
+        local fn = self['i_' .. k]
+        if not fn then return sym(self, k) end
         return function(...) return fn(self, ...) end
     end,
 }
 
 function Program:__init(prog)
-    local env = setmetatable({p = self}, env_mt)
+    local env = setmetatable({self}, env_mt)
     self.labels = {}
     self.ss, self.sm, self.pc = 0, 0, 0
     prog(env)  -- Collect directives and labels
@@ -62,9 +85,10 @@ function Program:i_side_set(count, ...)
         return raise(2, "invalid side_set count: %s", count)
     end
     for _, f in ipairs{...} do
-        if f == 'opt' then self.so = true
-        elseif f == 'pindirs' then self.sd = true
-        elseif f ~= nil then return raise(2, "invalid flag: %s", f) end
+        local n = sym_name(f)
+        if n == 'opt' then self.so = true
+        elseif n == 'pindirs' then self.sd = true
+        else return raise(2, "invalid flag: %s", n) end
     end
     self.ss = count
 end
@@ -83,6 +107,7 @@ end
 
 function Program:i_label(label)
     if not self.sm then return end
+    label = sym_name(label)
     if self.labels[label] then return raise(2, "duplicate label: %s", label) end
     self.labels[label] = self.pc
 end
@@ -93,6 +118,7 @@ function Program:i_word(instr, label)
     if self.pc >= 32 then return error("program too long", 2) end
     self.pc = self.pc + 1
     if self.sm then return end
+    if label then label = sym_name(label) end
     local lpc = not label and 0 or self.labels[label]
     if not lpc then return raise(2, "unknown label: %s", label) end
     self[self.pc] = instr | lpc
@@ -105,15 +131,19 @@ local jmp_conds = {not_x = 1, x_dec = 2, not_y = 3, y_dec = 4, x_not_y = 5,
 
 function Program:i_jmp(cond, label)
     local c = 0
-    if not label then label = cond else c = jmp_conds[cond] end
-    if not c then return raise(2, "invalid condition: %s", cond) end
+    if not label then label = cond
+    else
+        cond = sym_name(cond)
+        c = jmp_conds[cond]
+        if not c then return raise(2, "invalid condition: %s", cond) end
+    end
     return self:i_word(0x0000 | (c << 5), label)
 end
 
 local wait_srcs = {gpio = 0, pin = 1, irq = 2}
 
 function Program:i_wait(polarity, src, index)
-    if type(src) == 'function' then src = 'irq' end
+    src = type(src) == 'function' and 'irq' or sym_name(src)
     local s = wait_srcs[src]
     if not s then return raise(2, "invalid source: %s", src) end
     return self:i_word(0x2000 | (polarity << 7) | (s << 5) | index)
@@ -122,6 +152,7 @@ end
 local in_srcs = {pins = 0, x = 1, y = 2, null = 3, isr = 6, osr = 7}
 
 function Program:i_in_(src, bcnt)
+    src = sym_name(src)
     local s = in_srcs[src]
     if not s then return raise(2, "invalid source: %s", src) end
     if not (0 < bcnt and bcnt <= 32) then
@@ -134,6 +165,7 @@ local out_dests = {pins = 0, x = 1, y = 2, null = 3, pindirs = 4, pc = 5,
                    isr = 6, exec = 7}
 
 function Program:i_out(dest, bcnt)
+    dest = sym_name(dest)
     local d = out_dests[dest]
     if not d then return raise(2, "invalid destination: %s", dest) end
     if not (0 < bcnt and bcnt <= 32) then
@@ -153,10 +185,11 @@ end
 function Program:_push_pull_flags(...)
     local v = 1
     for _, f in ipairs{...} do
-        if f == 'iffull' then v = v | 2
-        elseif f == 'block' then v = v | 1
-        elseif f == 'noblock' then v = v & ~1
-        elseif f then return raise(4, "invalid flag: %s", f) end
+        local n = sym_name(f)
+        if n == 'iffull' then v = v | 2
+        elseif n == 'block' then v = v | 1
+        elseif n == 'noblock' then v = v & ~1
+        else return raise(4, "invalid flag: %s", n) end
     end
     return v
 end
@@ -167,6 +200,7 @@ local mov_srcs = {pins = 0, x = 1, y = 2, null = 3, status = 5, isr = 6,
                   osr = 7}
 
 function Program:i_mov(dest, src)
+    dest, src = sym_name(dest), sym_name(src)
     local d = mov_dests[dest]
     if not d then return raise(2, "invalid destination: %s", dest) end
     local op, sn = src:match('^([~:]?)(.*)$')
@@ -175,13 +209,13 @@ function Program:i_mov(dest, src)
     return self:i_word(0xa000 | (d << 5) | (o << 3) | s)
 end
 
-function Program:i_invert(v) return '~' .. v end
-function Program:i_reverse(v) return ':' .. v end
+function Program:i_invert(s) return prefix_sym(s, '~') end
+function Program:i_reverse(s) return prefix_sym(s, ':') end
 
 local irq_modes = {wait = 1, clear = 2}
 
 function Program:i_irq(mode, index)
-    if type(mode) == 'function' then mode = 'wait' end
+    mode = type(mode) == 'function' and 'wait' or sym_name(mode)
     local m = 0
     if not index then index = mode else m = irq_modes[mode] end
     if not m then return raise(2, "invalid mode: %s", mode) end
@@ -197,6 +231,7 @@ end
 local set_dests = {pins = 0, x = 1, y = 2, pindirs = 4}
 
 function Program:i_set(dest, data)
+    dest = sym_name(dest)
     local d = set_dests[dest]
     if not d then return raise(2, "invalid destination: %s", dest) end
     if (data & ~0x1f) ~= 0 then return raise(2, "invalid data: %s", data) end
