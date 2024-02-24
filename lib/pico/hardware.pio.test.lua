@@ -32,3 +32,49 @@ function test_PIO_index_base(t)
             :eq(addressmap[('PIO%s_BASE'):format(i)])
     end
 end
+
+local prog = {
+                -- loop:
+    0xa0c1,     -- 0:       mov(isr, x)
+    0x8020,     -- 1:       push()
+    0x0040,     -- 2:       jmp(x_dec, loop)
+                -- start:
+    0x80a0,     -- 3:       pull()
+    0xa027,     -- 4:       mov(x, osr)
+    0x0040,     -- 5:       jmp(x_dec, loop)
+    labels = {start = 3},
+}
+
+function test_program(t)
+    -- Load the program.
+    local inst = pio[0]
+    t:assert(t:expr(inst):can_add_program(prog)):eq(true)
+    local off = inst:add_program(prog)
+    t:expect(off):label("offset"):eq(32 - #prog)
+    t:cleanup(function() inst:remove_program(prog, off) end)
+
+    -- Claim a state machine.
+    local smi = inst:claim_unused_sm()
+    t:cleanup(function() inst:unclaim(smi) end)
+    local sm = inst:sm(smi)
+    t:expect(t:expr(sm):index()):eq(smi)
+    t:expect(t:expr(sm):is_claimed()):eq(true)
+
+    -- Configure and start the state machine.
+    local cfg = pio.get_default_sm_config()
+    cfg:set_wrap(prog.labels.start + off, #prog + off)
+    sm:init(prog.labels.start + off, cfg)
+    t:cleanup(function() sm:set_enabled(false) end)
+    sm:set_enabled(true)
+
+    -- Exercise the program.
+    for _, n in ipairs{2, 3, 5, 7, 11} do
+        t:context{n = n}
+        sm:put_blocking(n)
+        local i = n
+        while i > 0 do
+            i = i - 1
+            t:expect(t:expr(sm):get_blocking()):eq(i)
+        end
+    end
+end

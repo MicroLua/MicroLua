@@ -114,11 +114,16 @@ static int SM_ ## n(lua_State* ls) { \
 }
 
 #define SM_FUNC_V0(n) SM_FUNC_V(n)
-#define SM_FUNC_V1(n, a1) SM_FUNC_V(n, a1(ls, 1))
-#define SM_FUNC_V2(n, a1, a2) SM_FUNC_V(n, a1(ls, 1), a2(ls, 2))
-#define SM_FUNC_V3(n, a1, a2, a3) SM_FUNC_V(n, a1(ls, 1), a2(ls, 2), a3(ls, 3))
+#define SM_FUNC_V1(n, a1) SM_FUNC_V(n, a1(ls, 2))
+#define SM_FUNC_V2(n, a1, a2) SM_FUNC_V(n, a1(ls, 2), a2(ls, 3))
+#define SM_FUNC_V3(n, a1, a2, a3) SM_FUNC_V(n, a1(ls, 2), a2(ls, 3), a3(ls, 4))
 #define SM_FUNC_R0(n, ret) SM_FUNC_R(n, ret)
-#define SM_FUNC_R1(n, ret, a1) SM_FUNC_R(n, ret, a1(ls, 1))
+#define SM_FUNC_R1(n, ret, a1) SM_FUNC_R(n, ret, a1(ls, 2))
+
+static int SM_index(lua_State* ls) {
+    SM* sm = check_SM(ls, 1);
+    return lua_pushinteger(ls, sm->sm), 1;
+}
 
 static int SM_get_dreq(lua_State* ls) {
     SM* sm = check_SM(ls, 1);
@@ -164,6 +169,7 @@ SM_FUNC_V0(unclaim)
 SM_FUNC_R0(is_claimed, lua_pushboolean)
 
 MLUA_SYMBOLS(SM_syms) = {
+    MLUA_SYM_F(index, SM_),
     MLUA_SYM_F(set_config, SM_),
     MLUA_SYM_F(get_dreq, SM_),
     MLUA_SYM_F(init, SM_),
@@ -244,6 +250,80 @@ static int PIO_regs_base(lua_State* ls) {
     return 1;
 }
 
+static void to_program(lua_State* ls, pio_program_t* prog) {
+    prog->length = lua_rawlen(ls, 2);
+    if (prog->length > 32) luaL_error(ls, "program too large");
+    if (lua_getfield(ls, 2, "origin") != LUA_TNIL) {
+        prog->origin = luaL_checkinteger(ls, -1);
+    }
+    lua_pop(ls, 1);
+}
+
+static int PIO_can_add_program(lua_State* ls) {
+    PIO pio = check_PIO(ls, 1);
+    luaL_checktype(ls, 2, LUA_TTABLE);
+    pio_program_t prog;
+    to_program(ls, &prog);
+    return lua_pushboolean(ls, pio_can_add_program(pio, &prog)), 1;
+}
+
+static int PIO_can_add_program_at_offset(lua_State* ls) {
+    PIO pio = check_PIO(ls, 1);
+    luaL_checktype(ls, 2, LUA_TTABLE);
+    uint off = luaL_checkinteger(ls, 3);
+    pio_program_t prog;
+    to_program(ls, &prog);
+    lua_pushboolean(ls, pio_can_add_program_at_offset(pio, &prog, off));
+    return 1;
+}
+
+static void copy_instructions(lua_State* ls, uint8_t len, uint16_t* instr) {
+    for (uint8_t i = 0; i < len; ++i) {
+        lua_rawgeti(ls, 2, i + 1);
+        instr[i] = luaL_checkinteger(ls, -1);
+        lua_pop(ls, 1);
+    }
+}
+
+static int PIO_add_program(lua_State* ls) {
+    PIO pio = check_PIO(ls, 1);
+    luaL_checktype(ls, 2, LUA_TTABLE);
+    pio_program_t prog;
+    to_program(ls, &prog);
+    uint16_t instr[prog.length];
+    prog.instructions = instr;
+    copy_instructions(ls, prog.length, instr);
+    return lua_pushinteger(ls, pio_add_program(pio, &prog)), 1;
+}
+
+static int PIO_add_program_at_offset(lua_State* ls) {
+    PIO pio = check_PIO(ls, 1);
+    luaL_checktype(ls, 2, LUA_TTABLE);
+    uint off = luaL_checkinteger(ls, 3);
+    pio_program_t prog;
+    to_program(ls, &prog);
+    uint16_t instr[prog.length];
+    prog.instructions = instr;
+    copy_instructions(ls, prog.length, instr);
+    pio_add_program_at_offset(pio, &prog, off);
+    return 0;
+}
+
+static int PIO_remove_program(lua_State* ls) {
+    PIO pio = check_PIO(ls, 1);
+    pio_program_t prog;
+    if (lua_type(ls, 2) == LUA_TTABLE) {
+        prog.length = luaL_len(ls, 2);
+    } else if (lua_isinteger(ls, 2)) {
+        prog.length = lua_tointeger(ls, 2);
+    } else {
+        return luaL_typeerror(ls, 2, "table or integer");
+    }
+    uint off = luaL_checkinteger(ls, 3);
+    pio_remove_program(pio, &prog, off);
+    return 0;
+}
+
 MLUA_FUNC_R1(PIO_, pio_, get_index, lua_pushinteger, check_PIO)
 MLUA_FUNC_V2(PIO_, pio_, gpio_init, check_PIO, luaL_checkinteger)
 MLUA_FUNC_V1(PIO_, pio_, clear_instruction_memory, check_PIO)
@@ -268,18 +348,19 @@ MLUA_FUNC_R2(PIO_, pio_, interrupt_get, lua_pushboolean, check_PIO,
              luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, interrupt_clear, check_PIO, luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, claim_sm_mask, check_PIO, luaL_checkinteger)
-MLUA_FUNC_V2(PIO_, pio_, claim_unused_sm, check_PIO, mlua_to_cbool)
+MLUA_FUNC_R2(PIO_, pio_, claim_unused_sm, lua_pushinteger, check_PIO,
+             mlua_to_cbool)
 
 MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(sm, PIO_),
     MLUA_SYM_F(get_index, PIO_),
     MLUA_SYM_F(regs_base, PIO_),
     MLUA_SYM_F(gpio_init, PIO_),
-    // TODO: MLUA_SYM_F(can_add_program, PIO_),
-    // TODO: MLUA_SYM_F(can_add_program_at_offset, PIO_),
-    // TODO: MLUA_SYM_F(add_program, PIO_),
-    // TODO: MLUA_SYM_F(add_program_at_offset, PIO_),
-    // TODO: MLUA_SYM_F(remove_program, PIO_),
+    MLUA_SYM_F(can_add_program, PIO_),
+    MLUA_SYM_F(can_add_program_at_offset, PIO_),
+    MLUA_SYM_F(add_program, PIO_),
+    MLUA_SYM_F(add_program_at_offset, PIO_),
+    MLUA_SYM_F(remove_program, PIO_),
     MLUA_SYM_F(clear_instruction_memory, PIO_),
     MLUA_SYM_F(set_sm_mask_enabled, PIO_),
     MLUA_SYM_F(restart_sm_mask, PIO_),

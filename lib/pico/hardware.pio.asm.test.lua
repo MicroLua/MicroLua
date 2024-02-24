@@ -13,6 +13,40 @@ package.loaded['hardware.pio.asm'] = nil  -- Reduce permanent memory usage
 
 local function hex8(v) return ('0x%08x'):format(v) end
 
+function test_run(t)
+    local prog = asm.assemble(function(_ENV)
+    label(loop)
+        mov(isr, x)
+        push()
+        jmp(x_dec, loop)
+    label(start)
+    wrap_target()
+        pull()
+        mov(x, osr)
+        jmp(x_dec, loop)
+    end)
+
+    -- Load the program.
+    local inst = pio[0]
+    local off = inst:add_program(prog)
+    t:cleanup(function() inst:remove_program(prog, off) end)
+
+    -- Configure and start the state machine.
+    local sm = inst:sm(0)
+    local cfg = prog:config(off)
+    sm:init(prog.labels.start + off, cfg)
+    t:cleanup(function() sm:set_enabled(false) end)
+    sm:set_enabled(true)
+
+    -- Exercise the program.
+    local i = 7
+    sm:put_blocking(i)
+    while i > 0 do
+        i = i - 1
+        t:expect(t:expr(sm):get_blocking()):eq(i)
+    end
+end
+
 function test_assemble(t)
     for name, fn in pairs(_ENV) do
         if not name:find('^pio_') then goto continue end

@@ -7,7 +7,8 @@ local pio = require 'hardware.pio'
 local oo = require 'mlua.oo'
 local string = require 'string'
 
--- TODO: Try to implement "foo:" syntax for labels
+-- TODO: Add origin()
+-- TODO: Try to implement "foo:" syntax for labels. Or shorten label() to l()
 
 local function raise(level, format, ...)
     return error(format:format(...), level)
