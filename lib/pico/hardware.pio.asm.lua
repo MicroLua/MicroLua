@@ -7,8 +7,6 @@ local pio = require 'hardware.pio'
 local oo = require 'mlua.oo'
 local string = require 'string'
 
--- TODO: Add repr()
-
 local function raise(level, format, ...)
     return error(format:format(...), level)
 end

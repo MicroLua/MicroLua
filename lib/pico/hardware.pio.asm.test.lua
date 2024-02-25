@@ -13,6 +13,15 @@ package.loaded['hardware.pio.asm'] = nil  -- Reduce permanent memory usage
 
 local function hex8(v) return ('0x%08x'):format(v) end
 
+local function instructions(p)
+    local parts = list{'{'}
+    for i, instr in ipairs(p) do
+        parts:append(('%s0x%04x'):format(i == 1 and '' or ', ', instr))
+    end
+    parts:append('}')
+    return parts:concat()
+end
+
 function test_run(t)
     local prog = asm.assemble(function(_ENV)
     loop:
@@ -53,7 +62,7 @@ function test_assemble(t)
         t:context{program = name}
         local prog = asm.assemble(fn)
         local want = _ENV['want_' .. name]
-        t:expect(prog):label('prog'):eq(want.instr, list.eq)
+        t:expect(prog):label('instr'):fmt(instructions):eq(want.instr, list.eq)
         t:expect(t:expr(prog).labels):eq(want.labels, util.table_eq)
         t:expect(t:expr(prog).origin):eq(want.origin)
         local cfg = prog:config(0)
