@@ -8,7 +8,7 @@ local oo = require 'mlua.oo'
 local string = require 'string'
 
 -- TODO: Reduce delay() to ()
--- TODO: Add origin()
+-- TODO: Implement ~symbol
 -- TODO: Add repr()
 
 local function raise(level, format, ...)
@@ -17,7 +17,7 @@ end
 
 local Program = oo.class('Program')
 
-function assemble(prog) return Program(prog) end
+assemble = Program
 
 local sym_mt
 
@@ -68,13 +68,17 @@ function Program:config(offset)
     local cfg = pio.get_default_sm_config()
     cfg:set_wrap(self.wrap_target + offset, self.wrap + offset)
     if self.ss > 0 then
-        cfg:set_sideset(self.ss + (self.so and 1 or 0),
-                        self.so, self.sd or false)
+        cfg:set_sideset(self.ss + (self.so and 1 or 0), self.so, self.sd)
     end
     return cfg
 end
 
 -- Directives.
+
+function Program:i_origin(offset)
+    if not self.sm then return end
+    self.origin = offset
+end
 
 function Program:i_side_set(count, ...)
     if not self.sm then return end
