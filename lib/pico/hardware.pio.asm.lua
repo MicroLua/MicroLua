@@ -8,7 +8,6 @@ local oo = require 'mlua.oo'
 local string = require 'string'
 
 -- TODO: Reduce delay() to ()
--- TODO: Implement ~symbol
 -- TODO: Add repr()
 
 local function raise(level, format, ...)
@@ -38,6 +37,12 @@ sym_mt = {
             return fn(self, ...)
         end
     end,
+    __bxor = function(a, b)
+        rawset(a, 2, ('%s~%s'):format(rawget(a, 2), rawget(b, 2)))
+        return a
+    end,
+    __bnot = function(s) return prefix_sym(s, '~') end,
+    __len = function(s) return prefix_sym(s, '#') end,
 }
 
 local env_mt = {
@@ -134,8 +139,8 @@ end
 
 function Program:i_nop(o, k) return self:i_word(0xa042) end
 
-local jmp_conds = {not_x = 1, x_dec = 2, not_y = 3, y_dec = 4, x_not_y = 5,
-                   pin = 6, not_osre = 7}
+local jmp_conds = {['~x'] = 1, x_dec = 2, ['~y'] = 3, y_dec = 4, ['x~y'] = 5,
+                   pin = 6, ['~osre'] = 7}
 
 function Program:i_jmp(cond, label)
     local c = 0
@@ -183,18 +188,18 @@ function Program:i_out(dest, bcnt)
 end
 
 function Program:i_push(...)
-    return self:i_word(0x8000 | (self:_push_pull_flags(...) << 5))
+    return self:i_word(0x8000 | (self:_push_pull_flags('iffull', ...) << 5))
 end
 
 function Program:i_pull(...)
-    return self:i_word(0x8080 | (self:_push_pull_flags(...) << 5))
+    return self:i_word(0x8080 | (self:_push_pull_flags('ifempty', ...) << 5))
 end
 
-function Program:_push_pull_flags(...)
+function Program:_push_pull_flags(fe, ...)
     local v = 1
     for _, f in ipairs{...} do
         local n = sym_name(f)
-        if n == 'iffull' then v = v | 2
+        if n == fe then v = v | 2
         elseif n == 'block' then v = v | 1
         elseif n == 'noblock' then v = v & ~1
         else return raise(4, "invalid flag: %s", n) end
@@ -203,7 +208,7 @@ function Program:_push_pull_flags(...)
 end
 
 local mov_dests = {pins = 0, x = 1, y = 2, exec = 4, pc = 5, isr = 6, osr = 7}
-local mov_ops = {['~'] = 1, [':'] = 2}
+local mov_ops = {['~'] = 1, ['#'] = 2}
 local mov_srcs = {pins = 0, x = 1, y = 2, null = 3, status = 5, isr = 6,
                   osr = 7}
 
@@ -211,14 +216,11 @@ function Program:i_mov(dest, src)
     dest, src = sym_name(dest), sym_name(src)
     local d = mov_dests[dest]
     if not d then return raise(2, "invalid destination: %s", dest) end
-    local op, sn = src:match('^([~:]?)(.*)$')
+    local op, sn = src:match('^([~#]?)(.*)$')
     local o, s = mov_ops[op] or 0, mov_srcs[sn]
     if not s then return raise(2, "invalid source: %s", src) end
     return self:i_word(0xa000 | (d << 5) | (o << 3) | s)
 end
-
-function Program:i_invert(s) return prefix_sym(s, '~') end
-function Program:i_reverse(s) return prefix_sym(s, ':') end
 
 local irq_modes = {wait = 1, clear = 2}
 

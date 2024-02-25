@@ -68,7 +68,7 @@ end
 function pio_addition(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/addition/addition.pio
     pull()
-    mov(x, invert(osr))
+    mov(x, ~osr)
     pull()
     mov(y, osr)
     jmp(test)
@@ -76,7 +76,7 @@ incr:
     jmp(x_dec, test)
 test:
     jmp(y_dec, incr)
-    mov(isr, invert(x))
+    mov(isr, ~x)
     push()
 end
 
@@ -105,6 +105,40 @@ want_pio_apa102_mini = {
     end,
 }
 
+function pio_apa102_rgb555(_ENV)
+    -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/apa102/apa102.pio
+wrap_target()
+public(pixel_out)
+    pull(ifempty)
+    set(x, 2)
+colour_loop:
+    in_(osr, 5)
+    out(null, 5)
+    in_(null, 3)
+    jmp(x_dec, colour_loop)
+    in_(y, 8)
+    mov(isr, #isr)
+    out(null, 1)
+public(bit_run)
+    set(x, 31)
+bit_out:
+    set(pins, 0)
+    mov(pins, isr)              delay(6)
+    set(pins, 1)
+    in_(isr, 1)                 delay(6)
+    jmp(x_dec, bit_out)
+wrap()
+end
+
+want_pio_apa102_rgb555 = {
+    instr = {
+        0x80e0, 0xe022, 0x40e5, 0x6065, 0x4063, 0x0042, 0x4048, 0xa0d6,
+        0x6061, 0xe03f, 0xe000, 0xa606, 0xe001, 0x46c1, 0x004a,
+    },
+    labels = {pixel_out = 0, bit_run = 9},
+    config = function(cfg) cfg:set_wrap(0, 14) end,
+}
+
 function pio_clocked_input(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/clocked_input/clocked_input.pio
     wait(0, pin, 1)
@@ -124,7 +158,7 @@ function pio_differential_manchester_tx(_ENV)
 public(start)
 initial_high:
     out(x, 1)
-    jmp(not_x, high_0)  side(1) delay(6)
+    jmp(~x, high_0)     side(1) delay(6)
 high_1:
     nop()
     jmp(initial_high)   side(0) delay(6)
@@ -133,7 +167,7 @@ high_0:
 
 initial_low:
     out(x, 1)
-    jmp(not_x, low_0)   side(0) delay(6)
+    jmp(~x, low_0)      side(0) delay(6)
 low_1:
     nop()
     jmp(initial_low)    side(1) delay(6)
@@ -211,7 +245,7 @@ entry_point:
 wrap_target()
     out(x, 6)
     out(y, 1)
-    jmp(not_x, do_byte)
+    jmp(~x, do_byte)
     out(null, 32)
 do_exec:
     out(exec, 16)
@@ -286,10 +320,10 @@ sample_pins:
     mov(pc, isr)
 
 increment:
-    mov(y, invert(y))
+    mov(y, ~y)
     jmp(y_dec, increment_cont)
 increment_cont:
-    mov(y, invert(y))
+    mov(y, ~y)
 wrap()
 end
 
