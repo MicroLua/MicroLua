@@ -7,7 +7,6 @@ local pio = require 'hardware.pio'
 local oo = require 'mlua.oo'
 local string = require 'string'
 
--- TODO: Reduce delay() to ()
 -- TODO: Add repr()
 
 local function raise(level, format, ...)
@@ -61,7 +60,7 @@ function Program:__init(prog)
     prog(env)  -- Collect directives and labels
     if self.pc == 0 then return error("empty program", 0) end
     self.so = self.ss > 0 and (self.so or self.sm ~= (1 << self.pc) - 1) or nil
-    self.pc, self.sm = 0
+    self.pc, self.sm = 0, nil
     prog(env)  -- Generate code
     self.pc = nil
     self.wrap_target = self.wrap_target or 0
@@ -130,11 +129,13 @@ end
 function Program:i_word(instr, label)
     if self.pc >= 32 then return error("program too long", 2) end
     self.pc = self.pc + 1
-    if self.sm then return end
-    if label then label = sym_name(label) end
-    local lpc = not label and 0 or self.labels[label]
-    if not lpc then return raise(2, "unknown label: %s", label) end
-    self[self.pc] = instr | lpc
+    if not self.sm then
+        if label then label = sym_name(label) end
+        local lpc = not label and 0 or self.labels[label]
+        if not lpc then return raise(2, "unknown label: %s", label) end
+        self[self.pc] = instr | lpc
+    end
+    return function(value) return self:_delay(value) end
 end
 
 function Program:i_nop(o, k) return self:i_word(0xa042) end
@@ -257,15 +258,15 @@ function Program:i_side(value)
     if value > m then return raise(2, "invalid sideset: %s", value) end
     if self.sm then
         self.sm = self.sm | (1 << (self.pc - 1))
-        return
+    else
+        local shift = 13 - (self.ss + (self.so and 1 or 0))
+        self[self.pc] = (self[self.pc] & ~(m << shift))
+                        | (self.so and 0x1000 or 0) | (value << shift)
     end
-    local shift = 13 - (self.ss + (self.so and 1 or 0))
-    self[self.pc] = (self[self.pc] & ~(m << shift)) | (self.so and 0x1000 or 0)
-                    | (value << shift)
+    return function(value) return self:_delay(value) end
 end
 
-function Program:i_delay(value)
-    if self.pc == 0 then return error("delay() before first instruction", 2) end
+function Program:_delay(value)
     if self.sm then return end
     local m = 0x1f >> (self.ss + (self.so and 1 or 0))
     if value & ~m ~= 0 then return raise(2, "invalid delay: %s", value) end

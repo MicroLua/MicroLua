@@ -123,9 +123,9 @@ public(bit_run)
     set(x, 31)
 bit_out:
     set(pins, 0)
-    mov(pins, isr)              delay(6)
+    mov(pins, isr)          (6)
     set(pins, 1)
-    in_(isr, 1)                 delay(6)
+    in_(isr, 1)             (6)
     jmp(x_dec, bit_out)
 wrap()
 end
@@ -158,21 +158,21 @@ function pio_differential_manchester_tx(_ENV)
 public(start)
 initial_high:
     out(x, 1)
-    jmp(~x, high_0)     side(1) delay(6)
+    jmp(~x, high_0)     side(1) (6)
 high_1:
     nop()
-    jmp(initial_high)   side(0) delay(6)
+    jmp(initial_high)   side(0) (6)
 high_0:
-    jmp(initial_low)            delay(7)
+    jmp(initial_low)            (7)
 
 initial_low:
     out(x, 1)
-    jmp(~x, low_0)      side(0) delay(6)
+    jmp(~x, low_0)      side(0) (6)
 low_1:
     nop()
-    jmp(initial_low)    side(1) delay(6)
+    jmp(initial_low)    side(1) (6)
 low_0:
-    jmp(initial_high)           delay(7)
+    jmp(initial_high)           (7)
 end
 
 want_pio_differential_manchester_tx = {
@@ -191,23 +191,23 @@ function pio_differential_manchester_rx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/differential_manchester/differential_manchester.pio
 public(start)
 initial_high:
-    wait(1, pin, 0)     delay(11)
+    wait(1, pin, 0)     (11)
     jmp(pin, high_0)
 high_1:
     in_(x, 1)
     jmp(initial_high)
 high_0:
-    in_(y, 1)           delay(1)
+    in_(y, 1)           (1)
 
 wrap_target()
 initial_low:
-    wait(0, pin, 0)     delay(11)
+    wait(0, pin, 0)     (11)
     jmp(pin, low_1)
 low_0:
     in_(y, 1)
     jmp(initial_high)
 low_1:
-    in_(x, 1)           delay(1)
+    in_(x, 1)           (1)
 wrap()
 end
 
@@ -230,16 +230,16 @@ do_nack:
 do_byte:
     set(x, 7)
 bitloop:
-    out(pindirs, 1)             delay(7)
-    nop()               side(1) delay(2)
-    wait(1, pin, 1)             delay(4)
-    in_(pins, 1)                delay(7)
-    jmp(x_dec, bitloop) side(0) delay(7)
+    out(pindirs, 1)             (7)
+    nop()               side(1) (2)
+    wait(1, pin, 1)             (4)
+    in_(pins, 1)                (7)
+    jmp(x_dec, bitloop) side(0) (7)
 
-    out(pindirs, 1)             delay(7)
-    nop()               side(1) delay(7)
-    wait(1, pin, 1)             delay(7)
-    jmp(pin, do_nack)   side(0) delay(2)
+    out(pindirs, 1)             (7)
+    nop()               side(1) (7)
+    wait(1, pin, 1)             (7)
+    jmp(pin, do_nack)   side(0) (2)
 
 entry_point:
 wrap_target()
@@ -269,10 +269,10 @@ want_pio_i2c = {
 function pio_i2c_set_scl_sda(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/i2c/i2c.pio
     side_set(1, opt)
-    set(pindirs, 0) side(0) delay(7)
-    set(pindirs, 1) side(0) delay(7)
-    set(pindirs, 0) side(1) delay(7)
-    set(pindirs, 1) side(1) delay(7)
+    set(pindirs, 0) side(0) (7)
+    set(pindirs, 1) side(0) (7)
+    set(pindirs, 0) side(1) (7)
+    set(pindirs, 1) side(1) (7)
 end
 
 want_pio_i2c_set_scl_sda = {
