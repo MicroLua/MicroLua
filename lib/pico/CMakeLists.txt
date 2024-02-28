@@ -193,13 +193,20 @@ target_link_libraries(mlua_test_hardware.irq INTERFACE
 
 mlua_add_c_module(mlua_mod_hardware.pio hardware.pio.c)
 target_link_libraries(mlua_mod_hardware.pio INTERFACE
+    hardware_base
+    hardware_irq
     hardware_pio
+    hardware_sync
+    mlua_mod_mlua.thread_headers
+    pico_platform
 )
 
 mlua_add_lua_modules(mlua_test_hardware.pio hardware.pio.test.lua)
 target_link_libraries(mlua_test_hardware.pio INTERFACE
     mlua_mod_hardware.pio
     mlua_mod_hardware.regs.addressmap
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.time
 )
 
 mlua_add_lua_modules(mlua_mod_hardware.pio.asm hardware.pio.asm.lua)

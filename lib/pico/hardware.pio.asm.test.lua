@@ -23,17 +23,7 @@ local function instructions(p)
 end
 
 function test_run(t)
-    local prog = asm.assemble(function(_ENV)
-    loop:
-        mov(isr, x)
-        push()
-        jmp(x_dec, loop)
-    public(start)
-    wrap_target()
-        pull()
-        mov(x, osr)
-        jmp(x_dec, loop)
-    end)
+    local prog = asm.assemble(pio_timer)
 
     -- Load the program.
     local inst = pio[0]
@@ -48,10 +38,8 @@ function test_run(t)
     sm:set_enabled(true)
 
     -- Exercise the program.
-    local i = 7
-    sm:put_blocking(i)
-    while i > 0 do
-        i = i - 1
+    for i = 0, 10 do
+        sm:put_blocking(1)
         t:expect(t:expr(sm):get_blocking()):eq(i)
     end
 end
@@ -73,6 +61,27 @@ function test_assemble(t)
         ::continue::
     end
 end
+
+function pio_timer(_ENV)
+public(start)
+    set(y, 0)
+    mov(y, ~y)
+wrap_target()
+delay:
+    pull()
+    mov(x, osr)
+loop:
+    jmp(x_dec, loop)
+    mov(isr, ~y)
+    push()
+    jmp(y_dec, delay)
+end
+
+want_pio_timer = {
+    instr = {0xe040, 0xa04a, 0x80a0, 0xa027, 0x0044, 0xa0ca, 0x8020, 0x0082},
+    labels = {start = 0},
+    config = function(cfg) cfg:set_wrap(2, 7) end,
+}
 
 function pio_addition(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/addition/addition.pio

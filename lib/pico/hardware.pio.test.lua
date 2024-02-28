@@ -5,6 +5,10 @@ _ENV = module(...)
 
 local pio = require 'hardware.pio'
 local addressmap = require 'hardware.regs.addressmap'
+local thread = require 'mlua.thread'
+local time = require 'mlua.time'
+
+-- TODO: Add a multicore test with Tx in one core and Rx in the other
 
 function test_config(t)
     local cfg = pio.get_default_sm_config()
@@ -33,48 +37,80 @@ function test_PIO_index_base(t)
     end
 end
 
-local prog = {
-                -- loop:
-    0xa0c1,     -- 0:       mov(isr, x)
-    0x8020,     -- 1:       push()
-    0x0040,     -- 2:       jmp(x_dec, loop)
-                -- start:
-    0x80a0,     -- 3:       pull()
-    0xa027,     -- 4:       mov(x, osr)
-    0x0040,     -- 5:       jmp(x_dec, loop)
-    labels = {start = 3},
-}
+local function setup(t, prog)
+    -- Claim a state machine.
+    local inst = pio[1]
+    local sm = inst:sm(2)
+    sm:claim();
+    t:cleanup(function()
+        sm:unclaim()
+        t:expect(t:expr(sm):is_claimed()):eq(false)
+    end)
+    t:expect(t:expr(sm):index()):eq(2)
+    t:expect(t:expr(sm):is_claimed()):eq(true)
 
-function test_program(t)
+    -- Enable IRQs if non-blocking behavior is enabled.
+    if not thread.blocking() then
+        local mask = (1 << (pio.pis_sm0_tx_fifo_not_full + sm:index()))
+                     | (1 << (pio.pis_sm0_rx_fifo_not_empty + sm:index()))
+        inst:enable_irq(mask)
+        t:cleanup(function() inst:enable_irq(mask, false) end)
+    end
+
     -- Load the program.
-    local inst = pio[0]
     t:assert(t:expr(inst):can_add_program(prog)):eq(true)
     local off = inst:add_program(prog)
     t:expect(off):label("offset"):eq(32 - #prog)
     t:cleanup(function() inst:remove_program(prog, off) end)
 
-    -- Claim a state machine.
-    local smi = inst:claim_unused_sm()
-    t:cleanup(function() inst:unclaim(smi) end)
-    local sm = inst:sm(smi)
-    t:expect(t:expr(sm):index()):eq(smi)
-    t:expect(t:expr(sm):is_claimed()):eq(true)
-
-    -- Configure and start the state machine.
     local cfg = pio.get_default_sm_config()
-    cfg:set_wrap(prog.labels.start + off, #prog + off)
-    sm:init(prog.labels.start + off, cfg)
+    cfg:set_wrap(prog.wrap_target + off, prog.wrap + off)
+    return sm, cfg, off
+end
+
+local pio_timer = {
+    0xe040, 0xa04a, 0x80a0, 0xa027, 0x0044, 0xa0ca, 0x8020, 0x0082,
+    labels = {start = 0}, wrap_target = 2, wrap = 7,
+}
+
+function test_put_BNB(t)
+    local sm, cfg, off = setup(t, pio_timer)
+    cfg:set_clkdiv_int_frac(250)
+    sm:init(pio_timer.labels.start + off, cfg)
     t:cleanup(function() sm:set_enabled(false) end)
     sm:set_enabled(true)
 
     -- Exercise the program.
-    for _, n in ipairs{2, 3, 5, 7, 11} do
-        t:context{n = n}
-        sm:put_blocking(n)
-        local i = n
-        while i > 0 do
-            i = i - 1
-            t:expect(t:expr(sm):get_blocking()):eq(i)
-        end
+    local ticks = time.ticks
+    for _, delay in ipairs{500, 1000, 2000} do
+        sm:clear_fifos()
+        local t1 = ticks()
+        sm:put_blocking(delay)  -- Consumed immediately
+        sm:put_blocking(1)      -- FIFO
+        sm:put_blocking(1)      -- FIFO
+        sm:put_blocking(1)      -- FIFO
+        sm:put_blocking(1)      -- FIFO
+        sm:put_blocking(1)      -- Blocks until the delay elapses
+        local t2 = ticks()
+        t:expect(t2 - t1):label("delay"):gte(delay):lt(delay + 200)
+    end
+end
+
+function test_get_BNB(t)
+    local sm, cfg, off = setup(t, pio_timer)
+    cfg:set_clkdiv_int_frac(250)
+    sm:init(pio_timer.labels.start + off, cfg)
+    t:cleanup(function() sm:set_enabled(false) end)
+    sm:set_enabled(true)
+
+    -- Exercise the program.
+    local ticks = time.ticks
+    for i, delay in ipairs{500, 1000, 2000} do
+        local t1 = ticks()
+        sm:put_blocking(delay)
+        local v = sm:get_blocking()
+        local t2 = ticks()
+        t:expect(v):label("get_blocking()"):eq(i - 1)
+        t:expect(t2 - t1):label("delay"):gte(delay):lt(delay + 200)
     end
 end

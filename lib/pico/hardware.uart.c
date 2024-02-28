@@ -92,7 +92,7 @@ static void __time_critical_func(handle_uart_irq)(void) {
 }
 
 static int UART_enable_irq(lua_State* ls) {
-    uart_inst_t* inst = to_UART(ls, 1);
+    uart_inst_t* inst = mlua_check_UART(ls, 1);
     uint num = uart_get_index(inst);
     uint irq = UART0_IRQ + num;
     UARTState* state = &uart_state[num];

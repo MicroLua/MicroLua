@@ -45,7 +45,7 @@ typedef enum ThreadState {
 
 // Thread flags, as stored in ThreadExtra.flags.
 typedef enum ThreadFlags {
-    FLAGS_BLOCKING = 1 << 0,
+    FLAGS_BLOCKING = 1u << 0,
 } ThreadFlags;
 
 // Non-running thread stack indexes.

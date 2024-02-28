@@ -62,7 +62,7 @@ static void __time_critical_func(handle_spi_irq)(void) {
 }
 
 static int SPI_enable_irq(lua_State* ls) {
-    spi_inst_t* inst = to_SPI(ls, 1);
+    spi_inst_t* inst = check_SPI(ls, 1);
     uint num = spi_get_index(inst);
     uint irq = SPI0_IRQ + num;
     SPIState* state = &spi_state[num];
