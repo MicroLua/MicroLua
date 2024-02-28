@@ -17,6 +17,15 @@ local package = require 'package'
 local string = require 'string'
 local table = require 'table'
 
+local loaded = {}
+for n in pairs(package.loaded) do loaded[n] = true end
+
+local function unload_modules()
+    for n in pairs(package.loaded) do
+        if not loaded[n] then package.loaded[n] = nil end
+    end
+end
+
 local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
 local blocking_pat = '_BNB$'
@@ -518,8 +527,8 @@ local fn_comp = util.table_comp{1, 2}
 
 function Test:run_module(name, pat)
     pat = pat or def_func_pat
+    self:cleanup(unload_modules)
     local module = require(name)
-    self:cleanup(function() package.loaded[name] = nil end)
     local ok, fn = pcall(function() return module.set_up end)
     if ok and fn then fn(self) end
     local fns = list()
