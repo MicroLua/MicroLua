@@ -13,8 +13,6 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
-// TODO: Add callback functionality for IRQs
-
 static inline PIO get_pio_instance(uint num) {
     return num == 0 ? pio0 : pio1;
 }
@@ -161,7 +159,7 @@ typedef struct SMState {
 
 typedef struct PIOState {
     SMState sm[NUM_PIO_STATE_MACHINES];
-    MLuaEvent irq_event[NUM_PIO_STATE_MACHINES];
+    MLuaEvent irq_event[NUM_CORES];
     uint32_t mask[NUM_CORES];
     uint8_t pending[NUM_CORES];
 } PIOState;
@@ -176,8 +174,8 @@ static PIOState pio_state[NUM_PIOS];
 
 static void __time_critical_func(handle_pio_irq)(void) {
     uint num = (__get_current_exception() - VTABLE_FIRST_IRQ - PIO0_IRQ_0) / 2;
-    PIO pio = get_pio_instance(num);
-    PIOIntRegs* ir = INT_REGS(pio);
+    PIO inst = get_pio_instance(num);
+    PIOIntRegs* ir = INT_REGS(inst);
     uint32_t ints = ir->ints;
     hw_clear_bits(&ir->inte, ints);  // Mask IRQs that are firing
     PIOState* state = &pio_state[num];
@@ -192,13 +190,9 @@ static void __time_critical_func(handle_pio_irq)(void) {
     }
     uint8_t pending = (ints & SM_IRQ_MASK) >> PIO_INTR_SM0_LSB;
     if (pending != 0) {
-        state->pending[get_core_num()] |= pending;
-        for (uint i = 0; i < NUM_PIO_STATE_MACHINES; ++i) {
-            if ((pending & (1u << i)) != 0) {
-                mlua_event_set(&state->irq_event[i]);
-                // TODO: Reset pending IRQs in handler
-            }
-        }
+        uint core = get_core_num();
+        state->pending[core] |= pending;
+        mlua_event_set(&state->irq_event[core]);
     }
 }
 
@@ -207,8 +201,8 @@ static void __time_critical_func(handle_pio_irq)(void) {
 static int put_loop(lua_State* ls, bool timeout) {
     SM* sm = to_SM(ls, 1);
     if (pio_sm_is_tx_fifo_full(sm->pio, sm->sm)) {
-        PIOIntRegs* ir = INT_REGS(sm->pio);
-        hw_set_bits(&ir->inte, PIO_INTR_SM0_TXNFULL_BITS << sm->sm);
+        hw_set_bits(&INT_REGS(sm->pio)->inte,
+                    PIO_INTR_SM0_TXNFULL_BITS << sm->sm);
         return -1;
     }
     pio_sm_put(sm->pio, sm->sm, lua_tointeger(ls, 2));
@@ -219,12 +213,12 @@ static int SM_put_blocking(lua_State* ls) {
     SM* sm = check_SM(ls, 1);
     uint32_t data = luaL_checkinteger(ls, 2);
     PIOState* state = &pio_state[pio_get_index(sm->pio)];
-    MLuaEvent* event = &state->sm[sm->sm].tx_event;
+    MLuaEvent* ev = &state->sm[sm->sm].tx_event;
     if (((state->mask[get_core_num()]
             & (PIO_INTR_SM0_TXNFULL_BITS << sm->sm)) != 0)
-            && mlua_event_can_wait(ls, event)) {
+            && mlua_event_can_wait(ls, ev)) {
         lua_settop(ls, 2);
-        return mlua_event_loop(ls, event, &put_loop, 0);
+        return mlua_event_loop(ls, ev, &put_loop, 0);
     }
     pio_sm_put_blocking(sm->pio, sm->sm, data);
     return 0;
@@ -233,8 +227,8 @@ static int SM_put_blocking(lua_State* ls) {
 static int get_loop(lua_State* ls, bool timeout) {
     SM* sm = to_SM(ls, 1);
     if (pio_sm_is_rx_fifo_empty(sm->pio, sm->sm)) {
-        PIOIntRegs* ir = INT_REGS(sm->pio);
-        hw_set_bits(&ir->inte, PIO_INTR_SM0_RXNEMPTY_BITS << sm->sm);
+        hw_set_bits(&INT_REGS(sm->pio)->inte,
+                    PIO_INTR_SM0_RXNEMPTY_BITS << sm->sm);
         return -1;
     }
     return lua_pushinteger(ls, pio_sm_get(sm->pio, sm->sm)), 1;
@@ -243,12 +237,12 @@ static int get_loop(lua_State* ls, bool timeout) {
 static int SM_get_blocking(lua_State* ls) {
     SM* sm = check_SM(ls, 1);
     PIOState* state = &pio_state[pio_get_index(sm->pio)];
-    MLuaEvent* event = &state->sm[sm->sm].rx_event;
+    MLuaEvent* ev = &state->sm[sm->sm].rx_event;
     if (((state->mask[get_core_num()]
             & (PIO_INTR_SM0_RXNEMPTY_BITS << sm->sm)) != 0)
-            && mlua_event_can_wait(ls, event)) {
+            && mlua_event_can_wait(ls, ev)) {
         lua_settop(ls, 1);
-        return mlua_event_loop(ls, event, &get_loop, 0);
+        return mlua_event_loop(ls, ev, &get_loop, 0);
     }
     return lua_pushinteger(ls, pio_sm_get_blocking(sm->pio, sm->sm)), 1;
 }
@@ -445,12 +439,72 @@ static int PIO_remove_program(lua_State* ls) {
 
 #if LIB_MLUA_MOD_MLUA_THREAD
 
-static void disable_events(lua_State* ls, PIOState* state, uint32_t mask) {
-    for (int i = NUM_PIO_STATE_MACHINES - 1; i >= 0; --i) {
-        if ((mask & (PIO_INTR_SM0_BITS << i)) != 0) {
-            mlua_event_disable(ls, &state->irq_event[i]);
-        }
+static int handle_sm_irq_event_1(lua_State* ls, int status, lua_KContext ctx);
+
+static int handle_sm_irq_event(lua_State* ls) {
+    PIO inst = to_PIO(ls, lua_upvalueindex(1));
+    uint core = get_core_num();
+    PIOState* state = &pio_state[pio_get_index(inst)];
+    uint32_t save = save_and_disable_interrupts();
+    uint8_t pending = state->pending[core];
+    state->pending[core] = 0;
+    restore_interrupts(save);
+    pending &= (state->mask[core] & SM_IRQ_MASK) >> PIO_INTR_SM0_LSB;
+    if (pending != 0) {  // Call the callback
+        lua_pushvalue(ls, lua_upvalueindex(2));  // handler
+        lua_pushinteger(ls, pending);  // pending
+        lua_callk(ls, 1, 0, pending, &handle_sm_irq_event_1);
     }
+    return handle_sm_irq_event_1(ls, LUA_OK, pending);
+}
+
+static int handle_sm_irq_event_1(lua_State* ls, int status, lua_KContext ctx) {
+    PIO inst = to_PIO(ls, lua_upvalueindex(1));
+    PIOState* state = &pio_state[pio_get_index(inst)];
+    uint32_t pending = ctx;
+    hw_set_bits(&INT_REGS(inst)->inte,
+                (pending << PIO_INTR_SM0_LSB) & state->mask[get_core_num()]
+                & SM_IRQ_MASK);
+    return 0;
+}
+
+static int sm_irq_handler_done(lua_State* ls) {
+    PIO inst = to_PIO(ls, lua_upvalueindex(1));
+    PIOState* state = &pio_state[pio_get_index(inst)];
+    mlua_event_disable(ls, &state->irq_event[get_core_num()]);
+    return 0;
+}
+
+static int PIO_set_irq_callback(lua_State* ls) {
+    PIO inst = check_PIO(ls, 1);
+    PIOState* state = &pio_state[pio_get_index(inst)];
+    uint core = get_core_num();
+    MLuaEvent* ev = &state->irq_event[core];
+    if (lua_isnoneornil(ls, 2)) {  // Nil callback, kill the handler thread
+        mlua_event_stop_handler(ls, ev);
+        return 0;
+    }
+
+    // Set the callback.
+    if (!mlua_event_enable(ls, ev)) {
+        return luaL_error(ls, "PIO%d: SM IRQ callback already set",
+                          pio_get_index(inst));
+    }
+    uint32_t save = save_and_disable_interrupts();
+    state->pending[core] = 0;
+    restore_interrupts(save);
+    hw_set_bits(&INT_REGS(inst)->inte, state->mask[core] & SM_IRQ_MASK);
+
+    // Start the event handler thread.
+    lua_pushvalue(ls, 1);  // PIO
+    lua_pushvalue(ls, 2);  // handler
+    lua_pushcclosure(ls, &handle_sm_irq_event, 2);
+    lua_pushvalue(ls, 1);  // PIO
+    lua_pushcclosure(ls, &sm_irq_handler_done, 1);
+    return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
+}
+
+static void disable_events(lua_State* ls, PIOState* state, uint32_t mask) {
     for (int i = NUM_PIO_STATE_MACHINES - 1; i >= 0; --i) {
         SMState* sm = &state->sm[i];
         if ((mask & (PIO_INTR_SM0_TXNFULL_BITS << i)) != 0) {
@@ -470,7 +524,7 @@ static void enable_events(lua_State* ls, PIOState* state, uint32_t mask) {
         if ((mask & b) != 0) {
             if (!mlua_event_enable(ls, &sm->rx_event)) {
                 disable_events(ls, state, done);
-                luaL_error(ls, "PIO%d SM%d Rx IRQ already enabled",
+                luaL_error(ls, "PIO%d: SM%d Rx IRQ already enabled",
                            state - pio_state, i);
                 return;
             }
@@ -480,19 +534,7 @@ static void enable_events(lua_State* ls, PIOState* state, uint32_t mask) {
         if ((mask & b) != 0) {
             if (!mlua_event_enable(ls, &sm->tx_event)) {
                 disable_events(ls, state, done);
-                luaL_error(ls, "PIO%d SM%d Tx IRQ already enabled",
-                           state - pio_state, i);
-                return;
-            }
-            done |= b;
-        }
-    }
-    for (uint i = 0; i < NUM_PIO_STATE_MACHINES; ++i) {
-        uint32_t b = PIO_INTR_SM0_BITS << i;
-        if ((mask & b) != 0) {
-            if (!mlua_event_enable(ls, &state->irq_event[i])) {
-                disable_events(ls, state, done);
-                luaL_error(ls, "PIO%d IRQ%d already enabled",
+                luaL_error(ls, "PIO%d: SM%d Tx IRQ already enabled",
                            state - pio_state, i);
                 return;
             }
@@ -512,9 +554,8 @@ static int PIO_enable_irq(lua_State* ls) {
         uint core = get_core_num();
         mask &= state->mask[core];
         if (mask == 0) return 0;
-        uint32_t save = save_and_disable_interrupts();
         state->mask[core] &= ~mask;
-        restore_interrupts(save);
+        hw_clear_bits(&INT_REGS(inst)->inte, mask & SM_IRQ_MASK);
         if (state->mask[core] == 0) {
             irq_set_enabled(irq, false);
             irq_remove_handler(irq, &handle_pio_irq);
@@ -528,17 +569,25 @@ static int PIO_enable_irq(lua_State* ls) {
     mask &= ~state->mask[core];
     if (mask == 0) return 0;
     enable_events(ls, state, mask);
-    uint32_t save = save_and_disable_interrupts();
     state->mask[core] |= mask;
-    restore_interrupts(save);
     if (state->mask[core] == mask) {
         mlua_event_set_irq_handler(irq, &handle_pio_irq, priority);
         irq_set_enabled(irq, true);
     }
+    hw_set_bits(&INT_REGS(inst)->inte, mask & SM_IRQ_MASK);
     return 0;
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD
+
+static int PIO_interrupt_get_mask(lua_State* ls) {
+    return lua_pushinteger(ls, check_PIO(ls, 1)->irq), 1;
+}
+
+static int PIO_interrupt_clear_mask(lua_State* ls) {
+    check_PIO(ls, 1)->irq = luaL_checkinteger(ls, 2);
+    return 0;
+}
 
 MLUA_FUNC_R1(PIO_, pio_, get_index, lua_pushinteger, check_PIO)
 MLUA_FUNC_V2(PIO_, pio_, gpio_init, check_PIO, luaL_checkinteger)
@@ -589,9 +638,16 @@ MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(set_irqn_source_enabled, PIO_),
     MLUA_SYM_F(set_irqn_source_mask_enabled, PIO_),
     MLUA_SYM_F(interrupt_get, PIO_),
+    MLUA_SYM_F(interrupt_get_mask, PIO_),
     MLUA_SYM_F(interrupt_clear, PIO_),
+    MLUA_SYM_F(interrupt_clear_mask, PIO_),
     MLUA_SYM_F(claim_sm_mask, PIO_),
     MLUA_SYM_F(claim_unused_sm, PIO_),
+#if LIB_MLUA_MOD_MLUA_THREAD
+    MLUA_SYM_F(set_irq_callback, PIO_),
+#else
+    MLUA_SYM_V(set_irq_callback, boolean, false),
+#endif
 #if LIB_MLUA_MOD_MLUA_THREAD
     MLUA_SYM_F(enable_irq, PIO_),
 #else
@@ -608,7 +664,8 @@ static int mod_get_default_sm_config(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_V(NUM, integer, NUM_SPIS),
+    MLUA_SYM_V(NUM, integer, NUM_PIOS),
+    MLUA_SYM_V(NUM_STATE_MACHINES, integer, NUM_PIO_STATE_MACHINES),
     MLUA_SYM_V(FIFO_JOIN_NONE, integer, PIO_FIFO_JOIN_NONE),
     MLUA_SYM_V(FIFO_JOIN_TX, integer, PIO_FIFO_JOIN_TX),
     MLUA_SYM_V(FIFO_JOIN_RX, integer, PIO_FIFO_JOIN_RX),

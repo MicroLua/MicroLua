@@ -205,6 +205,7 @@ mlua_add_lua_modules(mlua_test_hardware.pio hardware.pio.test.lua)
 target_link_libraries(mlua_test_hardware.pio INTERFACE
     mlua_mod_hardware.pio
     mlua_mod_hardware.regs.addressmap
+    mlua_mod_mlua.list
     mlua_mod_mlua.thread
     mlua_mod_mlua.time
 )

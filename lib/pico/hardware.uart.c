@@ -48,7 +48,7 @@ static int UART_tx_wait_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 static int UART_tx_wait_blocking(lua_State* ls) {
     uart_inst_t* inst = mlua_check_UART(ls, 1);
     if (!mlua_thread_blocking(ls)) {
-        return UART_tx_wait_blocking_1(ls, 0, (lua_KContext)inst);
+        return UART_tx_wait_blocking_1(ls, LUA_OK, (lua_KContext)inst);
     }
     uart_tx_wait_blocking(inst);
     return 0;
@@ -105,11 +105,11 @@ static int UART_enable_irq(lua_State* ls) {
         return 0;
     }
     if (!mlua_event_enable(ls, &state->rx_event)) {
-        return luaL_error(ls, "UART%d Rx IRQ already enabled", num);
+        return luaL_error(ls, "UART%d: Rx IRQ already enabled", num);
     }
     if (!mlua_event_enable(ls, &state->tx_event)) {
         mlua_event_disable(ls, &state->rx_event);
-        return luaL_error(ls, "UART%d Tx IRQ already enabled", num);
+        return luaL_error(ls, "UART%d: Tx IRQ already enabled", num);
     }
     hw_write_masked(&uart_get_hw(inst)->ifls,  // Thresholds: 1/2 FIFO capacity
                     (2 << UART_UARTIFLS_RXIFLSEL_LSB)

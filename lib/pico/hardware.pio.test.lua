@@ -5,6 +5,7 @@ _ENV = module(...)
 
 local pio = require 'hardware.pio'
 local addressmap = require 'hardware.regs.addressmap'
+local list = require 'mlua.list'
 local thread = require 'mlua.thread'
 local time = require 'mlua.time'
 
@@ -37,7 +38,7 @@ function test_PIO_index_base(t)
     end
 end
 
-local function setup(t, prog)
+local function setup(t, prog, irq_mask)
     -- Claim a state machine.
     local inst = pio[1]
     local sm = inst:sm(2)
@@ -53,6 +54,7 @@ local function setup(t, prog)
     if not thread.blocking() then
         local mask = (1 << (pio.pis_sm0_tx_fifo_not_full + sm:index()))
                      | (1 << (pio.pis_sm0_rx_fifo_not_empty + sm:index()))
+                     | ((irq_mask or 0) << pio.pis_interrupt0)
         inst:enable_irq(mask)
         t:cleanup(function() inst:enable_irq(mask, false) end)
     end
@@ -64,8 +66,8 @@ local function setup(t, prog)
     t:cleanup(function() inst:remove_program(prog, off) end)
 
     local cfg = pio.get_default_sm_config()
-    cfg:set_wrap(prog.wrap_target + off, prog.wrap + off)
-    return sm, cfg, off
+        :set_wrap(prog.wrap_target + off, prog.wrap + off)
+    return inst, sm, cfg, off
 end
 
 local pio_timer = {
@@ -74,13 +76,12 @@ local pio_timer = {
 }
 
 function test_put_BNB(t)
-    local sm, cfg, off = setup(t, pio_timer)
+    local inst, sm, cfg, off = setup(t, pio_timer)
     cfg:set_clkdiv_int_frac(250)
     sm:init(pio_timer.labels.start + off, cfg)
     t:cleanup(function() sm:set_enabled(false) end)
     sm:set_enabled(true)
 
-    -- Exercise the program.
     local ticks = time.ticks
     for _, delay in ipairs{500, 1000, 2000} do
         sm:clear_fifos()
@@ -97,13 +98,12 @@ function test_put_BNB(t)
 end
 
 function test_get_BNB(t)
-    local sm, cfg, off = setup(t, pio_timer)
+    local inst, sm, cfg, off = setup(t, pio_timer)
     cfg:set_clkdiv_int_frac(250)
     sm:init(pio_timer.labels.start + off, cfg)
     t:cleanup(function() sm:set_enabled(false) end)
     sm:set_enabled(true)
 
-    -- Exercise the program.
     local ticks = time.ticks
     for i, delay in ipairs{500, 1000, 2000} do
         local t1 = ticks()
@@ -113,4 +113,33 @@ function test_get_BNB(t)
         t:expect(v):label("get_blocking()"):eq(i - 1)
         t:expect(t2 - t1):label("delay"):gte(delay):lt(delay + 200)
     end
+end
+
+local pio_irqs = {
+    0x80a0, 0xa027, 0xc020, 0xc021, 0xc022, 0xc023, 0x0042, 0x8020,
+    labels = {start = 0}, wrap_target = 0, wrap = 7,
+}
+
+function test_irq_callback(t)
+    local inst, sm, cfg, off = setup(t, pio_irqs,
+                                     (1 << pio.NUM_STATE_MACHINES) - 1)
+    sm:init(pio_irqs.labels.start + off, cfg)
+    t:cleanup(function() sm:set_enabled(false) end)
+    sm:set_enabled(true)
+
+    local log = list()
+    inst:set_irq_callback(function(pending)
+        log:append(pending)
+        t:expect(t:expr(inst):interrupt_get_mask()):eq(pending)
+        for i = 0, pio.NUM_STATE_MACHINES - 1 do
+            t:expect(t:expr(inst):interrupt_get(i))
+                :eq((pending & (1 << i) ~= 0))
+        end
+        inst:interrupt_clear_mask(pending)
+    end)
+    t:cleanup(function() inst:set_irq_callback(nil) end)
+
+    sm:put_blocking(2)
+    sm:get_blocking()
+    t:expect(log):label("log"):eq{1, 2, 4, 8, 1, 2, 4, 8, 1, 2, 4, 8}
 end

@@ -20,7 +20,7 @@ static int handle_i2c_slave_event_1(lua_State* ls, int status,
                                     lua_KContext ctx);
 
 static int handle_i2c_slave_event(lua_State* ls) {
-    return handle_i2c_slave_event_1(ls, 0, 0);
+    return handle_i2c_slave_event_1(ls, LUA_OK, 0);
 }
 
 static int handle_i2c_slave_event_1(lua_State* ls, int status,

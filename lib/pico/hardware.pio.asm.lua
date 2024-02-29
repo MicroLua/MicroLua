@@ -68,7 +68,7 @@ end
 
 function Program:config(offset)
     local cfg = pio.get_default_sm_config()
-    cfg:set_wrap(self.wrap_target + offset, self.wrap + offset)
+        :set_wrap(self.wrap_target + offset, self.wrap + offset)
     if self.ss > 0 then
         cfg:set_sideset(self.ss + (self.so and 1 or 0), self.so, self.sd)
     end

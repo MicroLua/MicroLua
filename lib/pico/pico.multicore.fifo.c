@@ -42,7 +42,7 @@ static int mod_enable_irq(lua_State* ls) {
     uint core = get_core_num();
     if (!mlua_event_enable_irq(ls, &fifo_state[core].event,
                               SIO_IRQ_PROC0 + core, &handle_sio_irq, 1, -1)) {
-        return luaL_error(ls, "SIO[%d]: IRQ already enabled", core);
+        return luaL_error(ls, "SIO%d: IRQ already enabled", core);
     }
     return 0;
 }
@@ -52,7 +52,7 @@ static int mod_enable_irq(lua_State* ls) {
 static int mod_push_blocking_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int mod_push_blocking(lua_State* ls) {
-    if (!mlua_thread_blocking(ls)) return mod_push_blocking_1(ls, 0, 0);
+    if (!mlua_thread_blocking(ls)) return mod_push_blocking_1(ls, LUA_OK, 0);
     multicore_fifo_push_blocking(luaL_checkinteger(ls, 1));
     return 0;
 }
@@ -78,7 +78,7 @@ static int mod_push_timeout_us(lua_State* ls) {
     if (!mlua_thread_blocking(ls)) {
         lua_settop(ls, 1);
         mlua_push_timeout_time(ls, timeout);
-        return mod_push_timeout_us_1(ls, 0, 0);
+        return mod_push_timeout_us_1(ls, LUA_OK, 0);
     }
     uint32_t data = luaL_checkinteger(ls, 1);
     lua_pushboolean(ls, multicore_fifo_push_timeout_us(data, timeout));
