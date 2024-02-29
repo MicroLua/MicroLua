@@ -597,18 +597,6 @@ MLUA_FUNC_V3(PIO_, pio_, set_sm_mask_enabled, check_PIO, luaL_checkinteger,
 MLUA_FUNC_V2(PIO_, pio_, restart_sm_mask, check_PIO, luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, clkdiv_restart_sm_mask, check_PIO, luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, enable_sm_mask_in_sync, check_PIO, luaL_checkinteger)
-MLUA_FUNC_V3(PIO_, pio_, set_irq0_source_enabled, check_PIO, luaL_checkinteger,
-             mlua_to_cbool)
-MLUA_FUNC_V3(PIO_, pio_, set_irq1_source_enabled, check_PIO, luaL_checkinteger,
-             mlua_to_cbool)
-MLUA_FUNC_V3(PIO_, pio_, set_irq0_source_mask_enabled, check_PIO,
-             luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_V3(PIO_, pio_, set_irq1_source_mask_enabled, check_PIO,
-             luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_V4(PIO_, pio_, set_irqn_source_enabled, check_PIO, luaL_checkinteger,
-             luaL_checkinteger, mlua_to_cbool)
-MLUA_FUNC_V4(PIO_, pio_, set_irqn_source_mask_enabled, check_PIO,
-             luaL_checkinteger, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_R2(PIO_, pio_, interrupt_get, lua_pushboolean, check_PIO,
              luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, interrupt_clear, check_PIO, luaL_checkinteger)
@@ -631,12 +619,12 @@ MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(restart_sm_mask, PIO_),
     MLUA_SYM_F(clkdiv_restart_sm_mask, PIO_),
     MLUA_SYM_F(enable_sm_mask_in_sync, PIO_),
-    MLUA_SYM_F(set_irq0_source_enabled, PIO_),
-    MLUA_SYM_F(set_irq1_source_enabled, PIO_),
-    MLUA_SYM_F(set_irq0_source_mask_enabled, PIO_),
-    MLUA_SYM_F(set_irq1_source_mask_enabled, PIO_),
-    MLUA_SYM_F(set_irqn_source_enabled, PIO_),
-    MLUA_SYM_F(set_irqn_source_mask_enabled, PIO_),
+    // set_irq0_source_enabled: Not useful in Lua
+    // set_irq1_source_enabled: Not useful in Lua
+    // set_irq0_source_mask_enabled: Not useful in Lua
+    // set_irq1_source_mask_enabled: Not useful in Lua
+    // set_irqn_source_enabled: Not useful in Lua
+    // set_irqn_source_mask_enabled: Not useful in Lua
     MLUA_SYM_F(interrupt_get, PIO_),
     MLUA_SYM_F(interrupt_get_mask, PIO_),
     MLUA_SYM_F(interrupt_clear, PIO_),

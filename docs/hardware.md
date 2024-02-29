@@ -101,8 +101,8 @@ tests: [`hardware.gpio.test`](../lib/pico/hardware.gpio.test.lua)
   and isn't documented.
 
 - `set_irq_callback(callback) -> Thread`\
-  Set the generic callback used for GPIO IRQ events, or remove the callback if
-  `callback` is `nil`. Returns the [event handler thread](core.md#callbacks).
+  Set the generic callback used for GPIO IRQ events. Returns the
+  [event handler thread](core.md#callbacks).
 
   - `callback(gpio, event_mask)`\
     The callback to be called on GPIO IRQ events.
@@ -209,6 +209,313 @@ tests: [`hardware.irq.test`](../lib/pico/hardware.irq.test.lua)
   Remove the IRQ handler for the user IRQ `num`. Alternatively, the thread
   returned when setting the handler can be killed.
 
+## `hardware.pio`
+
+**Library:** [`hardware_pio`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pio),
+header: [`hardware/pio.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pio/include/hardware/pio.h),
+sources: [`hardware_pio`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_pio)\
+**Module:** [`hardware.pio`](../lib/pico/hardware.pio.c),
+build target: `mlua_mod_hardware.pio`,
+tests: [`hardware.pio.test`](../lib/pico/hardware.pio.test.lua)
+
+This module exposes PIO functionality. The `PIO` class is instantiated once for
+each PIO peripheral of the target, and the instances can be accessed by indexing
+the module with the instance index.
+
+- `[0]: PIO`\
+  `[1]: PIO`\
+  The `PIO` instances.
+
+- `NUM: integer`\
+  `NUM_STATE_MACHINES: integer`\
+  The number of PIO peripherals available on the target, and the number of state
+  machines per PIO peripheral.
+
+- `FIFO_JOIN_NONE: integer`\
+  `FIFO_JOIN_TX: integer`\
+  `FIFO_JOIN_RX: integer`\
+  FIFO join states.
+
+- `STATUS_TX_LESSTHAN: integer`\
+  `STATUS_RX_LESSTHAN: integer`\
+  `mov` status types.
+
+- `pis_interrupt[0-3]: integer`\
+  `pis_sm[0-3]_tx_fifo_not_full: integer`\
+  `pis_sm[0-3]_rx_fifo_not_empty: integer`\
+  Interrupt source numbers.
+
+- `get_default_sm_config() -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaf2d2a23b08ba74188160469b3fd09936))\
+  Get the default state machine configuration.
+
+### `Config`
+
+The `Config` type (`hardware.pio.Config`) contains a state machine configuration
+and encapsulates a `pio_sm_config` structure. C library functions that take a
+`pio_sm_config*` as their first argument are exposed as methods on the `Config`
+class. Setters return the `Config` so that they can be chained.
+
+- `Config:clkdiv() -> integer`\
+  `Config:execctrl() -> integer`\
+  `Config:shiftctrl() -> integer`\
+  `Config:pinctrl() -> integer`\
+  Return the corresponding field of the
+  [`pio_sm_config`](https://www.raspberrypi.com/documentation/pico-sdk/structpio__sm__config.html) structure.
+
+- `Config:set_out_pins(base, count) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaf3004bbd996443d0c841664ebc92905c))\
+  Set the "out" pins.
+
+- `Config:set_set_pins(base, count) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gada1dff2c00b7d3a1cf722880c8373424))\
+  Set the "set" pins.
+
+- `Config:set_in_pins(base) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gac418400e30520ea3961d8977c180a4f9))\
+  Set the "in" pins.
+
+- `Config:set_sideset_pins(base) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gad55bf8b410fa1d13bd1bd020587e01d7))\
+  Set the "sideset" pins.
+
+- `Config:set_sideset(count, optional, pindirs) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaf543422206a8dbdc2efea85818dd650e))\
+  Set the "sideset" options.
+
+- `Config:set_clkdiv_int_frac(int, frac = 0) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#ga365abc6d25301810ca5ee11e5b36c763))\
+  Set the state machine clock divider from integral and fractional parts (16:8).
+
+- `Config:set_clkdiv(div) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gae8c09c7a4372da95ad777faae51c5a24))\
+  Set the state machine clock divider from a floating-point value.
+
+- `Config:set_wrap(target, wrap) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gafb753e8b35bbea9209ca4399a845f89c))\
+  Set the wrap addresses.
+
+- `Config:set_jmp_pin(pin) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaf2bfc66d6427ff92519e38dcb611133b))\
+  Set the "jmp" pin.
+
+- `Config:set_in_shift(right, autopush, threshold) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaed7a6e7dc4f1979c7c62e4773df8c79b))\
+  Set up input shifting parameters.
+
+- `Config:set_out_shift(right, autopush, threshold) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#ga613bed03e10e569f1b7aede74d40a5b5))\
+  Set up output shifting parameters.
+
+- `Config:set_fifo_join(join) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gafea1a06362182514518ebd91b2d52fd5))\
+  Set up the FIFO joining. `join` is one of the `FIFO_JOIN_*` values.
+
+- `Config:set_out_special(sticky, has_enable_pin, enable_pin) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#ga8a9141ceadf9e735b1e96457865de3f6))\
+  Set special output operations.
+
+- `Config:set_mov_status(sel, n) -> Config`
+  ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gacd24870944ce2f00f3f7847bb3e5d543))\
+  Set the source for the `mov status` instruction. `sel` is one of the
+  `STATUS_*` values.
+
+### `SM`
+
+The `SM` type (`hardware.pio.SM`) represents a state machine within a PIO
+peripheral. C library functions that take a `PIO` and a state machine number as
+their first arguments are exposed as methods on the `SM` class.
+
+- `SM:index() -> integer`\
+  Return the index of the state machine.
+
+- `SM:set_config(config)`\
+  Apply a configuration to the state machine.
+
+- `SM:get_dreq(is_tx) -> integer`\
+  Return the `DREQ` to use for pacing transfers to / from a state machine's
+  FIFO.
+
+- `SM:init(pc, config)`\
+  Reset the state machine to a consistent state and configure it.
+
+- `SM:set_enabled(enabled)`\
+  Enable or disable the state machine.
+
+- `SM:restart()`\
+  Restart the state machine with a know state.
+
+- `SM:clkdiv_restart()`\
+  Restart the state machine's clock divider from a phase of 0.
+
+- `SM:get_pc() -> integer`\
+  Return the current program counter of the state machine.
+
+- `SM:exec(instr)`\
+  Immediately execute an instruction on the state machine.
+
+- `SM:is_exec_stalled() -> boolean`\
+  Return `true` iff an instruction set by `exec()` is stalled executing.
+
+- `SM:exec_wait_blocking(instr)`\
+  Immediately execute an instruction on the state machine and wait for it to
+  complete.
+
+- `SM:set_wrap(target, wrap)`\
+  Set the wrap configuration of the state machine.
+
+- `SM:set_out_pins(base, count)`\
+  Set the "out" pins of the state machine.
+
+- `SM:set_set_pins(base, count)`\
+  Set the "set" pins of the state machine.
+
+- `SM:set_in_pins(base)`\
+  Set the "in" pins of the state machine.
+
+- `SM:set_sideset_pins(base)`\
+  Set the "sideset" pins of the state machine.
+
+- `SM:put(data)`\
+  Write a word of data to the state machine's TX FIFO.
+
+- `SM:get() -> integer`\
+  Read a word of data from the state machine's RX FIFO.
+
+- `SM:is_rx_fifo_full() -> boolean`\
+  `SM:is_rx_fifo_empty() -> boolean`\
+  `SM:get_rx_fifo_level() -> integer`\
+  `SM:is_tx_fifo_full() -> boolean`\
+  `SM:is_tx_fifo_empty() -> boolean`\
+  `SM:get_tx_fifo_level() -> integer`\
+  Return level information about the state machine's RX and TX FIFOs.
+
+- `SM:put_blocking(data)` *[yields]*\
+  Write a word of data to the state machine's TX FIFO, blocking if the FIFO is
+  full. Yields if the IRQ handler is enabled for the
+  `pis_sm[n]_tx_fifo_not_full` interrupt source.
+
+- `SM:put_blocking(data)` *[yields]*\
+  Read a word of data from the state machine's RX FIFO, blocking if the FIFO is
+  empty. Yields if the IRQ handler is enabled for the
+  `pis_sm[n]_rx_fifo_not_empty` interrupt source.
+
+- `SM:drain_tx_fifo()`\
+  Empty out the state machine's TX FIFO.
+
+- `SM:set_clkdiv_int_frac(int, frac = 0)`\
+  Set the state machine's clock divider from integral and fractional parts
+  (16:8).
+
+- `SM:set_clkdiv(div)`\
+  Set the state machine's clock divider from a floating-point value.
+
+- `SM:clear_fifos()`\
+  Clear the state machine's TX and RX FIFOs.
+
+- `SM:set_pins(pin_values)`\
+  Use the state machine to set a value on all pins for the PIO instance.
+
+- `SM:set_pins_with_mask(pin_values, pin_mask)`\
+  Use the state machine to set a value on multiple pins for the PIO instance.
+
+- `SM:set_pindirs_with_mask(pin_dirs, pin_mask)`\
+  Use the state machine to set the pin directions for multiple pins for the PIO
+  instance.
+
+- `SM:set_consecutive_pindirs(base, count, is_out)`\
+  Use the state machine to set the same pin direction for multiple consecutive
+  pins for the PIO instance.
+
+- `SM:claim()`\
+  Mark the state machine as used.
+
+- `SM:unclaim()`\
+  Mark the state machine as no longer used.
+
+- `SM:is_claimed() -> boolean()`\
+  Return `true` iff the state machine is claimed.
+
+### `PIO`
+
+The `PIO` type (`hardware.pio.PIO`) represents a PIO peripheral. C library
+functions that take a `PIO` as their first argument are exposed as methods on
+the `PIO` class.
+
+TODO: Describe the structure of a program
+
+- `PIO:sm(index) -> SM`\
+  Return the state machine with the given index.
+
+- `PIO:get_index() -> integer`\
+  Return the instance number of the peripheral.
+
+- `PIO:regs_base() -> integer`\
+  Return the base address of the peripheral registers (`PIOx_BASE`).
+
+- `PIO:gpio_init(pin)`\
+  Set up the function select for the GPIO to use output from the PIO instance.
+
+- `PIO:can_add_program(program) -> boolean`\
+  `PIO:can_add_program_at_offset(program, offset) -> boolean`
+  Return `true` iff `program` can (at the time of the call) be loaded onto the
+  PIO instance.
+
+- `PIO:add_program(program) -> integer`\
+  `PIO:add_program_at_offset(program, offset)`\
+  Load `program` onto the PIO instance, returning the offset at which the
+  program was loaded.
+
+- `PIO:remove_program(program, offset)`\
+  Remove `program` from the PIO instance's instruction memory.
+
+- `PIO:clear_instruction_memory()`\
+  Clear all of the PIO instance's instruction memory.
+
+- `PIO:set_sm_mask_enabled(mask, enabled)`\
+  Enable or disable multiple state machines.
+
+- `PIO:restart_sm_mask(mask)`\
+  Restart multiple state machines with a known state.
+
+- `PIO:clkdiv_restart_sm_mask(mask)`\
+  Restart multiple state machines' clock dividers from a phase of 0.
+
+- `PIO:enable_sm_mask_in_sync(mask)`\
+  Enable multiple state machines, synchronizing their clock dividers.
+
+- `PIO:interrupt_get(num) -> boolean`\
+  `PIO:interrupt_get_mask(mask) -> integer`\
+  Determine if one or more PIO interrupts are set.
+
+- `PIO:interrupt_clear(num)`\
+  `PIO:interrupt_clear_mask(mask)`\
+  Clear one or more PIO interrupts.
+
+- `PIO:claim_sm_mask(mask)`\
+  Mark multiple state machines as used.
+
+- `PIO:claim_unused_sm() -> integer`\
+  Claim an unused state machine. Returns the index of the claimed state machine.
+
+- `PIO:set_irq_callback(callback) -> Thread`\
+  Set a callback to be called on state machine IRQs. Returns the
+  [event handler thread](core.md#callbacks).
+
+  - `callback(mask)`\
+    The callback to be called on state machine IRQ events. `mask` is a bit mask
+    of pending state machine IRQs. The callback must clear pending IRQs with
+    `interrupt_clear()` or `interrupt_clear_mask()` prior to returning,
+    otherwise it will be called again immediately.
+
+  The callback can be removed either by killing the returned thread, or by
+  calling `set_irq_callback()` with a `nil` callback.
+
+- `PIO:enable_irq(mask, enable)`\
+  [Enable or disable](core.md#irq-enablers) the PIO IRQ handler (`PIOx_IRQ_n`)
+  for a set of interrupt sources. `mask` is a bit mask of `pis_*` interrupt
+  source numbers. The module uses IRQ 0 on core 0 and IRQ 1 on core 1.
+
 ## `hardware.pll`
 
 **Library:** [`hardware_pll`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_pll),
@@ -237,8 +544,8 @@ configuration functionality. All library functions that take an
   given slice.
 
 - `set_irq_handler(handler) -> Thread`\
-  Set a PWM wrap IRQ handler, or remove the handler if `handler`is `nil`.
-  Returns the [event handler thread](core.md#callbacks).
+  Set a PWM wrap IRQ handler. Returns the
+  [event handler thread](core.md#callbacks).
 
   - `handler(slice_mask)`\
     The handler to be called on PWM IRQ events.
@@ -388,9 +695,9 @@ default SPI peripheral, if defined, can be accessed as `default`.
 - `SPI:regs_base() -> integer`\
   Return the base address of the peripheral registers (`SPIx_BASE`).
 
-- `SPI:write_read_blocking(src) -> string`\
-  `SPI:write_blocking(src)`\
-  `SPI:read_blocking(tx_data, len) -> string`\
+- `SPI:write_read_blocking(src) -> string` *[yields]*\
+  `SPI:write_blocking(src)` *[yields]*\
+  `SPI:read_blocking(tx_data, len) -> string` *[yields]*\
   Write to and / or read from the SPI peripheral. Yields until the write and /
   or read completes if the IRQ handler is enabled. The word size is
   auto-detected from the peripheral configuration. For word sizes >8 bits,
@@ -469,12 +776,13 @@ tests: [`hardware.timer.test`](../lib/pico/hardware.timer.test.lua)
 
 - `set_callback(alarm, callback) -> Thread`\
   Set the callback for the hardware timer `alarm`. Returns the
-  [event handler thread](core.md#callbacks). The callback can be removed either
-  by killing the returned thread, or by calling `set_callback()` with a `nil`
-  callback.
+  [event handler thread](core.md#callbacks).
 
   - `callback(alarm)`\
     The callback to be called when the timer triggers.
+
+  The callback can be removed either by killing the returned thread, or by
+  calling `set_callback()` with a `nil` callback.
 
 - `set_target(alarm, time) -> boolean`\
   Set the current target [absolute time](mlua.md#absolute-time) for a hardware

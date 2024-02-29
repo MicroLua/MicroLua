@@ -201,8 +201,8 @@ event and suspend themselves, and to be resumed when the event happens.
 
 ### IRQ enablers
 
-IRQ enabler functions set up an IRQ handler and one or more [events](#events).
-Their `enable` argument can take the following values:
+IRQ enabler functions set up an IRQ handler and one or more events. Their
+`enable` argument can take the following values:
 
 -   Missing, `true`, `nil`, negative `integer`: Set up an exclusive IRQ handler
     and enable the IRQ.
