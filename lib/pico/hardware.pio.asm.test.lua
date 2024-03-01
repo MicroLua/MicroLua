@@ -63,7 +63,7 @@ function test_assemble(t)
 end
 
 function pio_timer(_ENV)
-public(start)
+public(start):
     set(y, 0)
     mov(y, ~y)
 wrap_target()
@@ -84,7 +84,7 @@ want_pio_timer = {
 }
 
 function pio_irqs(_ENV)
-public(start)
+public(start):
     pull()
     mov(x, osr)
 loop:
@@ -145,7 +145,7 @@ want_pio_apa102_mini = {
 function pio_apa102_rgb555(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/apa102/apa102.pio
 wrap_target()
-public(pixel_out)
+public(pixel_out):
     pull(ifempty)
     set(x, 2)
 colour_loop:
@@ -156,7 +156,7 @@ colour_loop:
     in_(y, 8)
     mov(isr, #isr)
     out(null, 1)
-public(bit_run)
+public(bit_run):
     set(x, 31)
 bit_out:
     set(pins, 0)
@@ -192,8 +192,8 @@ want_pio_clocked_input = {
 function pio_differential_manchester_tx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/differential_manchester/differential_manchester.pio
     side_set(1)
-public(start)
 initial_high:
+public(start):
     out(x, 1)
     jmp(~x, high_0)     side(1) (6)
 high_1:
@@ -226,8 +226,8 @@ want_pio_differential_manchester_tx = {
 
 function pio_differential_manchester_rx(_ENV)
     -- https://github.com/raspberrypi/pico-examples/blob/sdk-1.5.1/pio/differential_manchester/differential_manchester.pio
-public(start)
 initial_high:
+public(start):
     wait(1, pin, 0)     (11)
     jmp(pin, high_0)
 high_1:

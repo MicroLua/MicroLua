@@ -30,7 +30,7 @@ sym_mt = {
         local self = rawget(s, 1)
         local fn = self['i_' .. k]
         return function(s, ...)
-            self:i_public(s, true)
+            self:_label(s)
             return fn(self, ...)
         end
     end,
@@ -67,12 +67,29 @@ function Program:__init(prog)
 end
 
 function Program:config(offset)
+    offset = offset or self.origin
     local cfg = pio.get_default_sm_config()
         :set_wrap(self.wrap_target + offset, self.wrap + offset)
     if self.ss > 0 then
         cfg:set_sideset(self.ss + (self.so and 1 or 0), self.so, self.sd)
     end
     return cfg
+end
+
+-- Labels.
+
+function Program:i_public(label)
+    rawset(label, 3, true)
+    return label
+end
+
+function Program:_label(label)
+    if not self.sm then return end
+    local name = sym_name(label)
+    if self.labels[name] then return raise(3, "duplicate label: %s", name) end
+    local labels = self.labels
+    if not rawget(label, 3) then labels = getmetatable(labels).__index end
+    labels[name] = self.pc
 end
 
 -- Directives.
@@ -109,17 +126,6 @@ function Program:i_wrap()
     if not self.sm then return end
     if self.wrap then return error("duplicate wrap()", 2) end
     self.wrap = self.pc - 1
-end
-
-function Program:i_public(label, private)
-    if not self.sm then return end
-    label = sym_name(label)
-    if self.labels[label] then
-        return raise(private and 3 or 2, "duplicate label: %s", label)
-    end
-    local labels = self.labels
-    if private then labels = getmetatable(labels).__index end
-    labels[label] = self.pc
 end
 
 -- Instructions.
