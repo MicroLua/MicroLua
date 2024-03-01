@@ -249,6 +249,12 @@ the module with the instance index.
   ([doc](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#gaf2d2a23b08ba74188160469b3fd09936))\
   Get the default state machine configuration.
 
+### PIO programs
+
+A PIO program is a table with the program's instructions at integer indices
+and optionally an `origin` key specifying the offset at which the program must
+be loaded (as given by the `.origin` directive in PIO assembly).
+
 ### `Config`
 
 The `Config` type (`hardware.pio.Config`) contains a state machine configuration
@@ -442,8 +448,6 @@ The `PIO` type (`hardware.pio.PIO`) represents a PIO peripheral. C library
 functions that take a `PIO` as their first argument are exposed as methods on
 the `PIO` class.
 
-TODO: Describe the structure of a program
-
 - `PIO:sm(index) -> SM`\
   Return the state machine with the given index.
 
@@ -515,6 +519,134 @@ TODO: Describe the structure of a program
   [Enable or disable](core.md#irq-enablers) the PIO IRQ handler (`PIOx_IRQ_n`)
   for a set of interrupt sources. `mask` is a bit mask of `pis_*` interrupt
   source numbers. The module uses IRQ 0 on core 0 and IRQ 1 on core 1.
+
+## `hardware.pio.asm`
+
+**Module:** [`hardware.pio.asm`](../lib/pico/hardware.pio.asm.lua),
+build target: `mlua_mod_hardware.pio.asm`,
+tests: [`hardware.pio.asm.test`](../lib/pico/hardware.pio.asm.test.lua)
+
+This module provides an assembler for PIO programs. It allows creating PIO
+programs in pure Lua, using a syntax very close to PIO assembly (thanks to some
+advanced metatable magic). It is similar to the
+[`rp2.asm_pio()`](https://docs.micropython.org/en/latest/library/rp2.html#rp2.asm_pio)
+decorator in MicroPython, with similar but slightly more intuitive
+[syntax](https://docs.micropython.org/en/latest/library/rp2.html#pio-assembly-language-instructions).
+
+- `assemble(fn) -> Program`\
+  Assemble the program defined by the function `fn`.
+
+### `Program`
+
+- `[1], ...: integer`\
+  The program's instructions, as 16-bit integers.
+
+- `origin: integer`\
+  When specified, the program must be loaded at this offset in PIO instruction
+  memory.
+
+- `labels: table`\
+  The public labels defined by the program.
+
+- `wrap_target: integer`\
+  `wrap: integer`\
+  The wrap target and wrap address of the program.
+
+- `Program:config([offset]) -> Config`\
+  Return a default configuration for the program when loaded at the given
+  offset, with the wrap and side-set configuration already set. `offset` is
+  optional if `origin` is set.
+
+### PIO program syntax
+
+A PIO program is defined as a `function(_ENV)`. Within the function, the program
+is constructed through calls to directive and instruction functions. The
+[test suite](../lib/pico/hardware.pio.asm.test.lua) has a number of example
+programs.
+
+Labels have the following forms:
+
+- `<label>:`\
+  Defines a private label named `label`.
+
+- `public(<label>):`\
+  Defines a public label named `label`. Public labels are avilable at the key
+  `labels` in the assembled program. Note that when both a private and a public
+  label are defined for the same instruction, the private label must be
+  specified first.
+
+Directives do not generate instructions, but specify configuration for the
+program.
+
+- `origin(offset)`\
+  Specify the PIO instruction memory offset at which the program must be loaded.
+  The offset is available at the key `origin` in the assembled program.
+
+- `side_set(count, ...)`\
+  Indicate the number of side-set bits to be used. An optional `opt` argument
+  specifies that side-setting is optional. It is set automatically if at least
+  one instruction doesn't have a `side()`. An optional `pindirs` argument
+  specifies that side-set values should be applied to the pin directions.
+
+- `wrap_target()`\
+  Indicate that program wrapping should jump to the instruction just after the
+  directive. The wrap target is available at the key `wrap_target` of the
+  assembled program.
+
+- `wrap()`\
+  Indicate that the program should wrap after the instruction just prior to the
+  directive. The wrap instruction offset is available at the key `wrap` of the
+  assembled program.
+
+Instructions are added by calling the functions below, optionally followed by
+`side(value)` to specify a side-set and / or `(delay)` to specify a delay for
+the instruction.
+
+- `word(instr, [label])`\
+  Add an arbitrary 16-bit instruction. If specified, the offset of `label` is
+  ORed into the instruction.
+
+- `nop()`\
+  Add a `mov(y, y)` insruction, which does nothing.
+
+- `jmp([cond], label)`\
+  Add a `JMP` instruction. The optional condition can be one of `~x`, `x_dec`,
+  `~y`, `y_dec`, `x~y`, `pin` or `~osre`.
+
+- `wait(polarity, src, num)`\
+  Add a `WAIT` instruction. The source can be one of `gpio`, `pin` or `irq`.
+  For the `irq` source, a relative IRQ number can be specified as `rel(num)`.
+
+- `in_(src, count)`\
+  Add an `IN` instruction. The source can be one of `pins`, `x`, `y`, `null`,
+  `isr` or `osr`.
+
+- `out(dest, count)`\
+  Add an `OUT` instruction. The destination can be one of `pins`, `x`, `y`,
+  `null`, `pindirs`, `pc`, `isr` or `exec`.
+
+- `push(...)`\
+  Add a `PUSH` instruction. The optional flags can be any of `iffull`, `block`
+  and `noblock`.
+
+- `pull(...)`\
+  Add a `PULL` instruction. The optional flags can be any of `ifempty`, `block`
+  and `noblock`.
+
+- `mov(dest, src)`\
+  Add a `MOV` instruction. The destination can be one of `pins`, `x`, `y`,
+  `exec`, `pc`, `isr` or `osr`. The source can be one of `pins`, `x`, `y`,
+  `null`, `status`, `isr` or `osr`. The source can optionally be prefixed with
+  `~` to indicate that it should be inverted (bitwise complement) or `#` to
+  indicate that it should be bit-reversed.
+
+- `irq([mode], num)`\
+  Add a an `IRQ` instruction. The optional mode can be one of `wait` or `clear`.
+  A relative IRQ number can be specified as `rel(num)`.
+
+- `set(dest, data)`\
+  Add a `SET` instruction. The destination can be one of `pins`, `x`, `y` or
+  `pindirs`.
 
 ## `hardware.pll`
 
