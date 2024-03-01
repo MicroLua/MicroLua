@@ -132,6 +132,7 @@ target_link_libraries(mlua_mod_mlua.list INTERFACE
 mlua_add_lua_modules(mlua_test_mlua.list mlua.list.test.lua)
 target_link_libraries(mlua_test_mlua.list INTERFACE
     mlua_mod_mlua.list
+    mlua_mod_mlua.repr
     mlua_mod_mlua.util
     mlua_mod_table
 )
@@ -167,6 +168,19 @@ target_link_libraries(mlua_test_mlua.platform INTERFACE
     mlua_mod_mlua.platform
 )
 
+mlua_add_lua_modules(mlua_mod_mlua.repr mlua.repr.lua)
+target_link_libraries(mlua_mod_mlua.repr INTERFACE
+    mlua_mod_math
+    mlua_mod_mlua.list
+    mlua_mod_string
+)
+
+mlua_add_lua_modules(mlua_test_mlua.repr mlua.repr.test.lua)
+target_link_libraries(mlua_test_mlua.repr INTERFACE
+    mlua_mod_mlua.repr
+    mlua_mod_table
+)
+
 mlua_add_lua_modules(mlua_mod_mlua.shell mlua.shell.lua)
 target_link_libraries(mlua_mod_mlua.shell INTERFACE
     mlua_mod_string
@@ -183,6 +197,7 @@ target_link_libraries(mlua_mod_mlua.testing INTERFACE
     mlua_mod_mlua.list
     mlua_mod_mlua.oo
     mlua_mod_mlua.platform
+    mlua_mod_mlua.repr
     mlua_mod_mlua.time
     mlua_mod_mlua.util
     mlua_mod_package
@@ -192,7 +207,7 @@ target_link_libraries(mlua_mod_mlua.testing INTERFACE
 mlua_add_lua_modules(mlua_test_mlua.testing mlua.testing.test.lua)
 target_link_libraries(mlua_test_mlua.testing INTERFACE
     mlua_mod_mlua.list
-    mlua_mod_mlua.util
+    mlua_mod_mlua.repr
     mlua_mod_table
 )
 
@@ -245,12 +260,10 @@ target_link_libraries(mlua_mod_mlua.util INTERFACE
     mlua_mod_math
     mlua_mod_mlua.list
     mlua_mod_string
-    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_test_mlua.util mlua.util.test.lua)
 target_link_libraries(mlua_test_mlua.util INTERFACE
-    mlua_mod_mlua.list
     mlua_mod_mlua.util
     mlua_mod_table
 )

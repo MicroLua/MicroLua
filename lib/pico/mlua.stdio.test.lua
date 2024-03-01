@@ -5,9 +5,9 @@ _ENV = module(...)
 
 local io = require 'mlua.io'
 local list = require 'mlua.list'
+local repr = require 'mlua.repr'
 local stdio = require 'mlua.stdio'
 local testing_stdio = require 'mlua.testing.stdio'
-local util = require 'mlua.util'
 
 function test_streams_BNB(t)
     for _, test in ipairs{
@@ -26,7 +26,7 @@ function test_streams_BNB(t)
             end
         end))
         for i, w in ipairs(writes) do
-            t:expect(wr[i]):label("write(%s)", util.repr(w)):eq(#w)
+            t:expect(wr[i]):label("write(%s)", repr(w)):eq(#w)
         end
         t:expect(got):label("crlf: %s, got", crlf):eq(want)
     end

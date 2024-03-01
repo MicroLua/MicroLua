@@ -4,7 +4,7 @@
 _ENV = module(...)
 
 local list = require 'mlua.list'
-local util = require 'mlua.util'
+local repr = require 'mlua.repr'
 local table = require 'table'
 
 function test_call_args(t)
@@ -54,7 +54,7 @@ function test_Expr(t)
         {t:expr(_ENV).f1(5)[v], 'f1(5)[{13}]', 42},
     } do
         local e, want_repr, want_eval = table.unpack(test)
-        t:expect(util.repr(e)):label('repr()'):eq(want_repr)
+        t:expect(repr(e)):label('repr()'):eq(want_repr)
         t:expect(t:expr(getmetatable(e)).__eval(e)):eq(want_eval)
     end
 end

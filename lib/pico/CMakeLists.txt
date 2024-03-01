@@ -467,9 +467,9 @@ mlua_add_lua_modules(mlua_test_mlua.stdio mlua.stdio.test.lua)
 target_link_libraries(mlua_test_mlua.stdio INTERFACE
     mlua_mod_mlua.io
     mlua_mod_mlua.list
+    mlua_mod_mlua.repr
     mlua_mod_mlua.stdio
     mlua_mod_mlua.testing.stdio
-    mlua_mod_mlua.util
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.clocks mlua.testing.clocks.lua)
@@ -600,9 +600,9 @@ target_link_libraries(mlua_mod_pico.stdio INTERFACE
 mlua_add_lua_modules(mlua_test_pico.stdio pico.stdio.test.lua)
 target_link_libraries(mlua_test_pico.stdio INTERFACE
     mlua_mod_mlua.list
+    mlua_mod_mlua.repr
     mlua_mod_mlua.testing.stdio
     mlua_mod_mlua.thread
-    mlua_mod_mlua.util
     mlua_mod_pico.stdio
     mlua_mod_string
 )

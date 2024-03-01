@@ -4,9 +4,9 @@
 _ENV = module(...)
 
 local list = require 'mlua.list'
+local repr = require 'mlua.repr'
 local testing_stdio = require 'mlua.testing.stdio'
 local thread = require 'mlua.thread'
-local util = require 'mlua.util'
 local stdio = require 'pico.stdio'
 local string = require 'string'
 
@@ -64,7 +64,7 @@ function test_write_read_BNB(t)
             while #got < #want do got = got .. stdio.read(#want - #got) end
         end))
         for i, w in ipairs(writes) do
-            t:expect(wr[i]):label("write(%s)", util.repr(w)):eq(#w)
+            t:expect(wr[i]):label("write(%s)", repr(w)):eq(#w)
         end
         t:expect(got):label("crlf: %s, got", crlf):eq(want)
     end

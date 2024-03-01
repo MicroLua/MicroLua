@@ -586,6 +586,33 @@ This module exposes platform-specific functionality under a common interface.
 - `binary_size: integer | Int64`\
   The size of the binary, or zero if the size is unknown.
 
+## `mlua.repr`
+
+**Module:** [`mlua.repr`](../lib/common/mlua.repr.lua),
+build target: `mlua_mod_mlua.repr`,
+tests: [`mlua.repr.test`](../lib/common/mlua.repr.test.lua)
+
+This module exposes a single function. In fact, the whole module *is* the
+function: the value returned by `require()` can be called directly.
+
+- `repr(v, [seen]) -> string`\
+  Return a human-readable string representation of `v`. `seen` is an optional
+  table whose keys are table values that have already been seen while recursing
+  through the data structure. If `repr()` is called on such a value again during
+  recursion, it returns `...`, thereby breaking the recursion.
+
+### `__repr` protocol
+
+`repr()` checks for the presence of a `__repr()` metamethod on the value, and if
+it finds one, calls it.
+
+- `V:__repr(repr, seen)`\
+  `repr` is the `repr()` function itself; this makes it easier to implement
+  `__repr()` methods in C, as the module doesn't need to be imported explicitly.
+  `seen` is the second argument of the `repr()` call, and should be updated
+  (and reverted on exit) if the method calls `repr()` and the calls could
+  recurse.
+
 ## `mlua.stdio`
 
 **Module:** [`mlua.stdio`](../lib/common/mlua.stdio.c),
@@ -1013,10 +1040,6 @@ This module provides various utilities.
 
 - `check(...) -> ...`\
   Identical to `assert()`, but raised errors don't include location information.
-
-- `repr(v) -> string`\
-  Return a human-readable string representation of `v`. Calls the `__repr`
-  metamethod of `v` if it is defined.
 
 - `keys(tab, filter) -> list`\
   Return the keys of `tab`. If `filter` is provided, only the keys of entries

@@ -10,6 +10,7 @@ local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
 local platform = require 'mlua.platform'
+local repr = require 'mlua.repr'
 local thread = try(require, 'mlua.thread')
 local time = require 'mlua.time'
 local util = require 'mlua.util'
@@ -61,7 +62,7 @@ end
 
 local function format_call(name, args, first)
     local parts = list()
-    for i = first or 1, list.len(args) do parts:append(util.repr(args[i])) end
+    for i = first or 1, list.len(args) do parts:append(repr(args[i])) end
     return ('%s(%s)'):format(name, parts:concat(', '))
 end
 
@@ -101,7 +102,7 @@ function Expr:__index(k)
             if type(k) == 'string' and k:find('^[%a_][%w_]*$') then
                 return ('%s%s%s'):format(s, s ~= '' and '.' or '', k)
             end
-            return ('%s[%s]'):format(s, util.repr(k))
+            return ('%s[%s]'):format(s, repr(k))
         end,
         function(pv, v) return v[k] end,
     })
@@ -205,8 +206,8 @@ function Matcher:fmt(fn)
     return self
 end
 
-function Matcher:_label() return self._l or util.repr(self._v) end
-function Matcher:_repr(v) return (self._fmt or util.repr)(v) end
+function Matcher:_label() return self._l or repr(self._v) end
+function Matcher:_repr(v) return (self._fmt or repr)(v) end
 
 function Matcher:eq(want, eq) return self:_rel_op(want, eq or util.eq, '') end
 
@@ -230,7 +231,7 @@ function Matcher:close_to(want, eps)
     return self:_compare(
         want, function(g, w) return w - eps <= g and g <= w + eps end,
         function()
-            return ('%s ±%s'):format(self:_repr(want), util.repr(eps))
+            return ('%s ±%s'):format(self:_repr(want), repr(eps))
         end)
 end
 
@@ -267,7 +268,7 @@ function Matcher:_index(key, want, text)
     local ok, value = pcall(function() return v[key] end)
     if (ok and value ~= nil) ~= want then
         self:_fail("%s %s key @{+CYAN}%s@{NORM}", self:_label(), text,
-                   util.repr(key))
+                   repr(key))
     end
     return self
 end
@@ -280,7 +281,7 @@ function Matcher:raises(want)
     elseif want and not err:find(want) then
         self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n"
                    .. "  @{+WHITE}%s@{NORM}",
-                   self:_label(), util.repr(want), err)
+                   self:_label(), repr(want), err)
     end
 end
 
@@ -310,13 +311,13 @@ function Test:patch(tab, name, value)
 end
 
 function Test:repr(v)
-    return function() return util.repr(v) end
+    return function() return repr(v) end
 end
 
 function Test:func(name, args)
     return function()
         local parts = list()
-        for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
+        for _, arg in list.ipairs(args) do parts:append(repr(arg)) end
         return ('%s(%s)'):format(name, parts:concat(', '))
     end
 end
@@ -397,7 +398,7 @@ function Test:_context()
     for _, k in util.keys(ctx):sort():ipairs() do
         local v = ctx[k]
         if type(v) == 'function' then v = v() end
-        if type(v) ~= 'string' then v = util.repr(v) end
+        if type(v) ~= 'string' then v = repr(v) end
         parts:append(io.aformat('  @{+MAGENTA}%s@{NORM}: %s\n', k, v))
     end
     return parts:concat()
@@ -605,8 +606,8 @@ local function print_registry()
     local reg = debug.getregistry()
     for k, v in pairs(reg) do
         if reg_exclude[k] then goto continue end
-        if util.get(v, '__name') ~= k then v = util.repr(v) end
-        io.aprintf("[@{+WHITE}%s@{NORM}] = %s\n", util.repr(k), v)
+        if util.get(v, '__name') ~= k then v = repr(v) end
+        io.aprintf("[@{+WHITE}%s@{NORM}] = %s\n", repr(k), v)
         ::continue::
     end
 end
