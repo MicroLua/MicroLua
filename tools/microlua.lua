@@ -211,7 +211,7 @@ local function fs_op_list(efs, path)
         entries:append({path = path, type = type == fs.TYPE_DIR and 'd' or nil,
                         size = size})
     end)
-    table.sort(entries, util.table_comp{'path'})
+    entries:sort(util.table_comp{'path'})
     local sd = 1
     for _, e in ipairs(entries) do
         local l = #tostring(e.size)

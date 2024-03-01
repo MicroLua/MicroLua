@@ -3,6 +3,7 @@
 
 _ENV = module(...)
 
+local list = require 'mlua.list'
 local util = require 'mlua.util'
 local table = require 'table'
 
@@ -47,8 +48,7 @@ function test_keys(t)
          {[0] = 1, 'c'}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:expr(util).keys(tab, filter)):apply(util.sort)
-            :eq(want, util.table_eq)
+        t:expect(t:expr(util).keys(tab, filter):sort()):eq(want, util.table_eq)
     end
 end
 
@@ -60,20 +60,8 @@ function test_values(t)
          {[0] = 1, 6}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:expr(util).values(tab, filter)):apply(util.sort)
+        t:expect(t:expr(util).values(tab, filter):sort())
             :eq(want, util.table_eq)
-    end
-end
-
-function test_sort(t)
-    for _, test in ipairs{
-        {{}, nil, {}},
-        {{1, 4, 2, 8, 5}, nil, {1, 2, 4, 5, 8}},
-        {{[0] = 5, 1, 4, 2, 8, 5}, nil, {[0] = 5, 1, 2, 4, 5, 8}},
-        {{1, 4, 2, 8, 5}, function(a, b) return a > b end, {8, 5, 4, 2, 1}},
-    } do
-        local items, comp, want = table.unpack(test)
-        t:expect(t:expr(util).sort(items, comp)):eq(want, util.table_eq)
     end
 end
 

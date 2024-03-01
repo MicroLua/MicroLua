@@ -15,7 +15,6 @@ local time = require 'mlua.time'
 local util = require 'mlua.util'
 local package = require 'package'
 local string = require 'string'
-local table = require 'table'
 
 local loaded = {}
 for n in pairs(package.loaded) do loaded[n] = true end
@@ -63,7 +62,7 @@ end
 local function format_call(name, args, first)
     local parts = list()
     for i = first or 1, list.len(args) do parts:append(util.repr(args[i])) end
-    return ('%s(%s)'):format(name, table.concat(parts, ', '))
+    return ('%s(%s)'):format(name, parts:concat(', '))
 end
 
 local function locals(level)
@@ -318,7 +317,7 @@ function Test:func(name, args)
     return function()
         local parts = list()
         for _, arg in list.ipairs(args) do parts:append(util.repr(arg)) end
-        return ('%s(%s)'):format(name, table.concat(parts, ', '))
+        return ('%s(%s)'):format(name, parts:concat(', '))
     end
 end
 
@@ -395,7 +394,7 @@ function Test:_context()
     local ctx = self._ctx
     if not ctx then return '' end
     local parts = list()
-    for _, k in util.sort(util.keys(ctx)):ipairs() do
+    for _, k in util.keys(ctx):sort():ipairs() do
         local v = ctx[k]
         if type(v) == 'function' then v = v() end
         if type(v) ~= 'string' then v = util.repr(v) end
@@ -538,7 +537,7 @@ function Test:run_module(name, pat)
             fns:append({info and info.linedefined or 0, name, fn})
         end
     end
-    for _, fn in util.sort(fns, fn_comp):ipairs() do
+    for _, fn in fns:sort(fn_comp):ipairs() do
         local b = thread and fn[2]:find(blocking_pat)
         self:run(fn[2] .. (b and " (non-blocking)" or ""), fn[3])
         if b then
@@ -554,7 +553,7 @@ end
 function Test:run_modules(mod_pat, func_pat)
     mod_pat = mod_pat or def_mod_pat
     func_pat = func_pat or def_func_pat
-    for _, name in util.sort(util.keys(package.preload)):ipairs() do
+    for _, name in util.keys(package.preload):sort():ipairs() do
         if name:find(mod_pat) then
             self:run(name, function(t) t:run_module(name, func_pat) end)
         end

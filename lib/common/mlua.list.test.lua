@@ -163,6 +163,29 @@ function test_unpack(t)
     end
 end
 
+function test_sort(t)
+    for _, test in ipairs{
+        {{nil}, nil},
+        {{{}}, {}},
+        {{{1, 4, 2, 8, 5, 7}}, {1, 2, 4, 5, 7, 8}},
+        {{{1, 4, 2, 8, 5}, function(a, b) return a > b end}, {8, 5, 4, 2, 1}},
+        {
+            {
+                {[0] = 7, 1, 4, 2, 8},
+                function(a, b)
+                    if a == nil then return b ~= nil end
+                    if b == nil then return false end
+                    return a < b
+                end,
+            },
+            {nil, nil, nil, 1, 2, 4, 8},
+        },
+    } do
+        local args, want = table.unpack(test)
+        t:expect(t:expr(list).sort(table.unpack(args))):eq(want, list.eq)
+    end
+end
+
 function test_concat(t)
     for _, test in ipairs{
         {{nil, ','}, ''},

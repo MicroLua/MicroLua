@@ -464,6 +464,10 @@ functions as methods.
 - `len(list) -> integer`\
   Return the number of elements in `list`.
 
+- `set_len(list, n) -> list`\
+  Set the length of `list`. This doesn't remove any elements, it just sets the
+  length at index `[0]`.
+
 - `eq(lhs, rhs) -> boolean`\
   Return true iff the elements of `lhs` and `rhs` compare pairwise equal.
 
@@ -488,6 +492,9 @@ functions as methods.
 
 - `unpack(list, i = 1, j = #list) -> ...`\
   Return the elements at positions `i` to `j` in `list`.
+
+- `sort(list, [cmp]) -> list`\
+  Sort the elements of `list` in-place, optionally using a comparison function.
 
 - `concat(list, sep = '', i = 1, j = #list) -> string`\
   Return the concatenation of the elements of `list` at positions `i` to `j`,

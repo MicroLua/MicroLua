@@ -151,8 +151,7 @@ local function read_dir(path)
     for name, type, size in assert(dfs:list(path)) do
         entries:append(list{name, type, size})
     end
-    table.sort(entries, util.table_comp{1})
-    return entries
+    return entries:sort(util.table_comp{1})
 end
 
 function test_dir(t)

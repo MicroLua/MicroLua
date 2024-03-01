@@ -85,8 +85,7 @@ local function repr_table(v, seen)
     for k, vk in pairs(v) do
         parts:append(('%s = %s'):format(repr_key(k, seen), repr(vk, seen)))
     end
-    table.sort(parts)
-    return ('{%s}'):format(table.concat(parts, ', '))
+    return ('{%s}'):format(parts:sort():concat(', '))
 end
 
 -- Return a string representation of the given value.
@@ -124,12 +123,6 @@ function values(tab, filter)
     end
     res[0] = len
     return res
-end
-
--- Sort the given list and return it.
-function sort(items, comp)
-    table.sort(items, comp)
-    return items
 end
 
 -- Return true iff the (key, value) pairs of the given tables compare equal.

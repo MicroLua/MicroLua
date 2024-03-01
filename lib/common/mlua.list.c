@@ -55,21 +55,18 @@ static int list_eq(lua_State* ls) {
     lua_Integer len1 = length(ls, 1);
     lua_Integer len2 = length(ls, 2);
     if (len1 != len2) {
-        lua_pushboolean(ls, false);
-        return 1;
+        return lua_pushboolean(ls, false), 1;
     }
     for (lua_Integer i = 0; i < len1; ++i) {
         lua_Integer idx = i + 1;
         lua_geti(ls, 1, idx);
         lua_geti(ls, 2, idx);
         if (!lua_compare(ls, -2, -1, LUA_OPEQ)) {
-            lua_pushboolean(ls, false);
-            return 1;
+            return lua_pushboolean(ls, false), 1;
         }
         lua_pop(ls, 2);
     }
-    lua_pushboolean(ls, true);
-    return 1;
+    return lua_pushboolean(ls, true), 1;
 }
 
 static int ipairs_iter(lua_State* ls) {
@@ -139,8 +136,7 @@ static int list_insert(lua_State* ls) {
     lua_seti(ls, 1, pos);
     lua_pushinteger(ls, len);
     lua_rawseti(ls, 1, LEN_IDX);
-    lua_settop(ls, 1);
-    return 1;
+    return lua_settop(ls, 1), 1;
 }
 
 static int list_remove(lua_State* ls) {
@@ -185,6 +181,40 @@ static int list_unpack(lua_State* ls) {
     return n;
 }
 
+static int restore_mt(lua_State* ls) {
+    lua_pushnil(ls);
+    lua_setmetatable(ls, lua_upvalueindex(1));
+    return 0;
+}
+
+static int list_sort(lua_State* ls) {
+    if (lua_isnoneornil(ls, 1)) return lua_settop(ls, 1), 1;
+    lua_settop(ls, 2);
+    if (lua_rawgeti(ls, 1, LEN_IDX) != LUA_TNIL) {
+        if (luaL_checkinteger(ls, -1) == 0) return lua_settop(ls, 1), 1;
+        lua_pop(ls, 1);
+        // The list has an explicit length but no metatable. Temporarily set
+        // a metatable so that table.sort() gets the correct length, and remove
+        // it on exit.
+        if (lua_getmetatable(ls, 1)) {
+            lua_pop(ls, 1);
+        } else {
+            lua_pushvalue(ls, 1);
+            lua_pushcclosure(ls, &restore_mt, 1);
+            lua_toclose(ls, -1);
+            luaL_getmetatable(ls, list_name);
+            lua_setmetatable(ls, 1);
+        }
+    } else {
+        lua_pop(ls, 1);
+    }
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_pushvalue(ls, 1);
+    lua_pushvalue(ls, 2);
+    lua_call(ls, 2, 0);
+    return lua_settop(ls, 1), 1;
+}
+
 static void add_value(lua_State* ls, luaL_Buffer* buf, lua_Integer i) {
     lua_geti(ls, 1, i);
     if (luai_unlikely(!lua_isstring(ls, -1))) {
@@ -209,8 +239,7 @@ static int list_concat(lua_State* ls) {
         luaL_addlstring(&buf, sep, lsep);
     }
     if (i == last) add_value(ls, &buf, i);
-    luaL_pushresult(&buf);
-    return 1;
+    return luaL_pushresult(&buf), 1;
 }
 
 static int list_find(lua_State* ls) {
@@ -222,8 +251,7 @@ static int list_find(lua_State* ls) {
     for (; i <= len; ++i) {
         lua_geti(ls, 1, i);
         if (lua_compare(ls, 2, -1, LUA_OPEQ)) {
-            lua_pushinteger(ls, i);
-            return 1;
+            return lua_pushinteger(ls, i), 1;
         }
     }
     return 0;
@@ -242,8 +270,7 @@ static int list___repr(lua_State* ls) {
         luaL_addvalue(&buf);
     }
     luaL_addchar(&buf, '}');
-    luaL_pushresult(&buf);
-    return 1;
+    return luaL_pushresult(&buf), 1;
 }
 
 static int list___call(lua_State* ls) {
@@ -279,7 +306,6 @@ MLUA_SYMBOLS(list_syms) = {
     // TODO: MLUA_SYM_F(slice, list_),
     MLUA_SYM_F(pack, list_),
     MLUA_SYM_F(unpack, list_),
-    // TODO: MLUA_SYM_F(sort, list_),
     // TODO: MLUA_SYM_F(move, list_),
     MLUA_SYM_F(concat, list_),
     MLUA_SYM_F(find, list_),
@@ -296,9 +322,14 @@ MLUA_SYMBOLS_NOHASH(list_meta_syms) = {
 };
 
 MLUA_OPEN_MODULE(mlua.list) {
+    mlua_require(ls, "table", true);
+
     // Create the list class.
     mlua_new_class(ls, list_name, list_syms, false);
     mlua_set_fields(ls, list_syms_nh);
     mlua_set_meta_fields(ls, list_meta_syms);
+    lua_getfield(ls, -2, "sort");
+    lua_pushcclosure(ls, &list_sort, 1);
+    lua_setfield(ls, -2, "sort");
     return 1;
 }
