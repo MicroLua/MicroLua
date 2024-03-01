@@ -8,15 +8,35 @@ local addressmap = require 'hardware.regs.addressmap'
 local list = require 'mlua.list'
 local thread = require 'mlua.thread'
 local time = require 'mlua.time'
+local string = require 'string'
 
 -- TODO: Add a multicore test with Tx in one core and Rx in the other
+
+local function hex8(v) return ('0x%08x'):format(v) end
 
 function test_config(t)
     local cfg = pio.get_default_sm_config()
         :set_out_pins(1, 2)
-        :set_set_pins(3, 1)
-        :set_clkdiv_int_frac(250)
-    -- TODO
+        :set_set_pins(3, 4)
+        :set_in_pins(5)
+        :set_sideset_pins(6)
+        :set_sideset(1, true, true)
+        :set_clkdiv_int_frac(123, 45)
+        :set_wrap(7, 13)
+        :set_jmp_pin(8)
+        :set_in_shift(true, true, 9)
+        :set_out_shift(true, true, 10)
+        :set_fifo_join(pio.FIFO_JOIN_RX)
+        :set_out_special(true, true, 11)
+        :set_mov_status(pio.STATUS_RX_LESSTHAN, 5)
+    t:expect(t:expr(cfg):clkdiv()):fmt(hex8):eq((123 << 16) | (45 << 8))
+    t:expect(t:expr(cfg):execctrl()):fmt(hex8)
+        :eq(0x60060010 | (8 << 24) | (11 << 19) | (13 << 12) | (7 << 7) | 5)
+    t:expect(t:expr(cfg):shiftctrl()):fmt(hex8)
+        :eq(0x800f0000 | (10 << 25) | (9 << 20))
+    t:expect(t:expr(cfg):pinctrl()):fmt(hex8)
+        :eq((1 << 29) | (4 << 26) | (2 << 20) | (5 << 15) | (6 << 10)
+            | (3 << 5) | 1)
 end
 
 function test_PIO_sm(t)

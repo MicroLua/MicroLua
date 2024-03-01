@@ -7,9 +7,7 @@ local pio = require 'hardware.pio'
 local asm = require 'hardware.pio.asm'
 local list = require 'mlua.list'
 local util = require 'mlua.util'
-local package = require 'package'
-
-package.loaded['hardware.pio.asm'] = nil  -- Reduce permanent memory usage
+local string = require 'string'
 
 local function hex8(v) return ('0x%08x'):format(v) end
 
