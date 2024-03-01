@@ -257,16 +257,35 @@ static int list_find(lua_State* ls) {
     return 0;
 }
 
+static int repr_done(lua_State* ls) {
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_pushnil(ls);
+    lua_rawset(ls, lua_upvalueindex(2));
+    return 0;
+}
+
 static int list___repr(lua_State* ls) {
+    lua_Integer len = length(ls, 1);
+    if (len == 0) return lua_pushliteral(ls, "{}"), 1;
+
+    // Set seen[self] = true and revert on exit.
+    lua_pushvalue(ls, 1);
+    lua_pushvalue(ls, 3);
+    lua_pushcclosure(ls, &repr_done, 2);
+    lua_toclose(ls, -1);
+    lua_pushvalue(ls, 1);
+    lua_pushboolean(ls, true);
+    lua_rawset(ls, 3);
+
     luaL_Buffer buf;
     luaL_buffinit(ls, &buf);
     luaL_addchar(&buf, '{');
-    lua_Integer len = length(ls, 1);
     for (lua_Integer i = 0; i < len; ++i) {
         if (i > 0) luaL_addstring(&buf, ", ");
-        lua_pushvalue(ls, 2);
-        lua_geti(ls, 1, i + 1);
-        lua_call(ls, 1, 1);
+        lua_pushvalue(ls, 2);  // repr
+        lua_geti(ls, 1, i + 1);  // self[i + 1]
+        lua_pushvalue(ls, 3);  // seen
+        lua_call(ls, 2, 1);
         luaL_addvalue(&buf);
     }
     luaL_addchar(&buf, '}');

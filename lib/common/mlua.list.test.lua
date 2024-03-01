@@ -4,6 +4,7 @@
 _ENV = module(...)
 
 local list = require 'mlua.list'
+local repr = require 'mlua.repr'
 local util = require 'mlua.util'
 local table = require 'table'
 
@@ -221,12 +222,16 @@ function test_find(t)
 end
 
 function test_repr(t)
+    local rec = list{1, list{2}, 3}
+    rec[2]:append(rec)
+    rec:append(rec)
     for _, test in ipairs{
         {list.pack(), '{}'},
         {list.pack(1), '{1}'},
         {list.pack(1, "2", 3, nil), '{1, "2", 3, nil}'},
+        {rec, '{1, {2, ...}, 3, ...}'},
     } do
         local arg, want = table.unpack(test)
-        t:expect(t:expr(util).repr(arg)):eq(want)
+        t:expect(repr(arg)):label("repr()"):eq(want)
     end
 end
