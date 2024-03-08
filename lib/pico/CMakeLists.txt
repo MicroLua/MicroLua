@@ -107,6 +107,22 @@ target_link_libraries(mlua_test_hardware.clocks INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_hardware.dma hardware.dma.c)
+target_link_libraries(mlua_mod_hardware.dma INTERFACE
+    hardware_base
+    hardware_dma
+    pico_platform
+)
+
+mlua_add_lua_modules(mlua_test_hardware.dma hardware.dma.test.lua)
+target_link_libraries(mlua_test_hardware.dma INTERFACE
+    mlua_mod_hardware.dma
+    mlua_mod_hardware.regs.addressmap
+    mlua_mod_hardware.regs.dma
+    mlua_mod_hardware.regs.dreq
+    mlua_mod_string
+)
+
 mlua_add_c_module(mlua_mod_hardware.flash hardware.flash.c)
 target_link_libraries(mlua_mod_hardware.flash INTERFACE
     hardware_flash
