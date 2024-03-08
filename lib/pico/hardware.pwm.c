@@ -11,8 +11,8 @@
 #include "mlua/util.h"
 
 static uint check_slice(lua_State* ls, int arg) {
-    uint num = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, num < NUM_PWM_SLICES, arg, "invalid PWM slice number");
+    lua_Unsigned num = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, num < NUM_PWM_SLICES, arg, "invalid PWM slice");
     return num;
 }
 

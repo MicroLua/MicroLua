@@ -198,7 +198,7 @@ static inline Filesystem* to_Filesystem(lua_State* ls, int arg) {
 
 static uint8_t check_attr(lua_State* ls, int arg) {
     lua_Unsigned attr = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, attr <= 0xff, arg, "invalid attribute number type");
+    luaL_argcheck(ls, attr <= 0xff, arg, "invalid attribute type");
     return attr;
 }
 

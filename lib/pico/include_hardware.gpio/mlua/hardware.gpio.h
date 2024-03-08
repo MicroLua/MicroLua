@@ -15,9 +15,9 @@ extern "C" {
 
 // Return the given argument as a GPIO number. Raises an error if the argument
 // value is out of bounds.
-static inline unsigned int mlua_check_gpio(lua_State* ls, int arg) {
-    uint num = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, num < NUM_BANK0_GPIOS, arg, "invalid GPIO number");
+static inline uint mlua_check_gpio(lua_State* ls, int arg) {
+    lua_Unsigned num = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, num < NUM_BANK0_GPIOS, arg, "invalid GPIO");
     return num;
 }
 

@@ -14,9 +14,8 @@
 #include "mlua/util.h"
 
 static uint check_alarm(lua_State* ls, int index) {
-    lua_Integer alarm = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= alarm && alarm < (lua_Integer)NUM_TIMERS, index,
-                  "invalid alarm number");
+    lua_Unsigned alarm = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, alarm < NUM_TIMERS, index, "invalid alarm");
     return alarm;
 }
 

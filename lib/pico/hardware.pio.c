@@ -341,9 +341,8 @@ static inline PIO to_PIO(lua_State* ls, int arg) {
 
 static int PIO_sm(lua_State* ls) {
     PIO inst = check_PIO(ls, 1);
-    uint num = luaL_checkinteger(ls, 2);
-    luaL_argcheck(ls, num < NUM_PIO_STATE_MACHINES, 2,
-                  "invalid state machine number");
+    lua_Unsigned num = luaL_checkinteger(ls, 2);
+    luaL_argcheck(ls, num < NUM_PIO_STATE_MACHINES, 2, "invalid state machine");
     if (lua_getiuservalue(ls, 1, num + 1) == LUA_TNIL) {
         lua_pop(ls, 1);
         SM* sm = new_SM(ls);

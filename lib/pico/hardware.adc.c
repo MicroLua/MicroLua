@@ -14,9 +14,8 @@
 #include "mlua/util.h"
 
 static uint check_channel(lua_State* ls, int arg) {
-    uint num = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, num < NUM_ADC_CHANNELS, arg,
-                  "invalid ADC channel number");
+    lua_Unsigned num = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, num < NUM_ADC_CHANNELS, arg, "invalid ADC channel");
     return num;
 }
 

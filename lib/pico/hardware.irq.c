@@ -19,15 +19,16 @@ static bool is_user_irq(uint irq) {
 }
 
 static uint check_irq(lua_State* ls, int index) {
-    lua_Integer irq = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= irq && irq < (lua_Integer)NUM_IRQS, index,
-                  "unsupported IRQ number");
+    lua_Unsigned irq = luaL_checkinteger(ls, index);
+    luaL_argcheck(ls, irq < NUM_IRQS, index, "invalid IRQ");
     return irq;
  }
 
 static uint check_user_irq(lua_State* ls, int index) {
-    lua_Integer irq = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, is_user_irq(irq), index, "unsupported user IRQ number");
+    lua_Unsigned irq = luaL_checkinteger(ls, index);
+    luaL_argcheck(
+        ls, FIRST_USER_IRQ <= irq && irq < FIRST_USER_IRQ + NUM_USER_IRQS,
+        index, "invalid user IRQ");
     return irq;
 }
 
