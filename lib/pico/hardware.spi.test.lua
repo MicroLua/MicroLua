@@ -12,8 +12,7 @@ function test_index_base(t)
     for i = 0, spi.NUM - 1 do
         local inst = spi[i]
         t:expect(t:expr(inst):get_index()):eq(i)
-        t:expect(t:expr(inst):regs_base())
-            :eq(addressmap[('SPI%s_BASE'):format(i)])
+        t:expect(t:expr(inst):regs()):eq(addressmap[('SPI%s_BASE'):format(i)])
     end
 end
 

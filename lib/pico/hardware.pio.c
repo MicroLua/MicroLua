@@ -354,7 +354,7 @@ static int PIO_sm(lua_State* ls) {
     return 1;
 }
 
-static int PIO_regs_base(lua_State* ls) {
+static int PIO_regs(lua_State* ls) {
     lua_pushinteger(ls, (uintptr_t)check_PIO(ls, 1));
     return 1;
 }
@@ -606,7 +606,7 @@ MLUA_FUNC_R2(PIO_, pio_, claim_unused_sm, lua_pushinteger, check_PIO,
 MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(sm, PIO_),
     MLUA_SYM_F(get_index, PIO_),
-    MLUA_SYM_F(regs_base, PIO_),
+    MLUA_SYM_F(regs, PIO_),
     MLUA_SYM_F(gpio_init, PIO_),
     MLUA_SYM_F(can_add_program, PIO_),
     MLUA_SYM_F(can_add_program_at_offset, PIO_),

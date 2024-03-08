@@ -18,13 +18,12 @@ function test_index_base(t)
     for i = 0, i2c.NUM - 1 do
         local inst = i2c[i]
         t:expect(t:expr(inst):hw_index()):eq(i)
-        t:expect(t:expr(inst):regs_base())
-            :eq(addressmap[('I2C%s_BASE'):format(i)])
+        t:expect(t:expr(inst):regs()):eq(addressmap[('I2C%s_BASE'):format(i)])
     end
 end
 
 local function run_slave(inst, on_receive, on_request)
-    local i2c_base = inst:regs_base()
+    local i2c_base = inst:regs()
     while true do
         while inst:get_read_available() > 0 do
             local dc = inst:read_data_cmd()
@@ -45,7 +44,7 @@ function test_master_BNB(t)
         t, 1000000, config.I2C_MASTER_SDA, config.I2C_MASTER_SCL,
         config.I2C_SLAVE_SDA, config.I2C_SLAVE_SCL)
     slave:set_slave_mode(true, slave_addr)
-    base.write32(slave:regs_base() + regs.IC_INTR_MASK_OFFSET,
+    base.write32(slave:regs() + regs.IC_INTR_MASK_OFFSET,
                  regs.IC_INTR_MASK_M_RD_REQ_BITS)
 
     -- Start the slave on core 1 if blocking is enabled, or as a thread.

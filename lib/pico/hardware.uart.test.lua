@@ -12,12 +12,11 @@ local thread = require 'mlua.thread'
 local time = require 'mlua.time'
 local string = require 'string'
 
-function test_index_base(t)
+function test_index_regs(t)
     for i = 0, uart.NUM - 1 do
         local inst = uart[i]
         t:expect(t:expr(inst):get_index()):eq(i)
-        t:expect(t:expr(inst):regs_base())
-            :eq(addressmap[('UART%s_BASE'):format(i)])
+        t:expect(t:expr(inst):regs()):eq(addressmap[('UART%s_BASE'):format(i)])
     end
 end
 

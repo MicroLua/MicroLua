@@ -39,7 +39,7 @@ static inline spi_inst_t* to_SPI(lua_State* ls, int arg) {
     return *((spi_inst_t**)lua_touserdata(ls, arg));
 }
 
-static int SPI_regs_base(lua_State* ls) {
+static int SPI_regs(lua_State* ls) {
     lua_pushinteger(ls, (uintptr_t)spi_get_hw(check_SPI(ls, 1)));
     return 1;
 }
@@ -287,7 +287,7 @@ MLUA_SYMBOLS(SPI_syms) = {
     MLUA_SYM_F(set_baudrate, SPI_),
     MLUA_SYM_F(get_baudrate, SPI_),
     MLUA_SYM_F(get_index, SPI_),
-    MLUA_SYM_F(regs_base, SPI_),
+    MLUA_SYM_F(regs, SPI_),
     MLUA_SYM_F(set_format, SPI_),
     MLUA_SYM_F(set_slave, SPI_),
     MLUA_SYM_F(is_writable, SPI_),

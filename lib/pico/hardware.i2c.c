@@ -24,7 +24,7 @@ static i2c_inst_t** new_I2C(lua_State* ls) {
     return v;
 }
 
-static int I2C_regs_base(lua_State* ls) {
+static int I2C_regs(lua_State* ls) {
     lua_pushinteger(ls, (uintptr_t)i2c_get_hw(mlua_check_I2C(ls, 1)));
     return 1;
 }
@@ -336,7 +336,7 @@ MLUA_SYMBOLS(I2C_syms) = {
     MLUA_SYM_F(set_baudrate, I2C_),
     MLUA_SYM_F(set_slave_mode, I2C_),
     MLUA_SYM_F(hw_index, I2C_),
-    MLUA_SYM_F(regs_base, I2C_),
+    MLUA_SYM_F(regs, I2C_),
     MLUA_SYM_F(write_blocking_until, I2C_),
     MLUA_SYM_F(read_blocking_until, I2C_),
     MLUA_SYM_F(write_timeout_us, I2C_),

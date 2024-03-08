@@ -145,7 +145,7 @@ default I2C peripheral, if defined, can be accessed as `default`.
 - `default: I2C | boolean`\
   The default `I2C` instance, or `false` if `PICO_DEFAULT_I2C` is unset.
 
-- `I2C:regs_base() -> integer`\
+- `I2C:regs() -> integer`\
   Return the base address of the peripheral registers (`I2Cx_BASE`).
 
 - `I2C:write_blocking(addr, src, nostop) -> integer | nil` *[yields]*\
@@ -454,7 +454,7 @@ the `PIO` class.
 - `PIO:get_index() -> integer`\
   Return the instance number of the peripheral.
 
-- `PIO:regs_base() -> integer`\
+- `PIO:regs() -> integer`\
   Return the base address of the peripheral registers (`PIOx_BASE`).
 
 - `PIO:gpio_init(pin)`\
@@ -670,7 +670,10 @@ This module defines the `hardware.pwm.Config` class, which exposes PWM
 configuration functionality. All library functions that take an
 `pwm_config*` as a first argument are exposed as methods on the `Config` class.
 
-- `reg_base(slice = nil) -> integer`\
+- `NUM_SLICES: integer`\
+  The number of PWM slices available on the target.
+
+- `regs(slice = nil) -> integer`\
   When `slice` is `nil`, return the base address of the peripheral registers
   (`PWM_BASE`). Otherwise, return the base address of the registers for the
   given slice.
@@ -824,7 +827,7 @@ default SPI peripheral, if defined, can be accessed as `default`.
 - `default: SPI | boolean`\
   The default `SPI` instance, or `false` if `PICO_DEFAULT_SPI` is unset.
 
-- `SPI:regs_base() -> integer`\
+- `SPI:regs() -> integer`\
   Return the base address of the peripheral registers (`SPIx_BASE`).
 
 - `SPI:write_read_blocking(src) -> string` *[yields]*\
@@ -953,7 +956,7 @@ default UART peripheral, if defined, can be accessed as `default`.
 - `default: UART | boolean`\
   The default `UART` instance, or `false` if `PICO_DEFAULT_UART` is unset.
 
-- `UART:regs_base() -> integer`\
+- `UART:regs() -> integer`\
   Return the base address of the peripheral registers (`UARTx_BASE`).
 
 - `UART:is_tx_busy() -> boolean`\

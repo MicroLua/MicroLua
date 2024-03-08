@@ -71,7 +71,7 @@ static int mod_get_default_config(lua_State* ls) {
     return 1;
 }
 
-static int mod_reg_base(lua_State* ls) {
+static int mod_regs(lua_State* ls) {
     lua_pushinteger(ls, lua_isnoneornil(ls, 1) ? (uintptr_t)pwm_hw
                         : (uintptr_t)&pwm_hw->slice[check_slice(ls, 1)]);
     return 1;
@@ -184,6 +184,7 @@ MLUA_FUNC_V1(mod_, pwm_, force_irq, check_slice)
 MLUA_FUNC_R1(mod_, pwm_, get_dreq, lua_pushinteger, check_slice)
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_V(NUM_SLICES, integer, NUM_PWM_SLICES),
     MLUA_SYM_V(DIV_FREE_RUNNING, integer, PWM_DIV_FREE_RUNNING),
     MLUA_SYM_V(DIV_B_HIGH, integer, PWM_DIV_B_HIGH),
     MLUA_SYM_V(DIV_B_RISING, integer, PWM_DIV_B_RISING),
@@ -195,7 +196,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(gpio_to_channel, mod_),
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(get_default_config, mod_),
-    MLUA_SYM_F(reg_base, mod_),
+    MLUA_SYM_F(regs, mod_),
     MLUA_SYM_F(set_wrap, mod_),
     MLUA_SYM_F(set_chan_level, mod_),
     MLUA_SYM_F(set_both_levels, mod_),

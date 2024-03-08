@@ -53,8 +53,7 @@ function test_PIO_index_base(t)
     for i = 0, pio.NUM - 1 do
         local inst = pio[i]
         t:expect(t:expr(inst):get_index()):eq(i)
-        t:expect(t:expr(inst):regs_base())
-            :eq(addressmap[('PIO%s_BASE'):format(i)])
+        t:expect(t:expr(inst):regs()):eq(addressmap[('PIO%s_BASE'):format(i)])
     end
 end
 
