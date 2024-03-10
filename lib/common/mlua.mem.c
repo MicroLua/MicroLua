@@ -40,7 +40,7 @@ static int Buffer_fill(lua_State* ls) {
     lua_Unsigned len = luaL_optinteger(ls, 4, size - offset);
     luaL_argcheck(ls, offset + len <= size, 4, "out of bounds");
     memset(buf + offset, value, len);
-    return 0;
+    return lua_settop(ls, 1), 1;
 }
 
 static int Buffer_read(lua_State* ls) {

@@ -56,6 +56,9 @@ static int wp ## n(lua_State* ls) { \
     MLUA_FUNC_V(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4))
 #define MLUA_FUNC_V5(wp, p, n, a1, a2, a3, a4, a5) \
     MLUA_FUNC_V(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), a5(ls, 5))
+#define MLUA_FUNC_V6(wp, p, n, a1, a2, a3, a4, a5, a6) \
+    MLUA_FUNC_V(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), \
+                a5(ls, 5), a6(ls, 6))
 
 #define MLUA_FUNC_R0(wp, p, n, ret) \
     MLUA_FUNC_R(wp, p, n, ret)
@@ -70,6 +73,9 @@ static int wp ## n(lua_State* ls) { \
 #define MLUA_FUNC_R5(wp, p, n, ret, a1, a2, a3, a4, a5) \
     MLUA_FUNC_R(wp, p, n, ret, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), \
                 a5(ls, 5))
+#define MLUA_FUNC_R6(wp, p, n, ret, a1, a2, a3, a4, a5, a6) \
+    MLUA_FUNC_R(wp, p, n, ret, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), \
+                a5(ls, 5), a6(ls, 6))
 
 #define MLUA_FUNC_S1(wp, p, n, a1) \
     MLUA_FUNC_S(wp, p, n, a1(ls, 1))
@@ -81,6 +87,9 @@ static int wp ## n(lua_State* ls) { \
     MLUA_FUNC_S(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4))
 #define MLUA_FUNC_S5(wp, p, n, a1, a2, a3, a4, a5) \
     MLUA_FUNC_S(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), a5(ls, 5))
+#define MLUA_FUNC_S6(wp, p, n, a1, a2, a3, a4, a5, a6) \
+    MLUA_FUNC_S(wp, p, n, a1(ls, 1), a2(ls, 2), a3(ls, 3), a4(ls, 4), \
+                a5(ls, 5), a6(ls, 6))
 
 // A Lua symbol value.
 typedef struct MLuaSymVal {

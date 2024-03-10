@@ -18,6 +18,12 @@ static inline void* mlua_mem_check_Buffer(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, mlua_Buffer_name);
 }
 
+// Get a Buffer value, return NULL if the argument is not a Buffer userdata.
+static inline void* mlua_mem_test_Buffer(lua_State* ls, int arg) {
+    extern char const mlua_Buffer_name[];
+    return luaL_testudata(ls, arg, mlua_Buffer_name);
+}
+
 #ifdef __cplusplus
 }
 #endif
