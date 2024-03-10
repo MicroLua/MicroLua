@@ -23,6 +23,10 @@ bool mlua_to_cbool(lua_State* ls, int arg) {
     return lua_toboolean(ls, arg);
 }
 
+bool mlua_opt_cbool(lua_State* ls, int arg, bool def) {
+    return luaL_opt(ls, mlua_to_cbool, arg, def);
+}
+
 void* mlua_check_userdata(lua_State* ls, int arg) {
     void* ud = lua_touserdata(ls, arg);
     luaL_argexpected(ls, ud != NULL, arg, "userdata");

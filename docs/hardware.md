@@ -499,7 +499,7 @@ the `PIO` class.
 - `PIO:claim_sm_mask(mask)`\
   Mark multiple state machines as used.
 
-- `PIO:claim_unused_sm() -> integer`\
+- `PIO:claim_unused_sm(required = true) -> integer`\
   Claim an unused state machine. Returns the index of the claimed state machine.
 
 - `PIO:set_irq_callback(callback) -> Thread`\

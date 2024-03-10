@@ -130,8 +130,8 @@ MLUA_FUNC_V1(mod_,, busy_wait_ms, luaL_checkinteger)
 MLUA_FUNC_V1(mod_,, busy_wait_until, check_absolute_time)
 MLUA_FUNC_R1(mod_,, time_reached, lua_pushboolean, check_absolute_time)
 MLUA_FUNC_V1(mod_, hardware_alarm_, claim, luaL_checkinteger)
-MLUA_FUNC_R1(mod_, hardware_alarm_, claim_unused, lua_pushinteger,
-             lua_toboolean)
+MLUA_FUNC_R(mod_, hardware_alarm_, claim_unused, lua_pushinteger,
+            mlua_opt_cbool(ls, 1, true))
 MLUA_FUNC_V1(mod_, hardware_alarm_, unclaim, luaL_checkinteger)
 MLUA_FUNC_R1(mod_, hardware_alarm_, is_claimed, lua_pushboolean,
              luaL_checkinteger)

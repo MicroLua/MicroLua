@@ -26,7 +26,7 @@ function test_user_irqs(t)
     -- Set up IRQ handlers.
     local irqs, nums, log = list(), '', nil
     while true do
-        local num = irq.user_irq_claim_unused()
+        local num = irq.user_irq_claim_unused(false)
         if num < 0 then break end
         t:cleanup(function() irq.user_irq_unclaim(num) end)
         irq.set_handler(num, function(n) log = log .. ('%s '):format(n) end)

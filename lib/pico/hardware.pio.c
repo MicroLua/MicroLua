@@ -600,8 +600,8 @@ MLUA_FUNC_R2(PIO_, pio_, interrupt_get, lua_pushboolean, check_PIO,
              luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, interrupt_clear, check_PIO, luaL_checkinteger)
 MLUA_FUNC_V2(PIO_, pio_, claim_sm_mask, check_PIO, luaL_checkinteger)
-MLUA_FUNC_R2(PIO_, pio_, claim_unused_sm, lua_pushinteger, check_PIO,
-             mlua_to_cbool)
+MLUA_FUNC_R(PIO_, pio_, claim_unused_sm, lua_pushinteger, check_PIO(ls, 1),
+             mlua_opt_cbool(ls, 2, true))
 
 MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(sm, PIO_),

@@ -178,7 +178,8 @@ MLUA_FUNC_V2(mod_, irq_, set_mask_enabled, luaL_checkinteger, mlua_to_cbool)
 MLUA_FUNC_R1(mod_, irq_, has_shared_handler, lua_pushboolean, check_irq)
 MLUA_FUNC_V1(mod_, irq_, set_pending, check_irq)
 MLUA_FUNC_V1(mod_,, user_irq_claim, check_user_irq)
-MLUA_FUNC_R1(mod_,, user_irq_claim_unused, lua_pushinteger, mlua_to_cbool)
+MLUA_FUNC_R(mod_,, user_irq_claim_unused, lua_pushinteger,
+            mlua_opt_cbool(ls, 1, true))
 MLUA_FUNC_V1(mod_,, user_irq_unclaim, check_user_irq)
 
 MLUA_SYMBOLS(module_syms) = {

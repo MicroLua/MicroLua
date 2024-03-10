@@ -32,9 +32,14 @@ int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
 // Load a module, and optionally keep a reference to it on the stack.
 void mlua_require(lua_State* ls, char const* module, bool keep);
 
-// Convert an argument to a boolean according to C rules: nil, false, 0 and 0.0
-// are considered false, and everything else is true.
+// Convert an argument to a boolean according to C rules: nil, false, 0, 0.0 and
+// a missing argument are considered false, and everything else is true.
 bool mlua_to_cbool(lua_State* ls, int arg);
+
+// Convert an optional argument to a boolean according to C rules: false, 0 and
+// 0.0 are considered false, and everything else is true. If the argument is
+// absent or nil, return "def".
+bool mlua_opt_cbool(lua_State* ls, int arg, bool def);
 
 // Return the given argument as a userdata. Raises an error if the argument is
 // not a userdata.
