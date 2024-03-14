@@ -134,8 +134,8 @@ static void __time_critical_func(handle_dma_irq)(void) {
     dma_state.pending[core] |= pending;
     while (pending != 0) {
         uint ch = __builtin_ctz(pending);
-        mlua_event_set(&dma_state.events[ch]);
         pending &= ~(1u << ch);
+        mlua_event_set(&dma_state.events[ch]);
     }
 }
 
@@ -230,8 +230,8 @@ static int mod_wait_irq(lua_State* ls) {
 static void disable_events(lua_State* ls, uint32_t mask) {
     while (mask != 0) {
         uint ch = __builtin_ctz(mask);
-        mlua_event_disable(ls, &dma_state.events[ch]);
         mask &= ~(1u << ch);
+        mlua_event_disable(ls, &dma_state.events[ch]);
     }
 }
 
@@ -239,14 +239,14 @@ static void enable_events(lua_State* ls, uint32_t mask) {
     uint32_t done = 0;
     while (mask != 0) {
         uint ch = __builtin_ctz(mask);
+        uint32_t bm = 1u << ch;
+        mask &= ~bm;
         if (!mlua_event_enable(ls, &dma_state.events[ch])) {
             disable_events(ls, done);
             luaL_error(ls, "DMA: channel %d IRQ already enabled", ch);
             return;
         }
-        uint32_t b = 1u << ch;
-        done |= b;
-        mask &= ~b;
+        done |= bm;
     }
 }
 

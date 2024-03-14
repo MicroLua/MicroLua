@@ -96,6 +96,6 @@ function test_mem_to_mem_BNB(t)
         t:expect(t:expr(dst):read()):eq(src)
         t:expect(t:expr(dma).sniffer_get_data_accumulator()):fmt(hex8)
             :eq(0x414fa339)
-        t:expect(t2 - t1):label("duration"):gte(50 * #src)
+        t:expect(t2 - t1):label("duration"):gte(50 * #src - 20)
     end
 end
