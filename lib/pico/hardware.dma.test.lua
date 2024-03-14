@@ -8,6 +8,8 @@ local addressmap = require 'hardware.regs.addressmap'
 local regs = require 'hardware.regs.dma'
 local dreq = require 'hardware.regs.dreq'
 local mem = require 'mlua.mem'
+local thread = require 'mlua.thread'
+local time = require 'mlua.time'
 local string = require 'string'
 
 local function hex8(v) return ('0x%08x'):format(v) end
@@ -37,8 +39,10 @@ function test_regs(t)
     end
 end
 
-function test_mem_to_mem(t)
+function test_mem_to_mem_BNB(t)
     t:cleanup(function() dma.sniffer_disable() end)
+
+    -- Claim a DMA channel.
     local ch = dma.claim_unused_channel()
     t:cleanup(function()
         dma.channel_cleanup(ch)
@@ -46,23 +50,52 @@ function test_mem_to_mem(t)
         t:expect(t:expr(dma).channel_is_claimed(ch)):eq(false)
     end)
     t:expect(t:expr(dma).channel_is_claimed(ch)):eq(true)
+
+    -- Claim a DMA timer and configure it.
+    local timer = dma.claim_unused_timer()
+    t:cleanup(function()
+        dma.timer_unclaim(timer)
+        t:expect(t:expr(dma).timer_is_claimed(timer)):eq(false)
+    end)
+    t:expect(t:expr(dma).timer_is_claimed(timer)):eq(true)
+    dma.timer_set_fraction(timer, 1, 50 * 250)
+
+    -- Enable the DMA IRQ if non-blocking behavior is enabled.
+    if not thread.blocking() then
+        dma.enable_irq(1 << ch)
+        t:cleanup(function() dma.enable_irq(1 << ch, false) end)
+    end
+
+    -- Prepare the channel configuration.
     local cfg = dma.channel_get_default_config(ch)
         :set_read_increment(true)
         :set_write_increment(true)
+        :set_dreq(dma.get_timer_dreq(timer))
         :set_transfer_data_size(dma.SIZE_8)
         :set_sniff_enable(true)
 
+    -- Perform transfers. The CRC-32 computation corresponds to the CRC32 preset
+    -- on <http://www.sunshine2k.de/coding/javascript/crc/crc_js.html>.
     local src = "The quick brown fox jumps over the lazy dog"
-    local dst = mem.alloc(#src):fill(0)
-    -- CRC-32 computation using the CRC32 preset on
-    -- <http://www.sunshine2k.de/coding/javascript/crc/crc_js.html>.
+    local dst = mem.alloc(#src)
     dma.sniffer_enable(ch, dma.SNIFF_CRC32_REV, false)
-    dma.sniffer_set_data_accumulator(0xffffffff)
     dma.sniffer_set_output_invert_enabled(true)
     dma.sniffer_set_output_reverse_enabled(true)
-    dma.channel_configure(ch, cfg, dst, src, #src, true)
-    while dma.channel_busy(ch) do end
-    t:expect(t:expr(dst):read()):eq(src)
-    t:expect(t:expr(dma).sniffer_get_data_accumulator()):fmt(hex8)
-        :eq(0x414fa339)
+    for i = 1, 3 do
+        dst:fill(0)
+        dma.sniffer_set_data_accumulator(0xffffffff)
+        t:expect(t:expr(dma).channel_is_busy(ch)):eq(false)
+        local t1 = time.ticks()
+        dma.channel_configure(ch, cfg, dst, src, #src, true)
+        t:expect(t:expr(dma).channel_is_busy(ch)):eq(true)
+        t:expect(t:expr(dma).channel_get_irq_status(ch)):eq(false)
+        dma.wait_irq(ch)
+        local t2 = time.ticks()
+        t:expect(t:expr(dma).channel_is_busy(ch)):eq(false)
+        t:expect(t:expr(dma).channel_get_irq_status(ch)):eq(false)
+        t:expect(t:expr(dst):read()):eq(src)
+        t:expect(t:expr(dma).sniffer_get_data_accumulator()):fmt(hex8)
+            :eq(0x414fa339)
+        t:expect(t2 - t1):label("duration"):gte(50 * #src)
+    end
 end

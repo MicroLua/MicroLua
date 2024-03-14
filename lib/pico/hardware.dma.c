@@ -9,9 +9,8 @@
 #include "lauxlib.h"
 #include "mlua/mem.h"
 #include "mlua/module.h"
+#include "mlua/thread.h"
 #include "mlua/util.h"
-
-// TODO: Add support for IRQs
 
 static uint check_channel(lua_State* ls, int arg) {
     lua_Unsigned num = luaL_checkinteger(ls, arg);
@@ -109,6 +108,39 @@ MLUA_SYMBOLS(Config_syms) = {
     MLUA_SYM_F(set_sniff_enable, Config_),
 };
 
+#if LIB_MLUA_MOD_MLUA_THREAD
+
+typedef struct DMAIntRegs {
+    io_rw_32 inte;
+    io_rw_32 intf;
+    io_rw_32 ints;
+} DMAIntRegs;
+
+#define INT_REGS(core) ((DMAIntRegs*)&dma_hw->inte0 + core)
+
+typedef struct DMAState {
+    MLuaEvent events[NUM_DMA_CHANNELS];
+    uint16_t pending[NUM_CORES];
+} DMAState;
+
+static DMAState dma_state;
+
+static void __time_critical_func(handle_dma_irq)(void) {
+    uint core = get_core_num();
+    DMAIntRegs* ir = INT_REGS(core);
+    uint32_t pending = ir->ints;
+    if (pending == 0) return;
+    ir->ints = pending;  // Clear pending IRQs
+    dma_state.pending[core] |= pending;
+    while (pending != 0) {
+        uint ch = __builtin_ctz(pending);
+        mlua_event_set(&dma_state.events[ch]);
+        pending &= ~(1u << ch);
+    }
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
+
 static int mod_channel_get_default_config(lua_State* ls) {
     *new_Config(ls) = dma_channel_get_default_config(check_channel(ls, 1));
     return 1;
@@ -124,6 +156,135 @@ static int mod_regs(lua_State* ls) {
                         : (uintptr_t)&dma_hw->ch[check_channel(ls, 1)]);
     return 1;
 }
+
+static int mod_channel_get_irq_status(lua_State* ls) {
+    uint16_t mask = 1u << check_channel(ls, 1);
+    bool pending = (dma_hw->intr & mask) != 0;
+#if LIB_MLUA_MOD_MLUA_THREAD
+    if (!pending) {
+        uint32_t save = save_and_disable_interrupts();
+        pending = (dma_state.pending[get_core_num()] & mask) != 0;
+        restore_interrupts(save);
+    }
+#endif
+    return lua_pushboolean(ls, pending), 1;
+}
+
+static int mod_channel_acknowledge_irq(lua_State* ls) {
+    uint16_t mask = 1u << check_channel(ls, 1);
+#if LIB_MLUA_MOD_MLUA_THREAD
+    uint32_t save = save_and_disable_interrupts();
+    dma_hw->intr = mask;
+    dma_state.pending[get_core_num()] &= ~mask;
+    restore_interrupts(save);
+#else
+    dma_hw->intr = mask;
+#endif
+    return 0;
+}
+
+static int wait_irq_loop(lua_State* ls, bool timeout) {
+    uint16_t mask = 1u << lua_tointeger(ls, 1);
+    uint16_t* pending = &dma_state.pending[get_core_num()];
+    uint32_t save = save_and_disable_interrupts();
+    uint16_t p = *pending;
+    *pending &= ~mask;
+    restore_interrupts(save);
+    if ((p & mask) == 0) return -1;
+    return 0;
+}
+
+static int mod_wait_irq(lua_State* ls) {
+    uint ch = check_channel(ls, 1);
+    MLuaEvent* ev = &dma_state.events[ch];
+    if (mlua_event_can_wait(ls, ev)) {
+        return mlua_event_loop(ls, ev, &wait_irq_loop, 0);
+    }
+    uint16_t mask = 1u << ch;
+#if LIB_MLUA_MOD_MLUA_THREAD
+    uint core = get_core_num();
+    DMAIntRegs* ir = INT_REGS(core);
+    if ((ir->inte & mask) != 0) {  // IRQ is managed by IRQ handler
+        uint16_t* pending = &dma_state.pending[core];
+        for (;;) {
+            uint32_t save = save_and_disable_interrupts();
+            uint16_t p = *pending;
+            *pending &= ~mask;
+            restore_interrupts(save);
+            if ((p & mask) != 0) return 0;
+            tight_loop_contents();
+        }
+    }
+#endif
+    for (;;) {
+        if ((dma_hw->intr & mask) != 0) {
+            dma_hw->intr = mask;  // Clear pending IRQ
+            return 0;
+        }
+        tight_loop_contents();
+    }
+}
+
+#if LIB_MLUA_MOD_MLUA_THREAD
+
+static void disable_events(lua_State* ls, uint32_t mask) {
+    while (mask != 0) {
+        uint ch = __builtin_ctz(mask);
+        mlua_event_disable(ls, &dma_state.events[ch]);
+        mask &= ~(1u << ch);
+    }
+}
+
+static void enable_events(lua_State* ls, uint32_t mask) {
+    uint32_t done = 0;
+    while (mask != 0) {
+        uint ch = __builtin_ctz(mask);
+        if (!mlua_event_enable(ls, &dma_state.events[ch])) {
+            disable_events(ls, done);
+            luaL_error(ls, "DMA: channel %d IRQ already enabled", ch);
+            return;
+        }
+        uint32_t b = 1u << ch;
+        done |= b;
+        mask &= ~b;
+    }
+}
+
+static int mod_enable_irq(lua_State* ls) {
+    uint32_t mask = luaL_checkinteger(ls, 1) & ((1u << NUM_DMA_CHANNELS) - 1);
+    uint core = get_core_num();
+    uint irq = DMA_IRQ_0 + core;
+    DMAIntRegs* ir = INT_REGS(core);
+    lua_Integer priority = -1;
+    if (!mlua_event_enable_irq_arg(ls, 2, &priority)) {  // Disable IRQs
+        mask &= ir->inte;
+        if (mask == 0) return 0;
+        hw_clear_bits(&ir->inte, mask);
+        if (ir->inte == 0) {
+            irq_set_enabled(irq, false);
+            irq_remove_handler(irq, &handle_dma_irq);
+        }
+        disable_events(ls, mask);
+        return 0;
+    }
+
+    // Enable IRQs.
+    mask &= ~ir->inte;
+    if (mask == 0) return 0;
+    enable_events(ls, mask);
+    uint32_t save = save_and_disable_interrupts();
+    dma_hw->intr = mask;  // Clear pending IRQs
+    dma_state.pending[core] &= ~mask;
+    restore_interrupts(save);
+    if (ir->inte == 0) {
+        mlua_event_set_irq_handler(irq, &handle_dma_irq, priority);
+        irq_set_enabled(irq, true);
+    }
+    hw_set_bits(&ir->inte, mask);
+    return 0;
+}
+
+#endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 MLUA_FUNC_V1(mod_, dma_, channel_claim, check_channel)
 MLUA_FUNC_V1(mod_, dma_, claim_mask, luaL_checkinteger)
@@ -207,18 +368,20 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(start_channel_mask, mod_),
     MLUA_SYM_F(channel_start, mod_),
     MLUA_SYM_F(channel_abort, mod_),
-    // channel_set_irq0_enabled: Not useful in Lua
-    // set_irq0_channel_mask_enabled: Not useful in Lua
-    // channel_set_irq1_enabled: Not useful in Lua
-    // set_irq1_channel_mask_enabled: Not useful in Lua
-    // irqn_set_channel_enabled: Not useful in Lua
-    // irqn_set_channel_mask_enabled: Not useful in Lua
-    // TODO: MLUA_SYM_F(get_irq0_status, mod_),
-    // TODO: MLUA_SYM_F(get_irq1_status, mod_),
-    // TODO: MLUA_SYM_F(irqn_get_channel_status, mod_),
-    // TODO: MLUA_SYM_F(channel_acknowledge_irq0, mod_),
-    // TODO: MLUA_SYM_F(channel_acknowledge_irq1, mod_),
-    // TODO: MLUA_SYM_F(irqn_acknowledge_channel, mod_),
+    // channel_set_irq0_enabled: Use enable_irq
+    // set_irq0_channel_mask_enabled: Use enable_irq
+    // channel_set_irq1_enabled: Use enable_irq
+    // set_irq1_channel_mask_enabled: Use enable_irq
+    // irqn_set_channel_enabled: Use enable_irq
+    // irqn_set_channel_mask_enabled: Use enable_irq
+    MLUA_SYM_F(channel_get_irq_status, mod_),
+    // channel_get_irq0_status: Use channel_get_irq_status
+    // channel_get_irq1_status: Use channel_get_irq_status
+    // irqn_get_channel_status: Use channel_get_irq_status
+    MLUA_SYM_F(channel_acknowledge_irq, mod_),
+    // channel_acknowledge_irq0: Use channel_acknowledge_irq
+    // channel_acknowledge_irq1: Use channel_acknowledge_irq
+    // irqn_acknowledge_channel: Use channel_acknowledge_irq
     MLUA_SYM_F(channel_is_busy, mod_),
     MLUA_SYM_F(channel_wait_for_finish_blocking, mod_),
     MLUA_SYM_F(sniffer_enable, mod_),
@@ -235,9 +398,17 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(timer_set_fraction, mod_),
     MLUA_SYM_F(get_timer_dreq, mod_),
     MLUA_SYM_F(channel_cleanup, mod_),
+    MLUA_SYM_F(wait_irq, mod_),
+#if LIB_MLUA_MOD_MLUA_THREAD
+    MLUA_SYM_F(enable_irq, mod_),
+#else
+    MLUA_SYM_V(enable_irq, boolean, false),
+#endif
 };
 
 MLUA_OPEN_MODULE(hardware.dma) {
+    mlua_thread_require(ls);
+
     // Create the module.
     mlua_new_module(ls, NUM_DMA_CHANNELS, module_syms);
 

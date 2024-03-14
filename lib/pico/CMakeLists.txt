@@ -112,6 +112,7 @@ target_link_libraries(mlua_mod_hardware.dma INTERFACE
     hardware_base
     hardware_dma
     mlua_mod_mlua.mem_headers
+    mlua_mod_mlua.thread_headers
     pico_platform
 )
 
@@ -122,6 +123,8 @@ target_link_libraries(mlua_test_hardware.dma INTERFACE
     mlua_mod_hardware.regs.dma
     mlua_mod_hardware.regs.dreq
     mlua_mod_mlua.mem
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.time
     mlua_mod_string
 )
 

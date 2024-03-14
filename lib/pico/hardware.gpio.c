@@ -95,7 +95,7 @@ static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx) {
         }
 
         // Call the IRQ callback.
-        int shift = (__builtin_ffs(pending) - 1) & ~3;
+        int shift = __builtin_ctz(pending) & ~3;
         lua_pushvalue(ls, ctx + 2);  // handler
         lua_pushinteger(ls, 8 * block + shift / 4);  // gpio
         lua_pushinteger(ls, (pending >> shift) & 0xfu);  // event_mask
