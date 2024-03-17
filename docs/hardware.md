@@ -231,6 +231,11 @@ the module with the instance index.
   The number of PIO peripherals available on the target, and the number of state
   machines per PIO peripheral.
 
+- `NUM_IRQS: integer`\
+  `NUM_SYS_IRQS: integer`\
+  The number of state machine interrupts, and the number of state machine
+  interrupts that are routed to the system IRQs.
+
 - `FIFO_JOIN_NONE: integer`\
   `FIFO_JOIN_TX: integer`\
   `FIFO_JOIN_RX: integer`\
@@ -490,11 +495,11 @@ the `PIO` class.
 
 - `PIO:interrupt_get(num) -> boolean`\
   `PIO:interrupt_get_mask(mask) -> integer`\
-  Determine if one or more PIO interrupts are set.
+  Determine if one or more state machine interrupts are pending.
 
 - `PIO:interrupt_clear(num)`\
   `PIO:interrupt_clear_mask(mask)`\
-  Clear one or more PIO interrupts.
+  Clear one or more state machine interrupts.
 
 - `PIO:claim_sm_mask(mask)`\
   Mark multiple state machines as used.
@@ -502,18 +507,11 @@ the `PIO` class.
 - `PIO:claim_unused_sm(required = true) -> integer`\
   Claim an unused state machine. Returns the index of the claimed state machine.
 
-- `PIO:set_irq_callback(callback) -> Thread`\
-  Set a callback to be called on state machine IRQs. Returns the
-  [event handler thread](core.md#callbacks).
-
-  - `callback(mask)`\
-    The callback to be called on state machine IRQ events. `mask` is a bit mask
-    of pending state machine IRQs. The callback must clear pending IRQs with
-    `interrupt_clear()` or `interrupt_clear_mask()` prior to returning,
-    otherwise it will be called again immediately.
-
-  The callback can be removed either by killing the returned thread, or by
-  calling `set_irq_callback()` with a `nil` callback.
+- `PIO:wait_irq(mask) -> integer` *[yields]*\
+  Wait for one of the state machine interrupts indicated by the mask to be set.
+  Returns the interrupts that are currently pending, masked by `mask`. This
+  function blocks without yielding if the mask contains interrupts that aren't
+  routed to the system IRQs.
 
 - `PIO:enable_irq(mask, enable)`\
   [Enable or disable](core.md#irq-enablers) the PIO IRQ handler (`PIOx_IRQ_n`)

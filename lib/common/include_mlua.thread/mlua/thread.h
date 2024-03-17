@@ -63,14 +63,15 @@ void mlua_thread_kill(lua_State* ls);
 // Shut down the thread scheduler.
 void mlua_thread_shutdown(lua_State* ls);
 
-// Prepare for multi-event operations. The event pointer is updated to the first
-// event in the array for which the mask has a bit set, and the mask is shifted
-// to remove that bit (i.e. the remaining bits set are for events after the
-// first).
-static inline void mlua_event_multi(MLuaEvent const** evs, unsigned int* mask) {
-    unsigned int bit = MLUA_CTZ(*mask);
+// Prepare an event pointer for multi-event operations. The pointer is updated
+// to the first event in the array for which the mask has a bit set. Returns the
+// mask value to use in the multi-event operations; it corresponds to the mask
+// of events following the first one.
+static inline unsigned int mlua_event_multi(MLuaEvent const** evs,
+                                            unsigned int mask) {
+    unsigned int bit = MLUA_CTZ(mask);
     *evs += bit;
-    *mask >>= bit + 1;
+    return mask >> (bit + 1);
 }
 
 // Register the current thread to be notified when an event triggers.

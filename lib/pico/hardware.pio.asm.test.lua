@@ -83,21 +83,16 @@ want_pio_timer = {
 
 function pio_irqs(_ENV)
 public(start):
-    pull()
-    mov(x, osr)
-loop:
-    irq(wait, 0)
-    irq(wait, 1)
-    irq(wait, 2)
-    irq(wait, 3)
-    jmp(x_dec, loop)
-    push()
+    irq(wait, 0) (10)
+    irq(wait, 1) (10)
+    irq(wait, 2) (10)
+    irq(wait, 3) (10)
 end
 
 want_pio_irqs = {
-    instr = {0x80a0, 0xa027, 0xc020, 0xc021, 0xc022, 0xc023, 0x0042, 0x8020},
+    instr = {0xca20, 0xca21, 0xca22, 0xca23},
     labels = {start = 0},
-    config = function(cfg) cfg:set_wrap(0, 7) end,
+    config = function(cfg) cfg:set_wrap(0, 3) end,
 }
 
 function pio_addition(_ENV)
