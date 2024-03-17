@@ -133,7 +133,7 @@ static void __time_critical_func(handle_dma_irq)(void) {
     ir->ints = pending;  // Clear pending IRQs
     dma_state.pending[core] |= pending;
     while (pending != 0) {
-        uint ch = __builtin_ctz(pending);
+        uint ch = MLUA_CTZ(pending);
         pending &= ~(1u << ch);
         mlua_event_set(&dma_state.events[ch]);
     }
@@ -229,7 +229,7 @@ static int mod_wait_irq(lua_State* ls) {
 
 static void disable_events(lua_State* ls, uint32_t mask) {
     while (mask != 0) {
-        uint ch = __builtin_ctz(mask);
+        uint ch = MLUA_CTZ(mask);
         mask &= ~(1u << ch);
         mlua_event_disable(ls, &dma_state.events[ch]);
     }
@@ -238,7 +238,7 @@ static void disable_events(lua_State* ls, uint32_t mask) {
 static void enable_events(lua_State* ls, uint32_t mask) {
     uint32_t done = 0;
     while (mask != 0) {
-        uint ch = __builtin_ctz(mask);
+        uint ch = MLUA_CTZ(mask);
         uint32_t bm = 1u << ch;
         mask &= ~bm;
         if (!mlua_event_enable(ls, &dma_state.events[ch])) {

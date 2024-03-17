@@ -20,6 +20,12 @@ extern "C" {
 // Return the number of elements in the given array.
 #define MLUA_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+// Return a bit mask of n bits.
+#define MLUA_MASK(n) ((1u << n) - 1)
+
+// Return the number of trailing zero bits of the given value.
+#define MLUA_CTZ(v) __builtin_ctz(v)
+
 // MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
 #define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 

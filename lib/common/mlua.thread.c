@@ -15,7 +15,6 @@
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/platform.h"
-#include "mlua/util.h"
 
 // TODO: Add "performance" counters: dispatch cycles, sleeps
 
@@ -749,19 +748,11 @@ MLUA_OPEN_MODULE(mlua.thread) {
 }
 
 void mlua_event_watch(lua_State* ls, MLuaEvent const* ev) {
-    if (!mlua_event_enabled(ev)) {
-        luaL_error(ls, "watching disabled event");
-        return;
-    }
     lua_pushthread(ls);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
 }
 
-void watch_from_thread(lua_State* ls, MLuaEvent const* ev, int thread) {
-    if (!mlua_event_enabled(ev)) {
-        luaL_error(ls, "watching disabled event");
-        return;
-    }
+static void watch_from_thread(lua_State* ls, MLuaEvent const* ev, int thread) {
     lua_pushvalue(ls, thread);
     lua_rawsetp(ls, LUA_REGISTRYINDEX, ev);
 }
@@ -769,6 +760,30 @@ void watch_from_thread(lua_State* ls, MLuaEvent const* ev, int thread) {
 void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev) {
     if (!mlua_event_enabled(ev)) return;
     mlua_event_remove_watcher(ls, ev);
+}
+
+static inline void next_event(MLuaEvent const** evs, unsigned int* mask) {
+    unsigned int bit = MLUA_CTZ(*mask) + 1;
+    *evs += bit;
+    *mask >>= bit;
+}
+
+void mlua_event_watch_multi(lua_State* ls, MLuaEvent const* evs,
+                            unsigned int mask) {
+    for (;;) {
+        mlua_event_watch(ls, evs);
+        if (mask == 0) return;
+        next_event(&evs, &mask);
+    }
+}
+
+void mlua_event_unwatch_multi(lua_State* ls, MLuaEvent const* evs,
+                              unsigned int mask) {
+    for (;;) {
+        mlua_event_unwatch(ls, evs);
+        if (mask == 0) return;
+        next_event(&evs, &mask);
+    }
 }
 
 bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev) {
@@ -789,15 +804,22 @@ bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev) {
     return !mlua_thread_blocking(ls) && mlua_event_enabled(ev);
 }
 
+bool mlua_event_can_wait_multi(lua_State* ls, MLuaEvent const* evs,
+                               unsigned int mask) {
+    if (mlua_thread_blocking(ls)) return false;
+    for (;;) {
+        if (!mlua_event_enabled(evs)) return false;
+        if (mask == 0) return true;
+        next_event(&evs, &mask);
+    }
+}
+
 static int mlua_event_loop_1(lua_State* ls, MLuaEvent const* ev,
                              MLuaEventLoopFn loop, int index);
 static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx);
 
 int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
                     int index) {
-    if (!mlua_event_enabled(ev)) {
-        return luaL_error(ls, "wait for disabled event");
-    }
     int res = loop(ls, false);
     if (res >= 0) return res;
     if (index != 0) {
@@ -831,6 +853,56 @@ static int mlua_event_loop_2(lua_State* ls, int status, lua_KContext ctx) {
         res = loop(ls, true);
     }
     mlua_event_unwatch(ls, (MLuaEvent const*)ctx);
+    return res;
+}
+
+static int mlua_event_loop_multi_1(lua_State* ls, MLuaEvent const* evs,
+                                   unsigned int mask, MLuaEventLoopFn loop,
+                                   int index);
+static int mlua_event_loop_multi_2(lua_State* ls, int status, lua_KContext ctx);
+
+int mlua_event_loop_multi(lua_State* ls, MLuaEvent const* evs,
+                          unsigned int mask, MLuaEventLoopFn loop, int index) {
+    int res = loop(ls, false);
+    if (res >= 0) return res;
+    if (index != 0) {
+        if (lua_isnoneornil(ls, index)) {
+            index = 0;
+        } else {
+            luaL_argexpected(ls, mlua_is_time(ls, index), index,
+                             "integer or Int64");
+        }
+    }
+    // TODO: Use a deferred to unwatch
+    mlua_event_watch_multi(ls, evs, mask);
+    return mlua_event_loop_multi_1(ls, evs, mask, loop, index);
+}
+
+static int mlua_event_loop_multi_1(lua_State* ls, MLuaEvent const* evs,
+                                   unsigned int mask, MLuaEventLoopFn loop,
+                                   int index) {
+    lua_pushinteger(ls, mask);
+    lua_pushlightuserdata(ls, loop);
+    lua_pushinteger(ls, index);
+    return mlua_thread_suspend(ls, &mlua_event_loop_2, (lua_KContext)evs,
+                               index);
+}
+
+static int mlua_event_loop_multi_2(lua_State* ls, int status,
+                                   lua_KContext ctx) {
+    MLuaEvent* evs = (MLuaEvent*)ctx;
+    unsigned int mask = lua_tointeger(ls, -3);
+    MLuaEventLoopFn loop = (MLuaEventLoopFn)lua_touserdata(ls, -2);
+    int index = lua_tointeger(ls, -1);
+    lua_pop(ls, 3);  // Restore the stack for loop
+    int res = loop(ls, false);
+    if (res < 0) {
+        if (index == 0 || !mlua_time_reached(ls, index)) {
+            return mlua_event_loop_multi_1(ls, evs, mask, loop, index);
+        }
+        res = loop(ls, true);
+    }
+    mlua_event_unwatch_multi(ls, evs, mask);
     return res;
 }
 
