@@ -230,10 +230,13 @@ end
 local irq_modes = {wait = 1, clear = 2}
 
 function Program:i_irq(mode, index)
-    mode = type(mode) == 'function' and 'wait' or sym_name(mode)
     local m = 0
-    if not index then index = mode else m = irq_modes[mode] end
-    if not m then return raise(2, "invalid mode: %s", mode) end
+    if not index then index = mode
+    else
+        mode = type(mode) == 'function' and 'wait' or sym_name(mode)
+        m = irq_modes[mode]
+        if not m then return raise(2, "invalid mode: %s", mode) end
+    end
     if (index & ~0x1f) ~= 0 then return raise(2, "invalid index: %s", index) end
     return self:i_word(0xc000 | (m << 5) | index)
 end
