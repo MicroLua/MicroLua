@@ -184,43 +184,44 @@ static int mod_channel_acknowledge_irq(lua_State* ls) {
 }
 
 static int wait_irq_loop(lua_State* ls, bool timeout) {
-    uint16_t mask = 1u << lua_tointeger(ls, 1);
+    uint16_t mask = lua_tointeger(ls, 1);
     uint16_t* pending = &dma_state.pending[get_core_num()];
     uint32_t save = save_and_disable_interrupts();
     uint16_t p = *pending;
     *pending &= ~mask;
     restore_interrupts(save);
-    if ((p & mask) == 0) return -1;
-    return 0;
+    p &= mask;
+    if (p == 0) return -1;
+    return lua_pushinteger(ls, p), 1;
 }
 
 static int mod_wait_irq(lua_State* ls) {
-    uint ch = check_channel(ls, 1);
-    MLuaEvent* ev = &dma_state.events[ch];
-    if (mlua_event_can_wait(ls, ev)) {
-        return mlua_event_loop(ls, ev, &wait_irq_loop, 0);
+    uint16_t mask = luaL_checkinteger(ls, 1) & MLUA_MASK(NUM_DMA_CHANNELS);
+    MLuaEvent const* evs = dma_state.events;
+    uint m = mlua_event_multi(&evs, mask);
+    if (mlua_event_can_wait_multi(ls, evs, m)) {
+        return mlua_event_loop_multi(ls, evs, m, &wait_irq_loop, 0);
     }
-    uint16_t mask = 1u << ch;
+
+    uint16_t poll_mask = mask;
 #if LIB_MLUA_MOD_MLUA_THREAD
     uint core = get_core_num();
-    DMAIntRegs* ir = INT_REGS(core);
-    if ((ir->inte & mask) != 0) {  // IRQ is managed by IRQ handler
-        uint16_t* pending = &dma_state.pending[core];
-        for (;;) {
-            uint32_t save = save_and_disable_interrupts();
-            uint16_t p = *pending;
-            *pending &= ~mask;
-            restore_interrupts(save);
-            if ((p & mask) != 0) return 0;
-            tight_loop_contents();
-        }
-    }
+    uint16_t* pending = &dma_state.pending[core];
+    uint16_t irq_mask = INT_REGS(core)->inte & mask;
+    poll_mask &= ~irq_mask;
 #endif
     for (;;) {
-        if ((dma_hw->intr & mask) != 0) {
-            dma_hw->intr = mask;  // Clear pending IRQ
-            return 0;
+        uint16_t p = dma_hw->intr & poll_mask;
+        if (p != 0) dma_hw->intr = p;
+#if LIB_MLUA_MOD_MLUA_THREAD
+        if (irq_mask != 0) {
+            uint32_t save = save_and_disable_interrupts();
+            p |= *pending & irq_mask;
+            *pending &= ~irq_mask;
+            restore_interrupts(save);
         }
+#endif
+        if (p != 0) return lua_pushinteger(ls, p), 1;
         tight_loop_contents();
     }
 }
@@ -251,7 +252,7 @@ static void enable_events(lua_State* ls, uint32_t mask) {
 }
 
 static int mod_enable_irq(lua_State* ls) {
-    uint32_t mask = luaL_checkinteger(ls, 1) & ((1u << NUM_DMA_CHANNELS) - 1);
+    uint32_t mask = luaL_checkinteger(ls, 1) & MLUA_MASK(NUM_DMA_CHANNELS);
     uint core = get_core_num();
     uint irq = DMA_IRQ_0 + core;
     DMAIntRegs* ir = INT_REGS(core);
