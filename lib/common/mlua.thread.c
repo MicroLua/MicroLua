@@ -884,7 +884,7 @@ static int mlua_event_loop_multi_1(lua_State* ls, MLuaEvent const* evs,
     lua_pushinteger(ls, mask);
     lua_pushlightuserdata(ls, loop);
     lua_pushinteger(ls, index);
-    return mlua_thread_suspend(ls, &mlua_event_loop_2, (lua_KContext)evs,
+    return mlua_thread_suspend(ls, &mlua_event_loop_multi_2, (lua_KContext)evs,
                                index);
 }
 
