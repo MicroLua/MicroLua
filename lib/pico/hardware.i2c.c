@@ -147,11 +147,11 @@ static int I2C_write_blocking(lua_State* ls) {
     bool nostop = mlua_to_cbool(ls, 4);
 
     MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
-    if (mlua_event_can_wait(ls, event)) {
+    if (mlua_event_can_wait(ls, event, 0)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // abort_reason
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_loop(ls, event, &write_loop, 5);
+        return mlua_event_wait(ls, event, 0, &write_loop, 5);
     }
 
     int res;
@@ -272,11 +272,11 @@ static int I2C_read_blocking(lua_State* ls) {
     bool nostop = mlua_to_cbool(ls, 4);
 
     MLuaEvent* event = &mlua_i2c_state[i2c_hw_index(inst)].event;
-    if (mlua_event_can_wait(ls, event)) {
+    if (mlua_event_can_wait(ls, event, 0)) {
         lua_settop(ls, 5);
         lua_pushinteger(ls, 0);  // wcnt
         lua_pushinteger(ls, -1);  // offset
-        return mlua_event_loop(ls, event, &read_loop, 5);
+        return mlua_event_wait(ls, event, 0, &read_loop, 5);
     }
 
     bool no_deadline = lua_isnoneornil(ls, 5);

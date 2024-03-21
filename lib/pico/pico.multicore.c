@@ -103,7 +103,7 @@ static int mod_reset_core1(lua_State* ls) {
         return luaL_error(ls, "multicore: stopped event already enabled");
     }
     lua_pushlightuserdata(ls, st);
-    return mlua_event_loop(ls, &st->stopped_event, &stopped_loop, 0);
+    return mlua_event_wait(ls, &st->stopped_event, 0, &stopped_loop, 0);
 }
 
 static int handle_shutdown_event(lua_State* ls) {

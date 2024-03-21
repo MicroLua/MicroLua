@@ -219,12 +219,12 @@ static int write_read_loop(lua_State* ls, bool timeout) {
 static int write_read_non_blocking(lua_State* ls, spi_inst_t* inst, bool read,
                                    size_t len) {
     MLuaEvent* event = &spi_state[spi_get_index(inst)].event;
-    if (!mlua_event_can_wait(ls, event)) return -1;
+    if (!mlua_event_can_wait(ls, event, 0)) return -1;
     lua_settop(ls, 2);
     lua_pushboolean(ls, read);  // read
     lua_pushinteger(ls, len);  // tx
     lua_pushinteger(ls, len);  // rx
-    return mlua_event_loop(ls, event, &write_read_loop, 0);
+    return mlua_event_wait(ls, event, 0, &write_read_loop, 0);
 }
 
 static int write_read(lua_State* ls, bool read, uint8_t const* src,

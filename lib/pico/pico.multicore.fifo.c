@@ -114,8 +114,8 @@ static int pop_loop(lua_State* ls, bool timeout) {
 
 static int mod_pop_blocking(lua_State* ls) {
     MLuaEvent* event = &fifo_state[get_core_num()].event;
-    if (mlua_event_can_wait(ls, event)) {
-        return mlua_event_loop(ls, event, &pop_loop, 0);
+    if (mlua_event_can_wait(ls, event, 0)) {
+        return mlua_event_wait(ls, event, 0, &pop_loop, 0);
     }
     lua_pushinteger(ls, multicore_fifo_pop_blocking());
     return 1;
@@ -124,10 +124,10 @@ static int mod_pop_blocking(lua_State* ls) {
 static int mod_pop_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 1);
     MLuaEvent* event = &fifo_state[get_core_num()].event;
-    if (mlua_event_can_wait(ls, event)) {
+    if (mlua_event_can_wait(ls, event, 0)) {
         lua_settop(ls, 0);
         mlua_push_timeout_time(ls, timeout);
-        return mlua_event_loop(ls, event, &pop_loop, 1);
+        return mlua_event_wait(ls, event, 0, &pop_loop, 1);
     }
 
     // BUG(pico-sdk): We don't use multicore_fifo_pop_timeout_us() here, because

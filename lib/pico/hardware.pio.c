@@ -203,9 +203,9 @@ static int SM_put_blocking(lua_State* ls) {
     MLuaEvent* ev = &state->events[sm->sm + PIO_INTR_SM0_TXNFULL_LSB];
     if (((state->mask[get_core_num()]
             & (PIO_INTR_SM0_TXNFULL_BITS << sm->sm)) != 0)
-            && mlua_event_can_wait(ls, ev)) {
+            && mlua_event_can_wait(ls, ev, 0)) {
         lua_settop(ls, 2);
-        return mlua_event_loop(ls, ev, &put_loop, 0);
+        return mlua_event_wait(ls, ev, 0, &put_loop, 0);
     }
     pio_sm_put_blocking(sm->pio, sm->sm, data);
     return 0;
@@ -227,9 +227,9 @@ static int SM_get_blocking(lua_State* ls) {
     MLuaEvent* ev = &state->events[sm->sm + PIO_INTR_SM0_RXNEMPTY_LSB];
     if (((state->mask[get_core_num()]
             & (PIO_INTR_SM0_RXNEMPTY_BITS << sm->sm)) != 0)
-            && mlua_event_can_wait(ls, ev)) {
+            && mlua_event_can_wait(ls, ev, 0)) {
         lua_settop(ls, 1);
-        return mlua_event_loop(ls, ev, &get_loop, 0);
+        return mlua_event_wait(ls, ev, 0, &get_loop, 0);
     }
     return lua_pushinteger(ls, pio_sm_get_blocking(sm->pio, sm->sm)), 1;
 }
@@ -445,8 +445,8 @@ static int PIO_wait_irq(lua_State* ls) {
                   >> PIO_INTR_SM0_LSB)) == 0) {
         MLuaEvent const* evs = &state->events[PIO_INTR_SM0_LSB];
         uint m = mlua_event_multi(&evs, mask);
-        if (mlua_event_can_wait_multi(ls, evs, m)) {
-            return mlua_event_loop_multi(ls, evs, m, &wait_irq_loop, 0);
+        if (mlua_event_can_wait(ls, evs, m)) {
+            return mlua_event_wait(ls, evs, m, &wait_irq_loop, 0);
         }
     }
     for (;;) {

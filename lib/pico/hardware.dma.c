@@ -199,8 +199,8 @@ static int mod_wait_irq(lua_State* ls) {
     uint16_t mask = luaL_checkinteger(ls, 1) & MLUA_MASK(NUM_DMA_CHANNELS);
     MLuaEvent const* evs = dma_state.events;
     uint m = mlua_event_multi(&evs, mask);
-    if (mlua_event_can_wait_multi(ls, evs, m)) {
-        return mlua_event_loop_multi(ls, evs, m, &wait_irq_loop, 0);
+    if (mlua_event_can_wait(ls, evs, m)) {
+        return mlua_event_wait(ls, evs, m, &wait_irq_loop, 0);
     }
 
     uint16_t poll_mask = mask;

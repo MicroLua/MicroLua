@@ -74,16 +74,6 @@ static inline unsigned int mlua_event_multi(MLuaEvent const** evs,
     return mask >> (bit + 1);
 }
 
-// Register the current thread to be notified when an event triggers.
-void mlua_event_watch(lua_State* ls, MLuaEvent const* ev);
-void mlua_event_watch_multi(lua_State* ls, MLuaEvent const* evs,
-                            unsigned int mask);
-
-// Unregister the current thread from notifications for one or more events.
-void mlua_event_unwatch(lua_State* ls, MLuaEvent const* ev);
-void mlua_event_unwatch_multi(lua_State* ls, MLuaEvent const* evs,
-                              unsigned int mask);
-
 // Resume the watcher of an event. "resume" is the index where Thread.resume
 // can be found.
 bool mlua_event_resume_watcher(lua_State* ls, MLuaEvent const* ev);
@@ -93,29 +83,23 @@ void mlua_event_remove_watcher(lua_State* ls, MLuaEvent const* ev);
 
 // Return true iff waiting for the given events is possible, i.e. non-blocking
 // event handling is selected and the events are enabled.
-bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* ev);
-bool mlua_event_can_wait_multi(lua_State* ls, MLuaEvent const* evs,
-                               unsigned int mask);
+bool mlua_event_can_wait(lua_State* ls, MLuaEvent const* evs,
+                         unsigned int mask);
 
 #if !LIB_MLUA_MOD_MLUA_THREAD
-#define mlua_event_can_wait(ls, ev) (0)
-#define mlua_event_can_wait_multi(ls, evs, mask) (0)
+#define mlua_event_can_wait(ls, evs, mask) (0)
 #endif
 
 typedef int (*MLuaEventLoopFn)(lua_State*, bool);
 
-// Run an event wait loop. The loop function is called repeatedly, suspending
-// after each call, as long as the function returns a negative value. The index
-// is passed to mlua_thread_suspend() as a deadline index.
-// TODO: Rename to mlua_event_wait(_multi)
-int mlua_event_loop(lua_State* ls, MLuaEvent const* ev, MLuaEventLoopFn loop,
-                    int index);
-int mlua_event_loop_multi(lua_State* ls, MLuaEvent const* evs,
-                          unsigned int mask, MLuaEventLoopFn loop, int index);
+// Wait for a condition to be fulfilled. The loop function is called repeatedly,
+// suspending after each call, as long as the function returns a negative value.
+// The index is passed to mlua_thread_suspend() as a deadline index.
+int mlua_event_wait(lua_State* ls, MLuaEvent const* evs,
+                    unsigned int mask, MLuaEventLoopFn loop, int index);
 
 #if !LIB_MLUA_MOD_MLUA_THREAD
-#define mlua_event_loop(ls, ev, loop, index) ((int)0)
-#define mlua_event_loop_multi(ls, evs, mask, loop, index) ((int)0)
+#define mlua_event_wait(ls, evs, mask, loop, index) ((int)0)
 #endif
 
 // Start an event handler thread for the given event. The function expects two

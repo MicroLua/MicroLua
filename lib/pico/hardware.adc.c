@@ -53,8 +53,8 @@ static int fifo_get_loop(lua_State* ls, bool timeout) {
 
 static int mod_fifo_get_blocking(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_THREAD
-    if (mlua_event_can_wait(ls, &adc_state.event)) {
-        return mlua_event_loop(ls, &adc_state.event, &fifo_get_loop, 0);
+    if (mlua_event_can_wait(ls, &adc_state.event, 0)) {
+        return mlua_event_wait(ls, &adc_state.event, 0, &fifo_get_loop, 0);
     }
 #endif
     lua_pushinteger(ls, adc_fifo_get_blocking());
