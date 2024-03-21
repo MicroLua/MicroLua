@@ -64,8 +64,8 @@ easy to interface to C code.
 
 ### Roadmap
 
-- **Add more bindings for the Pico SDK.** DMA is high on the list, followed by
-  USB, Wifi and Bluetooth. Eventually, most SDK libraries should have a binding.
+- **Add more bindings for the Pico SDK.** Next on the list are USB, Wifi and
+  Bluetooth. Eventually, most SDK libraries will have a binding.
 - **Tune garbage collection.** Garbage collection parameters are currently left
   at their default value, which may not be ideal for a memory-constrained
   target.

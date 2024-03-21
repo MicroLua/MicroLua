@@ -74,6 +74,203 @@ tests: [`hardware.clocks.test`](../lib/pico/hardware.clocks.test.lua)
 > [!NOTE]
 > Resus functionality isn't implemented yet.
 
+## `hardware.dma`
+
+**Library:** [`hardware_dma`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_dma),
+header: [`hardware/dma.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_dma/include/hardware/dma.h),
+sources: [`hardware_dma`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/hardware_dma)\
+**Module:** [`hardware.dma`](../lib/pico/hardware.dma.c),
+build target: `mlua_mod_hardware.dma`,
+tests: [`hardware.dma.test`](../lib/pico/hardware.dma.test.lua)
+
+This module exposes DMA functionality.
+
+- `NUM_CHANNELS: integer`\
+  `NUM_TIMERS: integer`\
+  The number of DMA channels and timers, respectively.
+
+- `DREQ_TIMERx: integer`\
+  `DREQ_FORCE: integer`\
+  Transfer request signals for the DMA timers, and for unthrottled transfers.
+
+- `SIZE_8: integer`\
+  `SIZE_16: integer`\
+  `SIZE_32: integer`\
+  DMA transfer sizes.
+
+- `SNIFF_*: integer`\
+  Constants related to DMA sniffing.
+
+- `channel_get_default_config(channel) -> Config`\
+  Get the default configuration for a channel.
+
+- `get_channel_config(channel) -> Config`\
+  Get the current configuration of a channel.
+
+- `regs([channel]) -> integer`\
+  When `channel` is absent or `nil`, return the base address of the peripheral
+  registers (`DMA_BASE`). Otherwise, return the base address of the registers
+  for the given channel.
+
+- `channel_claim(channel)`\
+  Mark a channel as used.
+
+- `claim_mask(mask)`\
+  Mark multiple channels as used.
+
+- `channel_unclaim(channel)`\
+  Mark a channel as no longer used.
+
+- `unclaim_mask(mask)`\
+  Mark multiple channels as no longer used.
+
+- `claim_unused_channel(required = true) -> integer`\
+  Claim a free channel.
+
+- `channel_is_claimed(channel) -> boolean`\
+  Return `true` iff the given channel is claimed.
+
+- `channel_set_config(channel, config, trigger)`\
+  Set the configuration for a channel.
+
+- `channel_set_read_addr(channel, addr, trigger)`\
+  Set the initial read address for a channel. `addr` can be `nil`, an integer, a
+  string or a [`Buffer`](mlua.md#Buffer-1) object.
+
+- `channel_set_write_addr(channel, addr, trigger)`\
+  Set the initial write address for a channel. `addr` can be `nil`, an integer
+  or a [`Buffer`](mlua.md#Buffer-1) object.
+
+- `channel_set_trans_count(channel, count, trigger)`\
+  Set the number of bus transfers the channel will do.
+
+- `channel_configure(channel, config, write_addr, read_addr, count, trigger)`\
+  Configure all parameters of a channel.
+
+- `channel_transfer_from_buffer_now(channel, read_addr, count)`\
+  Start a transfer from a buffer immediately.
+
+- `channel_transfer_to_buffer_now(channel, write_addr, count)`\
+  Start a transfer to a buffer immediately.
+
+- `start_channel_mask(mask)`\
+  Start multiple channels simultaneously.
+
+- `channel_start(channel)`\
+  Start a channel.
+
+- `channel_abort(channel)`\
+  Stop a transfer.
+
+- `channel_get_irq_status(channel) -> boolean`\
+  Determine if a channel is asserting its IRQ flag.
+
+- `channel_acknowledge_irq(channel)`\
+  Acknowledge and reset the IRQ flag of a channel.
+
+- `channel_is_busy(channel) -> boolean`\
+  Return `true` iff the given channel is busy.
+
+- `channel_wait_for_finish_blocking(channel)`\
+  Wait for a channel transfer to finish. This function blocks without yielding;
+  for non-blocking behavior, use `wait_irq()`.
+
+- `sniffer_enable(channel, mode, force_channel_enable)`\
+  Enable sniffing, targeting the given channel.
+
+- `sniffer_set_byte_swap_enabled(enable)`\
+  Enable or disable byte swapping for sniffing.
+
+- `sniffer_set_output_invert_enabled(enable)`\
+  Enable or disable output inversion for sniffing.
+
+- `sniffer_set_output_reverse_enabled(enable)`\
+  Enable or disable output bit reversal for sniffing.
+
+- `sniffer_enable()`\
+  Disable sniffing.
+
+- `sniffer_set_data_accumulator(value)`\
+  Set the value of the sniffer's data accumulator.
+
+- `sniffer_get_data_accumulator() -> integer`\
+  Get the value of the sniffer's data accumulator.
+
+- `timer_claim(timer)`\
+  Mark a timer as used.
+
+- `timer_unclaim(timer)`\
+  Mark a timer as no longer used.
+
+- `claim_unused_timer(required = true) -> integer`\
+  Claim a free timer.
+
+- `timer_is_claimed(timer) -> boolean`\
+  Return `true` iff the given timer is claimed.
+
+- `timer_set_fraction(timer, numerator, denominator)`\
+  Set the divider for a timer.
+
+- `get_timer_dreq(timer) -> integer`\
+  Return the `DREQ` number for the given timer.
+
+- `channel_cleanup(channel)`\
+  Clean up a channel after use.
+
+- `wait_irq(mask) -> integer` *[yields]*\
+  Wait for one of the channel IRQ flags indicated by the mask to be set. Returns
+  the IRQs that are currently pending, masked by `mask`.
+
+- `enable_irq(mask, enable)`\
+  [Enable or disable](core.md#irq-enablers) the DMA IRQ handler (`DMA_IRQ_n`)
+  for a set of channels. The module uses IRQ 0 on core 0 and IRQ 1 on core 1.
+
+### `Config`
+
+The `Config` type (`hardware.dma.Config`) contains a DMA channel configuration
+and encapsulates a [`dma_channel_config`](https://www.raspberrypi.com/documentation/pico-sdk/structdma__channel__config.html)
+structure. C library functions that take a `dma_channel_config*` as their first
+argument are exposed as methods on the `Config` class. Setters return the
+`Config` so that they can be chained.
+
+- `Config:ctrl() -> integer`\
+  Return the corresponding field of the
+  [`dma_channel_config`](https://www.raspberrypi.com/documentation/pico-sdk/structdma__channel__config.html) structure.
+
+- `Config:set_read_increment(enable) -> Config`\
+  Enable or disable the read increment.
+
+- `Config:set_write_increment(enable) -> Config`\
+  Enable or disable the write increment.
+
+- `Config:set_dreq(dreq) -> Config`\
+  Set the transfer request signal to use.
+
+- `Config:set_chain_to(channel) -> Config`\
+  Set the channel to which to chain transfers. Chaining can be disabled by
+  chaining a channel to itself.
+
+- `Config:set_transfer_data_size(size) -> Config`\
+  Set the size of each data transfer. `size` is one of the `SIZE_*` constants.
+
+- `Config:set_ring(write, size_bits) -> Config`\
+  Set address wrapping parameters.
+
+- `Config:set_bswap(enable) -> Config`\
+  Enable or disable byte swapping.
+
+- `Config:set_irq_quiet(enable) -> Config`\
+  Enable or disable IRQ quiet mode.
+
+- `Config:set_high_priority(enable) -> Config`\
+  Enable or disable high-priority treatment.
+
+- `Config:set_enable(enable) -> Config`\
+  Enable or disable the channel.
+
+- `Config:set_sniff_enable(enable) -> Config`\
+  Enable or disable access by the sniff hardware.
+
 ## `hardware.flash`
 
 **Library:** [`hardware_flash`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_flash),
@@ -263,9 +460,11 @@ be loaded (as given by the `.origin` directive in PIO assembly).
 ### `Config`
 
 The `Config` type (`hardware.pio.Config`) contains a state machine configuration
-and encapsulates a `pio_sm_config` structure. C library functions that take a
-`pio_sm_config*` as their first argument are exposed as methods on the `Config`
-class. Setters return the `Config` so that they can be chained.
+and encapsulates a
+[`pio_sm_config`](https://www.raspberrypi.com/documentation/pico-sdk/structpio__sm__config.html)
+structure. C library functions that take a `pio_sm_config*` as their first
+argument are exposed as methods on the `Config` class. Setters return the
+`Config` so that they can be chained.
 
 - `Config:clkdiv() -> integer`\
   `Config:execctrl() -> integer`\
@@ -344,8 +543,8 @@ their first arguments are exposed as methods on the `SM` class.
   Apply a configuration to the state machine.
 
 - `SM:get_dreq(is_tx) -> integer`\
-  Return the `DREQ` to use for pacing transfers to / from a state machine's
-  FIFO.
+  Return the `DREQ` number to use for pacing transfers to / from a state
+  machine's FIFO.
 
 - `SM:init(pc, config)`\
   Reset the state machine to a consistent state and configure it.
@@ -671,10 +870,10 @@ configuration functionality. All library functions that take an
 - `NUM_SLICES: integer`\
   The number of PWM slices available on the target.
 
-- `regs(slice = nil) -> integer`\
-  When `slice` is `nil`, return the base address of the peripheral registers
-  (`PWM_BASE`). Otherwise, return the base address of the registers for the
-  given slice.
+- `regs([slice]) -> integer`\
+  When `slice` is absent or `nil`, return the base address of the peripheral
+  registers (`PWM_BASE`). Otherwise, return the base address of the registers
+  for the given slice.
 
 - `set_irq_handler(handler) -> Thread`\
   Set a PWM wrap IRQ handler. Returns the
