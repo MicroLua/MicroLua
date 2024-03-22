@@ -19,7 +19,7 @@ static uint check_slice(lua_State* ls, int arg) {
 static char const Config_name[] = "hardware.pwm.Config";
 
 static inline pwm_config* check_Config(lua_State* ls, int arg) {
-    return (pwm_config*)luaL_checkudata(ls, arg, Config_name);
+    return luaL_checkudata(ls, arg, Config_name);
 }
 
 static int Config_csr(lua_State* ls) {

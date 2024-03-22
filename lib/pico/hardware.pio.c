@@ -23,7 +23,7 @@ static inline PIO get_pio_instance(uint num) {
 static char const Config_name[] = "hardware.pio.Config";
 
 static inline pio_sm_config* check_Config(lua_State* ls, int arg) {
-    return (pio_sm_config*)luaL_checkudata(ls, arg, Config_name);
+    return luaL_checkudata(ls, arg, Config_name);
 }
 
 static int Config_clkdiv(lua_State* ls) {
@@ -108,11 +108,11 @@ static SM* new_SM(lua_State* ls) {
 }
 
 static inline SM* check_SM(lua_State* ls, int arg) {
-    return (SM*)luaL_checkudata(ls, arg, SM_name);
+    return luaL_checkudata(ls, arg, SM_name);
 }
 
 static inline SM* to_SM(lua_State* ls, int arg) {
-    return (SM*)lua_touserdata(ls, arg);
+    return lua_touserdata(ls, arg);
 }
 
 #define SM_FUNC_V(n, ...)  \

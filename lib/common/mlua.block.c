@@ -18,7 +18,6 @@ void* mlua_block_push(lua_State* ls, size_t size, int nuv) {
 }
 
 MLuaBlockDev* mlua_block_check(lua_State* ls, int arg) {
-    extern char const Dev_name[];
     void* ptr = luaL_checkudata(ls, arg, Dev_name);
     if (ptr == NULL || lua_rawlen(ls, arg) != sizeof(ptr)) return ptr;
     return *((MLuaBlockDev**)ptr);

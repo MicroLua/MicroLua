@@ -64,7 +64,7 @@ static dma_channel_config* new_Config(lua_State* ls) {
 }
 
 static inline dma_channel_config* check_Config(lua_State* ls, int arg) {
-    return (dma_channel_config*)luaL_checkudata(ls, arg, Config_name);
+    return luaL_checkudata(ls, arg, Config_name);
 }
 
 static int Config_ctrl(lua_State* ls) {
