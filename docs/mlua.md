@@ -39,6 +39,29 @@ The test modules can be useful as usage examples.
   if i2c then ... end
   ```
 
+## `mlua.bits`
+
+**Module:** [`mlua.bits`](../lib/common/mlua.bits.c),
+build target: `mlua_mod_mlua.bits`
+
+This module provides bit operations on integers. It supports both `integer` and
+`Int64` values.
+
+- `leading_zeros(value) -> integer`\
+  Return the number of leading zero bits of `value`.
+
+- `trailing_zeros(value) -> integer`\
+  Return the number of trailing zero bits of `value`.
+
+- `ones(value) -> integer`\
+  Return the number of one bits in `value`.
+
+- `parity(value) -> integer`\
+  Return the parity of `value`, i.e. the number of one bits modulo 2.
+
+- `mask(count) -> integer | Int64`\
+  Return a bit mask with `count` least significant bits set.
+
 ## `mlua.block`
 
 **Module:** [`mlua.block`](../lib/common/mlua.block.c),

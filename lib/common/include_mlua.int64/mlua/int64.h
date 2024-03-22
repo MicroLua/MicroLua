@@ -50,6 +50,22 @@ int mlua_int64_to_string(int64_t value, char* s, size_t size);
 // false if the conversion fails.
 bool mlua_string_to_int64(char const* s, int base, int64_t* value);
 
+// Get an int64 value at the given stack index. Returns false iff the stack
+// entry is not an int64.
+static inline bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
+#if MLUA_IS64INT
+    if (luai_unlikely(!lua_isinteger(ls, arg))) return false;
+    *value = lua_tointeger(ls, arg);
+    return true;
+#else
+    extern char const mlua_int64_name[];
+    int64_t* v = luaL_testudata(ls, arg, mlua_int64_name);
+    if (luai_unlikely(v == NULL)) return false;
+    *value = *v;
+    return true;
+#endif
+}
+
 // Push an int64 to the stack.
 #if MLUA_IS64INT
 static inline void mlua_push_int64(lua_State* ls, int64_t value) {

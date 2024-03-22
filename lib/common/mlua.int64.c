@@ -91,19 +91,6 @@ bool mlua_string_to_int64(char const* s, int base, int64_t* value) {
     return true;
 }
 
-static inline bool mlua_test_int64(lua_State* ls, int arg, int64_t* value) {
-#if MLUA_IS64INT
-    if (!lua_isinteger(ls, arg)) return false;
-    *value = lua_tointeger(ls, arg);
-    return true;
-#else
-    int64_t* v = luaL_testudata(ls, arg, mlua_int64_name);
-    if (v == NULL) return false;
-    *value = *v;
-    return true;
-#endif
-}
-
 #if !MLUA_IS64INT
 
 void mlua_push_int64(lua_State* ls, int64_t value) {
@@ -114,7 +101,7 @@ void mlua_push_int64(lua_State* ls, int64_t value) {
 }
 
 void mlua_push_minint(lua_State* ls, int64_t value) {
-    if (LUA_MININTEGER <= value && value <= LUA_MAXINTEGER) {
+    if (luai_likely(LUA_MININTEGER <= value && value <= LUA_MAXINTEGER)) {
         lua_pushinteger(ls, (lua_Integer)value);
     } else {
         mlua_push_int64(ls, value);
@@ -122,19 +109,19 @@ void mlua_push_minint(lua_State* ls, int64_t value) {
 }
 
 int64_t mlua_to_int64(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
+    if (luai_likely(lua_isinteger(ls, arg))) return lua_tointeger(ls, arg);
     return *(int64_t*)lua_touserdata(ls, arg);
 }
 
 int64_t mlua_check_int64(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg);
+    if (luai_likely(lua_isinteger(ls, arg))) return lua_tointeger(ls, arg);
     int64_t v;
     if (mlua_test_int64(ls, arg, &v)) return v;
     return luaL_typeerror(ls, arg, "integer or Int64");
 }
 
 uint64_t mlua_check_time(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) {
+    if (luai_likely(lua_isinteger(ls, arg))) {
         return mlua_to_ticks64(lua_tointeger(ls, arg), mlua_ticks64());
     }
     int64_t time;
@@ -143,7 +130,7 @@ uint64_t mlua_check_time(lua_State* ls, int arg) {
 }
 
 void mlua_push_timeout_time(lua_State* ls, uint64_t timeout) {
-    if (timeout <= LUA_MAXINTEGER) {
+    if (luai_likely(timeout <= LUA_MAXINTEGER)) {
         lua_pushinteger(ls, mlua_ticks() + (lua_Unsigned)timeout);
     } else {
         mlua_push_int64(ls, mlua_timeout_time(mlua_ticks64(), timeout));

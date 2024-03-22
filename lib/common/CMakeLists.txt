@@ -15,6 +15,19 @@ target_link_libraries(mlua_test_mlua INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_mlua.bits mlua.bits.c)
+target_link_libraries(mlua_mod_mlua.bits INTERFACE
+    mlua_mod_mlua.int64
+)
+
+mlua_add_lua_modules(mlua_test_mlua.bits mlua.bits.test.lua)
+target_link_libraries(mlua_test_mlua.bits INTERFACE
+    mlua_mod_mlua.bits
+    mlua_mod_mlua.int64
+    mlua_mod_string
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_mlua.block mlua.block.c)
 target_include_directories(mlua_mod_mlua.block_headers INTERFACE
     include_mlua.block)
