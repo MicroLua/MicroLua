@@ -453,21 +453,21 @@ This module provides helpers for input / output processing.
   Substitute tags in `format`, format the arguments with `string:format()` and
   output the result to `out`.
 
-### `Buffer`
+### `Recorder`
 
-The `Buffer` type records writes and allows replaying them on another stream.
+The `Recorder` type records writes and allows replaying them on another stream.
 
-- `Buffer:is_empty() -> boolean`\
-  Return true iff the buffer holds no data.
+- `Recorder:is_empty() -> boolean`\
+  Return true iff the recorder holds no data.
 
-- `Buffer:write(data)`\
-  Write data to the buffer.
+- `Recorder:write(data)`\
+  Write data to the recorder.
 
-- `Buffer:replay(w)`\
+- `Recorder:replay(w)`\
   Replay the recorded writes to `w`.
 
-- `tostring(Buffer) -> string`\
-  Return the content of the buffer as a string.
+- `tostring(Recorder) -> string`\
+  Return the content of the recorder as a string.
 
 ## `mlua.list`
 
@@ -550,7 +550,7 @@ This module provides functionality to access raw memory (ROM, RAM).
 
 ### `Buffer`
 
-The `Buffer` type (`mlua.Buffer`) holds a fixed-size memory buffer.
+The `Buffer` type (`mlua.mem.Buffer`) holds a fixed-size memory buffer.
 
 - `#Buffer -> integer`\
   Return the size of the buffer.

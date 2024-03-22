@@ -49,12 +49,12 @@ function with_traceback(fn)
     end
 end
 
-local Buffer = oo.class('Buffer', io.Buffer)
+local Recorder = oo.class('Recorder', io.Recorder)
 
-function Buffer:__init(t) self.t = t end
+function Recorder:__init(t) self.t = t end
 
-function Buffer:write(...)
-    io.Buffer.write(self, ...)
+function Recorder:write(...)
+    io.Recorder.write(self, ...)
     if not self:is_empty() and self.t:_attr('_full_output') then
         self.t:enable_output()
     end
@@ -501,7 +501,7 @@ function Test:enable_output()
 end
 
 function Test:_capture_output()
-    self._out = Buffer(self)
+    self._out = Recorder(self)
     self._old_out, _G.stdout = _G.stdout, self._out
 end
 

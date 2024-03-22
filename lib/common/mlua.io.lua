@@ -57,13 +57,13 @@ function aprintf(format, ...) return printf(ansi(format), ...) end
 function afprintf(out, format, ...) return fprintf(out, ansi(format), ...) end
 
 -- A writer that collects writes and can replay them.
-Buffer = oo.class('Buffer')
+Recorder = oo.class('Recorder')
 
 -- Return true iff the buffer is empty.
-function Buffer:is_empty() return (self[0] or 0) == 0 end
+function Recorder:is_empty() return (self[0] or 0) == 0 end
 
 -- Write data to the writer.
-function Buffer:write(...)
+function Recorder:write(...)
     local len = self[0] or 0
     for i = 1, select('#', ...) do
         local data = select(i, ...)
@@ -76,9 +76,9 @@ function Buffer:write(...)
 end
 
 -- Replay the written data to the given writer.
-function Buffer:replay(w)
+function Recorder:replay(w)
     for _, data in ipairs(self) do w:write(data) end
 end
 
 -- Return the content of the buffer as a string.
-function Buffer:__tostring() return table.concat(self) end
+function Recorder:__tostring() return table.concat(self) end
