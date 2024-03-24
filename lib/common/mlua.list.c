@@ -54,9 +54,7 @@ static int list_set_len(lua_State* ls) {
 static int list_eq(lua_State* ls) {
     lua_Integer len1 = length(ls, 1);
     lua_Integer len2 = length(ls, 2);
-    if (len1 != len2) {
-        return lua_pushboolean(ls, false), 1;
-    }
+    if (len1 != len2) return lua_pushboolean(ls, false), 1;
     for (lua_Integer i = 0; i < len1; ++i) {
         lua_Integer idx = i + 1;
         lua_geti(ls, 1, idx);
@@ -101,7 +99,19 @@ static int list_append(lua_State* ls) {
         len = length(ls, 1);
     }
     int cnt = lua_gettop(ls) - 1;
+#if MLUA_APPEND_DESCENDING
+    // Depending on Lua's allocation strategy for the array part of tables,
+    // appending in descending order could be faster (allocate the full size
+    // at once) or slower (switch to storing in hashed part). I haven't checked
+    // yet which one it is, so in the meantime, we append in ascending order.
     for (int i = cnt; i > 0; --i) lua_rawseti(ls, 1, luaL_intop(+, len, i));
+#else
+    for (int i = 1; i <= cnt; ++i) {
+        lua_pushvalue(ls, 1 + i);
+        lua_rawseti(ls, 1, luaL_intop(+, len, i));
+    }
+    lua_settop(ls, 1);
+#endif
     lua_pushinteger(ls, luaL_intop(+, len, cnt));
     lua_rawseti(ls, 1, LEN_IDX);
     return 1;
@@ -124,14 +134,14 @@ static int list_insert(lua_State* ls) {
     case 3:
         pos = luaL_checkinteger(ls, 2);
         luaL_argcheck(ls, (lua_Unsigned)pos - 1u < (lua_Unsigned)len, 2,
-                      "insert: position out of bounds");
+                      "out of bounds");
         for (lua_Integer i = len; i > pos; --i) {
             lua_geti(ls, 1, i - 1);
             lua_seti(ls, 1, i);
         }
         break;
     default:
-        return luaL_error(ls, "insert: wrong number of arguments");
+        return luaL_error(ls, "invalid arguments");
     }
     lua_seti(ls, 1, pos);
     lua_pushinteger(ls, len);
@@ -144,7 +154,7 @@ static int list_remove(lua_State* ls) {
     lua_Integer pos = luaL_optinteger(ls, 2, len);
     if (pos != len) {
         luaL_argcheck(ls, (lua_Unsigned)pos - 1u <= (lua_Unsigned)len, 2,
-                      "remove: position out of bounds");
+                      "out of bounds");
     }
     if (len <= 0) return 0;
     lua_geti(ls, 1, pos);
@@ -175,7 +185,7 @@ static int list_unpack(lua_State* ls) {
     if (b > e) return 0;
     lua_Integer n = e - b + 1;
     if (luai_unlikely(!lua_checkstack(ls, n))) {
-        return luaL_error(ls, "unpack: too many results");
+        return luaL_error(ls, "too many results");
     }
     for (lua_Integer i = 0; i < n; ++i) lua_geti(ls, 1, b + i);
     return n;
@@ -218,8 +228,8 @@ static int list_sort(lua_State* ls) {
 static void add_value(lua_State* ls, luaL_Buffer* buf, lua_Integer i) {
     lua_geti(ls, 1, i);
     if (luai_unlikely(!lua_isstring(ls, -1))) {
-        luaL_error(ls, "concat: invalid value (%s) at index %I",
-                   luaL_typename(ls, -1), (LUAI_UACINT)i);
+        luaL_error(ls, "invalid value (%s) at index %I", luaL_typename(ls, -1),
+                   (LUAI_UACINT)i);
         return;
     }
     luaL_addvalue(buf);
@@ -311,9 +321,6 @@ static int list___call(lua_State* ls) {
     return 1;
 }
 
-#define list___len list_len
-#define list___eq list_eq
-
 MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(len, list_),
     MLUA_SYM_F(set_len, list_),
@@ -329,6 +336,9 @@ MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(concat, list_),
     MLUA_SYM_F(find, list_),
 };
+
+#define list___len list_len
+#define list___eq list_eq
 
 MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
     MLUA_SYM_F_NH(__len, list_),
