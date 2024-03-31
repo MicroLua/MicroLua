@@ -46,6 +46,30 @@ int mlua_push_fail(lua_State* ls, char const* err) {
     return 2;
 }
 
+bool mlua_compare_eq(lua_State* ls, int arg1, int arg2) {
+    int t1 = lua_type(ls, arg1), t2 = lua_type(ls, arg2);
+    if (t1 == LUA_TNONE || t2 == LUA_TNONE) return false;
+    if ((t1 == LUA_TUSERDATA) == (t2 == LUA_TUSERDATA)
+            && (t1 == LUA_TTABLE) == (t2 == LUA_TTABLE)) {
+        return lua_compare(ls, arg1, arg2, LUA_OPEQ);
+    }
+    arg1 = lua_absindex(ls, arg1);
+    arg2 = lua_absindex(ls, arg2);
+    if (luaL_getmetafield(ls, arg1, "__eq") != LUA_TNIL) {
+        lua_pushvalue(ls, arg1);
+        lua_pushvalue(ls, arg2);
+    } else if (luaL_getmetafield(ls, arg2, "__eq") != LUA_TNIL) {
+        lua_pushvalue(ls, arg2);
+        lua_pushvalue(ls, arg1);
+    } else {
+        return false;
+    }
+    lua_call(ls, 2, 1);
+    bool res = lua_toboolean(ls, -1);
+    lua_pop(ls, 1);
+    return res;
+}
+
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.

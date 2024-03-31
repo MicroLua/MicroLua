@@ -58,6 +58,11 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 // Push a failure and an error message, and return the number of pushed values.
 int mlua_push_fail(lua_State* ls, char const* err);
 
+// Return the result of comparing two values for equality, similar to
+// lua_compare(..., LUA_OPEQ), but always call the __eq metamethod if one is
+// available on either value.
+bool mlua_compare_eq(lua_State* ls, int arg1, int arg2);
+
 #ifdef __cplusplus
 }
 #endif
