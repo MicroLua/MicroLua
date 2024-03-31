@@ -113,6 +113,14 @@ int64_t mlua_to_int64(lua_State* ls, int arg) {
     return *(int64_t*)lua_touserdata(ls, arg);
 }
 
+int64_t mlua_to_int64x(lua_State* ls, int arg, int* success) {
+    int64_t v = lua_tointegerx(ls, arg, success);
+    if (luai_likely(*success)) return v;
+    if (!mlua_test_int64(ls, arg, &v)) return 0;
+    if (success != NULL) *success = true;
+    return v;
+}
+
 int64_t mlua_check_int64(lua_State* ls, int arg) {
     if (luai_likely(lua_isinteger(ls, arg))) return lua_tointeger(ls, arg);
     int64_t v;
@@ -319,40 +327,36 @@ static int int64___shr(lua_State* ls) {
     return 1;
 }
 
-#define CMP_OP(n, op, lmod, lcmp, rmod, rcmp) \
-static int int64_ ## n(lua_State* ls) { \
-    bool res; \
-    int64_t v; \
-    if (is_float(ls, 1)) { \
-        lua_Number lhs = lua_tonumber(ls, 1); \
-        int64_t rhs = mlua_check_int64(ls, 2); \
-        if (mlua_int64_fits_number(rhs)) { \
-            res = lhs op (lua_Number)rhs; \
-        } else if (mlua_number_to_int64_ ## lmod(lhs, &v)) { \
-            res = v op rhs; \
-        } else { \
-            res = lcmp op 0; \
-        } \
-    } else if (is_float(ls, 2)) { \
-        int64_t lhs = mlua_check_int64(ls, 1); \
-        lua_Number rhs = lua_tonumber(ls, 2); \
-        if (mlua_int64_fits_number(lhs)) { \
-            res = (lua_Number)lhs op rhs; \
-        } else if (mlua_number_to_int64_ ## rmod(rhs, &v)) { \
-            res = lhs op v; \
-        } else { \
-            res = 0 op rcmp; \
-        } \
-    } else { \
-        res = mlua_check_int64(ls, 1) op mlua_check_int64(ls, 2); \
+#define CMP_OP(n, op, lop, lmod, lcmp, rmod, rcmp) \
+static inline bool cmp_ ## n(lua_State* ls, int arg1, int arg2) { \
+    int i1, i2; \
+    int64_t lhs = mlua_to_int64x(ls, arg1, &i1); \
+    int64_t rhs = mlua_to_int64x(ls, arg2, &i2); \
+    if (i1 && i2) return lhs op rhs; \
+    if (i1 && is_float(ls, arg2)) { \
+        lua_Number n = lua_tonumber(ls, arg2); \
+        if (mlua_int64_fits_number(lhs)) return (lua_Number)lhs op n; \
+        int64_t v; \
+        if (mlua_number_to_int64_ ## rmod(n, &v)) return lhs op v; \
+        return 0 op rcmp; \
     } \
-    lua_pushboolean(ls, res); \
-    return 1; \
+    if (i2 && is_float(ls, arg1)) { \
+        lua_Number n = lua_tonumber(ls, arg1); \
+        if (mlua_int64_fits_number(rhs)) return n op (lua_Number)rhs; \
+        int64_t v; \
+        if (mlua_number_to_int64_ ## lmod(n, &v)) return v op rhs; \
+        return lcmp op 0; \
+    } \
+    return lua_compare(ls, arg1, arg2, lop); \
+} \
+\
+static int int64___ ## n(lua_State* ls) { \
+    return lua_pushboolean(ls, cmp_ ## n(ls, 1, 2)), 1; \
 }
 
-CMP_OP(__eq, ==, eq, 1, eq, 1)
-CMP_OP(__lt, <, floor, lhs, ceil, rhs)
-CMP_OP(__le, <=, floor, lhs, ceil, rhs)
+CMP_OP(eq, ==, LUA_OPEQ, eq, 1, eq, 1)
+CMP_OP(lt, <, LUA_OPLT, floor, lhs, ceil, rhs)
+CMP_OP(le, <=, LUA_OPLE, floor, lhs, ceil, rhs)
 
 static int int64___tostring(lua_State* ls) {
     int64_t v = mlua_check_int64(ls, 1);

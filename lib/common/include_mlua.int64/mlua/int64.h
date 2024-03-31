@@ -94,6 +94,16 @@ static inline int64_t mlua_to_int64(lua_State* ls, int arg) {
 int64_t mlua_to_int64(lua_State* ls, int arg);
 #endif
 
+// Convert the value at the given stack index to an int64. If "success" is
+// non-NULL, set it to true iff the conversion is successful.
+#if MLUA_IS64INT
+static inline int64_t mlua_to_int64x(lua_State* ls, int arg, int* success) {
+    return lua_tointegerx(ls, arg, success);
+}
+#else
+int64_t mlua_to_int64x(lua_State* ls, int arg, int* success);
+#endif
+
 // Get an int64 value at the given stack index. Raises an error if the stack
 // entry is not an integer or an int64.
 #if MLUA_IS64INT
