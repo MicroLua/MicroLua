@@ -33,7 +33,7 @@ function parse_args(args)
     if args then
         for i, arg in ipairs(args) do
             if arg == '--' then
-                fargs:set_len(#fargs + (#args - i))
+                fargs:len(#fargs + (#args - i))
                 table.move(args, i + 1, #args, #fargs + 1, fargs)
                 break
             end

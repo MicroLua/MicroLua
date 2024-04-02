@@ -4,6 +4,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
+#include "mlua/util.h"
 
 static char const list_name[] = "mlua.List";
 
@@ -27,41 +28,39 @@ static lua_Integer length(lua_State* ls, int index) {
 }
 
 static int list_len(lua_State* ls) {
-    if (lua_isnoneornil(ls, 1)) {
-        lua_pushinteger(ls, 0);
-    } else if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
+    lua_Integer len = length(ls, 1);
+    if (!lua_isnoneornil(ls, 2)) {
+        lua_Integer new_len = luaL_checkinteger(ls, 2);
+        if (new_len < 0) new_len = 0;
+        if (new_len != len) {
+            for (lua_Integer i = len; i > new_len; --i) {
+                lua_pushnil(ls);
+                lua_seti(ls, 1, i);
+            }
+            lua_pushinteger(ls, new_len);
+            lua_rawseti(ls, 1, LEN_IDX);
+        }
+    }
+    return lua_pushinteger(ls, len), 1;
+}
+
+static int list___len(lua_State* ls) {
+    if (lua_isnoneornil(ls, 1)) return lua_pushinteger(ls, 0), 1;
+    if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
         lua_pop(ls, 1);
         lua_pushinteger(ls, lua_rawlen(ls, 1));
     }
     return 1;
 }
 
-static int list_set_len(lua_State* ls) {
-    lua_Integer len = length(ls, 1);
-    lua_Integer new_len = luaL_checkinteger(ls, 2);
-    if (new_len < 0) new_len = 0;
-    lua_settop(ls, 1);
-    if (new_len == len) return 1;
-    for (; len > new_len; --len) {
-        lua_pushnil(ls);
-        lua_rawseti(ls, 1, len);
-    }
-    lua_pushinteger(ls, new_len);
-    lua_rawseti(ls, 1, LEN_IDX);
-    return 1;
-}
-
-static int list_eq(lua_State* ls) {
-    lua_Integer len1 = length(ls, 1);
-    lua_Integer len2 = length(ls, 2);
+static int list___eq(lua_State* ls) {
+    lua_Integer len1 = length(ls, 1), len2 = length(ls, 2);
     if (len1 != len2) return lua_pushboolean(ls, false), 1;
     for (lua_Integer i = 0; i < len1; ++i) {
         lua_Integer idx = i + 1;
         lua_geti(ls, 1, idx);
         lua_geti(ls, 2, idx);
-        if (!lua_compare(ls, -2, -1, LUA_OPEQ)) {
-            return lua_pushboolean(ls, false), 1;
-        }
+        if (!mlua_compare_eq(ls, -2, -1)) return lua_pushboolean(ls, false), 1;
         lua_pop(ls, 2);
     }
     return lua_pushboolean(ls, true), 1;
@@ -104,11 +103,11 @@ static int list_append(lua_State* ls) {
     // appending in descending order could be faster (allocate the full size
     // at once) or slower (switch to storing in hashed part). I haven't checked
     // yet which one it is, so in the meantime, we append in ascending order.
-    for (int i = cnt; i > 0; --i) lua_rawseti(ls, 1, luaL_intop(+, len, i));
+    for (int i = cnt; i > 0; --i) lua_seti(ls, 1, luaL_intop(+, len, i));
 #else
     for (int i = 1; i <= cnt; ++i) {
         lua_pushvalue(ls, 1 + i);
-        lua_rawseti(ls, 1, luaL_intop(+, len, i));
+        lua_seti(ls, 1, luaL_intop(+, len, i));
     }
     lua_settop(ls, 1);
 #endif
@@ -321,9 +320,10 @@ static int list___call(lua_State* ls) {
     return 1;
 }
 
+#define list_eq list___eq
+
 MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(len, list_),
-    MLUA_SYM_F(set_len, list_),
     MLUA_SYM_F(eq, list_),
     MLUA_SYM_F(ipairs, list_),
     MLUA_SYM_F(append, list_),
@@ -336,9 +336,6 @@ MLUA_SYMBOLS(list_syms) = {
     MLUA_SYM_F(concat, list_),
     MLUA_SYM_F(find, list_),
 };
-
-#define list___len list_len
-#define list___eq list_eq
 
 MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
     MLUA_SYM_F_NH(__len, list_),
