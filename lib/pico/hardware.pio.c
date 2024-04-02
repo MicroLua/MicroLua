@@ -1,6 +1,8 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include <assert.h>
+
 #include "hardware/address_mapped.h"
 #include "hardware/irq.h"
 #include "hardware/pio.h"

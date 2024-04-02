@@ -11,16 +11,19 @@ local string = require 'string'
 local table = require 'table'
 
 function test_size(t)
-    for _, test in ipairs{
+    local _ = array  -- Capture the upvalue
+    t:expect(t.expr.array('i0', 0)):raises("out of limits")
+    t:expect(t.expr.array('i9', 0)):raises("out of limits")
+    t:expect(t.expr.array('a', 0)):raises("invalid value format")
+    t:expect(t.expr.array('bb', 0)):raises("invalid value format")
+    for _, typ in ipairs{
         'b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'j', 'J', 'T',
         'i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7', 'i8',
         'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8',
+        'f', 'd', 'n',
     } do
-        t:expect(t:expr(array(test, 1)):size()):eq(string.packsize(test))
+        t:expect(t.expr.array(typ, 0):size()):eq(string.packsize(typ))
     end
-    t:expect(t:expr(array)('i0')):raises("out of limits")
-    t:expect(t:expr(array)('i9')):raises("out of limits")
-    t:expect(t:expr(array)('x')):raises("invalid value format")
 end
 
 local function clamp(typ, value)
@@ -43,13 +46,14 @@ function test_integer(t)
         (1 << 32) + 7, -((1 << 32) + 7),
         math.maxinteger, math.mininteger,
     }
-    for _, test in ipairs{
+    for _, typ in ipairs{
         'b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'j', 'J', 'T',
         'i1', 'i2', 'i3', 'i4', 'I1', 'I2', 'I3', 'I4',
     } do
-        local a = array(test, #values):set(1, table.unpack(values))
+        t:context({type = typ})
+        local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
-        for i, v in ipairs(values) do want[i] = clamp(test, v) end
+        for i, v in ipairs(values) do want[i] = clamp(typ, v) end
         t:expect(t:mexpr(a):get(1, #a)):eq(want)
     end
 end
@@ -82,12 +86,31 @@ function _test_int64(t)
         (one64 << 56) + 13, -((one64 << 56) + 13),
         int64.max, int64.min,
     }
-    for _, test in ipairs{
+    for _, typ in ipairs{
         'i5', 'i6', 'i7', 'i8', 'I5', 'I6', 'I7', 'I8',
     } do
-        local a = array(test, #values):set(1, table.unpack(values))
+        t:context({type = typ})
+        local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
-        for i, v in ipairs(values) do want[i] = clamp64(test, v) end
+        for i, v in ipairs(values) do want[i] = clamp64(typ, v) end
+        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+    end
+end
+
+local function pack_unpack(typ, value)
+    return string.unpack(typ, string.pack(typ, value))
+end
+
+function test_float(t)
+    local values = {
+        0.0, 1.0, -1.0, 1.2e34, -1.2e34, 1.2e-34, -1.2e-34,
+        math.huge, -math.huge,
+    }
+    for _, typ in ipairs{'f', 'd', 'n'} do
+        t:context({type = typ})
+        local a = array(typ, #values):set(1, table.unpack(values))
+        local want = {}
+        for i, v in ipairs(values) do want[i] = pack_unpack(typ, v) end
         t:expect(t:mexpr(a):get(1, #a)):eq(want)
     end
 end
@@ -106,6 +129,12 @@ function test_eq(t)
         {array('i8', 2):set(1, 15, 16), array('i8', 2):set(1, 16, 99), false},
         {array('i8', 2):set(1, 17, 18), array('i', 2):set(1, 17, 18), true},
         {array('i8', 2):set(1, 19, 20), array('i', 2):set(1, 19, 99), false},
+        {array('n', 2):set(1, 21.0, -22.0),
+         array('j', 2):set(1, 21, -22), true},
+        {array('n', 2):set(1, 21.0, -22.0),
+         array('j', 2):set(1, 21, 99), false},
+        {array('n', 2):set(1, 21.0, -22.1),
+         array('j', 2):set(1, 21, -22), false},
     } do
         local a1, a2, want = table.unpack(test)
         t:expect(t:expr(_G).equal(a1, a2)):eq(want)
@@ -118,6 +147,8 @@ function test_tostring(t)
         {array('j', 0), '{}'},
         {array('j', 1):set(1, 1), '{1}'},
         {array('j', 3, 4):set(1, 1, -2, 3, 4), '{1, -2, 3}'},
+        {array('n', 3, 4):set(1, 1.2, -3.4, 5.6, 7.8),
+         ('{%s, %s, %s}'):format(1.2, -3.4, 5.6)},
     } do
         local value, want = table.unpack(test)
         t:expect(t.expr.tostring(value)):eq(want)

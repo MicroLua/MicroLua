@@ -1,6 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include <assert.h>
+
 #include "hardware/irq.h"
 #include "hardware/pwm.h"
 #include "pico/platform.h"

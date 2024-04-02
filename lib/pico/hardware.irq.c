@@ -1,6 +1,7 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include <assert.h>
 #include <stdbool.h>
 
 #include "hardware/irq.h"

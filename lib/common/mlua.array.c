@@ -3,9 +3,17 @@
 
 #include "mlua/array.h"
 
+#include <assert.h>
+#include <float.h>
+#include <stdalign.h>
+
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
+
+// TODO: Add support for views into another array or Buffer
+
+#define HAS_LDOUBLE (LDBL_MANT_DIG != DBL_MANT_DIG)
 
 static void get_int8(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(int8_t const*)data);
@@ -15,6 +23,13 @@ static void get_uint8(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(uint8_t const*)data);
 }
 
+static void set_uint8(lua_State* ls, int arg, void* data, size_t size) {
+    *(uint8_t*)data = luaL_checkinteger(ls, arg);
+}
+
+static MLuaValueType const vt_int8 = {.get = &get_int8, .set = &set_uint8};
+static MLuaValueType const vt_uint8 = {.get = &get_uint8, .set = &set_uint8};
+
 static void get_int16(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(int16_t const*)data);
 }
@@ -22,6 +37,13 @@ static void get_int16(lua_State* ls, void const* data, size_t size) {
 static void get_uint16(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(uint16_t const*)data);
 }
+
+static void set_uint16(lua_State* ls, int arg, void* data, size_t size) {
+    *(uint16_t*)data = luaL_checkinteger(ls, arg);
+}
+
+static MLuaValueType const vt_int16 = {.get = &get_int16, .set = &set_uint16};
+static MLuaValueType const vt_uint16 = {.get = &get_uint16, .set = &set_uint16};
 
 static void get_int32(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(int32_t const*)data);
@@ -31,9 +53,22 @@ static void get_uint32(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(uint32_t const*)data);
 }
 
+static void set_uint32(lua_State* ls, int arg, void* data, size_t size) {
+    *(uint32_t*)data = luaL_checkinteger(ls, arg);
+}
+
+static MLuaValueType const vt_int32 = {.get = &get_int32, .set = &set_uint32};
+static MLuaValueType const vt_uint32 = {.get = &get_uint32, .set = &set_uint32};
+
 static void get_uint64(lua_State* ls, void const* data, size_t size) {
     mlua_push_int64(ls, *(uint64_t const*)data);
 }
+
+static void set_uint64(lua_State* ls, int arg, void* data, size_t size) {
+    *(uint64_t*)data = mlua_check_int64(ls, arg);
+}
+
+static MLuaValueType const vt_uint64 = {.get = &get_uint64, .set = &set_uint64};
 
 static lua_Unsigned read_uint(lua_State* ls, uint8_t const* data, size_t size) {
     union { int dummy; char little; } const endian = {1};
@@ -75,22 +110,6 @@ static void get_uint(lua_State* ls, void const* data, size_t size) {
     mlua_push_int64(ls, read_uint64(ls, data, size));
 }
 
-static void set_uint8(lua_State* ls, int arg, void* data, size_t size) {
-    *(uint8_t*)data = luaL_checkinteger(ls, arg);
-}
-
-static void set_uint16(lua_State* ls, int arg, void* data, size_t size) {
-    *(uint16_t*)data = luaL_checkinteger(ls, arg);
-}
-
-static void set_uint32(lua_State* ls, int arg, void* data, size_t size) {
-    *(uint32_t*)data = luaL_checkinteger(ls, arg);
-}
-
-static void set_uint64(lua_State* ls, int arg, void* data, size_t size) {
-    *(uint64_t*)data = mlua_check_int64(ls, arg);
-}
-
 static void set_uint(lua_State* ls, int arg, void* data, size_t size) {
     union { int dummy; char little; } const endian = {1};
     uint8_t* data8 = data;
@@ -110,15 +129,45 @@ static void set_uint(lua_State* ls, int arg, void* data, size_t size) {
     }
 }
 
-static MLuaValueType const vt_int8 = {.get = &get_int8, .set = &set_uint8};
-static MLuaValueType const vt_uint8 = {.get = &get_uint8, .set = &set_uint8};
-static MLuaValueType const vt_int16 = {.get = &get_int16, .set = &set_uint16};
-static MLuaValueType const vt_uint16 = {.get = &get_uint16, .set = &set_uint16};
-static MLuaValueType const vt_int32 = {.get = &get_int32, .set = &set_uint32};
-static MLuaValueType const vt_uint32 = {.get = &get_uint32, .set = &set_uint32};
-static MLuaValueType const vt_uint64 = {.get = &get_uint64, .set = &set_uint64};
 static MLuaValueType const vt_int = {.get = &get_int, .set = &set_uint};
 static MLuaValueType const vt_uint = {.get = &get_uint, .set = &set_uint};
+
+static void get_float(lua_State* ls, void const* data, size_t size) {
+    lua_pushnumber(ls, *(float const*)data);
+}
+
+static void set_float(lua_State* ls, int arg, void* data, size_t size) {
+    *(float*)data = luaL_checknumber(ls, arg);
+}
+
+static MLuaValueType const vt_float = {.get = &get_float, .set = &set_float};
+
+static void get_double(lua_State* ls, void const* data, size_t size) {
+    lua_pushnumber(ls, *(double const*)data);
+}
+
+static void set_double(lua_State* ls, int arg, void* data, size_t size) {
+    *(double*)data = luaL_checknumber(ls, arg);
+}
+
+static MLuaValueType const vt_double = {.get = &get_double, .set = &set_double};
+
+#if HAS_LDOUBLE
+
+static_assert(alignof(long double) == sizeof(long double));
+
+static void get_ldouble(lua_State* ls, void const* data, size_t size) {
+    lua_pushnumber(ls, *(long double const*)data);
+}
+
+static void set_ldouble(lua_State* ls, int arg, void* data, size_t size) {
+    *(long double*)data = luaL_checknumber(ls, arg);
+}
+
+static MLuaValueType const vt_ldouble = {.get = &get_ldouble,
+                                         .set = &set_ldouble};
+
+#endif  // HAS_LDOUBLE
 
 char const mlua_array_name[] = "mlua.Array";
 
@@ -173,8 +222,7 @@ static int array___eq(lua_State* ls) {
     MLuaArray const* arr1 = mlua_check_array(ls, 1);
     MLuaArray const* arr2 = mlua_check_array(ls, 2);
     if (arr1->len != arr2->len) return lua_pushboolean(ls, false), 1;
-    size_t s1 = arr1->size;
-    size_t s2 = arr2->size;
+    size_t s1 = arr1->size, s2 = arr2->size;
     void const* p1 = arr1->data;
     void const* p2 = arr2->data;
     for (lua_Integer i = arr1->len; i > 0; p1 += s1, p2 += s2, --i) {
@@ -275,7 +323,7 @@ static int array_fill(lua_State* ls) {
     return lua_settop(ls, 1), 1;
 }
 
-static size_t parse_int(lua_State* ls, char const** fmt, size_t def) {
+static size_t parse_size(lua_State* ls, char const** fmt, size_t def) {
     if (**fmt < '0' || **fmt > '9') return def;
     size_t size = *(*fmt)++ - '0';
     if (0 < size && size <= sizeof(uint64_t)) return size;
@@ -284,40 +332,53 @@ static size_t parse_int(lua_State* ls, char const** fmt, size_t def) {
 
 static inline MLuaValueType const* int_vt(size_t size) {
     switch (size) {
-    case 1: return &vt_int8;
-    case 2: return &vt_int16;
-    case 4: return &vt_int32;
-    case 8: return &vt_uint64;
-    default: return &vt_int;
+    case sizeof(int8_t): return &vt_int8;
+    case sizeof(int16_t): return &vt_int16;
+    case sizeof(int32_t): return &vt_int32;
+    case sizeof(int64_t): return &vt_uint64;
     }
+    if (size <= sizeof(int64_t)) return &vt_int;
+    return NULL;
 }
 
 static inline MLuaValueType const* uint_vt(size_t size) {
     switch (size) {
-    case 1: return &vt_uint8;
-    case 2: return &vt_uint16;
-    case 4: return &vt_uint32;
-    case 8: return &vt_uint64;
-    default: return &vt_uint;
+    case sizeof(uint8_t): return &vt_uint8;
+    case sizeof(uint16_t): return &vt_uint16;
+    case sizeof(uint32_t): return &vt_uint32;
+    case sizeof(uint64_t): return &vt_uint64;
+    }
+    if (size <= sizeof(uint64_t)) return &vt_uint;
+    return NULL;
+}
+
+static inline MLuaValueType const* number_vt(size_t size) {
+    switch (size) {
+    case sizeof(float): return &vt_float;
+    case sizeof(double): return &vt_double;
+#if HAS_LDOUBLE
+    case sizeof(long double): return &vt_ldouble;
+#endif
+    default: return NULL;
     }
 }
 
 static int array___call(lua_State* ls) {
     lua_remove(ls, 1);  // Remove class
     char const* fmt = luaL_checkstring(ls, 1);
-    size_t size = 0;
-    MLuaValueType const* vt;
+    size_t size;
+    MLuaValueType const* vt = NULL;
     switch (*fmt++) {
     case 'b': size = sizeof(signed char); vt = int_vt(size); break;
     case 'B': size = sizeof(unsigned char); vt = uint_vt(size); break;
     case 'h': size = sizeof(signed short); vt = int_vt(size); break;
     case 'H': size = sizeof(unsigned short); vt = uint_vt(size); break;
     case 'i':
-        size = parse_int(ls, &fmt, sizeof(signed int));
+        size = parse_size(ls, &fmt, sizeof(signed int));
         vt = int_vt(size);
         break;
     case 'I':
-        size = parse_int(ls, &fmt, sizeof(unsigned int));
+        size = parse_size(ls, &fmt, sizeof(unsigned int));
         vt = uint_vt(size);
         break;
     case 'l': size = sizeof(signed long); vt = int_vt(size); break;
@@ -325,14 +386,15 @@ static int array___call(lua_State* ls) {
     case 'j': size = sizeof(lua_Integer); vt = int_vt(size); break;
     case 'J': size = sizeof(lua_Unsigned); vt = uint_vt(size); break;
     case 'T': size = sizeof(size_t); vt = uint_vt(size); break;
-    // TODO: Add support for floats
-    // case 'f':
-    // case 'd':
-    // case 'n':
+    case 'f': size = sizeof(float); vt = &vt_float; break;
+    case 'd': size = sizeof(double); vt = &vt_double; break;
+    case 'n': size = sizeof(lua_Number); vt = number_vt(size); break;
     // TODO: Add support for fixed-size strings
     // case 'c':
     }
-    if (size == 0) return luaL_argerror(ls, 1, "invalid value format");
+    if (vt == NULL || *fmt != '\0') {
+        return luaL_argerror(ls, 1, "invalid value format");
+    }
     lua_Integer len = luaL_checkinteger(ls, 2);
     lua_Integer cap = luaL_optinteger(ls, 3, len);
     luaL_argcheck(ls, cap >= 0 && (lua_Unsigned)cap <= SIZE_MAX / size, 3,

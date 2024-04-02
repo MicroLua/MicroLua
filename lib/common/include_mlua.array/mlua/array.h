@@ -24,9 +24,9 @@ typedef struct MLuaValueType {
 typedef struct MLuaArray {
     MLuaValueType const* type;
     void* data;
-    size_t size;
     lua_Integer len;
     lua_Integer cap;
+    size_t size;
     uint64_t d64[0];
 } MLuaArray;
 

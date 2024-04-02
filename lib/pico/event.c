@@ -3,10 +3,11 @@
 
 #include "mlua/thread.h"
 
-#include "lstate.h"
+#include <assert.h>
 
 #include "pico/platform.h"
 
+#include "lstate.h"
 #include "mlua/platform.h"
 
 spin_lock_t* mlua_event_spinlock;
