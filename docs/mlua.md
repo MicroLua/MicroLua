@@ -378,9 +378,9 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 
 > [!IMPORTANT]
 > **Mixed-type equality comparisons (`==`, `~=`) involving `Int64` values do not
-> work correctly**, because Lua only calls the `__eq` metamethod if both values
-> are either tables or full userdata. Use `eq()` instead if the arguments may
-> be primitive types.
+> work correctly**, because Lua only calls the `__eq` metamethod if the values
+> are either both tables or both full userdata. Use `_G.equal()` instead if
+> either argument may be a primitive type.
 
 - `int64(value) -> Int64 | nil`\
   Cast `value` to an `Int64`. `value` can have the following types:
@@ -400,10 +400,6 @@ automatic promotion to `number`). When `lua_Integer` is a 64-bit integer,
 - `ashr(value, num) -> Int64`\
   Returns the result of performing an arithmetic (i.e. sign-extending) right
   shift of `value` by `num` bits.
-
-- `eq(lhs, rhs) -> boolean`\
-  Compares `lhs` and `rhs` for equality. Works correctly for mixed-type
-  comparisons.
 
 - `hex(value) -> string`\
   Return a hexadecimal representation of `value`.

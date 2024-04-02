@@ -442,11 +442,8 @@ static int int64___call(lua_State* ls) {
     return 1;
 }
 
-#define int64_eq int64___eq
-
 MLUA_SYMBOLS(int64_syms) = {
     MLUA_SYM_F(ashr, int64_),
-    MLUA_SYM_F(eq, int64_),
     MLUA_SYM_F(hex, int64_),
     MLUA_SYM_F(tointeger, int64_),
     MLUA_SYM_F(tonumber, int64_),
