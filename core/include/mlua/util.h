@@ -29,9 +29,6 @@ extern "C" {
 // MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
 #define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
-// Initialize the functionality contained in this module.
-void mlua_util_init(lua_State* ls);
-
 // A continuation that returns its ctx argument.
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
 

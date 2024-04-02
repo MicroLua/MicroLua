@@ -28,6 +28,12 @@ function test_try(t)
         :label("failure"):eq{nil, "boom"}
 end
 
+function test_equal(t)
+    local tab = setmetatable({}, {__eq = function() return true end})
+    t:expect(t:expr(_G).equal(tab, 1)):eq(true)
+    t:expect(t:expr(_G).equal(1, tab)):eq(true)
+end
+
 local private_var = 'private'
 public_var = 'public'
 

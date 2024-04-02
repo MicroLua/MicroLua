@@ -143,11 +143,10 @@ function test_unary_ops(t)
         ['-'] = function(v) return -v end,
         ['~'] = function(v) return ~v end,
     }
-    local eq = int64.eq
     for op, f in pairs(ops) do
         for _, v in ipairs(values) do
             local got, want = f(int64(v)), f(v)
-            t:expect(eq(got, want), "%s(%s) = %s, want %s", op, v, got, want)
+            t:expect(equal(got, want), "%s(%s) = %s, want %s", op, v, got, want)
         end
     end
 
@@ -178,16 +177,15 @@ local variants = {
     end,
 }
 
-local function run_binary_ops_tests(t, ops, as, bs, eq)
-    eq = eq or util.eq
+local function run_binary_ops_tests(t, ops, as, bs)
     for op, f in pairs(ops) do
         for fmt, v in pairs(variants) do
+            fmt = fmt .. " = %s, want %s"
             local vf = v(f)
             for _, a in ipairs(as) do
                 for _, b in ipairs(bs) do
                     local got, want = vf(a, b), f(a, b)
-                    t:expect(eq(got, want), fmt .. " = %s, want %s", a, op, b,
-                             got, want)
+                    t:expect(equal(got, want), fmt, a, op, b, got, want)
                 end
             end
         end
@@ -206,7 +204,7 @@ function test_binary_int_ops(t)
         ['|'] = function(a, b) return a | b end,
         ['~'] = function(a, b) return a ~ b end,
     }
-    run_binary_ops_tests(t, ops, values, values, int64.eq)
+    run_binary_ops_tests(t, ops, values, values)
 
     for _, test in ipairs{
         {int64('12345678901234'), '+', int64('24680135791113'),
@@ -260,7 +258,7 @@ function test_shift_ops(t)
         ['<<'] = function(a, b) return a << b end,
         ['>>'] = function(a, b) return a >> b end,
     }
-    run_binary_ops_tests(t, ops, values, shifts, int64.eq)
+    run_binary_ops_tests(t, ops, values, shifts)
 
     ops['(ashr)'] = int64.ashr
     for _, test in ipairs{
@@ -301,10 +299,7 @@ end
 function test_relational_ops(t)
     local values = {0, -1, 3, -7, 13, -1234, 2468}
     local ops = {
-        -- The metamethod for the equality operator is only called when the
-        -- arguments are either both tables or both full userdata. For mixed
-        -- argument types, the metamethod must be called directly.
-        ['=='] = int64.eq,
+        ['=='] = equal,
         ['<'] = function(a, b) return a < b end,
         ['<='] = function(a, b) return a <= b end,
     }

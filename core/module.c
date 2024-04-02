@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "lualib.h"
+#include "mlua/util.h"
 
 void mlua_sym_push_boolean(lua_State* ls, MLuaSymVal const* value) {
     lua_pushboolean(ls, value->boolean);
@@ -86,6 +87,10 @@ static int global_try(lua_State* ls) {
     luaL_pushfail(ls);
     lua_rotate(ls, -2, 1);
     return 2;
+}
+
+static int global_equal(lua_State* ls) {
+    return lua_pushboolean(ls, mlua_compare_eq(ls, 1, 2)), 1;
 }
 
 void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
@@ -308,6 +313,8 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "module");
     lua_pushcfunction(ls, &global_try);
     lua_setglobal(ls, "try");
+    lua_pushcfunction(ls, &global_equal);
+    lua_setglobal(ls, "equal");
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do

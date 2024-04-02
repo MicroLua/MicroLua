@@ -209,11 +209,11 @@ end
 function Matcher:_label() return self._l or repr(self._v) end
 function Matcher:_repr(v) return (self._fmt or repr)(v) end
 
-function Matcher:eq(want, eq) return self:_rel_op(want, eq or util.eq, '') end
+function Matcher:eq(want, eq) return self:_rel_op(want, eq or equal, '') end
 
 function Matcher:neq(want, eq)
-    local neq = eq and function(a, b) return not eq(a, b) end or util.neq
-    return self:_rel_op(want, neq, '~=')
+    return self:_rel_op(
+        want, function(a, b) return not (eq or equal)(a, b) end, '~=')
 end
 
 function Matcher:lt(want) return self:_rel_op(want, util.lt, '<') end

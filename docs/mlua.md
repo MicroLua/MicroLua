@@ -39,6 +39,11 @@ The test modules can be useful as usage examples.
   if i2c then ... end
   ```
 
+- `equal(a, b) -> boolean`\
+  Return the result of comparing `a` and `b` for equality. Unlike the `==`
+  operator, this function always calls the `__eq` metamethod of either argument
+  if it exists, even if the arguments have different types.
+
 ## `mlua.bits`
 
 **Module:** [`mlua.bits`](../lib/common/mlua.bits.c),
@@ -801,8 +806,8 @@ that value.
 - `Matcher:apply(fn) -> self`\
   Apply the function `fn` to the value, and set it as the new value.
 
-- `Matcher:eq(want, eq = mlua.util.eq) -> self`\
-  `Matcher:neq(want, eq = mlua.util.eq) -> self`\
+- `Matcher:eq(want, eq = _G.equal) -> self`\
+  `Matcher:neq(want, eq = _G.equal) -> self`\
   `Matcher:lt(want) -> self`\
   `Matcher:lte(want) -> self`\
   `Matcher:gt(want) -> self`\

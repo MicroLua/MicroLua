@@ -69,10 +69,3 @@ bool mlua_compare_eq(lua_State* ls, int arg1, int arg2) {
     lua_pop(ls, 1);
     return res;
 }
-
-static int Function___close(lua_State* ls) {
-    // Call the function itself, passing through the remaining arguments. This
-    // makes to-be-closed functions the equivalent of deferreds.
-    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &mlua_cont_return_ctx);
-    return 0;
-}
