@@ -5,6 +5,7 @@
 
 #include "mlua/int64.h"
 #include "mlua/module.h"
+#include "mlua/util.h"
 
 static void get_int8(lua_State* ls, void const* data, size_t size) {
     lua_pushinteger(ls, *(int8_t const*)data);
@@ -36,23 +37,34 @@ static void get_uint64(lua_State* ls, void const* data, size_t size) {
 
 static lua_Unsigned read_uint(lua_State* ls, uint8_t const* data, size_t size) {
     union { int dummy; char little; } const endian = {1};
-    lua_Unsigned res = 0;
+    lua_Unsigned v = 0;
     for (size_t i = size; i > 0; --i) {
-        res <<= 8;
-        res |= (lua_Unsigned)data[endian.little ? i - 1 : size - i];
+        v <<= 8;
+        v |= (lua_Unsigned)data[endian.little ? i - 1 : size - i];
     }
-    return res;
+    return v;
+}
+
+static uint64_t read_uint64(lua_State* ls, uint8_t const* data, size_t size) {
+    union { int dummy; char little; } const endian = {1};
+    uint64_t v = 0;
+    for (size_t i = size; i > 0; --i) {
+        v <<= 8;
+        v |= (uint64_t)data[endian.little ? i - 1 : size - i];
+    }
+    return v;
 }
 
 static void get_int(lua_State* ls, void const* data, size_t size) {
     if (size <= sizeof(lua_Unsigned)) {
-        lua_Unsigned res = read_uint(ls, data, size);
+        lua_Unsigned v = read_uint(ls, data, size);
         lua_Unsigned mask = (lua_Unsigned)1u << (size * 8 - 1);
-        lua_pushinteger(ls, (res ^ mask) - mask);  // Perform sign extension
+        lua_pushinteger(ls, (v ^ mask) - mask);  // Perform sign extension
         return;
     }
-    // TODO: Implement for int64
-    luaL_error(ls, "unsupported size: %d", size);
+    uint64_t v = read_uint64(ls, data, size);
+    uint64_t mask = (uint64_t)1u << (size * 8 - 1);
+    mlua_push_int64(ls, (v ^ mask) - mask);
 }
 
 static void get_uint(lua_State* ls, void const* data, size_t size) {
@@ -60,8 +72,7 @@ static void get_uint(lua_State* ls, void const* data, size_t size) {
         lua_pushinteger(ls, read_uint(ls, data, size));
         return;
     }
-    // TODO: Implement for uint64
-    luaL_error(ls, "unsupported size: %d", size);
+    mlua_push_int64(ls, read_uint64(ls, data, size));
 }
 
 static void set_uint8(lua_State* ls, int arg, void* data, size_t size) {
@@ -91,8 +102,12 @@ static void set_uint(lua_State* ls, int arg, void* data, size_t size) {
             data8[endian.little ? i : size - 1 - i] = v;
         }
     }
-    // TODO: Implement for uint64
-    luaL_error(ls, "unsupported size: %d", size);
+    uint64_t v = mlua_check_int64(ls, arg);
+    data8[endian.little ? 0 : size - 1] = v;
+    for (size_t i = 1; i < size; ++i) {
+        v >>= 8;
+        data8[endian.little ? i : size - 1 - i] = v;
+    }
 }
 
 static MLuaValueType const vt_int8 = {.get = &get_int8, .set = &set_uint8};
@@ -154,7 +169,7 @@ static int array_addr(lua_State* ls) {
     return mlua_push_intptr(ls, (uintptr_t)arr->data), 1;
 }
 
-static int array_eq(lua_State* ls) {
+static int array___eq(lua_State* ls) {
     MLuaArray const* arr1 = mlua_check_array(ls, 1);
     MLuaArray const* arr2 = mlua_check_array(ls, 2);
     if (arr1->len != arr2->len) return lua_pushboolean(ls, false), 1;
@@ -165,9 +180,7 @@ static int array_eq(lua_State* ls) {
     for (lua_Integer i = arr1->len; i > 0; p1 += s1, p2 += s2, --i) {
         arr1->type->get(ls, p1, s1);
         arr2->type->get(ls, p2, s2);
-        if (!lua_compare(ls, -2, -1, LUA_OPEQ)) {
-            return lua_pushboolean(ls, false), 1;
-        }
+        if (!mlua_compare_eq(ls, -2, -1)) return lua_pushboolean(ls, false), 1;
         lua_pop(ls, 2);
     }
     return lua_pushboolean(ls, true), 1;
@@ -262,6 +275,13 @@ static int array_fill(lua_State* ls) {
     return lua_settop(ls, 1), 1;
 }
 
+static size_t parse_int(lua_State* ls, char const** fmt, size_t def) {
+    if (**fmt < '0' || **fmt > '9') return def;
+    size_t size = *(*fmt)++ - '0';
+    if (0 < size && size <= sizeof(uint64_t)) return size;
+    return luaL_argerror(ls, 1, "integral size out of limits");
+}
+
 static inline MLuaValueType const* int_vt(size_t size) {
     switch (size) {
     case 1: return &vt_int8;
@@ -284,17 +304,22 @@ static inline MLuaValueType const* uint_vt(size_t size) {
 
 static int array___call(lua_State* ls) {
     lua_remove(ls, 1);  // Remove class
-    char const* type = luaL_checkstring(ls, 1);
-    size_t size;
+    char const* fmt = luaL_checkstring(ls, 1);
+    size_t size = 0;
     MLuaValueType const* vt;
-    switch (type[0]) {
+    switch (*fmt++) {
     case 'b': size = sizeof(signed char); vt = int_vt(size); break;
     case 'B': size = sizeof(unsigned char); vt = uint_vt(size); break;
     case 'h': size = sizeof(signed short); vt = int_vt(size); break;
     case 'H': size = sizeof(unsigned short); vt = uint_vt(size); break;
-    // TODO: Allow arbitrary integer sizes
-    case 'i': size = sizeof(signed int); vt = int_vt(size); break;
-    case 'I': size = sizeof(unsigned int); vt = uint_vt(size); break;
+    case 'i':
+        size = parse_int(ls, &fmt, sizeof(signed int));
+        vt = int_vt(size);
+        break;
+    case 'I':
+        size = parse_int(ls, &fmt, sizeof(unsigned int));
+        vt = uint_vt(size);
+        break;
     case 'l': size = sizeof(signed long); vt = int_vt(size); break;
     case 'L': size = sizeof(unsigned long); vt = uint_vt(size); break;
     case 'j': size = sizeof(lua_Integer); vt = int_vt(size); break;
@@ -306,9 +331,8 @@ static int array___call(lua_State* ls) {
     // case 'n':
     // TODO: Add support for fixed-size strings
     // case 'c':
-    default:
-        return luaL_argerror(ls, 1, "invalid value type");
     }
+    if (size == 0) return luaL_argerror(ls, 1, "invalid value format");
     lua_Integer len = luaL_checkinteger(ls, 2);
     lua_Integer cap = luaL_optinteger(ls, 3, len);
     luaL_argcheck(ls, cap >= 0 && (lua_Unsigned)cap <= SIZE_MAX / size, 3,
@@ -329,7 +353,6 @@ MLUA_SYMBOLS(array_syms) = {
     MLUA_SYM_F(len, array_),
     MLUA_SYM_F(cap, array_),
     MLUA_SYM_F(addr, array_),
-    MLUA_SYM_F(eq, array_),
     MLUA_SYM_F(get, array_),
     MLUA_SYM_F(set, array_),
     MLUA_SYM_F(append, array_),
@@ -338,8 +361,6 @@ MLUA_SYMBOLS(array_syms) = {
     // TODO: MLUA_SYM_F(read, array_),
     // TODO: MLUA_SYM_F(write, array_),
 };
-
-#define array___eq array_eq
 
 MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
     MLUA_SYM_F_NH(__len, array_),

@@ -14,11 +14,13 @@
 extern "C" {
 #endif
 
+// Handlers for a specific value type stored in an MLuaArray.
 typedef struct MLuaValueType {
     void (*get)(lua_State*, void const*, size_t);
     void (*set)(lua_State*, int, void*, size_t);
 } MLuaValueType;
 
+// A fixed-capacity homogeneous array.
 typedef struct MLuaArray {
     MLuaValueType const* type;
     void* data;
