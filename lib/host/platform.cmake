@@ -5,6 +5,10 @@ macro(mlua_pre_project)
 endmacro()
 
 macro(mlua_post_project)
+    foreach(LANG IN ITEMS C CXX ASM)
+        set("CMAKE_${LANG}_FLAGS" "${CMAKE_${LANG}_FLAGS} -march=native")
+        set("CMAKE_${LANG}_FLAGS_RELEASE" "${CMAKE_${LANG}_FLAGS_RELEASE} -O2")
+    endforeach()
 endmacro()
 
 function(mlua_add_executable_platform TARGET)
