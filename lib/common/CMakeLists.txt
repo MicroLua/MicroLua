@@ -16,8 +16,6 @@ target_link_libraries(mlua_test_mlua INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua.array mlua.array.c)
-target_include_directories(mlua_mod_mlua.array_headers INTERFACE
-    include_mlua.array)
 target_link_libraries(mlua_mod_mlua.array INTERFACE
     mlua_mod_mlua.int64
 )
