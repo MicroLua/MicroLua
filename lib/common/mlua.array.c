@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <float.h>
 #include <stdalign.h>
+#include <string.h>
 
 #include "mlua/int64.h"
 #include "mlua/module.h"
@@ -13,6 +14,9 @@
 // TODO: Add support for stride
 
 #define HAS_LDOUBLE (LDBL_MANT_DIG != DBL_MANT_DIG)
+#ifndef LUAL_PACKPADBYTE
+#define LUAL_PACKPADBYTE 0
+#endif
 
 struct Array;
 typedef struct Array Array;
@@ -190,6 +194,20 @@ static ArrayVT const vt_ldouble = {.get = &get_ldouble,
 
 #endif  // HAS_LDOUBLE
 
+static void get_string(lua_State* ls, Array const* arr, void const* data) {
+    lua_pushlstring(ls, data, arr->size);
+}
+
+static void set_string(lua_State* ls, Array const* arr, int arg, void* data) {
+    size_t len;
+    char const* s = luaL_checklstring(ls, arg, &len);
+    if (luai_unlikely(len > arr->size)) len = arr->size;
+    memcpy(data, s, len);
+    if (len < arr->size) memset(data + len, LUAL_PACKPADBYTE, arr->size - len);
+}
+
+static ArrayVT const vt_string = {.get = &get_string, .set = &set_string};
+
 char const array_name[] = "mlua.Array";
 
 static Array* new_array(lua_State* ls, size_t data_size) {
@@ -357,11 +375,21 @@ static int array_fill(lua_State* ls) {
     return lua_settop(ls, 1), 1;
 }
 
+static bool is_digit(char c) { return '0' <= c && c <= '9'; }
+
 static size_t parse_size(lua_State* ls, char const** fmt, size_t def) {
-    if (**fmt < '0' || **fmt > '9') return def;
-    size_t size = *(*fmt)++ - '0';
-    if (0 < size && size <= sizeof(uint64_t)) return size;
-    return luaL_argerror(ls, 1, "integral size out of limits");
+    if (!is_digit(**fmt)) return def;
+    size_t size = 0;
+    do {
+        size = size * 10 + (*(*fmt)++ - '0');
+    } while (is_digit(**fmt) && size < (~(size_t)0 - 9) / 10);
+    return size;
+}
+
+static size_t parse_int_size(lua_State* ls, char const** fmt, size_t def) {
+    size_t size = parse_size(ls, fmt, def);
+    if (luai_likely(0 < size && size <= sizeof(uint64_t))) return size;
+    return luaL_argerror(ls, 1, "integer size out of limits");
 }
 
 static inline ArrayVT const* int_vt(size_t size) {
@@ -408,11 +436,11 @@ static int array___call(lua_State* ls) {
     case 'h': size = sizeof(signed short); vt = int_vt(size); break;
     case 'H': size = sizeof(unsigned short); vt = uint_vt(size); break;
     case 'i':
-        size = parse_size(ls, &fmt, sizeof(signed int));
+        size = parse_int_size(ls, &fmt, sizeof(signed int));
         vt = int_vt(size);
         break;
     case 'I':
-        size = parse_size(ls, &fmt, sizeof(unsigned int));
+        size = parse_int_size(ls, &fmt, sizeof(unsigned int));
         vt = uint_vt(size);
         break;
     case 'l': size = sizeof(signed long); vt = int_vt(size); break;
@@ -423,8 +451,10 @@ static int array___call(lua_State* ls) {
     case 'f': size = sizeof(float); vt = &vt_float; break;
     case 'd': size = sizeof(double); vt = &vt_double; break;
     case 'n': size = sizeof(lua_Number); vt = number_vt(size); break;
-    // TODO: Add support for fixed-size strings
-    // case 'c':
+    case 'c':
+        size = parse_size(ls, &fmt, 0);
+        if (size > 0) vt = &vt_string;
+        break;
     }
     if (vt == NULL || *fmt != '\0') {
         return luaL_argerror(ls, 1, "invalid value format");

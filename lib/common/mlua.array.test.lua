@@ -14,6 +14,9 @@ function test_size(t)
     local _ = array  -- Capture the upvalue
     t:expect(t.expr.array('i0', 0)):raises("out of limits")
     t:expect(t.expr.array('i9', 0)):raises("out of limits")
+    t:expect(t.expr.array('c0', 0)):raises("invalid value format")
+    t:expect(t.expr.array('c999999999999999999999999', 0))
+        :raises("invalid value format")
     t:expect(t.expr.array('a', 0)):raises("invalid value format")
     t:expect(t.expr.array('bb', 0)):raises("invalid value format")
     for _, typ in ipairs{
@@ -21,6 +24,7 @@ function test_size(t)
         'i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7', 'i8',
         'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'I8',
         'f', 'd', 'n',
+        'c1', 'c2', 'c4', 'c8', 'c16', 'c32', 'c64', 'c12345678',
     } do
         t:expect(t.expr.array(typ, 0):size()):eq(string.packsize(typ))
     end
@@ -115,6 +119,23 @@ function test_float(t)
     end
 end
 
+local function pad_string(typ, value)
+    local size, len = tonumber(typ:sub(2), 10), #value
+    if len > size then return value:sub(1, size) end
+    return value .. ('\0'):rep(size - len)
+end
+
+function test_string(t)
+    local values = {'', '123', 'abcde', 'the quick brown fox'}
+    for _, typ in ipairs{'c1', 'c5', 'c11'} do
+        t:context({type = typ})
+        local a = array(typ, #values):set(1, table.unpack(values))
+        local want = {}
+        for i, v in ipairs(values) do want[i] = pad_string(typ, v) end
+        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+    end
+end
+
 function test_eq(t)
     for _, test in ipairs{
         {array('j', 0), array('j', 0, 1):set(1, 1), true},
@@ -135,6 +156,8 @@ function test_eq(t)
          array('j', 2):set(1, 21, 99), false},
         {array('n', 2):set(1, 21.0, -22.1),
          array('j', 2):set(1, 21, -22), false},
+        {array('c1', 0), array('j', 0), true},
+        {array('c1', 1):set(1, '1'), array('j', 1):set(1, 1), false},
     } do
         local a1, a2, want = table.unpack(test)
         t:expect(t:expr(_G).equal(a1, a2)):eq(want)
