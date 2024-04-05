@@ -245,3 +245,19 @@ function test_fill(t)
         else exp:raises("out of bounds") end
     end
 end
+
+function test_ipairs(t)
+    for _, test in ipairs{
+        {array('j', 0, 3), {}, {}},
+        {array('j', 4):set(1, 1, 4, 2, 8), {1, 2, 3, 4}, {1, 4, 2, 8}},
+    } do
+        local a, want_is, want_vs = table.unpack(test)
+        local is, vs = list(), list()
+        for i, v in a:ipairs() do
+            is:append(i)
+            vs:append(v)
+        end
+        t:expect(is):label("is(%s)", a):eq(want_is)
+        t:expect(vs):label("vs(%s)", a):eq(want_vs)
+    end
+end

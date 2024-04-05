@@ -70,7 +70,7 @@ static int ipairs_iter(lua_State* ls) {
     lua_Integer len = length(ls, 1);
     if (len == 0) return 0;
     lua_Integer i = luaL_checkinteger(ls, 2);
-    if (i == len) return 0;
+    if (i >= len) return 0;
     i = luaL_intop(+, i, 1);
     lua_pushinteger(ls, i);
     lua_geti(ls, 1, i);

@@ -169,30 +169,26 @@ static MLuaValueType const vt_ldouble = {.get = &get_ldouble,
 
 #endif  // HAS_LDOUBLE
 
-char const mlua_array_name[] = "mlua.Array";
+char const array_name[] = "mlua.Array";
 
 static MLuaArray* new_array(lua_State* ls, size_t data_size) {
     MLuaArray* arr = lua_newuserdatauv(ls, sizeof(MLuaArray) + data_size, 0);
-    luaL_getmetatable(ls, mlua_array_name);
+    luaL_getmetatable(ls, array_name);
     lua_setmetatable(ls, -2);
     return arr;
 }
 
-static MLuaArray* mlua_to_array(lua_State* ls, int arg) {
-    return lua_touserdata(ls, arg);
-}
-
-static MLuaArray* mlua_check_array(lua_State* ls, int arg) {
-    return luaL_checkudata(ls, arg, mlua_array_name);
+static inline MLuaArray* check_array(lua_State* ls, int arg) {
+    return luaL_checkudata(ls, arg, array_name);
 }
 
 static int array_size(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     return lua_pushinteger(ls, arr->size), 1;
 }
 
 static int array_len(lua_State* ls) {
-    MLuaArray* arr = mlua_check_array(ls, 1);
+    MLuaArray* arr = check_array(ls, 1);
     lua_Integer len = arr->len;
     if (!lua_isnoneornil(ls, 2)) {
         lua_Integer new_len = luaL_checkinteger(ls, 2);
@@ -204,23 +200,23 @@ static int array_len(lua_State* ls) {
 }
 
 static int array___len(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     return lua_pushinteger(ls, arr->len), 1;
 }
 
 static int array_cap(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     return lua_pushinteger(ls, arr->cap), 1;
 }
 
 static int array_addr(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     return mlua_push_intptr(ls, (uintptr_t)arr->data), 1;
 }
 
 static int array___eq(lua_State* ls) {
-    MLuaArray const* arr1 = mlua_check_array(ls, 1);
-    MLuaArray const* arr2 = mlua_check_array(ls, 2);
+    MLuaArray const* arr1 = check_array(ls, 1);
+    MLuaArray const* arr2 = check_array(ls, 2);
     if (arr1->len != arr2->len) return lua_pushboolean(ls, false), 1;
     size_t s1 = arr1->size, s2 = arr2->size;
     void const* p1 = arr1->data;
@@ -235,7 +231,7 @@ static int array___eq(lua_State* ls) {
 }
 
 static int array___tostring(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     if (arr->len == 0) return lua_pushliteral(ls, "{}"), 1;
     luaL_Buffer buf;
     luaL_buffinit(ls, &buf);
@@ -265,7 +261,7 @@ static inline lua_Integer opt_offset(lua_State* ls, int arg,
 }
 
 static int array_get(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     lua_Integer off = check_offset(ls, 2, arr);
     lua_Integer len = luaL_optinteger(ls, 3, 1);
     if (len <= 0) return 0;
@@ -286,7 +282,7 @@ static int array_get(lua_State* ls) {
 }
 
 static int array_set(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     lua_Integer off = check_offset(ls, 2, arr);
     int top = lua_gettop(ls);
     luaL_argcheck(ls, off >= 0 && off + top - 2 <= arr->cap, 2,
@@ -297,8 +293,25 @@ static int array_set(lua_State* ls) {
     return lua_settop(ls, 1), 1;
 }
 
+static int ipairs_iter(lua_State* ls) {
+    MLuaArray const* arr = check_array(ls, 1);
+    lua_Integer off = luaL_checkinteger(ls, 2);
+    if (off >= arr->len) return 0;
+    lua_pushinteger(ls, luaL_intop(+, off, 1));
+    arr->type->get(ls, arr->data + off * arr->size, arr->size);
+    return 2;
+}
+
+static int array_ipairs(lua_State* ls) {
+    check_array(ls, 1);
+    lua_pushcfunction(ls, &ipairs_iter);
+    lua_pushvalue(ls, 1);
+    lua_pushinteger(ls, 0);
+    return 3;
+}
+
 static int array_append(lua_State* ls) {
-    MLuaArray* arr = mlua_check_array(ls, 1);
+    MLuaArray* arr = check_array(ls, 1);
     int cnt = lua_gettop(ls) - 1;
     lua_Integer new_len = arr->len + cnt;
     if (new_len > arr->cap) return luaL_error(ls, "out of capacity");
@@ -311,7 +324,7 @@ static int array_append(lua_State* ls) {
 }
 
 static int array_fill(lua_State* ls) {
-    MLuaArray const* arr = mlua_check_array(ls, 1);
+    MLuaArray const* arr = check_array(ls, 1);
     lua_Integer off = opt_offset(ls, 3, arr, 0);
     luaL_argcheck(ls, 0 <= off && off <= arr->cap, 3, "out of bounds");
     lua_Integer len = luaL_optinteger(ls, 4, arr->cap - off);
@@ -415,6 +428,7 @@ MLUA_SYMBOLS(array_syms) = {
     MLUA_SYM_F(len, array_),
     MLUA_SYM_F(cap, array_),
     MLUA_SYM_F(addr, array_),
+    MLUA_SYM_F(ipairs, array_),
     MLUA_SYM_F(get, array_),
     MLUA_SYM_F(set, array_),
     MLUA_SYM_F(append, array_),
@@ -436,7 +450,7 @@ MLUA_SYMBOLS_NOHASH(array_meta_syms) = {
 
 MLUA_OPEN_MODULE(mlua.array) {
     // Create the array class.
-    mlua_new_class(ls, mlua_array_name, array_syms, true);
+    mlua_new_class(ls, array_name, array_syms, true);
     mlua_set_fields(ls, array_syms_nh);
     mlua_set_meta_fields(ls, array_meta_syms);
     return 1;

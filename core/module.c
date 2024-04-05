@@ -184,7 +184,7 @@ static void set_hashed_metatable(lua_State* ls, MLuaSymH const* fields, int cnt,
                    h->nkeys);
         return;
     }
-    lua_createtable(ls, 0, 0);
+    lua_createtable(ls, 0, 1);
     lua_pushlightuserdata(ls, (void*)fields);
     lua_pushlightuserdata(ls, (void*)h);
     lua_pushlightuserdata(ls, (void*)g);
