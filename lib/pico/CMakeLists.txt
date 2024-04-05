@@ -111,7 +111,6 @@ mlua_add_c_module(mlua_mod_hardware.dma hardware.dma.c)
 target_link_libraries(mlua_mod_hardware.dma INTERFACE
     hardware_base
     hardware_dma
-    mlua_mod_mlua.mem_headers
     mlua_mod_mlua.thread_headers
     pico_platform
 )

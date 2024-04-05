@@ -7,7 +7,6 @@
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/mem.h"
 #include "mlua/module.h"
 #include "mlua/thread.h"
 #include "mlua/util.h"
@@ -25,9 +24,6 @@ static uint check_timer(lua_State* ls, int arg) {
 }
 
 static void const* check_read_addr(lua_State* ls, int arg) {
-    // TODO: Add support for array.int(8|16|32)
-    // TODO: Call addr() if it is present, or maybe an __addr metamethod, or
-    //       even __raddr for read and __waddr for write
     if (lua_isnil(ls, arg)) return NULL;
     if (lua_isinteger(ls, arg)) {
         return (void const*)(uintptr_t)luaL_checkinteger(ls, arg);
@@ -35,21 +31,21 @@ static void const* check_read_addr(lua_State* ls, int arg) {
     size_t len;
     void const* ptr = lua_tolstring(ls, arg, &len);
     if (ptr != NULL) return ptr;
-    ptr = mlua_mem_test_Buffer(ls, arg);
+    ptr = mlua_get_buffer(ls, arg, &len);
     if (ptr != NULL) return ptr;
-    luaL_typeerror(ls, arg, "nil, integer, string or Buffer");
+    luaL_typeerror(ls, arg, "nil, integer, string or buffer");
     return NULL;
 }
 
 static void* check_write_addr(lua_State* ls, int arg) {
-    // TODO: Add support for array.int(8|16|32)
     if (lua_isnil(ls, arg)) return NULL;
     if (lua_isinteger(ls, arg)) {
         return (void*)(uintptr_t)luaL_checkinteger(ls, arg);
     }
-    void* ptr = mlua_mem_test_Buffer(ls, arg);
+    size_t len;
+    void* ptr = mlua_get_buffer(ls, arg, &len);
     if (ptr != NULL) return ptr;
-    luaL_typeerror(ls, arg, "nil, integer or Buffer");
+    luaL_typeerror(ls, arg, "nil, integer or buffer");
     return NULL;
 }
 

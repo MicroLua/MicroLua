@@ -55,7 +55,6 @@ mlua_add_c_module(mlua_mod_mlua.block.mem mlua.block.mem.c)
 target_link_libraries(mlua_mod_mlua.block.mem INTERFACE
     mlua_mod_mlua.block
     mlua_mod_mlua.errors
-    mlua_mod_mlua.mem
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.cli mlua.cli.lua)
@@ -166,8 +165,6 @@ target_link_libraries(mlua_test_mlua.list INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_mlua.mem mlua.mem.c)
-target_include_directories(mlua_mod_mlua.mem_headers INTERFACE
-    include_mlua.mem)
 target_link_libraries(mlua_mod_mlua.mem INTERFACE
     mlua_mod_mlua.int64
 )

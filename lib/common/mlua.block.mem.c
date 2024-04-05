@@ -8,12 +8,11 @@
 #include "mlua/block.h"
 #include "mlua/errors.h"
 #include "mlua/module.h"
-#include "mlua/mem.h"
 #include "mlua/util.h"
 
 typedef struct Dev {
     MLuaBlockDev dev;
-    char* start;
+    void* start;
 } Dev;
 
 static int mem_dev_read(MLuaBlockDev* dev, uint64_t off, void* dst,
@@ -42,8 +41,8 @@ static int mem_dev_erase(MLuaBlockDev* dev, uint64_t off, size_t size) {
 static int mem_dev_sync(MLuaBlockDev* dev) { return MLUA_EOK; }
 
 static int mod_new(lua_State* ls) {
-    char* buf = mlua_mem_check_Buffer(ls, 1);
-    size_t size = lua_rawlen(ls, 1);
+    size_t size = 0;
+    void* buf = mlua_get_buffer(ls, 1, &size);
     size_t write_size = luaL_optinteger(ls, 2, 256);
     size_t erase_size = luaL_optinteger(ls, 3, 256);
 

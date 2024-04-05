@@ -114,6 +114,15 @@ static inline int64_t mlua_check_int64(lua_State* ls, int arg) {
 int64_t mlua_check_int64(lua_State* ls, int arg);
 #endif
 
+// Get an intptr_t value at the given stack index. If "success" is non-NULL, set
+// it to true iff the conversion is successful.
+static inline intptr_t mlua_to_intptrx(lua_State* ls, int arg, int* success) {
+    if (sizeof(intptr_t) <= sizeof(lua_Integer)) {
+        return lua_tointegerx(ls, arg, success);
+    }
+    return mlua_to_int64x(ls, arg, success);
+}
+
 // Get an intptr_t value at the given stack index, or raise an error if the
 // stack entry doesn't have the right type.
 static inline intptr_t mlua_check_intptr(lua_State* ls, int arg) {

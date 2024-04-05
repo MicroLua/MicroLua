@@ -112,8 +112,8 @@ This module provides a block device that uses the QSPI flash for storage.
 **Module:** [`mlua.block.mem`](../lib/common/mlua.block.mem.c),
 build target: `mlua_mod_mlua.block.mem`
 
-This module provides a block device that uses a `mlua.mem.Buffer` for storage,
-i.e. a contiguous block of RAM.
+This module provides a block device that uses a
+[buffer](core.md#buffer-protocol) for storage, i.e. a contiguous block of RAM.
 
 - `new(buffer, size, write_size = 256, erase_size = 256) -> Dev`\
   Create a new memory block device in `buffer`.
@@ -534,17 +534,25 @@ the functions as methods.
 build target: `mlua_mod_mlua.mem`,
 tests: [`mlua.mem.test`](../lib/common/mlua.mem.test.lua)
 
-This module provides functionality to access raw memory (ROM, RAM).
+This module provides functionality to access the contents of objects
+implementing the [buffer protocol](core.md#buffer-protocol) and raw memory
+(ROM, RAM).
 
 > [!IMPORTANT]
 > This module must not be used to access hardware registers. Use the
 > [`hardware.base`](hardware.md#hardwarebase) module instead.
 
-- `read(address, size) -> string`\
-  Read `size` bytes in memory starting at `address`.
+- `read(buffer, offset = 0, len = size - offset) -> string`\
+  `read(address, len = 1) -> string`\
+  Read a range of raw data from a buffer or from memory.
 
-- `write(address, data)`\
-  Write `data` to memory starting at `address`.
+- `write(buffer, data, offset = 0)`\
+  `write(address, data)`\
+  Write a range of raw data to a buffer or to memory.
+
+- `fill(buffer, value = 0, offset = 0, len = size - offset)`\
+  `fill(address, value = 0, len = 1)`\
+  Fill a range of raw data in a buffer or in memory.
 
 - `alloc(size) -> Buffer`\
   Allocate a memory buffer of the given size.
@@ -559,14 +567,9 @@ The `Buffer` type (`mlua.mem.Buffer`) holds a fixed-size memory buffer.
 - `Buffer:addr() -> integer`\
   Return the address of the buffer in memory.
 
-- `Buffer:fill(value = 0, offset = 0, len = size - offset)`\
-  Fill `len` bytes of the buffer, starting at `offset`, with `value`.
-
-- `Buffer:read(offset = 0, len = size - offset) -> string`\
-  Read `len` bytes from the buffer, starting at `offset`.
-
-- `Buffer:write(data, offset = 0)`\
-  Write `data` to the buffer, starting at `offset`.
+- `Buffer:__buffer() -> (ptr, size)`\
+  Return the address and size of the buffer. Implements the
+  [buffer protocol](core.md#buffer-protocol).
 
 ## `mlua.oo`
 

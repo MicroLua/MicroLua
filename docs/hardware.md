@@ -135,11 +135,11 @@ This module exposes DMA functionality.
 
 - `channel_set_read_addr(channel, addr, trigger)`\
   Set the initial read address for a channel. `addr` can be `nil`, an integer, a
-  string or a [`Buffer`](mlua.md#Buffer) object.
+  string or a [buffer](core.md#buffer-protocol).
 
 - `channel_set_write_addr(channel, addr, trigger)`\
   Set the initial write address for a channel. `addr` can be `nil`, an integer
-  or a [`Buffer`](mlua.md#Buffer) object.
+  or a [buffer](core.md#buffer-protocol).
 
 - `channel_set_trans_count(channel, count, trigger)`\
   Set the number of bus transfers the channel will do.
