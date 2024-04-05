@@ -52,6 +52,10 @@ void* mlua_check_userdata(lua_State* ls, int arg);
 // Raises an error if the argument is not a userdata or nil.
 void* mlua_check_userdata_or_nil(lua_State* ls, int arg);
 
+// Apply the buffer protocol to the given argument, and return the buffer
+// pointer and size.
+void* mlua_get_buffer(lua_State* ls, int arg, size_t* size);
+
 // Push a failure and an error message, and return the number of pushed values.
 int mlua_push_fail(lua_State* ls, char const* err);
 

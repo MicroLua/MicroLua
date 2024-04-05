@@ -118,6 +118,16 @@ do
 end  -- Interrupts are restored here, even if range_program() raises an error
 ```
 
+### Buffer protocol
+
+A buffer is an object that provides low-level access to a block of mutable
+memory. To be recognized as a buffer, an object must implement the `__buffer`
+metamethod.
+
+- `Object:__buffer() -> (ptr, size)`\
+  Return the address and size of the buffer. `ptr` is a light userdata, and
+  `size` is an unsigned integer.
+
 ## Read-only tables
 
 Read-only tables reduce the RAM usage of tables where the keys are known at
