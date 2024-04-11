@@ -239,7 +239,7 @@ end
 local function pack_hash(h)
     local bits = key_bits(h.nkeys)
     local data = {}
-    if bits == 0 then return data end
+    if bits == 0 then return data, bits end
     for i = 1, (#h.g * bits + 7) // 8 do data[i] = 0 end
     for i, v in ipairs(h.g) do
         local bi = (i - 1) * bits
@@ -251,7 +251,7 @@ local function pack_hash(h)
             index = index + 1
         end
     end
-    return data
+    return data, bits
 end
 
 -- Check that the packed vertex values unpack to the original values.
@@ -279,23 +279,23 @@ local function check_packed_hash(h, data)
 end
 
 -- Format a perfect hash for embedding into a C file.
-local function format_hash(name, h, out)
-    local data = pack_hash(h)
+local function format_hash(suffix, name, h, out)
+    local data, bits = pack_hash(h)
     check_packed_hash(h, data)
     table.insert(out,
-        ('}; MLUA_SYMBOLS_HASH_FN(%s, %s, %s, %s, %s) = {'):format(
-            name, h.seed1, h.seed2, h.nkeys, #h.g))
+        ('}; MLUA_SYMBOLS_HASH_FN%s(%s, %s, %s, %s, %s, %s, '):format(
+            suffix, name, h.seed1, h.seed2, h.nkeys, bits, #h.g))
     for i = 0, #data - 1 do
         table.insert(out, ('0x%02x,'):format(data[i + 1] or 0))
     end
-    table.insert(out, '};\n')
+    table.insert(out, ')\n')
 end
 
 local max_syms = 1 << 16
 
 -- Preprocess C a module source.
 local function preprocess_cmod(text)
-    local out, name, syms, seen = {}
+    local out, suffix, name, syms, seen = {}
     for line in lines(text) do
         table.insert(out, line)
         if syms then
@@ -313,14 +313,14 @@ local function preprocess_cmod(text)
                 end
                 local h = find_perfect_hash(syms)
                 table.remove(out)
-                format_hash(name, h, out)
-                name, syms, seen = nil, nil, nil
+                format_hash(suffix, name, h, out)
+                suffix, name, syms, seen = nil
             end
         else
-            local suffix, n = line:match(
+            local s, n = line:match(
                 '^%s*MLUA_SYMBOLS([%u_]*)%(%s*([%a_][%w_]*)%s*%)%s*=%s*{%s*$')
-            if suffix == '' or suffix == '_HASH' then
-                name, syms, seen = n, {}, {}
+            if s == '' or s == '_HASH' then
+                suffix, name, syms, seen = s, n, {}, {}
             end
         end
     end
