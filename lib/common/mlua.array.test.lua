@@ -178,6 +178,43 @@ function test_tostring(t)
     end
 end
 
+function test_indexing(t)
+    local a = array('j', 3, 4):set(1, 1, 2, 3, 4)
+    for _, test in ipairs{
+        {0, nil}, {1, 1}, {2, 2}, {3, 3}, {4, nil},
+        {-1, 3}, {-2, 2}, {-3, 1}, {-4, nil},
+    } do
+        local arg, want = table.unpack(test)
+        t:expect(t:expr(a)[arg]):eq(want)
+    end
+
+    for _, test in ipairs{
+        {0, 99, nil},
+        {1, 99, {99, 2, 3, 4}},
+        {2, 99, {1, 99, 3, 4}},
+        {3, 99, {1, 2, 99, 4}},
+        {4, 99, {1, 2, 3, 99}},
+        {5, 99, nil},
+        {-1, 99, {1, 2, 99, 4}},
+        {-2, 99, {1, 99, 3, 4}},
+        {-3, 99, {99, 2, 3, 4}},
+        {-4, 99, nil},
+    } do
+        local a = array('j', 3, 4):set(1, 1, 2, 3, 4)
+        local arg, value, want = table.unpack(test)
+        local fn = function() a[arg] = value end
+        if want then
+            fn()
+            a:len(a:cap())
+            t:expect(a):label("a[%s] = %s", arg, value):op("=>")
+                :eq(array('j', #want):set(1, table.unpack(want)))
+        else
+            t:expect(t:expr(fn)()):label("a[%s] = %s", arg, value)
+                :raises("out of bounds")
+        end
+    end
+end
+
 function test_get(t)
     local a = array('j', 2, 4):set(1, 1, 2, 3, 4)
     t:expect(t:expr(a):len(0)):eq(2)

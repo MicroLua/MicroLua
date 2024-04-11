@@ -734,7 +734,7 @@ MLUA_OPEN_MODULE(mlua.thread) {
 
     // Create the Thread class.
     lua_pushthread(ls);
-    mlua_new_class(ls, mlua_Thread_name, Thread_syms, true);
+    mlua_new_class(ls, mlua_Thread_name, Thread_syms);
     mlua_set_fields(ls, Thread_syms_nh);
     lua_setmetatable(ls, -2);
     lua_pop(ls, 1);

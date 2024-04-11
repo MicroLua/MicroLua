@@ -24,7 +24,7 @@ if(NOT EXISTS "${MLUA_PATH}")
 endif()
 set(MLUA_PATH "${MLUA_PATH}" CACHE PATH "Path to MicroLua" FORCE)
 set(MLUA_INIT_CMAKE "${MLUA_PATH}/mlua_init.cmake")
-if (NOT EXISTS "${MLUA_INIT_CMAKE}")
+if(NOT EXISTS "${MLUA_INIT_CMAKE}")
     message(FATAL_ERROR "MicroLua not found in ${MLUA_PATH}; check MLUA_PATH")
 endif()
 

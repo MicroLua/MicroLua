@@ -46,12 +46,6 @@ void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
     }
 }
 
-void mlua_set_meta_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
-    lua_getmetatable(ls, -1);
-    mlua_set_fields_(ls, fields, cnt);
-    lua_pop(ls, 1);
-}
-
 void mlua_new_table_(lua_State* ls, MLuaSym const* fields, int narr, int nrec) {
     lua_createtable(ls, narr, nrec);
     mlua_set_fields_(ls, fields, nrec);
@@ -93,6 +87,28 @@ static int global_equal(lua_State* ls) {
     return lua_pushboolean(ls, mlua_compare_eq(ls, 1, 2)), 1;
 }
 
+static int index2(lua_State* ls) {
+    // TODO: Cache __index2 as an upvalue
+    lua_pushliteral(ls, "__index2");
+    if (lua_rawget(ls, lua_upvalueindex(1)) == LUA_TNIL) {
+        return mlua_index_undefined(ls);
+    }
+    lua_pushvalue(ls, 1);
+    lua_pushvalue(ls, 2);
+    lua_callk(ls, 2, 1, 1, &mlua_cont_return_ctx);
+    return 1;
+}
+
+static int nohash___index(lua_State* ls) {
+    // Try the lookup in the class table.
+    lua_pushvalue(ls, 2);
+    if (lua_rawget(ls, lua_upvalueindex(1)) != LUA_TNIL) return 1;
+    lua_pop(ls, 1);
+
+    // Fall back to __index2.
+    return index2(ls);
+}
+
 void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
                              int nrec) {
     mlua_new_table_(ls, fields, narr, nrec);
@@ -101,17 +117,12 @@ void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
 }
 
 void mlua_new_class_nohash_(lua_State* ls, char const* name,
-                            MLuaSym const* fields, int cnt, bool strict) {
+                            MLuaSym const* fields, int cnt) {
     luaL_newmetatable(ls, name);
     mlua_set_fields_(ls, fields, cnt);
     lua_pushvalue(ls, -1);
+    lua_pushcclosure(ls, &nohash___index, 1);
     lua_setfield(ls, -2, "__index");
-    lua_createtable(ls, 0, 1);
-    if (strict) {
-        lua_pushcfunction(ls, &mlua_index_undefined);
-        lua_setfield(ls, -2, "__index");
-    }
-    lua_setmetatable(ls, -2);
 }
 
 #define HASH_MULT 0x13
@@ -145,13 +156,19 @@ static uint32_t perfect_hash(char const* key, MLuaSymHash const* h,
             + lookup_g(g, hash(key, h->seed2) % h->ng, bits)) % h->nkeys;
 }
 
-static int hashed_index(lua_State* ls) {
+static int hash___index(lua_State* ls) {
+    // Try the lookup in the class table.
+    lua_pushvalue(ls, 2);
+    if (lua_rawget(ls, lua_upvalueindex(1)) != LUA_TNIL) return 1;
+    lua_pop(ls, 1);
+
+    // Try the lookup in the hash table.
     if (lua_isstring(ls, 2)) {
-        MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
-        uint8_t const* g = lua_touserdata(ls, lua_upvalueindex(3));
-        int bits = lua_tointeger(ls, lua_upvalueindex(4));
+        MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(3));
+        uint8_t const* g = lua_touserdata(ls, lua_upvalueindex(4));
+        int bits = lua_tointeger(ls, lua_upvalueindex(5));
         char const* key = lua_tostring(ls, 2);
-        MLuaSymH const* field = lua_touserdata(ls, lua_upvalueindex(1));
+        MLuaSymH const* field = lua_touserdata(ls, lua_upvalueindex(2));
         uint32_t kh = perfect_hash(key, h, g, bits);
         field += kh;
 #if MLUA_SYMBOL_HASH_DEBUG
@@ -167,8 +184,9 @@ static int hashed_index(lua_State* ls) {
 #endif
         return 1;
     }
-    if (lua_toboolean(ls, lua_upvalueindex(5))) return mlua_index_undefined(ls);
-    return 0;
+
+    // Fall back to __index2.
+    return index2(ls);
 }
 
 static int key_bits(uint16_t nkeys) {
@@ -177,37 +195,45 @@ static int key_bits(uint16_t nkeys) {
     }
 }
 
-static void set_hashed_metatable(lua_State* ls, MLuaSymH const* fields, int cnt,
-                          MLuaSymHash const* h, uint8_t const* g, bool strict) {
+static void set_hash_index(lua_State* ls, MLuaSymH const* fields, int cnt,
+                          MLuaSymHash const* h, uint8_t const* g) {
     if (cnt != h->nkeys) {
         luaL_error(ls, "key count mismatch: %d symbols, expected %d", cnt,
                    h->nkeys);
         return;
     }
-    lua_createtable(ls, 0, 1);
+    lua_pushvalue(ls, -1);
     lua_pushlightuserdata(ls, (void*)fields);
     lua_pushlightuserdata(ls, (void*)h);
     lua_pushlightuserdata(ls, (void*)g);
     lua_pushinteger(ls, key_bits(h->nkeys));
-    if (strict) lua_pushboolean(ls, strict);
-    lua_pushcclosure(ls, &hashed_index, strict ? 5 : 4);
+    lua_pushcclosure(ls, &hash___index, 5);
     lua_setfield(ls, -2, "__index");
-    lua_setmetatable(ls, -2);
 }
 
 void mlua_new_module_hash_(lua_State* ls, MLuaSymH const* fields, int narr,
                            int nrec, MLuaSymHash const* h, uint8_t const* g) {
     lua_createtable(ls, narr, 0);
-    set_hashed_metatable(ls, fields, nrec, h, g, true);
+    lua_createtable(ls, 0, 1);
+    set_hash_index(ls, fields, nrec, h, g);
+    lua_setmetatable(ls, -2);
 }
 
 void mlua_new_class_hash_(
         lua_State* ls, char const* name, MLuaSymH const* fields, int cnt,
-        MLuaSymHash const* h, uint8_t const* g, bool strict) {
+        MLuaSymHash const* h, uint8_t const* g) {
     luaL_newmetatable(ls, name);
-    set_hashed_metatable(ls, fields, cnt, h, g, strict);
-    lua_pushvalue(ls, -1);
-    lua_setfield(ls, -2, "__index");
+    set_hash_index(ls, fields, cnt, h, g);
+}
+
+void mlua_set_metaclass(lua_State* ls) {
+    bool has_new = lua_getfield(ls, -1, "__new") != LUA_TNIL;
+    bool has_index = lua_getfield(ls, -2, "__index") != LUA_TNIL;
+    lua_createtable(ls, 0, has_new + has_index);
+    lua_rotate(ls, -3, 1);
+    lua_setfield(ls, -3, "__index");
+    lua_setfield(ls, -2, "__call");
+    lua_setmetatable(ls, -2);
 }
 
 extern MLuaModule const __start_mlua_module_registry[];

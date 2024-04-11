@@ -121,7 +121,7 @@ MLUA_OPEN_MODULE(mlua.mem) {
     mlua_new_module(ls, 0, module_syms);
 
     // Create the Buffer class.
-    mlua_new_class(ls, Buffer_name, Buffer_syms, true);
+    mlua_new_class(ls, Buffer_name, Buffer_syms);
     mlua_set_fields(ls, Buffer_syms_nh);
     lua_pop(ls, 1);
     return 1;

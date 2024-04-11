@@ -410,7 +410,7 @@ MLUA_OPEN_MODULE(hardware.dma) {
     mlua_new_module(ls, NUM_DMA_CHANNELS, module_syms);
 
     // Create the Config class.
-    mlua_new_class(ls, Config_name, Config_syms, true);
+    mlua_new_class(ls, Config_name, Config_syms);
     lua_pop(ls, 1);
     return 1;
 }

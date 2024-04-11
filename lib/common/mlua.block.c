@@ -84,7 +84,7 @@ MLUA_OPEN_MODULE(mlua.block) {
     mlua_require(ls, "mlua.int64", false);
 
     // Create the Dev class.
-    mlua_new_class(ls, Dev_name, Dev_syms, true);
+    mlua_new_class(ls, Dev_name, Dev_syms);
     lua_pop(ls, 1);
 
     // Create the module.

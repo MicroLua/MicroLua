@@ -44,6 +44,26 @@ static int list_len(lua_State* ls) {
     return lua_pushinteger(ls, len), 1;
 }
 
+static int list___new(lua_State* ls) {
+    lua_remove(ls, 1);  // Remove class
+    if (lua_isnoneornil(ls, 1)) {
+        new_list(ls, 0);
+        lua_pushinteger(ls, 0);
+        lua_rawseti(ls, -2, LEN_IDX);
+        return 1;
+    }
+    luaL_checktype(ls, 1, LUA_TTABLE);
+    lua_settop(ls, 1);
+    if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
+        lua_pushinteger(ls, lua_rawlen(ls, 1));
+        lua_rawseti(ls, 1, LEN_IDX);
+    }
+    lua_pop(ls, 1);
+    luaL_getmetatable(ls, list_name);
+    lua_setmetatable(ls, 1);
+    return 1;
+}
+
 static int list___len(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) return lua_pushinteger(ls, 0), 1;
     if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
@@ -52,6 +72,8 @@ static int list___len(lua_State* ls) {
     }
     return 1;
 }
+
+static int list___index2(lua_State* ls) { return 0; }
 
 static int list___eq(lua_State* ls) {
     lua_Integer len1 = length(ls, 1), len2 = length(ls, 2);
@@ -301,25 +323,6 @@ static int list___repr(lua_State* ls) {
     return luaL_pushresult(&buf), 1;
 }
 
-static int list___call(lua_State* ls) {
-    if (lua_isnoneornil(ls, 2)) {
-        new_list(ls, 0);
-        lua_pushinteger(ls, 0);
-        lua_rawseti(ls, -2, LEN_IDX);
-        return 1;
-    }
-    luaL_checktype(ls, 2, LUA_TTABLE);
-    lua_settop(ls, 2);
-    if (lua_rawgeti(ls, 2, LEN_IDX) == LUA_TNIL) {
-        lua_pushinteger(ls, lua_rawlen(ls, 2));
-        lua_rawseti(ls, 2, LEN_IDX);
-    }
-    lua_pop(ls, 1);
-    luaL_getmetatable(ls, list_name);
-    lua_setmetatable(ls, 2);
-    return 1;
-}
-
 #define list_eq list___eq
 
 MLUA_SYMBOLS(list_syms) = {
@@ -338,22 +341,20 @@ MLUA_SYMBOLS(list_syms) = {
 };
 
 MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
+    MLUA_SYM_F_NH(__new, list_),
     MLUA_SYM_F_NH(__len, list_),
+    MLUA_SYM_F_NH(__index2, list_),
     MLUA_SYM_F_NH(__eq, list_),
     MLUA_SYM_F_NH(__repr, list_),
-};
-
-MLUA_SYMBOLS_NOHASH(list_meta_syms) = {
-    MLUA_SYM_F_NH(__call, list_),
 };
 
 MLUA_OPEN_MODULE(mlua.list) {
     mlua_require(ls, "table", true);
 
     // Create the list class.
-    mlua_new_class(ls, list_name, list_syms, false);
+    mlua_new_class(ls, list_name, list_syms);
     mlua_set_fields(ls, list_syms_nh);
-    mlua_set_meta_fields(ls, list_meta_syms);
+    mlua_set_metaclass(ls);
     lua_getfield(ls, -2, "sort");
     lua_pushcclosure(ls, &list_sort, 1);
     lua_setfield(ls, -2, "sort");

@@ -221,6 +221,105 @@ static inline Array* check_array(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, array_name);
 }
 
+static bool is_digit(char c) { return '0' <= c && c <= '9'; }
+
+static size_t parse_size(lua_State* ls, char const** fmt, size_t def) {
+    if (!is_digit(**fmt)) return def;
+    size_t size = 0;
+    do {
+        size = size * 10 + (*(*fmt)++ - '0');
+    } while (is_digit(**fmt) && size < (~(size_t)0 - 9) / 10);
+    return size;
+}
+
+static size_t parse_int_size(lua_State* ls, char const** fmt, size_t def) {
+    size_t size = parse_size(ls, fmt, def);
+    if (luai_likely(0 < size && size <= sizeof(uint64_t))) return size;
+    return luaL_argerror(ls, 1, "integer size out of limits");
+}
+
+static inline ArrayVT const* int_vt(size_t size) {
+    switch (size) {
+    case sizeof(int8_t): return &vt_int8;
+    case sizeof(int16_t): return &vt_int16;
+    case sizeof(int32_t): return &vt_int32;
+    case sizeof(int64_t): return &vt_uint64;
+    }
+    if (size <= sizeof(int64_t)) return &vt_int;
+    return NULL;
+}
+
+static inline ArrayVT const* uint_vt(size_t size) {
+    switch (size) {
+    case sizeof(uint8_t): return &vt_uint8;
+    case sizeof(uint16_t): return &vt_uint16;
+    case sizeof(uint32_t): return &vt_uint32;
+    case sizeof(uint64_t): return &vt_uint64;
+    }
+    if (size <= sizeof(uint64_t)) return &vt_uint;
+    return NULL;
+}
+
+static inline ArrayVT const* number_vt(size_t size) {
+    switch (size) {
+    case sizeof(float): return &vt_float;
+    case sizeof(double): return &vt_double;
+#if HAS_LDOUBLE
+    case sizeof(long double): return &vt_ldouble;
+#endif
+    default: return NULL;
+    }
+}
+
+static int array___new(lua_State* ls) {
+    lua_remove(ls, 1);  // Remove class
+    char const* fmt = luaL_checkstring(ls, 1);
+    size_t size;
+    ArrayVT const* vt = NULL;
+    switch (*fmt++) {
+    case 'b': size = sizeof(signed char); vt = int_vt(size); break;
+    case 'B': size = sizeof(unsigned char); vt = uint_vt(size); break;
+    case 'h': size = sizeof(signed short); vt = int_vt(size); break;
+    case 'H': size = sizeof(unsigned short); vt = uint_vt(size); break;
+    case 'i':
+        size = parse_int_size(ls, &fmt, sizeof(signed int));
+        vt = int_vt(size);
+        break;
+    case 'I':
+        size = parse_int_size(ls, &fmt, sizeof(unsigned int));
+        vt = uint_vt(size);
+        break;
+    case 'l': size = sizeof(signed long); vt = int_vt(size); break;
+    case 'L': size = sizeof(unsigned long); vt = uint_vt(size); break;
+    case 'j': size = sizeof(lua_Integer); vt = int_vt(size); break;
+    case 'J': size = sizeof(lua_Unsigned); vt = uint_vt(size); break;
+    case 'T': size = sizeof(size_t); vt = uint_vt(size); break;
+    case 'f': size = sizeof(float); vt = &vt_float; break;
+    case 'd': size = sizeof(double); vt = &vt_double; break;
+    case 'n': size = sizeof(lua_Number); vt = number_vt(size); break;
+    case 'c':
+        size = parse_size(ls, &fmt, 0);
+        if (size > 0) vt = &vt_string;
+        break;
+    }
+    if (vt == NULL || *fmt != '\0') {
+        return luaL_argerror(ls, 1, "invalid value format");
+    }
+    lua_Integer len = luaL_checkinteger(ls, 2);
+    lua_Integer cap = luaL_optinteger(ls, 3, len);
+    luaL_argcheck(ls, cap >= 0 && (lua_Unsigned)cap <= SIZE_MAX / size, 3,
+                  "invalid capacity");
+    luaL_argcheck(ls, len >= 0 && len <= cap, 2, "invalid length");
+
+    Array* arr = new_array(ls, cap * size);
+    arr->type = vt;
+    arr->data = arr->d64;
+    arr->size = size;
+    arr->len = len;
+    arr->cap = cap;
+    return 1;
+}
+
 static int array_size(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
     return lua_pushinteger(ls, arr->size), 1;
@@ -299,6 +398,21 @@ static inline lua_Integer opt_offset(lua_State* ls, int arg,
     return check_offset(ls, arg, arr);
 }
 
+static int array___index2(lua_State* ls) {
+    Array const* arr = check_array(ls, 1);
+    lua_Integer off = check_offset(ls, 2, arr);
+    if (luai_unlikely(off < 0 || off >= arr->len)) return lua_pushnil(ls), 1;
+    return arr->type->get(ls, arr, arr->data + off * arr->size), 1;
+}
+
+static int array___newindex(lua_State* ls) {
+    Array const* arr = check_array(ls, 1);
+    lua_Integer off = check_offset(ls, 2, arr);
+    luaL_argcheck(ls, off >= 0 && off < arr->cap, 2, "out of bounds");
+    arr->type->set(ls, arr, 3, arr->data + off * arr->size);
+    return 0;
+}
+
 static int array_get(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
     lua_Integer off = check_offset(ls, 2, arr);
@@ -375,105 +489,6 @@ static int array_fill(lua_State* ls) {
     return lua_settop(ls, 1), 1;
 }
 
-static bool is_digit(char c) { return '0' <= c && c <= '9'; }
-
-static size_t parse_size(lua_State* ls, char const** fmt, size_t def) {
-    if (!is_digit(**fmt)) return def;
-    size_t size = 0;
-    do {
-        size = size * 10 + (*(*fmt)++ - '0');
-    } while (is_digit(**fmt) && size < (~(size_t)0 - 9) / 10);
-    return size;
-}
-
-static size_t parse_int_size(lua_State* ls, char const** fmt, size_t def) {
-    size_t size = parse_size(ls, fmt, def);
-    if (luai_likely(0 < size && size <= sizeof(uint64_t))) return size;
-    return luaL_argerror(ls, 1, "integer size out of limits");
-}
-
-static inline ArrayVT const* int_vt(size_t size) {
-    switch (size) {
-    case sizeof(int8_t): return &vt_int8;
-    case sizeof(int16_t): return &vt_int16;
-    case sizeof(int32_t): return &vt_int32;
-    case sizeof(int64_t): return &vt_uint64;
-    }
-    if (size <= sizeof(int64_t)) return &vt_int;
-    return NULL;
-}
-
-static inline ArrayVT const* uint_vt(size_t size) {
-    switch (size) {
-    case sizeof(uint8_t): return &vt_uint8;
-    case sizeof(uint16_t): return &vt_uint16;
-    case sizeof(uint32_t): return &vt_uint32;
-    case sizeof(uint64_t): return &vt_uint64;
-    }
-    if (size <= sizeof(uint64_t)) return &vt_uint;
-    return NULL;
-}
-
-static inline ArrayVT const* number_vt(size_t size) {
-    switch (size) {
-    case sizeof(float): return &vt_float;
-    case sizeof(double): return &vt_double;
-#if HAS_LDOUBLE
-    case sizeof(long double): return &vt_ldouble;
-#endif
-    default: return NULL;
-    }
-}
-
-static int array___call(lua_State* ls) {
-    lua_remove(ls, 1);  // Remove class
-    char const* fmt = luaL_checkstring(ls, 1);
-    size_t size;
-    ArrayVT const* vt = NULL;
-    switch (*fmt++) {
-    case 'b': size = sizeof(signed char); vt = int_vt(size); break;
-    case 'B': size = sizeof(unsigned char); vt = uint_vt(size); break;
-    case 'h': size = sizeof(signed short); vt = int_vt(size); break;
-    case 'H': size = sizeof(unsigned short); vt = uint_vt(size); break;
-    case 'i':
-        size = parse_int_size(ls, &fmt, sizeof(signed int));
-        vt = int_vt(size);
-        break;
-    case 'I':
-        size = parse_int_size(ls, &fmt, sizeof(unsigned int));
-        vt = uint_vt(size);
-        break;
-    case 'l': size = sizeof(signed long); vt = int_vt(size); break;
-    case 'L': size = sizeof(unsigned long); vt = uint_vt(size); break;
-    case 'j': size = sizeof(lua_Integer); vt = int_vt(size); break;
-    case 'J': size = sizeof(lua_Unsigned); vt = uint_vt(size); break;
-    case 'T': size = sizeof(size_t); vt = uint_vt(size); break;
-    case 'f': size = sizeof(float); vt = &vt_float; break;
-    case 'd': size = sizeof(double); vt = &vt_double; break;
-    case 'n': size = sizeof(lua_Number); vt = number_vt(size); break;
-    case 'c':
-        size = parse_size(ls, &fmt, 0);
-        if (size > 0) vt = &vt_string;
-        break;
-    }
-    if (vt == NULL || *fmt != '\0') {
-        return luaL_argerror(ls, 1, "invalid value format");
-    }
-    lua_Integer len = luaL_checkinteger(ls, 2);
-    lua_Integer cap = luaL_optinteger(ls, 3, len);
-    luaL_argcheck(ls, cap >= 0 && (lua_Unsigned)cap <= SIZE_MAX / size, 3,
-                  "invalid capacity");
-    luaL_argcheck(ls, len >= 0 && len <= cap, 2, "invalid length");
-
-    Array* arr = new_array(ls, cap * size);
-    arr->type = vt;
-    arr->data = arr->d64;
-    arr->size = size;
-    arr->len = len;
-    arr->cap = cap;
-    return 1;
-}
-
 MLUA_SYMBOLS(array_syms) = {
     MLUA_SYM_F(size, array_),
     MLUA_SYM_F(len, array_),
@@ -490,19 +505,19 @@ MLUA_SYMBOLS(array_syms) = {
 };
 
 MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
+    MLUA_SYM_F_NH(__new, array_),
     MLUA_SYM_F_NH(__len, array_),
     MLUA_SYM_F_NH(__eq, array_),
     MLUA_SYM_F_NH(__tostring, array_),
-};
-
-MLUA_SYMBOLS_NOHASH(array_meta_syms) = {
-    MLUA_SYM_F_NH(__call, array_),
+    MLUA_SYM_F_NH(__index2, array_),
+    MLUA_SYM_F_NH(__newindex, array_),
+    // TODO: MLUA_SYM_F_NH(__pairs, array_),
 };
 
 MLUA_OPEN_MODULE(mlua.array) {
     // Create the array class.
-    mlua_new_class(ls, array_name, array_syms, true);
+    mlua_new_class(ls, array_name, array_syms);
     mlua_set_fields(ls, array_syms_nh);
-    mlua_set_meta_fields(ls, array_meta_syms);
+    mlua_set_metaclass(ls);
     return 1;
 }

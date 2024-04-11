@@ -374,7 +374,7 @@ MLUA_OPEN_MODULE(hardware.i2c) {
     int mod_index = lua_gettop(ls);
 
     // Create the I2C class.
-    mlua_new_class(ls, mlua_I2C_name, I2C_syms, true);
+    mlua_new_class(ls, mlua_I2C_name, I2C_syms);
     lua_pop(ls, 1);
 
     // Create I2C instances.
