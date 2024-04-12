@@ -210,13 +210,6 @@ static ArrayVT const vt_string = {.get = &get_string, .set = &set_string};
 
 char const array_name[] = "mlua.Array";
 
-static Array* new_array(lua_State* ls, size_t data_size) {
-    Array* arr = lua_newuserdatauv(ls, sizeof(Array) + data_size, 0);
-    luaL_getmetatable(ls, array_name);
-    lua_setmetatable(ls, -2);
-    return arr;
-}
-
 static inline Array* check_array(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, array_name);
 }
@@ -311,7 +304,9 @@ static int array___new(lua_State* ls) {
                   "invalid capacity");
     luaL_argcheck(ls, len >= 0 && len <= cap, 2, "invalid length");
 
-    Array* arr = new_array(ls, cap * size);
+    Array* arr = lua_newuserdatauv(ls, sizeof(Array) + cap * size, 0);
+    luaL_getmetatable(ls, array_name);
+    lua_setmetatable(ls, -2);
     arr->vt = vt;
     arr->data = arr->d64;
     arr->size = size;
