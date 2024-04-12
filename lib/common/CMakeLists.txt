@@ -26,6 +26,8 @@ target_link_libraries(mlua_test_mlua.array INTERFACE
     mlua_mod_mlua.array
     mlua_mod_mlua.int64
     mlua_mod_mlua.list
+    mlua_mod_mlua.mem
+    mlua_mod_mlua.repr
     mlua_mod_string
     mlua_mod_table
 )

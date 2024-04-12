@@ -368,7 +368,14 @@ static int array___eq(lua_State* ls) {
     return lua_pushboolean(ls, true), 1;
 }
 
-static int array___tostring(lua_State* ls) {
+static int array___buffer(lua_State* ls) {
+    Array const* arr = check_array(ls, 1);
+    lua_pushlightuserdata(ls, arr->data);
+    lua_pushinteger(ls, arr->cap * arr->size);
+    return 2;
+}
+
+static int array___repr(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
     if (arr->len == 0) return lua_pushliteral(ls, "{}"), 1;
     luaL_Buffer buf;
@@ -377,10 +384,11 @@ static int array___tostring(lua_State* ls) {
     size_t s = arr->size;
     void const* p = arr->data;
     for (lua_Integer i = arr->len; i > 0; p += s, --i) {
+        lua_pushvalue(ls, 2);  // repr
         arr->vt->get(ls, arr, p);
-        luaL_tolstring(ls, -1, NULL);
+        lua_pushvalue(ls, 3);  // seen
+        lua_call(ls, 2, 1);
         luaL_addvalue(&buf);
-        lua_pop(ls, 1);
         if (i > 1) luaL_addstring(&buf, ", ");
     }
     luaL_addchar(&buf, '}');
@@ -505,7 +513,8 @@ MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
     MLUA_SYM_F_NH(__new, array_),
     MLUA_SYM_F_NH(__len, array_),
     MLUA_SYM_F_NH(__eq, array_),
-    MLUA_SYM_F_NH(__tostring, array_),
+    MLUA_SYM_F_NH(__buffer, array_),
+    MLUA_SYM_F_NH(__repr, array_),
     MLUA_SYM_F_NH(__index2, array_),
     MLUA_SYM_F_NH(__newindex, array_),
     MLUA_SYM_F_NH(__pairs, array_),

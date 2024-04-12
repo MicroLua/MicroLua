@@ -7,6 +7,8 @@ local math = require 'math'
 local array = require 'mlua.array'
 local int64 = require 'mlua.int64'
 local list = require 'mlua.list'
+local mem = require 'mlua.mem'
+local repr = require 'mlua.repr'
 local string = require 'string'
 local table = require 'table'
 
@@ -26,12 +28,12 @@ function test_size(t)
         'f', 'd', 'n',
         'c1', 'c2', 'c4', 'c8', 'c16', 'c32', 'c64', 'c12345678',
     } do
-        t:expect(t.expr.array(typ, 0):size()):eq(string.packsize(typ))
+        t:expect(t.expr.array(typ, 0):size()):eq(typ:packsize())
     end
 end
 
 local function clamp(typ, value)
-    local size = string.packsize(typ)
+    local size = typ:packsize()
     if typ < 'a' then return value & ((1 << 8 * size) - 1) end
     local mask = (1 << 8 * size) - 1
     value = value & mask
@@ -65,7 +67,7 @@ end
 local one64 = int64(1)
 
 local function clamp64(typ, value)
-    local size = string.packsize(typ)
+    local size = typ:packsize()
     if typ < 'a' then return value & ((one64 << 8 * size) - 1) end
     local mask = (one64 << 8 * size) - 1
     value = value & mask
@@ -73,7 +75,7 @@ local function clamp64(typ, value)
     return value
 end
 
-function _test_int64(t)
+function test_int64(t)
     local values = {
         0, one64, -one64,
         (one64 << 7) + 2, -((one64 << 7) + 2),
@@ -90,9 +92,7 @@ function _test_int64(t)
         (one64 << 56) + 13, -((one64 << 56) + 13),
         int64.max, int64.min,
     }
-    for _, typ in ipairs{
-        'i5', 'i6', 'i7', 'i8', 'I5', 'I6', 'I7', 'I8',
-    } do
+    for _, typ in ipairs{'i5', 'i6', 'i7', 'i8', 'I5', 'I6', 'I7', 'I8'} do
         t:context({type = typ})
         local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
@@ -101,9 +101,7 @@ function _test_int64(t)
     end
 end
 
-local function pack_unpack(typ, value)
-    return string.unpack(typ, string.pack(typ, value))
-end
+local function pack_unpack(typ, value) return typ:unpack(typ:pack(value)) end
 
 function test_float(t)
     local values = {
@@ -165,16 +163,35 @@ function test_eq(t)
     end
 end
 
-function test_tostring(t)
+function test_buffer(t)
+    for _, typ in ipairs{
+        'b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'j', 'J', 'T',
+        'i1', 'i2', 'i3', 'i4', 'I1', 'I2', 'I3', 'I4',
+        'f', 'd', 'n',
+    } do
+        t:context({type = typ})
+        local a = array(typ, 4):set(1, 1, 2, 3, 4)
+        local b = ''
+        for _, v in ipairs(a) do b = b .. typ:pack(v) end
+        t:expect(t:expr(mem).read(a)):eq(b)
+        mem.write(a, typ:pack(67) .. typ:pack(89), 2 * typ:packsize())
+        t:expect(a):eq(array(typ, 4):set(1, 1, 2, 67, 89))
+    end
+end
+
+function test_repr(t)
+    local _ = repr  -- Capture the upvalue
     for _, test in ipairs{
         {array('j', 0), '{}'},
         {array('j', 1):set(1, 1), '{1}'},
         {array('j', 3, 4):set(1, 1, -2, 3, 4), '{1, -2, 3}'},
         {array('n', 3, 4):set(1, 1.2, -3.4, 5.6, 7.8),
          ('{%s, %s, %s}'):format(1.2, -3.4, 5.6)},
+        {array('c3', 3):set(1, 'abc', 'de', 'f'),
+         '{"abc", "de\\x00", "f\\x00\\x00"}'},
     } do
         local value, want = table.unpack(test)
-        t:expect(t.expr.tostring(value)):eq(want)
+        t:expect(t.expr.repr(value)):eq(want)
     end
 end
 
