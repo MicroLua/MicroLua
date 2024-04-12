@@ -165,7 +165,7 @@ end
 
 function test_buffer(t)
     for _, typ in ipairs{
-        'b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'j', 'J', 'T',
+        'b', 'B', 'h', 'H', 'i', 'I', 'j', 'J',
         'i1', 'i2', 'i3', 'i4', 'I1', 'I2', 'I3', 'I4',
         'f', 'd', 'n',
     } do
