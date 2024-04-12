@@ -10,7 +10,7 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-// TODO: Add support for views into another array or Buffer
+// TODO: Add support for views into another buffer
 // TODO: Add support for stride
 
 #define HAS_LDOUBLE (LDBL_MANT_DIG != DBL_MANT_DIG)
@@ -29,7 +29,7 @@ typedef struct ArrayVT {
 
 // A fixed-capacity homogeneous array.
 struct Array {
-    ArrayVT const* type;
+    ArrayVT const* vt;
     void* data;
     lua_Integer len;
     lua_Integer cap;
@@ -312,7 +312,7 @@ static int array___new(lua_State* ls) {
     luaL_argcheck(ls, len >= 0 && len <= cap, 2, "invalid length");
 
     Array* arr = new_array(ls, cap * size);
-    arr->type = vt;
+    arr->vt = vt;
     arr->data = arr->d64;
     arr->size = size;
     arr->len = len;
@@ -360,8 +360,8 @@ static int array___eq(lua_State* ls) {
     void const* p1 = arr1->data;
     void const* p2 = arr2->data;
     for (lua_Integer i = arr1->len; i > 0; p1 += s1, p2 += s2, --i) {
-        arr1->type->get(ls, arr1, p1);
-        arr2->type->get(ls, arr2, p2);
+        arr1->vt->get(ls, arr1, p1);
+        arr2->vt->get(ls, arr2, p2);
         if (!mlua_compare_eq(ls, -2, -1)) return lua_pushboolean(ls, false), 1;
         lua_pop(ls, 2);
     }
@@ -377,7 +377,7 @@ static int array___tostring(lua_State* ls) {
     size_t s = arr->size;
     void const* p = arr->data;
     for (lua_Integer i = arr->len; i > 0; p += s, --i) {
-        arr->type->get(ls, arr, p);
+        arr->vt->get(ls, arr, p);
         luaL_tolstring(ls, -1, NULL);
         luaL_addvalue(&buf);
         lua_pop(ls, 1);
@@ -402,15 +402,32 @@ static int array___index2(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
     lua_Integer off = check_offset(ls, 2, arr);
     if (luai_unlikely(off < 0 || off >= arr->len)) return lua_pushnil(ls), 1;
-    return arr->type->get(ls, arr, arr->data + off * arr->size), 1;
+    return arr->vt->get(ls, arr, arr->data + off * arr->size), 1;
 }
 
 static int array___newindex(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
     lua_Integer off = check_offset(ls, 2, arr);
     luaL_argcheck(ls, off >= 0 && off < arr->cap, 2, "out of bounds");
-    arr->type->set(ls, arr, 3, arr->data + off * arr->size);
+    arr->vt->set(ls, arr, 3, arr->data + off * arr->size);
     return 0;
+}
+
+static int pairs_iter(lua_State* ls) {
+    Array const* arr = check_array(ls, 1);
+    lua_Integer off = luaL_checkinteger(ls, 2);
+    if (off >= arr->len) return 0;
+    lua_pushinteger(ls, luaL_intop(+, off, 1));
+    arr->vt->get(ls, arr, arr->data + off * arr->size);
+    return 2;
+}
+
+static int array___pairs(lua_State* ls) {
+    check_array(ls, 1);
+    lua_pushcfunction(ls, &pairs_iter);
+    lua_pushvalue(ls, 1);
+    lua_pushinteger(ls, 0);
+    return 3;
 }
 
 static int array_get(lua_State* ls) {
@@ -426,7 +443,7 @@ static int array_get(lua_State* ls) {
     void const* p = arr->data + off * s;
     for (lua_Integer end = off + len; off < end; p += s, ++off) {
         if (luai_likely(0 <= off && off < arr->len)) {
-            arr->type->get(ls, arr, p);
+            arr->vt->get(ls, arr, p);
         } else {
             lua_pushnil(ls);
         }
@@ -442,25 +459,8 @@ static int array_set(lua_State* ls) {
                   "out of bounds");
     size_t s = arr->size;
     void* p = arr->data + off * s;
-    for (int i = 3; i <= top; p += s, ++i) arr->type->set(ls, arr, i, p);
+    for (int i = 3; i <= top; p += s, ++i) arr->vt->set(ls, arr, i, p);
     return lua_settop(ls, 1), 1;
-}
-
-static int ipairs_iter(lua_State* ls) {
-    Array const* arr = check_array(ls, 1);
-    lua_Integer off = luaL_checkinteger(ls, 2);
-    if (off >= arr->len) return 0;
-    lua_pushinteger(ls, luaL_intop(+, off, 1));
-    arr->type->get(ls, arr, arr->data + off * arr->size);
-    return 2;
-}
-
-static int array_ipairs(lua_State* ls) {
-    check_array(ls, 1);
-    lua_pushcfunction(ls, &ipairs_iter);
-    lua_pushvalue(ls, 1);
-    lua_pushinteger(ls, 0);
-    return 3;
 }
 
 static int array_append(lua_State* ls) {
@@ -471,7 +471,7 @@ static int array_append(lua_State* ls) {
     size_t s = arr->size;
     void* p = arr->data + arr->len * s;
     int top = lua_gettop(ls);
-    for (int i = 2; i <= top; p += s, ++i) arr->type->set(ls, arr, i, p);
+    for (int i = 2; i <= top; p += s, ++i) arr->vt->set(ls, arr, i, p);
     arr->len = new_len;
     return lua_settop(ls, 1), 1;
 }
@@ -485,7 +485,7 @@ static int array_fill(lua_State* ls) {
     luaL_argcheck(ls, off + len <= arr->cap, 4, "out of bounds");
     size_t s = arr->size;
     void* p = arr->data + off * s;
-    for (; len > 0; p += s, --len) arr->type->set(ls, arr, 2, p);
+    for (; len > 0; p += s, --len) arr->vt->set(ls, arr, 2, p);
     return lua_settop(ls, 1), 1;
 }
 
@@ -494,14 +494,11 @@ MLUA_SYMBOLS(array_syms) = {
     MLUA_SYM_F(len, array_),
     MLUA_SYM_F(cap, array_),
     MLUA_SYM_F(addr, array_),
-    MLUA_SYM_F(ipairs, array_),
     MLUA_SYM_F(get, array_),
     MLUA_SYM_F(set, array_),
     MLUA_SYM_F(append, array_),
     MLUA_SYM_F(fill, array_),
     // TODO: MLUA_SYM_F(move, array_),
-    // TODO: MLUA_SYM_F(read, array_),
-    // TODO: MLUA_SYM_F(write, array_),
 };
 
 MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
@@ -511,7 +508,7 @@ MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
     MLUA_SYM_F_NH(__tostring, array_),
     MLUA_SYM_F_NH(__index2, array_),
     MLUA_SYM_F_NH(__newindex, array_),
-    // TODO: MLUA_SYM_F_NH(__pairs, array_),
+    MLUA_SYM_F_NH(__pairs, array_),
 };
 
 MLUA_OPEN_MODULE(mlua.array) {

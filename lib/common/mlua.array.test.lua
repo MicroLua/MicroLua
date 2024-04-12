@@ -178,7 +178,7 @@ function test_tostring(t)
     end
 end
 
-function test_indexing(t)
+function test_index(t)
     local a = array('j', 3, 4):set(1, 1, 2, 3, 4)
     for _, test in ipairs{
         {0, nil}, {1, 1}, {2, 2}, {3, 3}, {4, nil},
@@ -187,7 +187,9 @@ function test_indexing(t)
         local arg, want = table.unpack(test)
         t:expect(t:expr(a)[arg]):eq(want)
     end
+end
 
+function test_newindex(t)
     for _, test in ipairs{
         {0, 99, nil},
         {1, 99, {99, 2, 3, 4}},
@@ -211,6 +213,25 @@ function test_indexing(t)
         else
             t:expect(t:expr(fn)()):label("a[%s] = %s", arg, value)
                 :raises("out of bounds")
+        end
+    end
+end
+
+function test_pairs(t)
+    for _, fname in ipairs{'pairs', 'ipairs'} do
+        local fn = _G[fname]
+        for _, test in ipairs{
+            {array('j', 0, 3), {}, {}},
+            {array('j', 3, 4):set(1, 4, 2, 8, 5), {1, 2, 3}, {4, 2, 8}},
+        } do
+            local a, want_is, want_vs = table.unpack(test)
+            local is, vs = list(), list()
+            for i, v in fn(a) do
+                is:append(i)
+                vs:append(v)
+            end
+            t:expect(is):label("%s(%s) indexes", fname, a):eq(want_is)
+            t:expect(vs):label("%s(%s) values", fname, a):eq(want_vs)
         end
     end
 end
@@ -303,21 +324,5 @@ function test_fill(t)
             a:len(a:cap())
             exp:eq(array('j', #want):set(1, table.unpack(want)))
         else exp:raises("out of bounds") end
-    end
-end
-
-function test_ipairs(t)
-    for _, test in ipairs{
-        {array('j', 0, 3), {}, {}},
-        {array('j', 4):set(1, 1, 4, 2, 8), {1, 2, 3, 4}, {1, 4, 2, 8}},
-    } do
-        local a, want_is, want_vs = table.unpack(test)
-        local is, vs = list(), list()
-        for i, v in a:ipairs() do
-            is:append(i)
-            vs:append(v)
-        end
-        t:expect(is):label("is(%s)", a):eq(want_is)
-        t:expect(vs):label("vs(%s)", a):eq(want_vs)
     end
 end
