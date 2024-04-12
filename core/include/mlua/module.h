@@ -166,16 +166,6 @@ typedef MLuaSymVal MLuaSymH;
 
 #define MLUA_SYMCNT(a) (sizeof(a) / sizeof((a)[0]))
 
-// Set the given symbols as fields in the table at index -1.
-#define mlua_set_fields(ls, fields) \
-    mlua_set_fields_((ls), (fields), MLUA_SYMCNT(fields))
-void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt);
-
-// Create a new table and set its fields from the given (unhasned) symbol table.
-#define mlua_new_table(ls, narr, fields) \
-    mlua_new_table_((ls), (fields), (narr), MLUA_SYMCNT(fields))
-void mlua_new_table_(lua_State* ls, MLuaSym const* fields, int narr, int nrec);
-
 // A symbol hash.
 typedef struct MLuaSymHash {
     MLuaSymH const* fields;
@@ -193,6 +183,9 @@ static MLuaSymHash const n ## _hash = { \
     .nkeys = nk, .ng = ngv, .bits = nb, \
 };
 
+// An empty symbol table. Useful for classes without metamethods.
+MLUA_SYMBOLS_NOHASH(mlua_nosyms) = {};
+
 // TODO: Add nrec argument to mlua_new_module_*()
 
 // Create a new module and populate it from the given unhashed symbol table.
@@ -202,10 +195,12 @@ void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
                              int nrec);
 
 // Create a new class and populate it from the given unhashed symbol table.
-#define mlua_new_class_nohash(ls, name, fields) \
-    mlua_new_class_nohash_((ls), (name), (fields), MLUA_SYMCNT(fields))
+#define mlua_new_class_nohash(ls, name, fields, nh_fields) \
+    mlua_new_class_nohash_((ls), (name), (fields), MLUA_SYMCNT(fields), \
+                           (nh_fields), MLUA_SYMCNT(nh_fields))
 void mlua_new_class_nohash_(lua_State* ls, char const* name,
-                            MLuaSym const* fields, int cnt);
+                            MLuaSym const* fields, int cnt,
+                            MLuaSym const* nh_fields, int nh_cnt);
 
 // Create a new module and populate it from the given hashed symbol table.
 #define mlua_new_module_hash(ls, narr, fields) \
@@ -214,10 +209,12 @@ void mlua_new_module_hash_(lua_State* ls, int narr, int nrec,
                            MLuaSymHash const* h);
 
 // Create a new class and populate it from the given hashed symbol table.
-#define mlua_new_class_hash(ls, name, fields) \
-    mlua_new_class_hash_((ls), (name), MLUA_SYMCNT(fields), &fields ## _hash)
+#define mlua_new_class_hash(ls, name, fields, nh_fields) \
+    mlua_new_class_hash_((ls), (name), MLUA_SYMCNT(fields), &fields ## _hash, \
+                         (nh_fields), MLUA_SYMCNT(nh_fields))
 void mlua_new_class_hash_(lua_State* ls, char const* name, int cnt,
-                          MLuaSymHash const* h);
+                          MLuaSymHash const* h, MLuaSym const* nh_fields,
+                          int nh_cnt);
 
 #if MLUA_HASH_SYMBOL_TABLES
 

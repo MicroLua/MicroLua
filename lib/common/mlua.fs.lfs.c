@@ -704,18 +704,15 @@ MLUA_OPEN_MODULE(mlua.fs.lfs) {
     mlua_require(ls, "mlua.block", false);
 
     // Create the Filesystem class.
-    mlua_new_class(ls, Filesystem_name, Filesystem_syms);
-    mlua_set_fields(ls, Filesystem_syms_nh);
+    mlua_new_class(ls, Filesystem_name, Filesystem_syms, Filesystem_syms_nh);
     lua_pop(ls, 1);
 
     // Create the File class.
-    mlua_new_class(ls, File_name, File_syms);
-    mlua_set_fields(ls, File_syms_nh);
+    mlua_new_class(ls, File_name, File_syms, File_syms_nh);
     lua_pop(ls, 1);
 
     // Create the Dir class.
-    mlua_new_class(ls, Dir_name, Dir_syms);
-    mlua_set_fields(ls, Dir_syms_nh);
+    mlua_new_class(ls, Dir_name, Dir_syms, Dir_syms_nh);
     lua_pop(ls, 1);
 
     // Create the module.

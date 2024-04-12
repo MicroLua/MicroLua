@@ -629,15 +629,15 @@ MLUA_OPEN_MODULE(hardware.pio) {
     int mod_index = lua_gettop(ls);
 
     // Create the Config class.
-    mlua_new_class(ls, Config_name, Config_syms);
+    mlua_new_class(ls, Config_name, Config_syms, mlua_nosyms);
     lua_pop(ls, 1);
 
     // Create the SM class.
-    mlua_new_class(ls, SM_name, SM_syms);
+    mlua_new_class(ls, SM_name, SM_syms, mlua_nosyms);
     lua_pop(ls, 1);
 
     // Create the PIO class.
-    mlua_new_class(ls, PIO_name, PIO_syms);
+    mlua_new_class(ls, PIO_name, PIO_syms, mlua_nosyms);
     lua_pop(ls, 1);
 
     // Create PIO instances.

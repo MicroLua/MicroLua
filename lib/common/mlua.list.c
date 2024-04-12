@@ -346,14 +346,14 @@ MLUA_SYMBOLS_NOHASH(list_syms_nh) = {
     MLUA_SYM_F_NH(__index2, list_),
     MLUA_SYM_F_NH(__eq, list_),
     MLUA_SYM_F_NH(__repr, list_),
+    MLUA_SYM_V_NH(sort, boolean, false),  // Preallocate
 };
 
 MLUA_OPEN_MODULE(mlua.list) {
     mlua_require(ls, "table", true);
 
     // Create the list class.
-    mlua_new_class(ls, list_name, list_syms);
-    mlua_set_fields(ls, list_syms_nh);
+    mlua_new_class(ls, list_name, list_syms, list_syms_nh);
     mlua_set_metaclass(ls);
     lua_getfield(ls, -2, "sort");
     lua_pushcclosure(ls, &list_sort, 1);

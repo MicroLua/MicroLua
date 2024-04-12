@@ -36,7 +36,20 @@ int mlua_index_undefined(lua_State* ls) {
     return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
 }
 
-void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
+void new_metatable(lua_State* ls, char const* name, int narr, int nrec) {
+    if (luaL_getmetatable(ls, name) != LUA_TNIL) return;
+    lua_pop(ls, 1);
+    lua_createtable(ls, narr, 1 + nrec);
+    lua_pushstring(ls, name);
+    lua_setfield(ls, -2, "__name");
+    lua_pushvalue(ls, -1);
+    lua_setfield(ls, LUA_REGISTRYINDEX, name);
+}
+
+#define set_fields(ls, fields) \
+    set_fields_((ls), (fields), MLUA_SYMCNT(fields))
+
+void set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
     for (; cnt > 0; --cnt, ++fields) {
         MLuaSymVal const* value = &fields->value;
         value->push(ls, value);
@@ -44,11 +57,6 @@ void mlua_set_fields_(lua_State* ls, MLuaSym const* fields, int cnt) {
         if (name[0] == '_' && name[1] != '_') ++name;
         lua_setfield(ls, -2, name);
     }
-}
-
-void mlua_new_table_(lua_State* ls, MLuaSym const* fields, int narr, int nrec) {
-    lua_createtable(ls, narr, nrec);
-    mlua_set_fields_(ls, fields, nrec);
 }
 
 static char const Strict_name[] = "mlua.Strict";
@@ -111,15 +119,18 @@ static int nohash___index(lua_State* ls) {
 
 void mlua_new_module_nohash_(lua_State* ls, MLuaSym const* fields, int narr,
                              int nrec) {
-    mlua_new_table_(ls, fields, narr, nrec);
+    lua_createtable(ls, narr, nrec);
+    set_fields_(ls, fields, nrec);
     luaL_getmetatable(ls, Strict_name);
     lua_setmetatable(ls, -2);
 }
 
 void mlua_new_class_nohash_(lua_State* ls, char const* name,
-                            MLuaSym const* fields, int cnt) {
-    luaL_newmetatable(ls, name);
-    mlua_set_fields_(ls, fields, cnt);
+                            MLuaSym const* fields, int cnt,
+                            MLuaSym const* nh_fields, int nh_cnt) {
+    new_metatable(ls, name, 0, cnt + nh_cnt + 1);
+    set_fields_(ls, fields, cnt);
+    set_fields_(ls, nh_fields, nh_cnt);
     lua_pushvalue(ls, -1);
     lua_pushcclosure(ls, &nohash___index, 1);
     lua_setfield(ls, -2, "__index");
@@ -207,8 +218,10 @@ void mlua_new_module_hash_(lua_State* ls, int narr, int nrec,
 }
 
 void mlua_new_class_hash_(lua_State* ls, char const* name, int cnt,
-                          MLuaSymHash const* h) {
-    luaL_newmetatable(ls, name);
+                          MLuaSymHash const* h, MLuaSym const* nh_fields,
+                          int nh_cnt) {
+    new_metatable(ls, name, 0, nh_cnt + 1);
+    set_fields_(ls, nh_fields, nh_cnt);
     set_hash_index(ls, cnt, h);
 }
 
@@ -286,13 +299,13 @@ void mlua_register_modules(lua_State* ls) {
 
     // Create the Strict metatable, and set it on _G.
     lua_pushglobaltable(ls);
-    luaL_newmetatable(ls, Strict_name);
-    mlua_set_fields(ls, Strict_syms);
+    new_metatable(ls, Strict_name, 0, MLUA_SYMCNT(Strict_syms));
+    set_fields(ls, Strict_syms);
     lua_setmetatable(ls, -2);
     lua_pop(ls, 1);  // _G
 
     // Create the Module metatable.
-    luaL_newmetatable(ls, Module_name);
+    new_metatable(ls, Module_name, 0, 1);
     lua_pushglobaltable(ls);
     lua_setfield(ls, -2, "__index");
     lua_pop(ls, 1);  // Module
@@ -301,8 +314,8 @@ void mlua_register_modules(lua_State* ls) {
     // compiled-in modules.
     luaL_requiref(ls, "package", luaopen_package, 0);
     lua_getfield(ls, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
-    luaL_newmetatable(ls, Preload_name);
-    mlua_set_fields(ls, Preload_syms);
+    new_metatable(ls, Preload_name, 0, MLUA_SYMCNT(Preload_syms));
+    set_fields(ls, Preload_syms);
     lua_setmetatable(ls, -2);
     lua_pop(ls, 1);  // preload
 
@@ -337,7 +350,7 @@ void mlua_register_modules(lua_State* ls) {
     lua_pop(ls, 1);
 
     // Create a metatable for weak keys.
-    luaL_newmetatable(ls, mlua_WeakK_name);
+    new_metatable(ls, mlua_WeakK_name, 0, 1);
     lua_pushliteral(ls, "__mode");
     lua_pushliteral(ls, "k");
     lua_rawset(ls, -3);

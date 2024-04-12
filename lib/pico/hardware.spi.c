@@ -324,7 +324,7 @@ MLUA_OPEN_MODULE(hardware.spi) {
     int mod_index = lua_gettop(ls);
 
     // Create the SPI class.
-    mlua_new_class(ls, SPI_name, SPI_syms);
+    mlua_new_class(ls, SPI_name, SPI_syms, mlua_nosyms);
     lua_pop(ls, 1);
 
     // Create SPI instances.

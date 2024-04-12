@@ -517,8 +517,7 @@ MLUA_SYMBOLS_NOHASH(array_syms_nh) = {
 
 MLUA_OPEN_MODULE(mlua.array) {
     // Create the array class.
-    mlua_new_class(ls, array_name, array_syms);
-    mlua_set_fields(ls, array_syms_nh);
+    mlua_new_class(ls, array_name, array_syms, array_syms_nh);
     mlua_set_metaclass(ls);
     return 1;
 }

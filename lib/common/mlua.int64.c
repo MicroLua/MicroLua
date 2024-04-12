@@ -451,6 +451,8 @@ MLUA_SYMBOLS(int64_syms) = {
 };
 
 MLUA_SYMBOLS_NOHASH(int64_syms_nh) = {
+    MLUA_SYM_V_NH(max, boolean, false),  // Preallocate
+    MLUA_SYM_V_NH(min, boolean, false),  // Preallocate
     MLUA_SYM_F_NH(__new, int64_),
 #if !MLUA_IS64INT
     MLUA_SYM_F_NH(__add, int64_),
@@ -479,8 +481,7 @@ MLUA_SYMBOLS_NOHASH(int64_syms_nh) = {
 
 MLUA_OPEN_MODULE(mlua.int64) {
     // Create the int64 class.
-    mlua_new_class(ls, mlua_int64_name, int64_syms);
-    mlua_set_fields(ls, int64_syms_nh);
+    mlua_new_class(ls, mlua_int64_name, int64_syms, int64_syms_nh);
     mlua_set_metaclass(ls);
     mlua_push_int64(ls, INT64_MAX);
     lua_setfield(ls, -2, "max");
