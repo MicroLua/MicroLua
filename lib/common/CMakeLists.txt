@@ -12,6 +12,7 @@ mlua_add_lua_modules(mlua_test_mlua mlua.test.lua)
 target_link_libraries(mlua_test_mlua INTERFACE
     mlua_mod_mlua.io
     mlua_mod_mlua.mem
+    mlua_mod_mlua.thread
     mlua_mod_table
 )
 

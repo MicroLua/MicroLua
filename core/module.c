@@ -82,13 +82,20 @@ static int global_module(lua_State* ls) {
     return 1;
 }
 
+static int global_try_1(lua_State* ls, int status, lua_KContext ctx);
+
 static int global_try(lua_State* ls) {
-    if (lua_pcall(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0) == LUA_OK) {
-        return lua_gettop(ls);
-    }
+    int status = lua_pcallk(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0, 0,
+                            &global_try_1);
+    return global_try_1(ls, status, 0);
+}
+
+static int global_try_1(lua_State* ls, int status, lua_KContext ctx) {
+    if (status == LUA_OK || status == LUA_YIELD) return lua_gettop(ls);
     luaL_pushfail(ls);
     lua_rotate(ls, -2, 1);
     return 2;
+
 }
 
 static int global_equal(lua_State* ls) {

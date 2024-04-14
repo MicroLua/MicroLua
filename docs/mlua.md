@@ -810,6 +810,10 @@ that value.
 - `Matcher:apply(fn) -> self`\
   Apply the function `fn` to the value, and set it as the new value.
 
+- `Matcher:fmt(fn) -> self`\
+  Specify a formatter to use for the actual and expected values. The default is
+  `repr()`.
+
 - `Matcher:eq(want, eq = _G.equal) -> self`\
   `Matcher:neq(want, eq = _G.equal) -> self`\
   `Matcher:lt(want) -> self`\

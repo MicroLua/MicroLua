@@ -6,6 +6,7 @@ _ENV = module(...)
 local config = require 'mlua.config'
 local io = require 'mlua.io'
 local mem = require 'mlua.mem'
+local thread = require 'mlua.thread'
 local table = require 'table'
 
 local module_name = ...
@@ -26,6 +27,8 @@ function test_try(t)
         :label("success"):eq{3, 2, 1}
     t:expect(t:mexpr(_G).try(function() error("boom", 0) end))
         :label("failure"):eq{nil, "boom"}
+    t:expect(t:mexpr(_G).try(function() thread.yield() return 1, 2 end))
+        :label("yielding"):eq{1, 2}
 end
 
 function test_equal(t)
