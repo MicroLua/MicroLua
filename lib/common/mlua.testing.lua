@@ -333,7 +333,7 @@ function Test:skip(format, ...)
 end
 
 function Test:error(format, ...)
-    self._fail = true
+    if not self._fail then self:_up(function(t) t._fail = true end) end
     self:enable_output()
     return self:_log(FAIL, format, ...)
 end
@@ -404,23 +404,15 @@ function Test:_context()
     return parts:concat()
 end
 
-function Test:failed()
-    if self._error or self._fail then return true end
-    for _, child in list.ipairs(self.children) do
-        if child:failed() then return true end
-    end
-    return false
-end
+function Test:failed() return self._error or self._fail end
 
 function Test:_result()
-    return io.ansi(self._error and ERROR or self:failed() and FAIL
-                   or self._skip and SKIP or PASS)
+    return self._error and ERROR or self:failed() and FAIL
+           or self._skip and SKIP or PASS
 end
 
 function Test:run(name, fn)
-    local t = Test(name, self)
-    if t:_run(fn) then self.children = list.append(self.children, t) end
-    t = nil
+    Test(name, self):_run(fn)
     collectgarbage('collect')
 end
 
@@ -429,24 +421,29 @@ function Test:_run(fn)
     self:_capture_output()
     local start = time.ticks()
     self:_pcall(fn, self)
-    self.duration = time.ticks() - start
+    local duration = time.ticks() - start
     self._ctx = nil
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
     self._cleanups, self._ctx = nil
     self:_restore_output()
-    local keep = self.children or self:failed()
+    local level = -2
     self:_up(function(t)
-        keep = keep or t._full_results
+        level = level + 1
         if not t.npass then return end
         if self._error then t.nerror = t.nerror + 1
         elseif self:failed() then t.nfail = t.nfail + 1
         elseif self._skip then t.nskip = t.nskip + 1
         else t.npass = t.npass + 1 end
     end)
-    self._parent, self._out, self._old_out = nil
-    return keep
+    if not self:_attr('_full_results') then return end
+    self:_progress_end('\n')
+    local left = ('%s%s: %s'):format((' '):rep(2 * level), self:_result(),
+                                     self.name)
+    local right = ('%.3f s'):format(duration / time.ticks_per_second)
+    io.fprintf(self:_attr('_stdout'), "%s%s %s\n", io.ansi(left),
+               (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right), right)
 end
 
 local tb_exclude = {
@@ -459,6 +456,7 @@ function Test:_pcall(fn, ...)
     return xpcall(fn, function(err)
         if err ~= err_terminate then
             self._error = true
+            self:_up(function(t) if t ~= self then t._fail = true end end)
             self:enable_output()
             local tb = debug.traceback(err, 2)
             if type(tb) == 'string' then
@@ -470,15 +468,17 @@ function Test:_pcall(fn, ...)
     end, ...)
 end
 
+function Test:_progress_start(out) self._progress = out end
+
 function Test:_progress_tick()
     local progress = self:_attr('_progress')
     if progress then return progress:write('.') end
 end
 
-function Test:_progress_end()
+function Test:_progress_end(nl)
     self:_up(function(t)
         if not t._parent and t._progress then
-            t._progress:write('\n')
+            t._progress:write('\n' .. nl)
             t._progress = nil
         end
     end)
@@ -486,7 +486,7 @@ end
 
 function Test:enable_output()
     if not self._out then return end
-    self:_progress_end()
+    self:_progress_end('\n')
     local out = self._out
     self._out = nil
     self:_restore_output()
@@ -563,7 +563,8 @@ end
 
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
-    self._progress = stdout
+    self._stdout = stdout
+    self:_progress_start(stdout)
     local start = time.ticks()
     if runs > 1 then
         for i = 1, runs do
@@ -574,27 +575,14 @@ function Test:_main(runs)
     end
     local dt = time.ticks() - start
     local mem = math.tointeger(collectgarbage('count') * 1024)
-    self:_progress_end()
+    self:_progress_end('')
     io.write("\n")
-    self:_print_result()
-    if list.len(self.children) > 0 then io.write("\n") end
     io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror)
     io.printf("Duration: %.3f s, memory: %s bytes, binary: %s bytes\n",
               dt / time.ticks_per_second, mem, platform.binary_size)
-    io.printf("Result: %s\n", self:_result())
-end
-
-function Test:_print_result(indent)
-    indent = indent or ''
-    if self.name then
-        local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
-        local right = ('(%.3f s)'):format(self.duration / time.ticks_per_second)
-        io.printf("%s%s %s\n", left, (' '):rep(78 - #left - #right), right)
-        indent = indent .. '  '
-    end
-    for _, t in list.ipairs(self.children) do t:_print_result(indent) end
+    io.printf("Result: %s\n", io.ansi(self:_result()))
 end
 
 local reg_exclude = {
@@ -605,18 +593,16 @@ local reg_exclude = {
 local function print_registry()
     local reg = debug.getregistry()
     for k, v in pairs(reg) do
-        if reg_exclude[k] then goto continue end
-        if util.get(v, '__name') ~= k then v = repr(v) end
-        io.aprintf("[@{+WHITE}%s@{NORM}] = %s\n", repr(k), v)
-        ::continue::
+        if not reg_exclude[k] then
+            if util.get(v, '__name') ~= k then v = repr(v) end
+            io.aprintf("[@{+WHITE}%s@{NORM}] = %s\n", repr(k), v)
+        end
     end
 end
 
 local Runner = oo.class('Runner')
 
-function Runner:__init(opts)
-    self.opts = opts
-end
+function Runner:__init(opts) self.opts = opts end
 
 function Runner:run()
     local failed
