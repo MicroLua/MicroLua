@@ -52,7 +52,7 @@ local function repr_table(v, seen)
     if rawget(seen, v) then return '...' end
     rawset(seen, v, true)
     local done<close> = function() rawset(seen, v, nil) end
-    local ok, len = is_list(v)
+    local ok, len = try(is_list, v)
     if ok then return repr_list(v, len, seen) end
     local parts = list()
     for k, vk in pairs(v) do
