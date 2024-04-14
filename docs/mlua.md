@@ -442,7 +442,12 @@ This module provides helpers for input / output processing.
 - `fprintf(out, format, ...) -> integer | nil`\
   Format the arguments with `string:format()` and write the result to `out`.
 
-- `ansi(s) -> string`\
+- `ansi_tags: table`\
+  `empty_tags: function`\
+  Sets of tags that subtitute with ANSI escape codes and empty strings,
+  respectively.
+
+- `ansi(s, [tags]) -> string`\
   Substitute tags of the form `@{...}` with the corresponding ANSI escape codes.
   See the module for supported tags.
 

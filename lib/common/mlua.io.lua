@@ -19,7 +19,7 @@ function printf(format, ...) return stdout:write(format:format(...)) end
 -- Print formatted to an output stream.
 function fprintf(out, format, ...) return out:write(format:format(...)) end
 
-local codes = {
+ansi_tags = {
     NORM = '\x1b[0m',
     BOLD = '\x1b[1m',
 
@@ -44,8 +44,10 @@ local codes = {
     CLR = '\x1b[3J\x1b[H\x1b[2J'
 }
 
--- Substitute @{...} ANSI codes in the given string.
-function ansi(s) return s:gsub('@{([A-Z+]+)}', codes) end
+function empty_tags() return '' end
+
+-- Substitute @{...} tags in the given string.
+function ansi(s, tags) return s:gsub('@{([A-Z+]+)}', tags or ansi_tags) end
 
 -- ANSI-format a string.
 function aformat(format, ...) return ansi(format):format(...) end
