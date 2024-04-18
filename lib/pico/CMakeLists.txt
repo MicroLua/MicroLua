@@ -515,6 +515,9 @@ target_link_libraries(mlua_mod_mlua.testing.platform INTERFACE
     mlua_mod_mlua.testing
     mlua_mod_pico
 )
+target_link_libraries(mlua_mod_mlua.testing INTERFACE
+    mlua_mod_mlua.testing.platform
+)
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.stdio mlua.testing.stdio.lua)
 target_link_libraries(mlua_mod_mlua.testing.stdio INTERFACE
