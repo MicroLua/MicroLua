@@ -42,24 +42,6 @@ function test_run(t)
     end
 end
 
-function test_assemble(t)
-    for name, fn in pairs(_ENV) do
-        if not name:find('^pio_') then goto continue end
-        t:context{program = name}
-        local prog = asm.assemble(fn)
-        local want = _ENV['want_' .. name]
-        t:expect(prog):label('instr'):fmt(instructions):eq(want.instr, list.eq)
-        t:expect(t:expr(prog).labels):eq(want.labels, util.table_eq)
-        t:expect(t:expr(prog).origin):eq(want.origin)
-        local cfg = prog:config(0)
-        local wcfg = pio.get_default_sm_config()
-        want.config(wcfg)
-        t:expect(cfg:pinctrl()):label('pinctrl'):fmt(hex8):eq(wcfg:pinctrl())
-        t:expect(cfg:execctrl()):label('execctrl'):fmt(hex8):eq(wcfg:execctrl())
-        ::continue::
-    end
-end
-
 function pio_timer(_ENV)
 public(start):
     set(y, 0)
@@ -367,3 +349,24 @@ want_pio_quadrature_encoder = {
     origin = 0,
     config = function(cfg) cfg:set_wrap(15, 23) end,
 }
+
+local function assemble(t, name)
+    local prog = asm.assemble(_ENV[name])
+    local want = _ENV['want_' .. name]
+    t:expect(prog):label('instr'):fmt(instructions):eq(want.instr, list.eq)
+    t:expect(t:expr(prog).labels):eq(want.labels, util.table_eq)
+    t:expect(t:expr(prog).origin):eq(want.origin)
+    local cfg = prog:config(0)
+    local wcfg = pio.get_default_sm_config()
+    want.config(wcfg)
+    t:expect(cfg:pinctrl()):label('pinctrl'):fmt(hex8):eq(wcfg:pinctrl())
+    t:expect(cfg:execctrl()):label('execctrl'):fmt(hex8):eq(wcfg:execctrl())
+end
+
+for name in pairs(_ENV) do
+    if name:find('^pio_') then
+        _ENV[('test_%s'):format(name)] = function(t)
+            return assemble(t, name)
+        end
+    end
+end
