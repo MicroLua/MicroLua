@@ -16,11 +16,18 @@ void mlua_require(lua_State* ls, char const* module, bool keep) {
 }
 
 bool mlua_to_cbool(lua_State* ls, int arg) {
-    if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
-    if (lua_type(ls, arg) == LUA_TNUMBER) {
+    switch (lua_type(ls, arg)) {
+    case LUA_TNONE:
+    case LUA_TNIL:
+        return false;
+    case LUA_TBOOLEAN:
+        return lua_toboolean(ls, arg);
+    case LUA_TNUMBER:
+        if (lua_isinteger(ls, arg)) return lua_tointeger(ls, arg) != 0;
         return lua_tonumber(ls, arg) != l_mathop(0.0);
+    default:
+        return true;
     }
-    return lua_toboolean(ls, arg);
 }
 
 bool mlua_opt_cbool(lua_State* ls, int arg, bool def) {
