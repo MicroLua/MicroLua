@@ -3,6 +3,8 @@
 
 #include "pico.h"
 
+#include "hardware/structs/xip_ctrl.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
@@ -18,6 +20,18 @@ static void mod_flash_binary_start(lua_State* ls, MLuaSymVal const* value) {
 
 static void mod_flash_binary_end(lua_State* ls, MLuaSymVal const* value) {
     lua_pushinteger(ls, (uintptr_t)__flash_binary_end);
+}
+
+static int mod_xip_ctr(lua_State* ls) {
+    bool clear = mlua_to_cbool(ls, 1);
+    uint32_t hit = xip_ctrl_hw->ctr_hit, acc = xip_ctrl_hw->ctr_acc;
+    lua_pushinteger(ls, hit);
+    lua_pushinteger(ls, acc);
+    if (clear) {
+        xip_ctrl_hw->ctr_acc = 0;
+        xip_ctrl_hw->ctr_hit = 0;
+    }
+    return 2;
 }
 
 MLUA_SYMBOLS(module_syms) = {
@@ -121,6 +135,8 @@ MLUA_SYMBOLS(module_syms) = {
 #else
     MLUA_SYM_V(CYW43_WL_GPIO_LED_PIN, boolean, false),
 #endif
+
+    MLUA_SYM_F(xip_ctr, mod_),
 };
 
 MLUA_OPEN_MODULE(pico) {
