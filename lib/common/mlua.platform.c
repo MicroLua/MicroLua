@@ -24,14 +24,9 @@ static void mod_flash(lua_State* ls, MLuaSymVal const* value) {
     lua_setfield(ls, -2, "erase_size");
 }
 
-static void mod_binary_size(lua_State* ls, MLuaSymVal const* value) {
-    mlua_push_intptr(ls, mlua_platform_binary_size());
-}
-
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(name, string, MLUA_ESTR(MLUA_PLATFORM)),
     MLUA_SYM_P(flash, mod_),
-    MLUA_SYM_P(binary_size, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.platform) {

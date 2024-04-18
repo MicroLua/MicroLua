@@ -91,17 +91,9 @@ static inline bool mlua_wait(uint64_t deadline) {
 // platform doesn't have flash memory.
 MLuaFlash const* mlua_platform_flash(void);
 
-// Return the size of the binary.
-static inline uintptr_t mlua_platform_binary_size(void) {
-    extern char const __flash_binary_start[];
-    extern char const __flash_binary_end[];
-    return __flash_binary_end - __flash_binary_start;
-}
-
 #else  // !PICO_ON_DEVICE
 
 static inline MLuaFlash const* mlua_platform_flash(void) { return NULL; }
-static inline uintptr_t mlua_platform_binary_size(void) { return 0; }
 
 #endif  // !PICO_ON_DEVICE
 

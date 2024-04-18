@@ -54,9 +54,6 @@ bool mlua_wait(uint64_t deadline);
 // platform doesn't have flash memory.
 static inline MLuaFlash const* mlua_platform_flash(void) { return NULL; }
 
-// Return the size of the binary.
-static inline uintptr_t mlua_platform_binary_size(void) { return 0; }
-
 #ifdef __cplusplus
 }
 #endif

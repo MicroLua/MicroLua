@@ -615,9 +615,6 @@ This module exposes platform-specific functionality under a common interface.
   platform doesn't have any flash memory. The table has the fields `address`,
   `size`, `write_size` and `erase_size`.
 
-- `binary_size: integer | Int64`\
-  The size of the binary, or zero if the size is unknown.
-
 ## `mlua.repr`
 
 **Module:** [`mlua.repr`](../lib/common/mlua.repr.lua),

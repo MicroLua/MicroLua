@@ -224,7 +224,6 @@ target_link_libraries(mlua_mod_mlua.testing INTERFACE
     mlua_mod_mlua.io
     mlua_mod_mlua.list
     mlua_mod_mlua.oo
-    mlua_mod_mlua.platform
     mlua_mod_mlua.repr
     mlua_mod_mlua.time
     mlua_mod_mlua.util

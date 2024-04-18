@@ -46,6 +46,12 @@ target_link_libraries(mlua_tests PRIVATE
     mlua_mod_mlua.stdio
     mlua_mod_mlua.testing
 )
+if(TARGET mlua_mod_mlua.testing.platform)
+    # TODO: Bind this logic to mlua_mod_mlua.testing
+    target_link_libraries(mlua_tests PRIVATE
+        mlua_mod_mlua.testing.platform
+    )
+endif()
 mlua_list_targets(tests
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
     INCLUDE "^mlua_test_.*$"

@@ -9,22 +9,12 @@ local cli = require 'mlua.cli'
 local io = require 'mlua.io'
 local list = require 'mlua.list'
 local oo = require 'mlua.oo'
-local platform = require 'mlua.platform'
 local repr = require 'mlua.repr'
 local thread = try(require, 'mlua.thread')
 local time = require 'mlua.time'
 local util = require 'mlua.util'
 local package = require 'package'
 local string = require 'string'
-
-local loaded = {}
-for n in pairs(package.loaded) do loaded[n] = true end
-
-local function unload_modules()
-    for n in pairs(package.loaded) do
-        if not loaded[n] then package.loaded[n] = nil end
-    end
-end
 
 local def_mod_pat = '%.test$'
 local def_func_pat = '^test_'
@@ -55,7 +45,7 @@ function Recorder:__init(t) self.t = t end
 
 function Recorder:write(...)
     io.Recorder.write(self, ...)
-    if not self:is_empty() and self.t:_attr('_full_output') then
+    if not self:is_empty() and self.t:_root()._opts.full_output then
         self.t:enable_output()
     end
 end
@@ -416,13 +406,20 @@ function Test:run(name, fn)
     collectgarbage('collect')
 end
 
+function Test:_hook(name, ...)
+    local fn = self[name]
+    if fn then return fn(self, ...) end
+end
+
 function Test:_run(fn)
     self:_progress_tick()
     self:_capture_output()
+    self:_hook('_pre_run')
     local start = time.ticks()
     self:_pcall(fn, self)
     local duration = time.ticks() - start
     self._ctx = nil
+    self:_hook('_post_run')
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
@@ -437,13 +434,19 @@ function Test:_run(fn)
         elseif self._skip then t.nskip = t.nskip + 1
         else t.npass = t.npass + 1 end
     end)
-    if not self:_attr('_full_results') then return end
-    self:_progress_end('\n')
-    local left = ('%s%s: %s'):format((' '):rep(2 * level), self:_result(),
-                                     self.name)
-    local right = ('%.3f s'):format(duration / time.ticks_per_second)
-    io.fprintf(self:_attr('_stdout'), "%s%s %s\n", io.ansi(left),
-               (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right), right)
+    local root = self:_root()
+    local opts = root._opts
+    if opts.full_results or opts.stats then
+        self:_progress_end('\n')
+        local out = root._stdout
+        local left = ('%s%s: %s'):format((' '):rep(2 * level), self:_result(),
+                                         self.name)
+        local right = ('%.3f s'):format(duration / time.ticks_per_second)
+        io.fprintf(out, "%s%s %s\n", io.ansi(left),
+                   (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right),
+                   right)
+        if opts.stats then self:_hook('_print_stats', out, level) end
+    end
 end
 
 local tb_exclude = {
@@ -471,17 +474,16 @@ end
 function Test:_progress_start(out) self._progress = out end
 
 function Test:_progress_tick()
-    local progress = self:_attr('_progress')
+    local progress = self:_root()._progress
     if progress then return progress:write('.') end
 end
 
 function Test:_progress_end(nl)
-    self:_up(function(t)
-        if not t._parent and t._progress then
-            t._progress:write('\n' .. nl)
-            t._progress = nil
-        end
-    end)
+    local root = self:_root()
+    if root._progress then
+        root._progress:write('\n' .. nl)
+        root._progress = nil
+    end
 end
 
 function Test:enable_output()
@@ -519,15 +521,26 @@ function Test:_up(fn)
     end
 end
 
-function Test:_attr(name)
-    return self:_up(function(t) return t[name] end)
+function Test:_root()
+    return self:_up(function(t) if not t._parent then return t end end)
 end
 
 local fn_comp = util.table_comp{1, 2}
 
 function Test:run_module(name, pat)
     pat = pat or def_func_pat
-    self:cleanup(unload_modules)
+    local root = self:_root()
+    if not root._loaded then
+        local loaded = {}
+        for n in pairs(package.loaded) do loaded[n] = true end
+        root._loaded = loaded
+    end
+    self:cleanup(function(t)
+        local loaded = root._loaded
+        for n in pairs(package.loaded) do
+            if not loaded[n] then package.loaded[n] = nil end
+        end
+    end)
     local module = require(name)
     local ok, fn = pcall(function() return module.set_up end)
     if ok and fn then fn(self) end
@@ -564,24 +577,26 @@ end
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._stdout = stdout
+    self:_hook('_main_start')
     self:_progress_start(stdout)
     local start = time.ticks()
     if runs > 1 then
         for i = 1, runs do
-            self:run(("Run #%s"):format(i), function(t) t:run_modules() end)
+            self:run(("Run #%s"):format(i), function(t)
+                return t:run_modules()
+            end)
         end
     else
         self:run_modules()
     end
     local dt = time.ticks() - start
-    local mem = math.tointeger(collectgarbage('count') * 1024)
     self:_progress_end('')
-    io.write("\n")
-    io.printf("Tests: %d passed, %d skipped, %d failed, %d errored, %d total\n",
+    io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total"
+              .. " in %.3f s\n",
               self.npass, self.nskip, self.nfail, self.nerror,
-              self.npass + self.nskip + self.nfail + self.nerror)
-    io.printf("Duration: %.3f s, memory: %s bytes, binary: %s bytes\n",
-              dt / time.ticks_per_second, mem, platform.binary_size)
+              self.npass + self.nskip + self.nfail + self.nerror,
+              dt / time.ticks_per_second)
+    self:_hook('_print_main_stats')
     io.printf("Result: %s\n", io.ansi(self:_result()))
 end
 
@@ -608,8 +623,7 @@ function Runner:run()
     local failed
     while not self.exit do
         local t = Test()
-        t._full_output = self.opts.full_output
-        t._full_results = self.opts.full_results
+        t._opts = self.opts
         t:_main(self.opts.runs)
         failed = t:failed()
         if not self.opts.prompt then break end
@@ -662,6 +676,11 @@ end
 
 function Runner:cmd_reg() print_registry() end
 
+function Runner:cmd_st()
+    self.opts.stats = not self.opts.stats
+    return true
+end
+
 function Runner:cmd_x()
     self.exit = true
     return true
@@ -675,6 +694,7 @@ local function pmain(opts, args)
         full_results = cli.bool_opt(false),
         prompt = cli.bool_opt(argv == nil),
         runs = cli.int_opt(1),
+        stats = cli.bool_opt(false),
     })
     local runner = Runner(opts)
     return runner:run()
@@ -692,3 +712,5 @@ function main()
     end)
     return ok and res
 end
+
+try(require, 'mlua.testing.platform')

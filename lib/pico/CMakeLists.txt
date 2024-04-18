@@ -508,6 +508,14 @@ target_link_libraries(mlua_mod_mlua.testing.i2c INTERFACE
     mlua_mod_mlua.list
 )
 
+mlua_add_lua_modules(mlua_mod_mlua.testing.platform mlua.testing.platform.lua)
+target_link_libraries(mlua_mod_mlua.testing.platform INTERFACE
+    mlua_mod_math
+    mlua_mod_mlua.io
+    mlua_mod_mlua.testing
+    mlua_mod_pico
+)
+
 mlua_add_lua_modules(mlua_mod_mlua.testing.stdio mlua.testing.stdio.lua)
 target_link_libraries(mlua_mod_mlua.testing.stdio INTERFACE
     mlua_mod_hardware.gpio
