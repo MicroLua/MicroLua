@@ -401,18 +401,41 @@ function Test:_result()
            or self._skip and SKIP or PASS
 end
 
-function Test:run(name, fn)
-    Test(name, self):_run(fn)
-    collectgarbage('collect')
-end
+function Test:run(name, fn) return Test(name, self):_run(fn) end
 
 function Test:_hook(name, ...)
     local fn = self[name]
     if fn then return fn(self, ...) end
 end
 
+function Test:_update_alloc_stats(reset)
+    collectgarbage('collect')
+    local count, size, used, peak = alloc_stats(reset)
+    if not count then return end
+    if reset then
+        self._alloc_count, self._alloc_size = count, size
+        self._alloc_base, self._alloc_peak = used, used
+    else
+        self._alloc_count = count - self._alloc_count
+        self._alloc_size = size - self._alloc_size
+    end
+    return self:_up(function(t)
+        if peak > t._alloc_peak then t._alloc_peak = peak end
+    end)
+end
+
+function Test:_print_alloc_stats(out, indent)
+    if not self._alloc_count then return end
+    io.fprintf(
+        out, "%sAllocs: %s (%s bytes), peak: %s bytes (+%s bytes)\n",
+        indent, self._alloc_count, self._alloc_size, self._alloc_peak,
+        self._alloc_peak - self._alloc_base)
+end
+
 function Test:_run(fn)
+    local root, level = self:_root()
     self:_progress_tick()
+    self:_update_alloc_stats(true)
     self:_capture_output()
     self:_hook('_pre_run')
     local start = time.ticks()
@@ -424,28 +447,30 @@ function Test:_run(fn)
         self:_pcall(self._cleanups[i])
     end
     self._cleanups, self._ctx = nil
+
+    -- Compute stats.
     self:_restore_output()
-    local level = -2
-    self:_up(function(t)
-        level = level + 1
-        if not t.npass then return end
-        if self._error then t.nerror = t.nerror + 1
-        elseif self:failed() then t.nfail = t.nfail + 1
-        elseif self._skip then t.nskip = t.nskip + 1
-        else t.npass = t.npass + 1 end
-    end)
-    local root = self:_root()
+    self:_update_alloc_stats()
+    if self._error then root.nerror = root.nerror + 1
+    elseif self:failed() then root.nfail = root.nfail + 1
+    elseif self._skip then root.nskip = root.nskip + 1
+    else root.npass = root.npass + 1 end
+
+    -- Output results and stats.
     local opts = root._opts
-    if opts.full_results or opts.stats then
+    if level >= 0 and (opts.full_results or opts.stats) then
         self:_progress_end('\n')
         local out = root._stdout
-        local left = ('%s%s: %s'):format((' '):rep(2 * level), self:_result(),
-                                         self.name)
+        local indent = (' '):rep(2 * level)
+        local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
         local right = ('%.3f s'):format(duration / time.ticks_per_second)
         io.fprintf(out, "%s%s %s\n", io.ansi(left),
                    (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right),
                    right)
-        if opts.stats then self:_hook('_print_stats', out, level) end
+        if opts.stats then
+            self:_print_alloc_stats(out, indent .. ' ')
+            self:_hook('_print_stats', out, indent)
+        end
     end
 end
 
@@ -494,8 +519,8 @@ function Test:enable_output()
     self:_restore_output()
     if self._parent then self._parent:enable_output() end
     self._old_out = _G.stdout
-    local level = -1
-    self:_up(function(t) level = level + 1 end)
+    if not self._parent then return end
+    local _, level = self:_up(function(t) end)
     io.aprintf("@{BLUE}%s@{NORM} @{+WHITE}%s@{NORM} @{BLUE}%s@{NORM}\n",
                ('-'):rep(2 * level), self.name,
                ('-'):rep(77 - 2 * level - #self.name))
@@ -513,12 +538,13 @@ function Test:_restore_output()
 end
 
 function Test:_up(fn)
-    local t = self
+    local t, level = self, -1
     while t do
         local res = fn(t)
-        if res ~= nil then return res end
-        t = t._parent
+        if res ~= nil then return res, level end
+        t, level = t._parent, level + 1
     end
+    return nil, level
 end
 
 function Test:_root()
@@ -580,15 +606,12 @@ function Test:_main(runs)
     self:_hook('_main_start')
     self:_progress_start(stdout)
     local start = time.ticks()
-    if runs > 1 then
+    self:_run(function(t)
+        if runs == 1 then return t:run_modules() end
         for i = 1, runs do
-            self:run(("Run #%s"):format(i), function(t)
-                return t:run_modules()
-            end)
+            t:run(("Run #%s"):format(i), function(t) return t:run_modules() end)
         end
-    else
-        self:run_modules()
-    end
+    end)
     local dt = time.ticks() - start
     self:_progress_end('')
     io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total"
@@ -596,6 +619,7 @@ function Test:_main(runs)
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror,
               dt / time.ticks_per_second)
+    self:_print_alloc_stats(stdout, '')
     self:_hook('_print_main_stats')
     io.printf("Result: %s\n", io.ansi(self:_result()))
 end
@@ -696,8 +720,7 @@ local function pmain(opts, args)
         runs = cli.int_opt(1),
         stats = cli.bool_opt(false),
     })
-    local runner = Runner(opts)
-    return runner:run()
+    return Runner(opts):run()
 end
 
 function main()

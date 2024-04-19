@@ -102,6 +102,20 @@ static int global_equal(lua_State* ls) {
     return lua_pushboolean(ls, mlua_compare_eq(ls, 1, 2)), 1;
 }
 
+static int global_alloc_stats(lua_State* ls) {
+    bool reset = mlua_to_cbool(ls, 1);
+    void* ud;
+    lua_getallocf(ls, &ud);
+    if (ud == NULL) return 0;
+    MLuaAlloc* alloc = ud;
+    lua_pushinteger(ls, alloc->count);
+    lua_pushinteger(ls, alloc->size);
+    lua_pushinteger(ls, alloc->used);
+    lua_pushinteger(ls, alloc->peak);
+    if (reset) alloc->peak = alloc->used;
+    return 4;
+}
+
 static int index2(lua_State* ls) {
     // TODO: Cache __index2 as an upvalue
     lua_pushliteral(ls, "__index2");
@@ -347,6 +361,8 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "try");
     lua_pushcfunction(ls, &global_equal);
     lua_setglobal(ls, "equal");
+    lua_pushcfunction(ls, &global_alloc_stats);
+    lua_setglobal(ls, "alloc_stats");
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do

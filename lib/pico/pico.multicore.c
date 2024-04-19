@@ -34,7 +34,7 @@ static void launch_core(void) {
     // TODO: The event should be disabled after closing the lua_State,
     //       otherwise the core could be reset before the state can be closed.
     mlua_event_disable(ls, &st->shutdown_event);
-    lua_close(ls);
+    mlua_close_interpreter(ls);
     mlua_event_set(&st->stopped_event);
 }
 
@@ -54,7 +54,7 @@ static int mod_launch_core1(lua_State* ls) {
     // Set up the shutdown request event.
     CoreState* st = &core_state[core - 1];
     if (!mlua_event_enable(ls1, &st->shutdown_event)) {
-        lua_close(ls1);
+        mlua_close_interpreter(ls1);
         return luaL_error(ls, "core %d is already running an interpreter",
                           core);
     }

@@ -91,8 +91,23 @@ static int pmain(lua_State* ls) {
 
 static void* allocate(void* ud, void* ptr, size_t old_size, size_t new_size) {
     // TODO: Record per-object stats based on old_size
-    if (new_size != 0) return realloc(ptr, new_size);
+    if (new_size != 0) {
+        void* res = realloc(ptr, new_size);
+#if MLUA_ALLOC_STATS
+        if (res == NULL) return NULL;
+        MLuaAlloc* alloc = ud;
+        ++alloc->count;
+        alloc->size += new_size;
+        if (ptr != NULL) new_size -= old_size;
+        alloc->used += new_size;
+        if (alloc->used > alloc->peak) alloc->peak = alloc->used;
+#endif
+        return res;
+    }
     free(ptr);
+#if MLUA_ALLOC_STATS
+    ((MLuaAlloc*)ud)->used -= old_size;
+#endif
     return NULL;
 }
 
@@ -133,12 +148,33 @@ static void on_warn_off(void* ud, char const* msg, int cont) {
 }
 
 lua_State* mlua_new_interpreter(void) {
-    lua_State* ls = lua_newstate(allocate, NULL);
-    if (ls == NULL) return NULL;
+    MLuaAlloc* ud = NULL;
+#if MLUA_ALLOC_STATS
+    ud = realloc(NULL, sizeof(MLuaAlloc));
+    if (ud == NULL) return NULL;
+    memset(ud, 0, sizeof(*ud));
+#endif
+    lua_State* ls = lua_newstate(allocate, ud);
+    if (ls == NULL) {
+        free(ud);
+        return NULL;
+    }
     lua_atpanic(ls, &on_panic);
     lua_setwarnf(ls, &on_warn_off, ls);
     memset(lua_getextraspace(ls), 0, LUA_EXTRASPACE);
     return ls;
+}
+
+void mlua_close_interpreter(lua_State* ls) {
+    void* ud;
+    lua_getallocf(ls, &ud);
+    lua_close(ls);
+#if MLUA_ALLOC_STATS
+    if (((MLuaAlloc*)ud)->used != 0) {
+        mlua_writestringerror("WARNING: interpreter memory leak\n", "");
+    }
+#endif
+    free(ud);
 }
 
 int mlua_run_main(lua_State* ls, int args) {
@@ -188,7 +224,7 @@ int mlua_main_core0(int argc, char* argv[]) {
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_MODULE));
     lua_pushliteral(ls, MLUA_ESTR(MLUA_MAIN_FUNCTION));
     int res = mlua_run_main(ls, 0);
-    lua_close(ls);
+    mlua_close_interpreter(ls);
     return res;
 }
 

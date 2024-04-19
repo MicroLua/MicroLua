@@ -23,12 +23,11 @@ function Test:_post_run()
     self._xip_hit, self._xip_acc = hit - self._xip_hit, acc - self._xip_acc
 end
 
--- TODO: Add peak RAM usage
 -- TODO: Add threading
 
-function Test:_print_stats(out, level)
+function Test:_print_stats(out, indent)
     if self._xip_hit then
-        io.fprintf(out, "%s XIP cache: %.1f%%\n", (' '):rep(2 * level),
+        io.fprintf(out, "%s XIP cache: %.1f%%\n", indent,
                    (100.0 * self._xip_hit) / self._xip_acc)
     end
 end

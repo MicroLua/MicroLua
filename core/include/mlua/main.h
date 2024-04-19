@@ -17,6 +17,9 @@ void mlua_writestringerror(char const* fmt, char const* param);
 // Create a new Lua interpreter.
 lua_State* mlua_new_interpreter(void);
 
+// Free a Lua interpreter.
+void mlua_close_interpreter(lua_State* ls);
+
 // Load the main module and run its main function.
 int mlua_run_main(lua_State* ls, int args);
 

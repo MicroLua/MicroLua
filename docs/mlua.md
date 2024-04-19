@@ -44,6 +44,15 @@ The test modules can be useful as usage examples.
   operator, this function always calls the `__eq` metamethod of either argument
   if it exists, even if the arguments have different types.
 
+- `alloc_stats(reset = false) -> (count, size, used, peak)`\
+  Return statistics about Lua memory allocations. `count` is the number of
+  memory allocations performed. `size` is the total amount of memory allocated.
+  `used` is the amount of memory currently allocated. `peak` is the maximum
+  amount of memory allocated since the last time it was reset. When `reset` is
+  `true`, `peak` is reset after returning its current value. Allocation
+  statistics must be enabled by setting the `MLUA_ALLOC_STATS` compile
+  definition to `1`. When disabled, all return values are `nil`.
+
 ## `mlua.bits`
 
 **Module:** [`mlua.bits`](../lib/common/mlua.bits.c),

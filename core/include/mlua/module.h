@@ -27,6 +27,19 @@ extern "C" {
 #define MLUA_SYMBOL_HASH_DEBUG 0
 #endif
 
+// Enable memory allocation statistics.
+#ifndef MLUA_ALLOC_STATS
+#define MLUA_ALLOC_STATS 0
+#endif
+
+// Lua allocator auxiliary data.
+typedef struct MLuaAlloc {
+    size_t count;   // Number of memory allocation
+    size_t size;    // Sum of all memory allocations
+    size_t used;    // Memory currently used
+    size_t peak;    // Peak memory usage
+} MLuaAlloc;
+
 // Raise an error about argument 2 specifying an undefined symbol. Can be used
 // as an __index function for strict tables.
 int mlua_index_undefined(lua_State* ls);
