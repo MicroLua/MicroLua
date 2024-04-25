@@ -34,7 +34,6 @@ function(mlua_platform_bin_standalone TARGET)
         PICO_PROGRAM_VERSION_STRING="0.0"
     )
     target_link_libraries("${TARGET}" PRIVATE
-        mlua_mod_mlua.thread
         pico_stdlib
     )
 endfunction()
@@ -50,11 +49,11 @@ function(mlua_platform_bin_tests TARGET)
         PICO_ENTER_USB_BOOT_ON_EXIT=1
         PICO_MAX_SHARED_IRQ_HANDLERS=16
         PICO_PROGRAM_NAME="MicroLua-tests"
+        PICO_STACK_SIZE=0x1000
         PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
+        PICO_USE_STACK_GUARDS=1
     )
     target_link_libraries("${TARGET}" PRIVATE
-        mlua_mod_mlua.stdio
-        mlua_mod_mlua.thread
         mlua_mod_pico.stdio
         mlua_mod_pico.stdio.usb
         pico_stdlib

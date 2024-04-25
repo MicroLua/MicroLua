@@ -46,6 +46,7 @@ mlua_target_config(mlua_tests
 target_link_libraries(mlua_tests PRIVATE
     mlua_mod_mlua.stdio
     mlua_mod_mlua.testing
+    mlua_mod_mlua.thread
 )
 mlua_list_targets(tests
     DIRS "${MLUA_PATH}/core" "${MLUA_PATH}/lib"
