@@ -207,16 +207,18 @@ This module exposes symbols defined in the linker table.
 - `heap_start: integer = __end__`\
   `heap_limit: integer = __HeapLimit`\
   `heap_end: integer = __StackLimit`\
-  The start of the heap, its guaranteed limit (as set by `PICO_HEAP_SIZE) and
+  The start of the heap, its guaranteed limit (as set by `PICO_HEAP_SIZE`) and
   its end.
 
-- `stack1_top: integer = __StackOneTop`\
-  `stack1_bottom: integer = __StackOneBottom`\
-  The top and bottom of the stack for core 1, as set by `PICO_CORE1_STACK_SIZE`.
+- `stack1_bottom: integer = __StackOneBottom`\
+  `stack1_top: integer = __StackOneTop`\
+  The bottom and top of the stack for core 1. The stack size is set by
+  `PICO_CORE1_STACK_SIZE`.
 
-- `stack_top: integer = __StackTop`\
-  `stack_bottom: integer = __StackBottom`\
-  The top and bottom of the stack for core 0, as set by `PICO_STACK_SIZE`.
+- `stack_bottom: integer = __StackBottom`\
+  `stack_top: integer = __StackTop`\
+  The bottom and top of the stack for core 0. The stack size is set by
+  `PICO_STACK_SIZE`.
 
 ## `pico.stdio`
 

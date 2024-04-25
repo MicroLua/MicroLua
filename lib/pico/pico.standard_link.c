@@ -32,10 +32,10 @@ EXTERN_SYM(scratch_y_end, __scratch_y_end__)
 EXTERN_SYM(heap_start, __end__)
 EXTERN_SYM(heap_limit, __HeapLimit)
 EXTERN_SYM(heap_end, __StackLimit)
-EXTERN_SYM(stack1_top, __StackOneTop)
 EXTERN_SYM(stack1_bottom, __StackOneBottom)
-EXTERN_SYM(stack_top, __StackTop)
+EXTERN_SYM(stack1_top, __StackOneTop)
 EXTERN_SYM(stack_bottom, __StackBottom)
+EXTERN_SYM(stack_top, __StackTop)
 
 #define mod_FLASH mod_flash_binary_start
 #define mod_RAM mod_ram_vector_table
@@ -72,10 +72,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_P(heap_start, mod_),
     MLUA_SYM_P(heap_limit, mod_),
     MLUA_SYM_P(heap_end, mod_),
-    MLUA_SYM_P(stack1_top, mod_),
     MLUA_SYM_P(stack1_bottom, mod_),
-    MLUA_SYM_P(stack_top, mod_),
+    MLUA_SYM_P(stack1_top, mod_),
     MLUA_SYM_P(stack_bottom, mod_),
+    MLUA_SYM_P(stack_top, mod_),
 };
 
 MLUA_OPEN_MODULE(pico.standard_link) {
