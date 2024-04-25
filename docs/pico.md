@@ -145,6 +145,79 @@ This module exposes the constants defined in
 - `busy_wait_at_least_cycles(cycles)`\
   This function doesn't yield.
 
+## `pico.standard_link`
+
+**Library:** [`pico_standard_link`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_standard_link),
+sources: [`pico_standard_link`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_standard_link)\
+**Module:** [`pico.standard_link`](../lib/pico/pico.standard_link.c),
+build target: `mlua_mod_pico.standard_link`,
+tests: [`pico.standard_link.test`](../lib/pico/pico.standard_link.test.lua)
+
+This module exposes symbols defined in the linker table.
+
+- `FLASH: integer = 0x10000000`\
+  `FLASH_SIZE: integer = 0x200000`\
+  `RAM: integer = 0x20000000`\
+  `RAM_SIZE: integer = 0x40000`\
+  `SCRATCH_X: integer = 0x20040000`\
+  `SCRATCH_X_SIZE: integer = 0x1000`\
+  `SCRATCH_Y: integer = 0x20041000`\
+  `SCRATCH_Y_SIZE: integer = 0x1000`\
+  The addresses and sizes of the memory areas, as used by the linker.
+
+- `flash_binary_start: integer = __flash_binary_start`\
+  `flash_binary_end: integer = __flash_binary_end`\
+  The start and end of the binary in `FLASH`.
+
+- `logical_binary_start: integer = __logical_binary_start`\
+  The logical start of the binary, i.e. the part after the second stage
+  bootloader.
+
+- `binary_info_header_end: integer = __binary_info_header_end`\
+  The end of the binary info header.
+
+- `binary_info_start: integer = __binary_info_start`\
+  `binary_info_end: integer = __binary_info_end`\
+  The start and end of the binary info.
+
+- `ram_vector_table: integer = ram_vector_table`\
+  The address of the vector table in RAM.
+
+- `data_source: integer = __etext`\
+  `data_start: integer = __data_start__`\
+  `data_end: integer = __data_end__`\
+  The source (in `FLASH`), start and end (in `RAM`) of initialized data.
+
+- `bss_start: integer = __bss_start__`\
+  `bss_end: integer = __bss_end__`\
+  The start and end of zero-initialized data.
+
+- `scratch_x_source: integer = __scratch_x_source__`\
+  `scratch_x_start: integer = __scratch_x_start__`\
+  `scratch_x_end: integer = __scratch_x_end__`\
+  The source (in `FLASH`), start and end (in `SCRATCH_X`) of data allocated in
+  scratch X.
+
+- `scratch_y_source: integer = __scratch_y_source__`\
+  `scratch_y_start: integer = __scratch_y_start__`\
+  `scratch_y_end: integer = __scratch_y_end__`\
+  The source (in `FLASH`), start and end (in `SCRATCH_Y`) of data allocated in
+  scratch Y.
+
+- `heap_start: integer = __end__`\
+  `heap_limit: integer = __HeapLimit`\
+  `heap_end: integer = __StackLimit`\
+  The start of the heap, its guaranteed limit (as set by `PICO_HEAP_SIZE) and
+  its end.
+
+- `stack1_top: integer = __StackOneTop`\
+  `stack1_bottom: integer = __StackOneBottom`\
+  The top and bottom of the stack for core 1, as set by `PICO_CORE1_STACK_SIZE`.
+
+- `stack_top: integer = __StackTop`\
+  `stack_bottom: integer = __StackBottom`\
+  The top and bottom of the stack for core 0, as set by `PICO_STACK_SIZE`.
+
 ## `pico.stdio`
 
 **Library:** [`pico_stdio`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_stdio),

@@ -47,6 +47,7 @@ function(mlua_platform_bin_tests TARGET)
         MLUA_STDIO_INIT_UART_OUT=1
         MLUA_STDIO_INIT_USB=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
+        PICO_HEAP_SIZE=0x3c000
         PICO_MAX_SHARED_IRQ_HANDLERS=16
         PICO_PROGRAM_NAME="MicroLua-tests"
         PICO_STACK_SIZE=0x1000
@@ -616,6 +617,16 @@ target_link_libraries(mlua_test_pico.platform INTERFACE
     mlua_mod_math
     mlua_mod_mlua.time
     mlua_mod_pico.platform
+)
+
+mlua_add_c_module(mlua_mod_pico.standard_link pico.standard_link.c)
+target_link_libraries(mlua_mod_pico.standard_link INTERFACE
+    pico_base
+)
+
+mlua_add_lua_modules(mlua_test_pico.standard_link pico.standard_link.test.lua)
+target_link_libraries(mlua_test_pico.standard_link INTERFACE
+    mlua_mod_pico.standard_link
 )
 
 mlua_add_c_module(mlua_mod_pico.stdio pico.stdio.c)
