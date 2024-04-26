@@ -410,13 +410,12 @@ end
 
 function Test:_update_alloc_stats(reset)
     collectgarbage()
-    -- TODO: There may be something wrong here. The peak for pico.unique_id.test
-    --       is abnormally high.
     local count, size, used, peak = alloc_stats(reset)
     if not count then return end
     if reset then
+        peak = used
         self._alloc_count, self._alloc_size = count, size
-        self._alloc_base, self._alloc_peak = used, used
+        self._alloc_base, self._alloc_peak = used, peak
     else
         self._alloc_count = count - self._alloc_count
         self._alloc_size = size - self._alloc_size
@@ -693,6 +692,7 @@ function Runner:cmd_fo()
 end
 
 function Runner:cmd_fr()
+    -- TODO: Optional depth argument
     self.opts.full_results = not self.opts.full_results
     return true
 end
@@ -705,6 +705,7 @@ end
 function Runner:cmd_reg() print_registry() end
 
 function Runner:cmd_st()
+    -- TODO: Optional depth argument
     self.opts.stats = not self.opts.stats
     return true
 end
