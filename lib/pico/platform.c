@@ -62,6 +62,9 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
                                         &hardfault_handler);
     }
 #endif
+
+    // Tune the GC for an embedded system.
+    lua_gc(ls, LUA_GCINC, 120, 100, 12);
 }
 
 #if PICO_ON_DEVICE
