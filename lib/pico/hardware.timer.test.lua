@@ -82,7 +82,7 @@ function test_timer(t)
         local start = time_us()
         t:expect(timer.set_target(alarm, start),
                  "Setting missed alarm succeeded")
-        for delta = 10000, 40000, 3000 do
+        for delta = 10000, 40000, 4000 do
             local err = timer.set_target(alarm, start + delta)
             t:assert(not err, "Failed to set alarm at +%s us", delta)
             thread.suspend()

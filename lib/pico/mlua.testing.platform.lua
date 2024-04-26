@@ -20,6 +20,7 @@ local function xip_hit_rate(hit1, acc1, hit2, acc2)
 end
 
 function Test:_main_start()
+    collectgarbage("incremental", 120, 100, 12)
     pico.xip_ctr(true)  -- Clear XIP counters
 end
 
