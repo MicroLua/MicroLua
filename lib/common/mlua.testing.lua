@@ -45,7 +45,7 @@ function Recorder:__init(t) self.t = t end
 
 function Recorder:write(...)
     io.Recorder.write(self, ...)
-    if not self:is_empty() and self.t:_root()._opts.full_output then
+    if not self:is_empty() and self.t:_root()._opts.output then
         self.t:enable_output()
     end
 end
@@ -408,19 +408,21 @@ function Test:_hook(name, ...)
     if fn then return fn(self, ...) end
 end
 
-function Test:_update_alloc_stats(reset)
+function Test:_prepare_alloc_stats()
     collectgarbage()
-    local count, size, used, peak = alloc_stats(reset)
+    local count, size, used = alloc_stats(true)
     if not count then return end
-    if reset then
-        peak = used
-        self._alloc_count, self._alloc_size = count, size
-        self._alloc_base, self._alloc_peak = used, peak
-    else
-        self._alloc_count = count - self._alloc_count
-        self._alloc_size = size - self._alloc_size
-        self._alloc_used = used
-    end
+    self._alloc_count, self._alloc_size = count, size
+    self._alloc_base, self._alloc_peak = used, used
+end
+
+function Test:_compute_alloc_stats()
+    collectgarbage()
+    local count, size, used, peak = alloc_stats()
+    if not count then return end
+    self._alloc_count = count - self._alloc_count
+    self._alloc_size = size - self._alloc_size
+    self._alloc_used = used
     return self:_up(function(t)
         if peak > t._alloc_peak then t._alloc_peak = peak end
     end)
@@ -438,7 +440,7 @@ end
 function Test:_run(fn)
     local root, level = self:_root()
     self:_progress_tick()
-    self:_update_alloc_stats(true)
+    self:_prepare_alloc_stats()
     self:_hook('_pre_run')
     self:_capture_output()
     local start = time.ticks()
@@ -453,7 +455,7 @@ function Test:_run(fn)
     -- Compute stats.
     self:_restore_output()
     self:_hook('_post_run')
-    self:_update_alloc_stats()
+    self:_compute_alloc_stats()
     if self._error then root.nerror = root.nerror + 1
     elseif self:failed() then root.nfail = root.nfail + 1
     elseif self._skip then root.nskip = root.nskip + 1
@@ -461,7 +463,7 @@ function Test:_run(fn)
 
     -- Output results and stats.
     local opts = root._opts
-    if level >= 0 and (opts.full_results or opts.stats) then
+    if level >= 0 and level < opts.results then
         self:_progress_end('\n')
         local out = root._stdout
         local indent = (' '):rep(2 * level)
@@ -682,19 +684,11 @@ function Runner:prompt()
     end
 end
 
--- TODO: Show full results up to level x
 -- TODO: Terminate on first failure
 -- TODO: Launch repl on failure
 
-function Runner:cmd_fo()
-    self.opts.full_output = not self.opts.full_output
-    return true
-end
-
-function Runner:cmd_fr()
-    -- TODO: Optional depth argument
-    self.opts.full_results = not self.opts.full_results
-    return true
+function Runner:cmd_out()
+    self.opts.output = not self.opts.output
 end
 
 function Runner:cmd_r(count)
@@ -704,10 +698,26 @@ end
 
 function Runner:cmd_reg() print_registry() end
 
-function Runner:cmd_st()
-    -- TODO: Optional depth argument
-    self.opts.stats = not self.opts.stats
-    return true
+function Runner:cmd_res(level)
+    local opts = self.opts
+    if level then
+        opts.results = math.tointeger(tonumber(level)) or math.maxinteger
+    else
+        opts.results = opts.results == 0 and math.maxinteger or 0
+    end
+end
+
+function Runner:cmd_st(level)
+    local opts = self.opts
+    if level then
+        opts.stats = true
+        self:cmd_res(level)
+    elseif not opts.stats then
+        opts.stats = true
+        if opts.results <= 0 then opts.results = math.maxinteger end
+    else
+        opts.stats = false
+    end
 end
 
 function Runner:cmd_x()
@@ -719,9 +729,9 @@ local function pmain(opts, args)
     local argv = util.get(_G, 'arg')
     local opts, args = cli.parse_args(argv)
     cli.parse_opts(opts, {
-        full_output = cli.bool_opt(false),
-        full_results = cli.bool_opt(false),
+        output = cli.bool_opt(false),
         prompt = cli.bool_opt(argv == nil),
+        results = cli.int_opt(0),
         runs = cli.int_opt(1),
         stats = cli.bool_opt(false),
     })
