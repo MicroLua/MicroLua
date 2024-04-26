@@ -1,6 +1,7 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include <malloc.h>
 #include <string.h>
 
 #include "mlua/int64.h"
@@ -105,11 +106,23 @@ static int mod_alloc(lua_State* ls) {
     return 1;
 }
 
+static int mod_mallinfo(lua_State* ls) {
+#ifdef __GLIBC__
+    struct mallinfo2 info = mallinfo2();
+#else
+    struct mallinfo info = mallinfo();
+#endif
+    mlua_push_size(ls, info.arena);
+    mlua_push_size(ls, info.uordblks);
+    return 2;
+}
+
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(read, mod_),
     MLUA_SYM_F(write, mod_),
     MLUA_SYM_F(fill, mod_),
     MLUA_SYM_F(alloc, mod_),
+    MLUA_SYM_F(mallinfo, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.mem) {

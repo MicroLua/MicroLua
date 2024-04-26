@@ -510,10 +510,11 @@ target_link_libraries(mlua_mod_mlua.testing.i2c INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.platform mlua.testing.platform.lua)
 target_link_libraries(mlua_mod_mlua.testing.platform INTERFACE
-    mlua_mod_math
     mlua_mod_mlua.io
+    mlua_mod_mlua.mem
     mlua_mod_mlua.testing
     mlua_mod_pico
+    mlua_mod_pico.standard_link
 )
 target_link_libraries(mlua_mod_mlua.testing INTERFACE
     mlua_mod_mlua.testing.platform

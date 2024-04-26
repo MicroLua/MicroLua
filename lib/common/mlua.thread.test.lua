@@ -199,6 +199,6 @@ function test_scheduling_latency(t)
         threads:join()
         t:printf("Threads: %2s, min: %2s us, max: %2s us, avg: %4.1f us\n",
                  count, min, max, sum / (count * samples))
-        collectgarbage('collect')
+        collectgarbage()
     end
 end

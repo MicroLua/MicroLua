@@ -141,6 +141,15 @@ static inline void mlua_push_intptr(lua_State* ls, intptr_t value) {
     }
 }
 
+// Push a size_t to the stack.
+static inline void mlua_push_size(lua_State* ls, size_t value) {
+    if (sizeof(value) <= sizeof(lua_Integer)) {
+        lua_pushinteger(ls, value);
+    } else {
+        mlua_push_int64(ls, value);
+    }
+}
+
 // Return true iff the given argument is an absolute time value.
 static inline bool mlua_is_time(lua_State* ls, int arg) {
 #if MLUA_IS64INT

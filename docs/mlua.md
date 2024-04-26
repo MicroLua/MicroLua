@@ -571,6 +571,11 @@ implementing the [buffer protocol](core.md#buffer-protocol) and raw memory
 - `alloc(size) -> Buffer`\
   Allocate a memory buffer of the given size.
 
+- `mallinfo() -> (allocated, used)`\
+  Return the number of bytes allocated internally by `malloc()`, and the number
+  of bytes actually used. The values correspond to the `arena` and `uordblks`
+  fields of `struct mallinfo`, respectively.
+
 ### `Buffer`
 
 The `Buffer` type (`mlua.mem.Buffer`) holds a fixed-size memory buffer.

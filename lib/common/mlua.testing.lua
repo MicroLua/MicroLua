@@ -409,7 +409,9 @@ function Test:_hook(name, ...)
 end
 
 function Test:_update_alloc_stats(reset)
-    collectgarbage('collect')
+    collectgarbage()
+    -- TODO: There may be something wrong here. The peak for pico.unique_id.test
+    --       is abnormally high.
     local count, size, used, peak = alloc_stats(reset)
     if not count then return end
     if reset then
@@ -418,6 +420,7 @@ function Test:_update_alloc_stats(reset)
     else
         self._alloc_count = count - self._alloc_count
         self._alloc_size = size - self._alloc_size
+        self._alloc_used = used
     end
     return self:_up(function(t)
         if peak > t._alloc_peak then t._alloc_peak = peak end
@@ -425,24 +428,24 @@ function Test:_update_alloc_stats(reset)
 end
 
 function Test:_print_alloc_stats(out, indent)
-    if not self._alloc_count then return end
-    io.fprintf(
-        out, "%sAllocs: %s (%s bytes), peak: %s bytes (+%s bytes)\n",
-        indent, self._alloc_count, self._alloc_size, self._alloc_peak,
-        self._alloc_peak - self._alloc_base)
+    if self._alloc_count then
+        io.fprintf(
+            out, "%sAllocs: %s (%s B), peak: %s B (+%s B), used: %s B\n",
+            indent, self._alloc_count, self._alloc_size, self._alloc_peak,
+            self._alloc_peak - self._alloc_base, self._alloc_used)
+    end
 end
 
 function Test:_run(fn)
     local root, level = self:_root()
     self:_progress_tick()
     self:_update_alloc_stats(true)
-    self:_capture_output()
     self:_hook('_pre_run')
+    self:_capture_output()
     local start = time.ticks()
     self:_pcall(fn, self)
     local duration = time.ticks() - start
     self._ctx = nil
-    self:_hook('_post_run')
     for i = list.len(self._cleanups), 1, -1 do
         self:_pcall(self._cleanups[i])
     end
@@ -450,6 +453,7 @@ function Test:_run(fn)
 
     -- Compute stats.
     self:_restore_output()
+    self:_hook('_post_run')
     self:_update_alloc_stats()
     if self._error then root.nerror = root.nerror + 1
     elseif self:failed() then root.nfail = root.nfail + 1
