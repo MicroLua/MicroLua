@@ -37,10 +37,10 @@ end
 
 local print_stats = Test._print_stats
 
-function Test:_print_stats(out, indent)
-    print_stats(self, out, indent)
+function Test:_print_stats(out)
+    print_stats(self, out)
     if self._parent then
-        io.fprintf(out, "%sFlash: XIP cache: %s\n", indent, self._xip_hit)
+        io.fprintf(out, "Flash: XIP cache: %s\n", self._xip_hit)
     else
         local xhr = xip_hit_rate(0, 0, pico.xip_ctr())
         local size = standard_link.heap_end - standard_link.heap_start

@@ -431,16 +431,16 @@ function Test:_post_run()
     end)
 end
 
-function Test:_print_stats(out, indent)
+function Test:_print_stats(out)
     if self._alloc_count then
         io.fprintf(
-            out, "%sAllocs: %s (%s B), peak: %s B (+%s B), used: %s B\n",
-            indent, self._alloc_count, self._alloc_size, self._alloc_peak,
+            out, "Allocs: %s (%s B), peak: %s B (+%s B), used: %s B\n",
+            self._alloc_count, self._alloc_size, self._alloc_peak,
             self._alloc_peak - self._alloc_base, self._alloc_used)
     end
     if self._th_disps and self._th_disps ~= 0 then
-        io.fprintf(out, "%sThread: %s dispatches, %s waits, %s resumes\n",
-                   indent, self._th_disps, self._th_waits, self._th_resumes)
+        io.fprintf(out, "Thread: %s dispatches, %s waits, %s resumes\n",
+                   self._th_disps, self._th_waits, self._th_resumes)
     end
 end
 
@@ -477,7 +477,9 @@ function Test:_run(fn)
         io.fprintf(out, "%s%s %s\n", io.ansi(left),
                    (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right),
                    right)
-        if opts.stats then self:_print_stats(out, indent .. ' ') end
+        if opts.stats then
+            self:_print_stats(io.Indenter(out, indent .. ' '))
+        end
     end
 end
 

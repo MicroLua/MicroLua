@@ -84,3 +84,24 @@ end
 
 -- Return the content of the buffer as a string.
 function Recorder:__tostring() return table.concat(self) end
+
+-- A writer that indents written lines, except empty ones.
+Indenter = oo.class('Indenter')
+
+function Indenter:__init(w, indent)
+    self._w, self._indent, self._nl = w, indent, '\n' .. indent .. '%1'
+end
+
+function Indenter:write(...)
+    for i = 1, select('#', ...) do
+        local data = select(i, ...)
+        if #data > 0 then
+            data = data:gsub('\n([^\n]+)', self._nl)
+            if not self._nsol and data:byte(1) ~= 10 then
+                data = self._indent .. data
+            end
+            self._w:write(data)
+            self._nsol = data:byte(#data) ~= 10
+        end
+    end
+end

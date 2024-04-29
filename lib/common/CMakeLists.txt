@@ -152,6 +152,7 @@ mlua_add_lua_modules(mlua_test_mlua.io mlua.io.test.lua)
 target_link_libraries(mlua_test_mlua.io INTERFACE
     mlua_mod_mlua.io
     mlua_mod_mlua.oo
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_mlua.list mlua.list.c)

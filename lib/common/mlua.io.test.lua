@@ -5,6 +5,7 @@ _ENV = module(...)
 
 local io = require 'mlua.io'
 local oo = require 'mlua.oo'
+local table = require 'table'
 
 function test_read(t)
     Reader = oo.class('Reader')
@@ -15,30 +16,49 @@ function test_read(t)
 end
 
 function test_write(t)
-    local b = io.Recorder()
-    t:patch(_G, 'stdout', b)
+    local r = io.Recorder()
+    t:patch(_G, 'stdout', r)
 
     io.write('12', '|34')
     io.printf('|%s|%d', '56', 78)
-    io.fprintf(b, '|%s', 90)
-    t:expect(t.expr.tostring(b)):eq('12|34|56|78|90')
+    io.fprintf(r, '|%s', 90)
+    t:expect(t.expr.tostring(r)):eq('12|34|56|78|90')
 end
 
 function test_Recorder(t)
     local r = io.Recorder()
-    t:expect(r:is_empty(), "New Recorder doesn't report empty")
+    t:expect(t.expr(r):is_empty()):eq(true)
     r:write()
     r:write('', '', '')
-    t:expect(r:is_empty(), "Recorder with empty writes doesn't report empty")
+    t:expect(t.expr(r):is_empty()):eq(true)
     local got = tostring(r)
-    t:expect(got == '', "Empty Recorder returns non-empty value: %q", got)
+    t:expect(t.expr.tostring(r)):eq('')
 
     r:write('foo', 'bar', '', 'baz')
     r:write('quux')
-    t:expect(not r:is_empty(), "Non-empty Recorder reports empty")
+    t:expect(t.expr(r):is_empty()):eq(false)
     t:expect(t.expr.tostring(r)):eq('foobarbazquux')
 
     local b2 = io.Recorder()
     r:replay(b2)
     t:expect(t.expr.tostring(b2)):eq(tostring(r))
+end
+
+function test_Indenter(t)
+    for _, test in ipairs{
+        {'--', {}, ''},
+        {'--', {{}}, ''},
+        {'', {{'a\nb\nc\n'}, {'d\ne\nf', '\ng\nh'}}, 'a\nb\nc\nd\ne\nf\ng\nh'},
+        {'--', {{'\na\n\nb\nc\n'}}, '\n--a\n\n--b\n--c\n'},
+        {'--', {{'a\nb', 'c\n', 'd\n'}}, '--a\n--bc\n--d\n'},
+        {'--', {{'a\nb'}, {'c\n'}, {'d\n'}}, '--a\n--bc\n--d\n'},
+        {'--', {{'a\n', '\nb\n'}}, '--a\n\n--b\n'},
+    } do
+        local indent, writes, want = table.unpack(test)
+        t:context({indent = indent, writes = writes})
+        local r = io.Recorder()
+        local ind = io.Indenter(r, indent)
+        for _, args in ipairs(writes) do ind:write(table.unpack(args)) end
+        t:expect(tostring(r)):label("result"):eq(want)
+    end
 end
