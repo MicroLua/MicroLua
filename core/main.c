@@ -96,18 +96,18 @@ static void* allocate(void* ud, void* ptr, size_t old_size, size_t new_size) {
         void* res = realloc(ptr, new_size);
 #if MLUA_ALLOC_STATS
         if (res == NULL) return NULL;
-        MLuaAlloc* alloc = ud;
-        ++alloc->count;
-        alloc->size += new_size;
+        MLuaGlobal* g = ud;
+        ++g->alloc_count;
+        g->alloc_size += new_size;
         if (ptr != NULL) new_size -= old_size;
-        alloc->used += new_size;
-        if (alloc->used > alloc->peak) alloc->peak = alloc->used;
+        g->alloc_used += new_size;
+        if (g->alloc_used > g->alloc_peak) g->alloc_peak = g->alloc_used;
 #endif
         return res;
     }
     free(ptr);
 #if MLUA_ALLOC_STATS
-    ((MLuaAlloc*)ud)->used -= old_size;
+    ((MLuaGlobal*)ud)->alloc_used -= old_size;
 #endif
     return NULL;
 }
@@ -130,34 +130,30 @@ static void on_warn_off(void* ud, char const* msg, int cont);
 
 static void on_warn_on(void* ud, char const* msg, int cont) {
     if (!cont && msg[0] == '@') {
-        if (strcmp(msg, "@off") == 0)
-            lua_setwarnf((lua_State*)ud, &on_warn_off, ud);
+        if (strcmp(msg, "@off") == 0) lua_setwarnf(ud, &on_warn_off, ud);
         return;
     }
     warn_print(msg, true, !cont);
-    if (cont) lua_setwarnf((lua_State*)ud, &on_warn_cont, ud);
+    if (cont) lua_setwarnf(ud, &on_warn_cont, ud);
 }
 
 static void on_warn_cont(void* ud, char const* msg, int cont) {
     warn_print(msg, false, !cont);
-    if (!cont) lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
+    if (!cont) lua_setwarnf(ud, &on_warn_on, ud);
 }
 
 static void on_warn_off(void* ud, char const* msg, int cont) {
     if (cont || strcmp(msg, "@on") == 0) return;
-    lua_setwarnf((lua_State*)ud, &on_warn_on, ud);
+    lua_setwarnf(ud, &on_warn_on, ud);
 }
 
 lua_State* mlua_new_interpreter(void) {
-    MLuaAlloc* ud = NULL;
-#if MLUA_ALLOC_STATS
-    ud = realloc(NULL, sizeof(MLuaAlloc));
-    if (ud == NULL) return NULL;
-    memset(ud, 0, sizeof(*ud));
-#endif
-    lua_State* ls = lua_newstate(allocate, ud);
+    MLuaGlobal* g = realloc(NULL, sizeof(MLuaGlobal));
+    if (g == NULL) return NULL;
+    memset(g, 0, sizeof(*g));
+    lua_State* ls = lua_newstate(allocate, g);
     if (ls == NULL) {
-        free(ud);
+        free(g);
         return NULL;
     }
     lua_atpanic(ls, &on_panic);
@@ -171,7 +167,7 @@ void mlua_close_interpreter(lua_State* ls) {
     lua_getallocf(ls, &ud);
     lua_close(ls);
 #if MLUA_ALLOC_STATS
-    if (((MLuaAlloc*)ud)->used != 0) {
+    if (((MLuaGlobal*)ud)->alloc_used != 0) {
         mlua_writestringerror("WARNING: interpreter memory leak\n", "");
     }
 #endif

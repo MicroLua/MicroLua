@@ -32,13 +32,28 @@ extern "C" {
 #define MLUA_ALLOC_STATS 0
 #endif
 
-// Lua allocator auxiliary data.
-typedef struct MLuaAlloc {
-    size_t count;   // Number of memory allocation
-    size_t size;    // Sum of all memory allocations
-    size_t used;    // Memory currently used
-    size_t peak;    // Peak memory usage
-} MLuaAlloc;
+// Enable thread statistics.
+#ifndef MLUA_THREAD_STATS
+#define MLUA_THREAD_STATS 0
+#endif
+
+// Per-interpreter global state.
+typedef struct MLuaGlobal {
+#if MLUA_ALLOC_STATS
+    size_t alloc_count;     // Number of memory allocation
+    size_t alloc_size;      // Sum of all memory allocations
+    size_t alloc_used;      // Memory currently used
+    size_t alloc_peak;      // Peak memory usage
+#endif
+#if LIB_MLUA_MOD_MLUA_THREAD && MLUA_THREAD_STATS
+    lua_Unsigned thread_dispatches;     // Number of event dispatch cycles
+    lua_Unsigned thread_waits;          // Number of event waits
+    lua_Unsigned thread_resumes;        // Number of thread resumes
+#endif
+} MLuaGlobal;
+
+// Return a pointer to the per-interpreter global state.
+MLuaGlobal* mlua_global(lua_State* ls);
 
 // Raise an error about argument 2 specifying an undefined symbol. Can be used
 // as an __index function for strict tables.

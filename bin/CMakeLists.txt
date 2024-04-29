@@ -25,6 +25,7 @@ mlua_platform_bin_standalone(mlua_standalone)
 mlua_add_executable(mlua_tests)
 target_compile_definitions(mlua_tests PRIVATE
     MLUA_ALLOC_STATS=1
+    MLUA_THREAD_STATS=1
     MLUA_MAIN_MODULE=mlua.testing
     MLUA_SYMBOL_HASH_DEBUG=0
 )

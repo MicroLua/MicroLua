@@ -8,6 +8,7 @@
 #include "pico/platform.h"
 
 #include "lstate.h"
+#include "mlua/module.h"
 #include "mlua/platform.h"
 
 spin_lock_t* mlua_event_spinlock;
@@ -99,7 +100,14 @@ void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
 void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
     bool wake = deadline == MLUA_TICKS_MIN;
     EventQueue* q = get_queue(ls);
+#if MLUA_THREAD_STATS
+    MLuaGlobal* g = mlua_global(ls);
+#endif
     for (;;) {
+#if MLUA_THREAD_STATS
+        ++g->thread_dispatches;
+#endif
+
         // Check for pending events and resume their watchers.
         for (;;) {
             mlua_event_lock();
@@ -118,6 +126,9 @@ void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
         wake = false;
 
         // Wait for events, up to the deadline.
+#if MLUA_THREAD_STATS
+        ++g->thread_waits;
+#endif
         mlua_wait(deadline);
     }
 }

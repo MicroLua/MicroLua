@@ -8,6 +8,16 @@
 #include "lualib.h"
 #include "mlua/util.h"
 
+MLuaGlobal* mlua_global(lua_State* ls) {
+    void* ud;
+    lua_getallocf(ls, &ud);
+    return ud;
+}
+
+int mlua_index_undefined(lua_State* ls) {
+    return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
+}
+
 void mlua_sym_push_boolean(lua_State* ls, MLuaSymVal const* value) {
     lua_pushboolean(ls, value->boolean);
 }
@@ -30,10 +40,6 @@ void mlua_sym_push_function(lua_State* ls, MLuaSymVal const* value) {
 
 void mlua_sym_push_lightuserdata(lua_State* ls, MLuaSymVal const* value) {
     lua_pushlightuserdata(ls, value->lightuserdata);
-}
-
-int mlua_index_undefined(lua_State* ls) {
-    return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
 }
 
 void new_metatable(lua_State* ls, char const* name, int narr, int nrec) {
@@ -104,16 +110,18 @@ static int global_equal(lua_State* ls) {
 
 static int global_alloc_stats(lua_State* ls) {
     bool reset = mlua_to_cbool(ls, 1);
-    void* ud;
-    lua_getallocf(ls, &ud);
-    if (ud == NULL) return 0;
-    MLuaAlloc* alloc = ud;
-    lua_pushinteger(ls, alloc->count);
-    lua_pushinteger(ls, alloc->size);
-    lua_pushinteger(ls, alloc->used);
-    lua_pushinteger(ls, alloc->peak);
-    if (reset) alloc->peak = alloc->used;
+#if MLUA_ALLOC_STATS
+    MLuaGlobal* g = mlua_global(ls);
+    lua_pushinteger(ls, g->alloc_count);
+    lua_pushinteger(ls, g->alloc_size);
+    lua_pushinteger(ls, g->alloc_used);
+    lua_pushinteger(ls, g->alloc_peak);
+    if (reset) g->alloc_peak = g->alloc_used;
     return 4;
+#else
+    (void)reset;
+    return 0;
+#endif
 }
 
 static int index2(lua_State* ls) {

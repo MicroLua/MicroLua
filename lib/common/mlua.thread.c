@@ -11,12 +11,9 @@
 #include "llimits.h"
 #include "lobject.h"
 #include "lstate.h"
-
 #include "mlua/int64.h"
 #include "mlua/module.h"
 #include "mlua/platform.h"
-
-// TODO: Add "performance" counters: dispatch cycles, sleeps
 
 void mlua_thread_require(lua_State* ls) {
     mlua_require(ls, "mlua.thread", false);
@@ -478,6 +475,18 @@ static int mod_shutdown(lua_State* ls) {
     return lua_yield(ls, 2);
 }
 
+static int mod_stats(lua_State* ls) {
+#if MLUA_THREAD_STATS
+    MLuaGlobal* g = mlua_global(ls);
+    lua_pushinteger(ls, g->thread_dispatches);
+    lua_pushinteger(ls, g->thread_waits);
+    lua_pushinteger(ls, g->thread_resumes);
+    return 3;
+#else
+    return 0;
+#endif
+}
+
 static void reset_main_state(lua_State* ls, int arg) {
     for (int i = UV_HEAD; i <= UV_TIMERS; ++i) {
         lua_pushnil(ls);
@@ -610,6 +619,9 @@ static int mod_main(lua_State* ls) {
         if (running == NULL) continue;
 
         // Resume the selected thread.
+#if MLUA_THREAD_STATS
+        ++mlua_global(ls)->thread_resumes;
+#endif
         lua_pop(running, FP_COUNT);
         int nres;
         if (lua_resume(running, ls, 0, &nres) != LUA_YIELD) {
@@ -724,6 +736,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(blocking, mod_),
     MLUA_SYM_F(start, mod_),
     MLUA_SYM_F(shutdown, mod_),
+    MLUA_SYM_F(stats, mod_),
 };
 
 MLUA_OPEN_MODULE(mlua.thread) {

@@ -19,29 +19,36 @@ local function xip_hit_rate(hit1, acc1, hit2, acc2)
     return ('%.1f%%'):format(100.0 * (hit / acc))
 end
 
+local pre_run = Test._pre_run
+
 function Test:_pre_run()
-    if not self.parent then pico.xip_ctr(true) end  -- Clear XIP counters
+    if not self._parent then pico.xip_ctr(true) end  -- Clear XIP counters
+    pre_run(self)
     self._xip_hit, self._xip_acc = pico.xip_ctr()
 end
+
+local post_run = Test._post_run
 
 function Test:_post_run()
     self._xip_hit = xip_hit_rate(self._xip_hit, self._xip_acc, pico.xip_ctr())
     self._xip_acc = nil
+    post_run(self)
 end
 
--- TODO: Add threading
+local print_stats = Test._print_stats
 
 function Test:_print_stats(out, indent)
-    io.fprintf(out, "%s Flash: XIP cache: %s\n", indent, self._xip_hit)
-end
-
-function Test:_print_main_stats(out)
-    local xhr = xip_hit_rate(0, 0, pico.xip_ctr())
-    local size = standard_link.heap_end - standard_link.heap_start
-    local alloc, used = mem.mallinfo()
-    io.fprintf(
-        out, "Heap: %s B, allocated: %s B (%.1f%%), used: %s B (%.1f%%)\n",
-        size, alloc, 100 * (alloc / size), used, 100 * (used / size))
-    io.fprintf(out, 'Flash: binary: %s B, XIP cache: %s\n',
-               pico.flash_binary_end - pico.flash_binary_start, xhr)
+    print_stats(self, out, indent)
+    if self._parent then
+        io.fprintf(out, "%sFlash: XIP cache: %s\n", indent, self._xip_hit)
+    else
+        local xhr = xip_hit_rate(0, 0, pico.xip_ctr())
+        local size = standard_link.heap_end - standard_link.heap_start
+        local alloc, used = mem.mallinfo()
+        io.fprintf(
+            out, "Heap: %s B, allocated: %s B (%.1f%%), used: %s B (%.1f%%)\n",
+            size, alloc, 100 * (alloc / size), used, 100 * (used / size))
+        io.fprintf(out, "Flash: binary: %s B, XIP cache: %s\n",
+                   pico.flash_binary_end - pico.flash_binary_start, xhr)
+    end
 end

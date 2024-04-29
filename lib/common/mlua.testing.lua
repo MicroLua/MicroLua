@@ -402,15 +402,24 @@ end
 
 function Test:run(name, fn) return Test(name, self):_run(fn) end
 
-function Test:_prepare_alloc_stats()
+function Test:_pre_run()
     collectgarbage()
     local count, size, used = alloc_stats(true)
     if not count then return end
     self._alloc_count, self._alloc_size = count, size
     self._alloc_base, self._alloc_peak = used, used
+    if thread then
+        self._th_disps, self._th_waits, self._th_resumes = thread.stats()
+    end
 end
 
-function Test:_compute_alloc_stats()
+function Test:_post_run()
+    if self._th_disps then
+        local disps, waits, resumes = thread.stats()
+        self._th_disps = disps - self._th_disps
+        self._th_waits = waits - self._th_waits
+        self._th_resumes = resumes - self._th_resumes
+    end
     collectgarbage()
     local count, size, used, peak = alloc_stats()
     if not count then return end
@@ -422,24 +431,22 @@ function Test:_compute_alloc_stats()
     end)
 end
 
-function Test:_print_alloc_stats(out, indent)
+function Test:_print_stats(out, indent)
     if self._alloc_count then
         io.fprintf(
             out, "%sAllocs: %s (%s B), peak: %s B (+%s B), used: %s B\n",
             indent, self._alloc_count, self._alloc_size, self._alloc_peak,
             self._alloc_peak - self._alloc_base, self._alloc_used)
     end
+    if self._th_disps and self._th_disps ~= 0 then
+        io.fprintf(out, "%sThread: %s dispatches, %s waits, %s resumes\n",
+                   indent, self._th_disps, self._th_waits, self._th_resumes)
+    end
 end
-
-function Test:_pre_run() end
-function Test:_post_run() end
-function Test:_print_stats() end
-function Test:_print_main_stats() end
 
 function Test:_run(fn)
     local root, level = self:_root()
     self:_progress_tick()
-    self:_prepare_alloc_stats()
     self:_pre_run()
     self:_capture_output()
     local start = time.ticks()
@@ -454,7 +461,6 @@ function Test:_run(fn)
     -- Compute stats.
     self:_restore_output()
     self:_post_run()
-    self:_compute_alloc_stats()
     if self._error then root.nerror = root.nerror + 1
     elseif self:failed() then root.nfail = root.nfail + 1
     elseif self._skip then root.nskip = root.nskip + 1
@@ -471,10 +477,7 @@ function Test:_run(fn)
         io.fprintf(out, "%s%s %s\n", io.ansi(left),
                    (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right),
                    right)
-        if opts.stats then
-            self:_print_alloc_stats(out, indent .. ' ')
-            self:_print_stats(out, indent)
-        end
+        if opts.stats then self:_print_stats(out, indent .. ' ') end
     end
 end
 
@@ -621,8 +624,7 @@ function Test:_main(runs)
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror,
               dt / time.ticks_per_second)
-    self:_print_alloc_stats(stdout, '')
-    self:_print_main_stats(stdout)
+    self:_print_stats(stdout, '')
     io.printf("Result: %s\n", io.ansi(self:_result()))
 end
 
