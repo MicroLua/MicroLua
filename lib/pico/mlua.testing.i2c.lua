@@ -68,12 +68,12 @@ function set_up(t, baud, sda0, scl0, sda1, scl1)
         end
     end
 
-    t:expect(t:expr(inst0):init(baud)):close_to_rel(baud, 0.01)
+    t:expect(t.expr(inst0):init(baud)):close_to_rel(baud, 0.01)
     gpio.set_function(sda0, gpio.FUNC_I2C)
     gpio.set_function(scl0, gpio.FUNC_I2C)
 
     if sda1 and scl1 then
-        t:expect(t:expr(inst1):init(baud)):close_to_rel(baud, 0.01)
+        t:expect(t.expr(inst1):init(baud)):close_to_rel(baud, 0.01)
         gpio.set_function(sda1, gpio.FUNC_I2C)
         gpio.set_function(scl1, gpio.FUNC_I2C)
     end

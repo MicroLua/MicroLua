@@ -21,10 +21,10 @@ function test_slave(t)
 
     -- Write some data, then read it back.
     local data = 'abcdefghijklmnopqrstuvwxyz012345'
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x00' .. data, false))
+    t:expect(t.expr(master):write_blocking(slave_addr, '\x00' .. data, false))
         :eq(1 + #data)
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x07', true)):eq(1)
-    t:expect(t:expr(master):read_blocking(slave_addr, 25, true))
+    t:expect(t.expr(master):write_blocking(slave_addr, '\x07', true)):eq(1)
+    t:expect(t.expr(master):read_blocking(slave_addr, 25, true))
         :eq('hijklmnopqrstuvwxyz012345')
-    t:expect(t:expr(master):read_blocking(slave_addr, 7, false)):eq('abcdefg')
+    t:expect(t.expr(master):read_blocking(slave_addr, 7, false)):eq('abcdefg')
 end

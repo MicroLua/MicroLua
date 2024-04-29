@@ -12,11 +12,11 @@ local resets = require 'hardware.resets'
 function test_reset(t)
     local div = addressmap.ADC_BASE + adc.DIV_OFFSET
     base.write32(div, 1234)
-    t:expect(t:expr(base).read32(div)):eq(1234)
+    t:expect(t.expr(base).read32(div)):eq(1234)
 
     local bits = regs.RESET_ADC_BITS
     resets.reset_block(bits)
     resets.unreset_block_wait(bits)
 
-    t:expect(t:expr(base).read32(div)):eq(adc.DIV_RESET)
+    t:expect(t.expr(base).read32(div)):eq(adc.DIV_RESET)
 end

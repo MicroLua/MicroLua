@@ -17,13 +17,13 @@ function set_up(t)
     t:assert(loader.fs, "no filesystem");
 
     if loader.fs:is_mounted() then loader.fs:unmount() end
-    t:assert(t:expr(loader.fs):format()):eq(true)
-    t:assert(t:expr(loader.fs):mount()):eq(true)
+    t:assert(t.expr(loader.fs):format()):eq(true)
+    t:assert(t.expr(loader.fs):mount()):eq(true)
     assert(loader.fs:mkdir('/lua'))
 end
 
 function test_block_device(t)
-    t:expect(t:expr(loader).block:size()):eq(100 << 10)
+    t:expect(t.expr(loader).block:size()):eq(100 << 10)
 end
 
 local function write_file(mfs, path, data)
@@ -51,18 +51,18 @@ function test_loading(t)
     ]])
 
     local m, p = require(prefix .. '.a')
-    t:expect(t:expr(m).value):eq('a')
+    t:expect(t.expr(m).value):eq('a')
     t:expect(p):label("a.path"):eq(('/lua/%s.a.lua'):format(prefix))
 
     local m, p = require(prefix .. '.b')
-    t:expect(t:expr(m).value):eq('b')
+    t:expect(t.expr(m).value):eq('b')
     t:expect(p):label("b.path"):eq(('/%s.b.lua'):format(prefix))
 
-    t:expect(t:expr(_G).require('not_found'))
+    t:expect(t.expr(_G).require('not_found'))
         :raises("\t/lua/not_found%.lua: no such file or directory\n\t/not_found%.lua: no such file or directory")
 
     write_file(loader.fs, '/invalid.lua', 'abcde')
-    t:expect(t:expr(_G).require('invalid'))
+    t:expect(t.expr(_G).require('invalid'))
         :raises("\t/invalid%.lua:1: syntax error")
 end
 
@@ -89,6 +89,6 @@ function test_loading_multicore(t)
     t:cleanup(function() fifo.enable_irq(false) end)
     for i = 1, 10 do
         fifo.push_blocking(i)
-        t:expect(t:expr(fifo).pop_blocking()):eq(i)
+        t:expect(t.expr(fifo).pop_blocking()):eq(i)
     end
 end

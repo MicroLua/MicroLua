@@ -14,7 +14,7 @@ function test_keys(t)
          {[0] = 1, 'c'}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:expr(util).keys(tab, filter):sort()):eq(want, util.table_eq)
+        t:expect(t.expr(util).keys(tab, filter):sort()):eq(want, util.table_eq)
     end
 end
 
@@ -26,7 +26,7 @@ function test_values(t)
          {[0] = 1, 6}},
     } do
         local tab, filter, want = table.unpack(test)
-        t:expect(t:expr(util).values(tab, filter):sort())
+        t:expect(t.expr(util).values(tab, filter):sort())
             :eq(want, util.table_eq)
     end
 end
@@ -44,8 +44,8 @@ function test_table_eq(t)
         {{a = 1, b = 2}, {a = 1, b = 3}, false},
     } do
         local a, b, want = table.unpack(test)
-        t:expect(t:expr(util).table_eq(a, b)):eq(want)
-        t:expect(t:expr(util).table_eq(b, a)):eq(want)
+        t:expect(t.expr(util).table_eq(a, b)):eq(want)
+        t:expect(t.expr(util).table_eq(b, a)):eq(want)
     end
 end
 
@@ -57,7 +57,7 @@ function test_table_copy(t)
         {setmetatable({1, 2, a = 3, b = 4}, {5, 6})},
     } do
         local tab = table.unpack(test)
-        t:expect(t:expr(util).table_copy(tab)):eq(tab, util.table_eq)
+        t:expect(t.expr(util).table_copy(tab)):eq(tab, util.table_eq)
             :apply(getmetatable):op("metatable is"):eq(getmetatable(tab))
     end
 end
@@ -69,6 +69,6 @@ function test_table_comp(t)
         {{1, 2, 3}, true}, {{2, 2, 2}, false}, {{3, 2, 1}, false},
     } do
         local keys, want = table.unpack(test)
-        t:expect(t:expr(util).table_comp(keys)(a, b))
+        t:expect(t.expr(util).table_comp(keys)(a, b))
     end
 end

@@ -28,7 +28,7 @@ function set_up(t)
 end
 
 function test_get_datetime(t)
-    t:expect(t:expr(rtc).running()):eq(true)
+    t:expect(t.expr(rtc).running()):eq(true)
     local dt = rtc.get_datetime()
     dt.sec = nil  -- Second field could be anything
     t:expect(dt):label("datetime")

@@ -18,23 +18,23 @@ end
 function test_globals(t)
     t:expect(_G):label("_G"):has('_VERSION')
     t:expect(_G):label("_G"):has('_RELEASE')
-    t:expect(t:expr(_G)._VERSION_NUM):gte(504)
-    t:expect(t:expr(_G)._RELEASE_NUM):gte(50406)
+    t:expect(t.expr(_G)._VERSION_NUM):gte(504)
+    t:expect(t.expr(_G)._RELEASE_NUM):gte(50406)
 end
 
 function test_try(t)
-    t:expect(t:mexpr(_G).try(function(a, b, c) return c, b, a end, 1, 2, 3))
+    t:expect(t.mexpr(_G).try(function(a, b, c) return c, b, a end, 1, 2, 3))
         :label("success"):eq{3, 2, 1}
-    t:expect(t:mexpr(_G).try(function() error("boom", 0) end))
+    t:expect(t.mexpr(_G).try(function() error("boom", 0) end))
         :label("failure"):eq{nil, "boom"}
-    t:expect(t:mexpr(_G).try(function() thread.yield() return 1, 2 end))
+    t:expect(t.mexpr(_G).try(function() thread.yield() return 1, 2 end))
         :label("yielding"):eq{1, 2}
 end
 
 function test_equal(t)
     local tab = setmetatable({}, {__eq = function() return true end})
-    t:expect(t:expr(_G).equal(tab, 1)):eq(true)
-    t:expect(t:expr(_G).equal(1, tab)):eq(true)
+    t:expect(t.expr(_G).equal(tab, 1)):eq(true)
+    t:expect(t.expr(_G).equal(1, tab)):eq(true)
 end
 
 local private_var = 'private'

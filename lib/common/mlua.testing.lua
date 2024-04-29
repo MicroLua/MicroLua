@@ -142,11 +142,7 @@ local function new_expr(fact, attrs)
 end
 
 function ExprFactory:__index(k) return new_expr(self, {r = locals(2)})[k] end
-
-function ExprFactory:__call(t, root)
-    if not oo.isinstance(t, Test) then root = t end
-    return new_expr(self, {r = root})
-end
+function ExprFactory:__call(root) return new_expr(self, {r = root}) end
 
 local Matcher = oo.class('Matcher')
 

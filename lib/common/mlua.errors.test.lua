@@ -13,7 +13,7 @@ function test_codes(t)
 end
 
 function test_message(t)
-    t:expect(t:expr(errors).message(errors.EINVAL)):eq("invalid argument")
-    t:expect(t:expr(errors).message(errors.ENOENT))
+    t:expect(t.expr(errors).message(errors.EINVAL)):eq("invalid argument")
+    t:expect(t.expr(errors).message(errors.ENOENT))
         :eq("no such file or directory")
 end

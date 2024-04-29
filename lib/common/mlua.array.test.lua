@@ -60,7 +60,7 @@ function test_integer(t)
         local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
         for i, v in ipairs(values) do want[i] = clamp(typ, v) end
-        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+        t:expect(t.mexpr(a):get(1, #a)):eq(want)
     end
 end
 
@@ -97,7 +97,7 @@ function test_int64(t)
         local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
         for i, v in ipairs(values) do want[i] = clamp64(typ, v) end
-        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+        t:expect(t.mexpr(a):get(1, #a)):eq(want)
     end
 end
 
@@ -113,7 +113,7 @@ function test_float(t)
         local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
         for i, v in ipairs(values) do want[i] = pack_unpack(typ, v) end
-        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+        t:expect(t.mexpr(a):get(1, #a)):eq(want)
     end
 end
 
@@ -130,7 +130,7 @@ function test_string(t)
         local a = array(typ, #values):set(1, table.unpack(values))
         local want = {}
         for i, v in ipairs(values) do want[i] = pad_string(typ, v) end
-        t:expect(t:mexpr(a):get(1, #a)):eq(want)
+        t:expect(t.mexpr(a):get(1, #a)):eq(want)
     end
 end
 
@@ -158,7 +158,7 @@ function test_eq(t)
         {array('c1', 1):set(1, '1'), array('j', 1):set(1, 1), false},
     } do
         local a1, a2, want = table.unpack(test)
-        t:expect(t:expr(_G).equal(a1, a2)):eq(want)
+        t:expect(t.expr(_G).equal(a1, a2)):eq(want)
         t:expect(a1 == a2):label("%s == %s", a1, a2):eq(want)
     end
 end
@@ -173,7 +173,7 @@ function test_buffer(t)
         local a = array(typ, 4):set(1, 1, 2, 3, 4)
         local b = ''
         for _, v in ipairs(a) do b = b .. typ:pack(v) end
-        t:expect(t:expr(mem).read(a)):eq(b)
+        t:expect(t.expr(mem).read(a)):eq(b)
         mem.write(a, typ:pack(67) .. typ:pack(89), 2 * typ:packsize())
         t:expect(a):eq(array(typ, 4):set(1, 1, 2, 67, 89))
     end
@@ -202,7 +202,7 @@ function test_index(t)
         {-1, 3}, {-2, 2}, {-3, 1}, {-4, nil},
     } do
         local arg, want = table.unpack(test)
-        t:expect(t:expr(a)[arg]):eq(want)
+        t:expect(t.expr(a)[arg]):eq(want)
     end
 end
 
@@ -228,7 +228,7 @@ function test_newindex(t)
             t:expect(a):label("a[%s] = %s", arg, value):op("=>")
                 :eq(array('j', #want):set(1, table.unpack(want)))
         else
-            t:expect(t:expr(fn)()):label("a[%s] = %s", arg, value)
+            t:expect(t.expr(fn)()):label("a[%s] = %s", arg, value)
                 :raises("out of bounds")
         end
     end
@@ -255,13 +255,13 @@ end
 
 function test_get(t)
     local a = array('j', 2, 4):set(1, 1, 2, 3, 4)
-    t:expect(t:expr(a):len(0)):eq(2)
-    t:expect(t:expr(a):len(3)):eq(0)
-    t:expect(t:expr(a):len(-1)):raises("invalid length")
-    t:expect(t:expr(a):len(5)):raises("invalid length")
-    t:expect(t:expr(a):len()):eq(3)
+    t:expect(t.expr(a):len(0)):eq(2)
+    t:expect(t.expr(a):len(3)):eq(0)
+    t:expect(t.expr(a):len(-1)):raises("invalid length")
+    t:expect(t.expr(a):len(5)):raises("invalid length")
+    t:expect(t.expr(a):len()):eq(3)
     t:expect(#a):label("#a"):eq(3)
-    t:expect(t:expr(a):cap()):eq(4)
+    t:expect(t.expr(a):cap()):eq(4)
     for _, test in ipairs{
         {{0}, list.pack(nil)}, {{1}, {1}}, {{2}, {2}}, {{3}, {3}},
         {{4}, list.pack(nil)}, {{-1}, {3}}, {{-2}, {2}}, {{-3}, {1}},
@@ -270,14 +270,14 @@ function test_get(t)
         {{0, 5}, list.pack(nil, 1, 2, 3, nil)},
     } do
         local args, want = table.unpack(test)
-        t:expect(t:mexpr(a):get(table.unpack(args))):eq(want)
+        t:expect(t.mexpr(a):get(table.unpack(args))):eq(want)
     end
 end
 
 function test_set(t)
     local zero = array('j', 0)
-    t:expect(t:expr(zero):set(1)):eq(array('j', 0))
-    t:expect(t:expr(zero):set(2)):raises("out of bounds")
+    t:expect(t.expr(zero):set(1)):eq(array('j', 0))
+    t:expect(t.expr(zero):set(2)):raises("out of bounds")
     for _, test in ipairs{
         {{0}, nil},
         {{1}, {1, 2, 3}},
@@ -296,7 +296,7 @@ function test_set(t)
     } do
         local args, want = table.unpack(test)
         local a = array('j', 3, 4):set(1, 1, 2, 3, 4)
-        local exp = t:expect(t:expr(a):set(table.unpack(args)))
+        local exp = t:expect(t.expr(a):set(table.unpack(args)))
         if want then exp:eq(array('j', #want):set(1, table.unpack(want)))
         else exp:raises("out of bounds") end
     end
@@ -313,7 +313,7 @@ function test_append(t)
         {array('j', 2), {1}, nil},
     } do
         local a, args, want = table.unpack(test)
-        local exp = t:expect(t:expr(a):append(table.unpack(args)))
+        local exp = t:expect(t.expr(a):append(table.unpack(args)))
         if want then exp:eq(array('j', #want):set(1, table.unpack(want)))
         else exp:raises("out of capacity") end
     end
@@ -336,7 +336,7 @@ function test_fill(t)
         {array('j', 3), {7, 2, 3}, nil},
     } do
         local a, args, want = table.unpack(test)
-        local exp = t:expect(t:expr(a):fill(table.unpack(args)))
+        local exp = t:expect(t.expr(a):fill(table.unpack(args)))
         if want then
             a:len(a:cap())
             exp:eq(array('j', #want):set(1, table.unpack(want)))

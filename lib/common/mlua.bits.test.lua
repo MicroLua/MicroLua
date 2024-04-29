@@ -29,10 +29,10 @@ function test_bit_counts(t)
         {int64('0x0000000000000000'), 64, 64, 0},
     } do
         local arg, lz, tz, ones = table.unpack(test)
-        t:expect(t:expr(bits).leading_zeros(arg)):eq(lz)
-        t:expect(t:expr(bits).trailing_zeros(arg)):eq(tz)
-        t:expect(t:expr(bits).ones(arg)):eq(ones)
-        t:expect(t:expr(bits).parity(arg)):eq(ones % 2)
+        t:expect(t.expr(bits).leading_zeros(arg)):eq(lz)
+        t:expect(t.expr(bits).trailing_zeros(arg)):eq(tz)
+        t:expect(t.expr(bits).ones(arg)):eq(ones)
+        t:expect(t.expr(bits).parity(arg)):eq(ones % 2)
     end
 end
 
@@ -50,6 +50,6 @@ function test_mask(t)
         {64, int64('0xffffffffffffffff')},
     } do
         local arg, want = table.unpack(test)
-        t:expect(t:expr(bits).mask(arg)):fmt(hex):eq(want)
+        t:expect(t.expr(bits).mask(arg)):fmt(hex):eq(want)
     end
 end

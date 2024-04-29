@@ -41,7 +41,7 @@ function test_hex(t)
         {{int64(0x1234), 16}, '0000000000001234'},
     } do
         local args, want = table.unpack(test)
-        t:expect(t:expr(int64).hex(table.unpack(args))):eq(want)
+        t:expect(t.expr(int64).hex(table.unpack(args))):eq(want)
     end
 end
 
@@ -58,7 +58,7 @@ function test_tointeger(t)
          math.mininteger <= int64.min and -9223372036854775808 or nil},
     } do
         local value, want = table.unpack(test)
-        t:expect(t:expr(int64).tointeger(value)):eq(want)
+        t:expect(t.expr(int64).tointeger(value)):eq(want)
     end
 end
 
@@ -71,7 +71,7 @@ function test_tonumber(t)
         {int64.min, -9223372036854775808.0},
     } do
         local value, want = table.unpack(test)
-        t:expect(t:expr(int64).tonumber(value)):eq(want)
+        t:expect(t.expr(int64).tonumber(value)):eq(want)
     end
 end
 

@@ -24,24 +24,24 @@ end
 
 function test_read_write_width(t)
     base.write32(scratch, 0x01234567)
-    t:expect(t:expr(base).read8(scratch)):eq(0x67)
-    t:expect(t:expr(base).read8(scratch + 1)):eq(0x45)
-    t:expect(t:expr(base).read8(scratch + 2)):eq(0x23)
-    t:expect(t:expr(base).read8(scratch + 3)):eq(0x01)
-    t:expect(t:expr(base).read16(scratch)):eq(0x4567)
-    t:expect(t:expr(base).read16(scratch + 2)):eq(0x0123)
-    t:expect(t:expr(base).read32(scratch)):eq(0x01234567)
+    t:expect(t.expr(base).read8(scratch)):eq(0x67)
+    t:expect(t.expr(base).read8(scratch + 1)):eq(0x45)
+    t:expect(t.expr(base).read8(scratch + 2)):eq(0x23)
+    t:expect(t.expr(base).read8(scratch + 3)):eq(0x01)
+    t:expect(t.expr(base).read16(scratch)):eq(0x4567)
+    t:expect(t.expr(base).read16(scratch + 2)):eq(0x0123)
+    t:expect(t.expr(base).read32(scratch)):eq(0x01234567)
 
     -- Narrow writes to hardware registers are replicated across the whole word.
     base.write8(scratch, 0x42)
-    t:expect(t:expr(base).read32(scratch)):eq(0x42424242)
+    t:expect(t.expr(base).read32(scratch)):eq(0x42424242)
     base.write16(scratch, 0xabcd)
-    t:expect(t:expr(base).read32(scratch)):eq(0xabcdabcd)
+    t:expect(t.expr(base).read32(scratch)):eq(0xabcdabcd)
 end
 
 function test_alignment(t)
-    t:expect(t:expr(base).read16(scratch + 1)):raises("not 16%-bit aligned")
-    t:expect(t:expr(base).read32(scratch + 2)):raises("not 32%-bit aligned")
+    t:expect(t.expr(base).read16(scratch + 1)):raises("not 16%-bit aligned")
+    t:expect(t.expr(base).read32(scratch + 2)):raises("not 32%-bit aligned")
 end
 
 function test_atomic_hw_bit_ops(t)

@@ -33,7 +33,7 @@ function test_len(t)
         {{[0] = 7}, 4, 7, {[0] = 4}},
     } do
         local arg, new, want, want_list = table.unpack(test)
-        t:expect(t:expr(list).len(arg, new)):eq(want)
+        t:expect(t.expr(list).len(arg, new)):eq(want)
         t:expect(arg):label("list"):eq(want_list, util.table_eq)
     end
 end
@@ -50,8 +50,8 @@ function test_eq(t)
         {{1, 2, 3, a = 4}, {1, 2, 3, b = 5}, true},
     } do
         local a, b, want = table.unpack(test)
-        t:expect(t:expr(list).eq(a, b)):eq(want)
-        t:expect(t:expr(list).eq(b, a)):eq(want)
+        t:expect(t.expr(list).eq(a, b)):eq(want)
+        t:expect(t.expr(list).eq(b, a)):eq(want)
     end
 end
 
@@ -176,7 +176,7 @@ function test_sort(t)
         },
     } do
         local args, want = table.unpack(test)
-        t:expect(t:expr(list).sort(table.unpack(args))):eq(want, list.eq)
+        t:expect(t.expr(list).sort(table.unpack(args))):eq(want, list.eq)
     end
 end
 
@@ -191,7 +191,7 @@ function test_concat(t)
         {{{'a', 'b', 'c', 'd'}, ',', 3, 2}, ''},
     } do
         local args, want = table.unpack(test)
-        t:expect(t:expr(list).concat(table.unpack(args))):eq(want)
+        t:expect(t.expr(list).concat(table.unpack(args))):eq(want)
     end
 end
 
@@ -210,7 +210,7 @@ function test_find(t)
         {{{[0] = 7, [5] = 'a'}, 'a'}, 5},
     } do
         local args, want = table.unpack(test)
-        t:expect(t:expr(list).find(table.unpack(args))):eq(want)
+        t:expect(t.expr(list).find(table.unpack(args))):eq(want)
     end
 end
 

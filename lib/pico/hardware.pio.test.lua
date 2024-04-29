@@ -29,12 +29,12 @@ function test_config(t)
         :set_fifo_join(pio.FIFO_JOIN_RX)
         :set_out_special(true, true, 11)
         :set_mov_status(pio.STATUS_RX_LESSTHAN, 5)
-    t:expect(t:expr(cfg):clkdiv()):fmt(hex8):eq((123 << 16) | (45 << 8))
-    t:expect(t:expr(cfg):execctrl()):fmt(hex8)
+    t:expect(t.expr(cfg):clkdiv()):fmt(hex8):eq((123 << 16) | (45 << 8))
+    t:expect(t.expr(cfg):execctrl()):fmt(hex8)
         :eq(0x60060010 | (8 << 24) | (11 << 19) | (13 << 12) | (7 << 7) | 5)
-    t:expect(t:expr(cfg):shiftctrl()):fmt(hex8)
+    t:expect(t.expr(cfg):shiftctrl()):fmt(hex8)
         :eq(0x800f0000 | (10 << 25) | (9 << 20))
-    t:expect(t:expr(cfg):pinctrl()):fmt(hex8)
+    t:expect(t.expr(cfg):pinctrl()):fmt(hex8)
         :eq((1 << 29) | (4 << 26) | (2 << 20) | (5 << 15) | (6 << 10)
             | (3 << 5) | 1)
 end
@@ -52,8 +52,8 @@ end
 function test_PIO_index_base(t)
     for i = 0, pio.NUM - 1 do
         local inst = pio[i]
-        t:expect(t:expr(inst):get_index()):eq(i)
-        t:expect(t:expr(inst):regs()):eq(addressmap[('PIO%s_BASE'):format(i)])
+        t:expect(t.expr(inst):get_index()):eq(i)
+        t:expect(t.expr(inst):regs()):eq(addressmap[('PIO%s_BASE'):format(i)])
     end
 end
 
@@ -65,10 +65,10 @@ local function setup(t, prog, clkdiv, irq_mask)
     sm:claim();
     t:cleanup(function()
         sm:unclaim()
-        t:expect(t:expr(sm):is_claimed()):eq(false)
+        t:expect(t.expr(sm):is_claimed()):eq(false)
     end)
-    t:expect(t:expr(sm):index()):eq(2)
-    t:expect(t:expr(sm):is_claimed()):eq(true)
+    t:expect(t.expr(sm):index()):eq(2)
+    t:expect(t.expr(sm):is_claimed()):eq(true)
 
     -- Enable IRQs if non-blocking behavior is enabled.
     if not thread.blocking() then
@@ -80,7 +80,7 @@ local function setup(t, prog, clkdiv, irq_mask)
     end
 
     -- Load the program.
-    t:assert(t:expr(inst):can_add_program(prog)):eq(true)
+    t:assert(t.expr(inst):can_add_program(prog)):eq(true)
     local off = inst:add_program(prog)
     t:expect(off):label("offset"):eq(32 - #prog)
     t:cleanup(function() inst:remove_program(prog, off) end)
@@ -142,7 +142,7 @@ function test_irqs_BNB(t)
         local pending = inst:wait_irq(0xf)
         log:append(pending)
         for j = 0, pio.NUM_SYS_IRQS - 1 do
-            t:expect(t:expr(inst):interrupt_get(j))
+            t:expect(t.expr(inst):interrupt_get(j))
                 :eq((pending & (1 << j) ~= 0))
         end
         inst:interrupt_clear_mask(pending)

@@ -34,7 +34,7 @@ function test_time_computation(t)
         {'is_nil_time', {time.nil_time}, true},
     } do
         local fn, args, want = table.unpack(test)
-        t:expect(t:expr(time)[fn](table.unpack(args))):eq(want)
+        t:expect(t.expr(time)[fn](table.unpack(args))):eq(want)
     end
 end
 
@@ -147,7 +147,7 @@ function test_alarm_repeat(t)
         alarm:join()
 
         local want = {1000, 3000, 6000}
-        t:expect(t:expr(got):len()):eq(#want)
+        t:expect(t.expr(got):len()):eq(#want)
         for i = 1, #want do
             t:expect(got[i] - start):label("alarm[%s]", i)
                 :gte(want[i]):lt(want[i] + 1500)
@@ -161,14 +161,14 @@ function test_cancel_alarm(t)
     -- Cancel before the alarm thread starts.
     local triggered = false
     local alarm = time.add_alarm_in_ms(10000, function() triggered = true end)
-    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(t.expr(time).cancel_alarm(alarm)):eq(true)
     t:expect(triggered):label("triggered"):eq(false)
 
     -- Cancel before the sleep elapses.
     local triggered = false
     local alarm = time.add_alarm_in_ms(10000, function() triggered = true end)
     thread.yield()
-    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(t.expr(time).cancel_alarm(alarm)):eq(true)
     t:expect(triggered):label("triggered"):eq(false)
 
     -- Cancel while the callback runs.
@@ -179,14 +179,14 @@ function test_cancel_alarm(t)
         triggered = true
     end)
     thread.suspend()
-    t:expect(t:expr(time).cancel_alarm(alarm)):eq(true)
+    t:expect(t.expr(time).cancel_alarm(alarm)):eq(true)
     t:expect(triggered):label("triggered"):eq(false)
 
     -- Cancel after the callback terminates.
     local triggered = false
     local alarm = time.add_alarm_in_us(100, function() triggered = true end)
     alarm:join()
-    t:expect(t:expr(time).cancel_alarm(alarm)):eq(false)
+    t:expect(t.expr(time).cancel_alarm(alarm)):eq(false)
     t:expect(triggered):label("triggered"):eq(true)
 end
 
@@ -207,7 +207,7 @@ function test_add_repeating_timer(t)
             alarm:join()
 
             local want = {2000, 4000, 7000, 10000, 12000}
-            t:expect(t:expr(got):len()):eq(#want)
+            t:expect(t.expr(got):len()):eq(#want)
             for i = 1, #want do
                 t:expect(got[i] - start):label("%s: alarm[%s]", fn, i)
                     :gte(want[i]):lt(want[i] + 1500)

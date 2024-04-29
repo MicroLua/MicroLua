@@ -38,7 +38,7 @@ function test_run(t)
     -- Exercise the program.
     for i = 0, 10 do
         sm:put_blocking(1)
-        t:expect(t:expr(sm):get_blocking()):eq(i)
+        t:expect(t.expr(sm):get_blocking()):eq(i)
     end
 end
 
@@ -354,8 +354,8 @@ local function assemble(t, name)
     local prog = asm.assemble(_ENV[name])
     local want = _ENV['want_' .. name]
     t:expect(prog):label('instr'):fmt(instructions):eq(want.instr, list.eq)
-    t:expect(t:expr(prog).labels):eq(want.labels, util.table_eq)
-    t:expect(t:expr(prog).origin):eq(want.origin)
+    t:expect(t.expr(prog).labels):eq(want.labels, util.table_eq)
+    t:expect(t.expr(prog).origin):eq(want.origin)
     local cfg = prog:config(0)
     local wcfg = pio.get_default_sm_config()
     want.config(wcfg)

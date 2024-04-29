@@ -12,7 +12,7 @@ function test_read(t)
     function Reader:read(arg) return tostring(arg) end
     t:patch(_G, 'stdin', Reader())
 
-    t:expect(t:expr(io).read(1234)):eq('1234')
+    t:expect(t.expr(io).read(1234)):eq('1234')
 end
 
 function test_write(t)

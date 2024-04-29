@@ -23,26 +23,26 @@ function test_status_BNB(t)
     -- Initial state
     fifo.drain()
     fifo.clear_irq()
-    t:expect(t:expr(fifo).rvalid()):eq(false)
-    t:expect(t:expr(fifo).wready()):eq(true)
-    t:expect(t:expr(fifo).get_status()):eq(fifo.RDY)
+    t:expect(t.expr(fifo).rvalid()):eq(false)
+    t:expect(t.expr(fifo).wready()):eq(true)
+    t:expect(t.expr(fifo).get_status()):eq(fifo.RDY)
 
     -- Read status
     multicore.launch_core1(module_name, 'core1_push_one')
     t:cleanup(multicore.reset_core1)
     while not fifo.rvalid() do thread.yield() end
-    t:expect(t:expr(fifo).get_status()):eq(fifo.RDY | fifo.VLD)
-    t:expect(t:expr(fifo).pop_timeout_us(100)):eq(1)
-    t:expect(t:expr(fifo).rvalid()):eq(false)
-    t:expect(t:expr(fifo).get_status()):eq(fifo.RDY)
-    t:expect(t:expr(fifo).pop_timeout_us(100)):eq(nil)
+    t:expect(t.expr(fifo).get_status()):eq(fifo.RDY | fifo.VLD)
+    t:expect(t.expr(fifo).pop_timeout_us(100)):eq(1)
+    t:expect(t.expr(fifo).rvalid()):eq(false)
+    t:expect(t.expr(fifo).get_status()):eq(fifo.RDY)
+    t:expect(t.expr(fifo).pop_timeout_us(100)):eq(nil)
 
     -- Write status
     while fifo.wready() do
-        t:expect(t:expr(fifo).push_timeout_us(0, 100)):eq(true)
+        t:expect(t.expr(fifo).push_timeout_us(0, 100)):eq(true)
     end
-    t:expect(t:expr(fifo).push_timeout_us(0, 100)):eq(false)
-    t:expect(t:expr(fifo).get_status()):eq(0)
+    t:expect(t.expr(fifo).push_timeout_us(0, 100)):eq(false)
+    t:expect(t.expr(fifo).get_status()):eq(0)
 end
 
 function core1_push_one()
@@ -61,7 +61,7 @@ function test_push_pop_BNB(t)
     end
     for i = 1, 10 do
         fifo.push_blocking(i)
-        t:expect(t:expr(fifo).pop_blocking()):eq(i)
+        t:expect(t.expr(fifo).pop_blocking()):eq(i)
     end
 end
 

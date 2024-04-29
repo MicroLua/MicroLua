@@ -12,7 +12,7 @@ local time = require 'mlua.time'
 local string = require 'string'
 
 function test_Thread_name(t)
-    t:expect(t:expr(thread).running():name()):eq('main')
+    t:expect(t.expr(thread).running():name()):eq('main')
     local th1<close> = thread.start(function() end)
     t:expect(t.expr.th1:name())
         :eq((tostring(th1):gsub('^[^:]+: (0?x?[0-9a-fA-F]+)$', '%1')))
@@ -24,7 +24,7 @@ end
 function test_Thread_suspend_resume(t)
     local want
     local th<close> = thread.start(function()
-        t:expect(t:expr(thread).running()):eq(want)
+        t:expect(t.expr(thread).running()):eq(want)
         thread.suspend()
     end)
     want = th
@@ -41,7 +41,7 @@ function test_Thread_suspend_resume(t)
 end
 
 function test_Thread_kill(t)
-    t:expect(t:expr(thread).running():kill()):raises("kill itself")
+    t:expect(t.expr(thread).running():kill()):raises("kill itself")
     for _, suspend in ipairs{false, true} do
         local closed = false
         local th<close> = thread.start(function()
@@ -50,13 +50,13 @@ function test_Thread_kill(t)
             error("never reached")
         end)
         thread.yield()
-        t:expect(t:expr(th):is_alive()):eq(true)
+        t:expect(t.expr(th):is_alive()):eq(true)
         t:expect(th:is_alive(), "Thread is dead before kill")
         t:expect(not closed, "Cleanup has run before kill")
-        t:expect(t:expr(th):kill()):eq(true)
+        t:expect(t.expr(th):kill()):eq(true)
         t:expect(not th:is_alive(), "Killed thread is alive")
         t:expect(closed, "Cleanup hasn't run on kill")
-        t:expect(t:expr(th):kill()):eq(false)
+        t:expect(t.expr(th):kill()):eq(false)
     end
 end
 
@@ -159,19 +159,19 @@ end
 function test_blocking(t)
     t:cleanup(function() thread.blocking(false) end)
     local ths<close> = thread.Group()
-    t:expect(t:expr(thread).blocking()):eq(false)
+    t:expect(t.expr(thread).blocking()):eq(false)
     ths:start(function()
-        t:expect(t:expr(thread).blocking()):eq(false)
+        t:expect(t.expr(thread).blocking()):eq(false)
     end)
-    t:expect(t:expr(thread).blocking(true)):eq(false)
-    t:expect(t:expr(thread).blocking()):eq(true)
+    t:expect(t.expr(thread).blocking(true)):eq(false)
+    t:expect(t.expr(thread).blocking()):eq(true)
     ths:start(function()
-        t:expect(t:expr(thread).blocking()):eq(true)
+        t:expect(t.expr(thread).blocking()):eq(true)
     end)
-    t:expect(t:expr(thread).blocking(false)):eq(true)
-    t:expect(t:expr(thread).blocking()):eq(false)
+    t:expect(t.expr(thread).blocking(false)):eq(true)
+    t:expect(t.expr(thread).blocking()):eq(false)
     ths:start(function()
-        t:expect(t:expr(thread).blocking()):eq(false)
+        t:expect(t.expr(thread).blocking()):eq(false)
     end)
     ths:join()
 end

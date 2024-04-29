@@ -14,11 +14,11 @@ local pico = require 'pico'
 local function hex8(v) return ('0x%08x'):format(v) end
 
 function test_introspect(t)
-    t:expect(t:expr(pwm).gpio_to_slice_num(13)):eq(6)
-    t:expect(t:expr(pwm).gpio_to_channel(13)):eq(pwm.CHAN_B)
-    t:expect(t:expr(pwm).regs()):fmt(hex8):eq(addressmap.PWM_BASE)
+    t:expect(t.expr(pwm).gpio_to_slice_num(13)):eq(6)
+    t:expect(t.expr(pwm).gpio_to_channel(13)):eq(pwm.CHAN_B)
+    t:expect(t.expr(pwm).regs()):fmt(hex8):eq(addressmap.PWM_BASE)
     for i = 0, pwm.NUM_SLICES - 1 do
-        t:expect(t:expr(pwm).regs(i)):fmt(hex8)
+        t:expect(t.expr(pwm).regs(i)):fmt(hex8)
             :eq(addressmap.PWM_BASE + i * regs.CH1_CSR_OFFSET)
     end
 end
@@ -42,15 +42,15 @@ function test_config(t)
         :set_clkdiv_mode(pwm.DIV_FREE_RUNNING)
         :set_output_polarity(false, true)
         :set_wrap(1)
-    t:expect(t:expr(cfg):csr()):eq(0x0a)
-    t:expect(t:expr(cfg):div()):eq(1 << 4)
-    t:expect(t:expr(cfg):top()):eq(1)
+    t:expect(t.expr(cfg):csr()):eq(0x0a)
+    t:expect(t.expr(cfg):div()):eq(1 << 4)
+    t:expect(t.expr(cfg):top()):eq(1)
 
     pwm.init(slice, cfg, true)
     pwm.set_gpio_level(pin, 0)
-    t:expect(t:expr(gpio).get_pad(pin)):eq(true)
+    t:expect(t.expr(gpio).get_pad(pin)):eq(true)
     pwm.set_gpio_level(pin, 2)
-    t:expect(t:expr(gpio).get_pad(pin)):eq(false)
+    t:expect(t.expr(gpio).get_pad(pin)):eq(false)
 end
 
 function test_free_running(t)
@@ -63,16 +63,16 @@ function test_free_running(t)
     pwm.set_wrap(slice, wrap)
 
     pwm.set_counter(slice, 0)
-    t:expect(t:expr(pwm).get_counter(slice)):eq(0)
+    t:expect(t.expr(pwm).get_counter(slice)):eq(0)
     local value = wrap // 2
     pwm.set_chan_level(slice, chan, value)
-    t:expect(t:expr(gpio).get_pad(pin)):eq(true)
+    t:expect(t.expr(gpio).get_pad(pin)):eq(true)
     pwm.set_mask_enabled(1 << slice, true)
-    t:expect(t:expr(pwm).get_counter(slice)):gt(0)
+    t:expect(t.expr(pwm).get_counter(slice)):gt(0)
     while pwm.get_counter(slice) < value do end
-    t:expect(t:expr(gpio).get_pad(pin)):eq(false)
+    t:expect(t.expr(gpio).get_pad(pin)):eq(false)
     while pwm.get_counter(slice) >= value do end
-    t:expect(t:expr(gpio).get_pad(pin)):eq(true)
+    t:expect(t.expr(gpio).get_pad(pin)):eq(true)
 end
 
 function test_irq_handler(t)

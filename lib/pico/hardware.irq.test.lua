@@ -13,11 +13,11 @@ function test_pending(t)
     t:cleanup(function() irq.user_irq_unclaim(num) end)
 
     irq.clear(num)
-    t:expect(t:expr(irq).is_pending(num)):eq(false)
+    t:expect(t.expr(irq).is_pending(num)):eq(false)
     irq.set_pending(num)
-    t:expect(t:expr(irq).is_pending(num)):eq(true)
+    t:expect(t.expr(irq).is_pending(num)):eq(true)
     irq.clear(num)
-    t:expect(t:expr(irq).is_pending(num)):eq(false)
+    t:expect(t.expr(irq).is_pending(num)):eq(false)
 end
 
 function test_user_irqs(t)

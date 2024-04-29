@@ -18,10 +18,10 @@ local function for_each_ticks(t, fn)
 end
 
 function test_ticks(t)
-    t:expect(t:expr(time).ticks_per_second):eq(1e6)
-    t:expect(t:expr(time).ticks64())
+    t:expect(t.expr(time).ticks_per_second):eq(1e6)
+    t:expect(t.expr(time).ticks64())
         :gte(time.min_ticks):lte(time.max_ticks)
-    t:expect(t:expr(time).ticks()):apply(math.type):op('type is'):eq('integer')
+    t:expect(t.expr(time).ticks()):apply(math.type):op('type is'):eq('integer')
 
     for_each_ticks(t, function(ticks)
         for i = 1, 10 do

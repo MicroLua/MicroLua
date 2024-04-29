@@ -17,8 +17,8 @@ local module_name = ...
 function test_index_base(t)
     for i = 0, i2c.NUM - 1 do
         local inst = i2c[i]
-        t:expect(t:expr(inst):hw_index()):eq(i)
-        t:expect(t:expr(inst):regs()):eq(addressmap[('I2C%s_BASE'):format(i)])
+        t:expect(t.expr(inst):hw_index()):eq(i)
+        t:expect(t.expr(inst):regs()):eq(addressmap[('I2C%s_BASE'):format(i)])
     end
 end
 
@@ -62,16 +62,16 @@ function test_master_BNB(t)
 
     -- Write some data, then read it back.
     local data = 'abcdefghijklmnopqrstuvwxyz012345'
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x00' .. data, false))
+    t:expect(t.expr(master):write_blocking(slave_addr, '\x00' .. data, false))
         :eq(1 + #data)
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x07', true)):eq(1)
-    t:expect(t:expr(master):read_blocking(slave_addr, 25, true))
+    t:expect(t.expr(master):write_blocking(slave_addr, '\x07', true)):eq(1)
+    t:expect(t.expr(master):read_blocking(slave_addr, 25, true))
         :eq('hijklmnopqrstuvwxyz012345')
-    t:expect(t:expr(master):read_blocking(slave_addr, 7, false)):eq('abcdefg')
+    t:expect(t.expr(master):read_blocking(slave_addr, 7, false)):eq('abcdefg')
 
     -- Perform a large read.
-    t:expect(t:expr(master):write_blocking(slave_addr, '\x00', true)):eq(1)
-    t:expect(t:expr(master):read_blocking(slave_addr, 10 * #data, false))
+    t:expect(t.expr(master):write_blocking(slave_addr, '\x00', true)):eq(1)
+    t:expect(t.expr(master):read_blocking(slave_addr, 10 * #data, false))
         :eq(data:rep(10))
 end
 

@@ -40,17 +40,17 @@ function test_watchdog(t)
 
     disable()
     t:expect(is_enabled()):label("watchdog enabled"):eq(false)
-    t:expect(t:expr(watchdog).enable_caused_reboot()):eq(false)
+    t:expect(t.expr(watchdog).enable_caused_reboot()):eq(false)
 
     watchdog.enable(1, true)
     inhibit_reset()
     t:expect(is_enabled()):label("watchdog enabled"):eq(true)
     -- CTRL.TIME doesn't decrement, despite what the documentation says
     -- <https://github.com/raspberrypi/pico-sdk/issues/1492>.
-    t:expect(t:expr(watchdog).get_count()):gt(0)
+    t:expect(t.expr(watchdog).get_count()):gt(0)
     t:expect(scratch4()):label("SCRATCH4"):eq(0x6ab73121)
     watchdog.update()
     time.sleep_for(1000)
-    t:expect(t:expr(watchdog).caused_reboot()):eq(true)
-    t:expect(t:expr(watchdog).enable_caused_reboot()):eq(true)
+    t:expect(t.expr(watchdog).caused_reboot()):eq(true)
+    t:expect(t.expr(watchdog).enable_caused_reboot()):eq(true)
 end

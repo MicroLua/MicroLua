@@ -17,7 +17,7 @@ function test_join(t)
         {{'abc', 'def', '/ghi', 'jkl'}, '/ghi/jkl'},
     } do
         local args, want = table.unpack(test)
-        t:expect(t:expr(fs).join(table.unpack(args))):eq(want)
+        t:expect(t.expr(fs).join(table.unpack(args))):eq(want)
     end
 end
 
@@ -36,6 +36,6 @@ function test_split(t)
         {'///', {'///', ''}},
     } do
         local arg, want = table.unpack(test)
-        t:expect(t:mexpr(fs).split(arg)):eq(want)
+        t:expect(t.mexpr(fs).split(arg)):eq(want)
     end
 end
