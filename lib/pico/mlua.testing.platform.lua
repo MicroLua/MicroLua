@@ -19,11 +19,8 @@ local function xip_hit_rate(hit1, acc1, hit2, acc2)
     return ('%.1f%%'):format(100.0 * (hit / acc))
 end
 
-function Test:_main_start()
-    pico.xip_ctr(true)  -- Clear XIP counters
-end
-
 function Test:_pre_run()
+    if not self.parent then pico.xip_ctr(true) end  -- Clear XIP counters
     self._xip_hit, self._xip_acc = pico.xip_ctr()
 end
 
@@ -38,12 +35,13 @@ function Test:_print_stats(out, indent)
     io.fprintf(out, "%s Flash: XIP cache: %s\n", indent, self._xip_hit)
 end
 
-function Test:_print_main_stats()
+function Test:_print_main_stats(out)
     local xhr = xip_hit_rate(0, 0, pico.xip_ctr())
     local size = standard_link.heap_end - standard_link.heap_start
     local alloc, used = mem.mallinfo()
-    io.printf("Heap: %s B, allocated: %s B (%.1f%%), used: %s B (%.1f%%)\n",
-              size, alloc, 100 * (alloc / size), used, 100 * (used / size))
-    io.printf('Flash: binary: %s B, XIP cache: %s\n',
-              pico.flash_binary_end - pico.flash_binary_start, xhr)
+    io.fprintf(
+        out, "Heap: %s B, allocated: %s B (%.1f%%), used: %s B (%.1f%%)\n",
+        size, alloc, 100 * (alloc / size), used, 100 * (used / size))
+    io.fprintf(out, 'Flash: binary: %s B, XIP cache: %s\n',
+               pico.flash_binary_end - pico.flash_binary_start, xhr)
 end

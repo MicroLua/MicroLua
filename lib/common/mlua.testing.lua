@@ -403,11 +403,6 @@ end
 
 function Test:run(name, fn) return Test(name, self):_run(fn) end
 
-function Test:_hook(name, ...)
-    local fn = self[name]
-    if fn then return fn(self, ...) end
-end
-
 function Test:_prepare_alloc_stats()
     collectgarbage()
     local count, size, used = alloc_stats(true)
@@ -437,11 +432,16 @@ function Test:_print_alloc_stats(out, indent)
     end
 end
 
+function Test:_pre_run() end
+function Test:_post_run() end
+function Test:_print_stats() end
+function Test:_print_main_stats() end
+
 function Test:_run(fn)
     local root, level = self:_root()
     self:_progress_tick()
     self:_prepare_alloc_stats()
-    self:_hook('_pre_run')
+    self:_pre_run()
     self:_capture_output()
     local start = time.ticks()
     self:_pcall(fn, self)
@@ -454,7 +454,7 @@ function Test:_run(fn)
 
     -- Compute stats.
     self:_restore_output()
-    self:_hook('_post_run')
+    self:_post_run()
     self:_compute_alloc_stats()
     if self._error then root.nerror = root.nerror + 1
     elseif self:failed() then root.nfail = root.nfail + 1
@@ -474,7 +474,7 @@ function Test:_run(fn)
                    right)
         if opts.stats then
             self:_print_alloc_stats(out, indent .. ' ')
-            self:_hook('_print_stats', out, indent)
+            self:_print_stats(out, indent)
         end
     end
 end
@@ -608,7 +608,6 @@ end
 function Test:_main(runs)
     io.aprintf("@{CLR}Running tests\n")
     self._stdout = stdout
-    self:_hook('_main_start')
     self:_progress_start(stdout)
     local start = time.ticks()
     self:_run(function(t)
@@ -625,7 +624,7 @@ function Test:_main(runs)
               self.npass + self.nskip + self.nfail + self.nerror,
               dt / time.ticks_per_second)
     self:_print_alloc_stats(stdout, '')
-    self:_hook('_print_main_stats')
+    self:_print_main_stats(stdout)
     io.printf("Result: %s\n", io.ansi(self:_result()))
 end
 
