@@ -269,8 +269,7 @@ function Matcher:raises(want)
     if ok then
         self:_fail("%s didn't raise an error", self:_label())
     elseif want and not err:find(want) then
-        self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n"
-                   .. "  @{+WHITE}%s@{NORM}",
+        self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n  @{+WHITE}%s@{NORM}",
                    self:_label(), repr(want), err)
     end
 end
@@ -618,8 +617,7 @@ function Test:_main(runs)
     end)
     local dt = time.ticks() - start
     self:_progress_end('')
-    io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total"
-              .. " in %.3f s\n",
+    io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total in %.3f s\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror,
               dt / time.ticks_per_second)

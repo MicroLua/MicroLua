@@ -59,8 +59,7 @@ function test_loading(t)
     t:expect(p):label("b.path"):eq(('/%s.b.lua'):format(prefix))
 
     t:expect(t:expr(_G).require('not_found'))
-        :raises("\t/lua/not_found%.lua: no such file or directory\n" ..
-                "\t/not_found%.lua: no such file or directory")
+        :raises("\t/lua/not_found%.lua: no such file or directory\n\t/not_found%.lua: no such file or directory")
 
     write_file(loader.fs, '/invalid.lua', 'abcde')
     t:expect(t:expr(_G).require('invalid'))
