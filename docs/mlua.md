@@ -912,6 +912,12 @@ to run the configured main function, then runs `main()`.
 - `main()`\
   Run the thread scheduler loop.
 
+- `stats() -> (dispatches, waits, resumes)`\
+  Return statistics about the thread scheduler. `dispatches` is the number of
+  event dispatch cycles. `waits` is the number of dispatch cycles where the
+  scheduler slept to wait for events. `resumes` is the number of times control
+  has been given to a thread.
+
 ### `Thread`
 
 This type represents an independent thread of execution. Threads are implemented
