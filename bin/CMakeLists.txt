@@ -37,6 +37,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 endif()
 mlua_target_config(mlua_tests
     HASH_SYMBOL_TABLES:integer=MLUA_HASH_SYMBOL_TABLES
+    GPIO_PIN1:integer=2
+    GPIO_PIN2:integer=3
     I2C_MASTER_SCL:integer=5
     I2C_MASTER_SDA:integer=4
     I2C_SLAVE_SCL:integer=7

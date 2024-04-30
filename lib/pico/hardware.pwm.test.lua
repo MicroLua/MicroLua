@@ -7,9 +7,14 @@ local gpio = require 'hardware.gpio'
 local pwm = require 'hardware.pwm'
 local addressmap = require 'hardware.regs.addressmap'
 local regs = require 'hardware.regs.pwm'
+local config = require 'mlua.config'
 local thread = require 'mlua.thread'
 local util = require 'mlua.util'
 local pico = require 'pico'
+
+local pin = config.GPIO_PIN1
+local slice = pwm.gpio_to_slice_num(pin)
+local chan = pwm.gpio_to_channel(pin)
 
 local function hex8(v) return ('0x%08x'):format(v) end
 
@@ -24,25 +29,22 @@ function test_introspect(t)
 end
 
 local function setup(t)
-    local pin = pico.DEFAULT_LED_PIN
     gpio.set_function(pin, gpio.FUNC_PWM)
-    local slice = pwm.gpio_to_slice_num(pin)
     t:cleanup(function()
         gpio.deinit(pin)
         pwm.set_enabled(slice, false)
     end)
-    return pin, slice, pwm.gpio_to_channel(pin)
 end
 
 function test_config(t)
-    pin, slice = setup(t)
+    setup(t)
     local cfg = pwm.get_default_config()
         :set_phase_correct(true)
         :set_clkdiv_int(1)
         :set_clkdiv_mode(pwm.DIV_FREE_RUNNING)
-        :set_output_polarity(false, true)
+        :set_output_polarity(true, true)
         :set_wrap(1)
-    t:expect(t.expr(cfg):csr()):eq(0x0a)
+    t:expect(t.expr(cfg):csr()):eq(0x0e)
     t:expect(t.expr(cfg):div()):eq(1 << 4)
     t:expect(t.expr(cfg):top()):eq(1)
 
@@ -54,7 +56,7 @@ function test_config(t)
 end
 
 function test_free_running(t)
-    pin, slice, chan = setup(t)
+    setup(t)
     pwm.set_clkdiv_int_frac(slice, 10)
     pwm.set_output_polarity(slice, false, false)
     pwm.set_clkdiv_mode(slice, pwm.DIV_FREE_RUNNING)

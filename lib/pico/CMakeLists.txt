@@ -167,7 +167,6 @@ target_link_libraries(mlua_test_hardware.gpio INTERFACE
     mlua_mod_mlua.list
     mlua_mod_mlua.thread
     mlua_mod_mlua.util
-    mlua_mod_pico
     mlua_mod_string
 )
 
