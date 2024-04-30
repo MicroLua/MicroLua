@@ -20,6 +20,14 @@ extern "C" {
 // Require the mlua.thread module.
 void mlua_thread_require(lua_State* ls);
 
+// Define a symbol that resolves to a function if the mlua.thread module is
+// available, or to false otherwise.
+#if LIB_MLUA_MOD_MLUA_THREAD
+#define MLUA_SYM_F_THREAD(n, p) MLUA_SYM_F(n, p)
+#else
+#define MLUA_SYM_F_THREAD(n, p) MLUA_SYM_V(n, boolean, false)
+#endif
+
 #if !LIB_MLUA_MOD_MLUA_THREAD
 #define mlua_thread_require(ls) do {} while(0)
 #endif

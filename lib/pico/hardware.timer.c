@@ -151,11 +151,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(claim_unused, mod_),
     MLUA_SYM_F(unclaim, mod_),
     MLUA_SYM_F(is_claimed, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(set_callback, mod_),
-#else
-    MLUA_SYM_V(set_callback, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(set_callback, mod_),
     MLUA_SYM_F(set_target, mod_),
     MLUA_SYM_F(cancel, mod_),
     MLUA_SYM_F(force_irq, mod_),

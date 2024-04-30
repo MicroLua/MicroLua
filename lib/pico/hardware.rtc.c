@@ -197,11 +197,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_datetime, mod_),
     MLUA_SYM_F(get_datetime, mod_),
     MLUA_SYM_F(running, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(set_alarm, mod_),
-#else
-    MLUA_SYM_V(set_alarm, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(set_alarm, mod_),
     MLUA_SYM_F(enable_alarm, mod_),
     MLUA_SYM_F(disable_alarm, mod_),
 };

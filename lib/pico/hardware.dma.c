@@ -396,11 +396,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(get_timer_dreq, mod_),
     MLUA_SYM_F(channel_cleanup, mod_),
     MLUA_SYM_F(wait_irq, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(enable_irq, mod_),
-#else
-    MLUA_SYM_V(enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(enable_irq, mod_),
 };
 
 MLUA_OPEN_MODULE(hardware.dma) {

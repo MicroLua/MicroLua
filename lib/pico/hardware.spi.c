@@ -298,11 +298,7 @@ MLUA_SYMBOLS(SPI_syms) = {
     MLUA_SYM_F(read_blocking, SPI_),
     MLUA_SYM_F(get_dreq, SPI_),
     MLUA_SYM_F(enable_loopback, SPI_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(enable_irq, SPI_),
-#else
-    MLUA_SYM_V(enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(enable_irq, SPI_),
 };
 
 MLUA_SYMBOLS(module_syms) = {

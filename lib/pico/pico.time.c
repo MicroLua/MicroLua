@@ -246,13 +246,13 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(best_effort_wfe_or_timeout, mod_),
 
     // alarm_pool_*: not useful in Lua, as thread-based alarms are unlimited
-    MLUA_SYM_F(add_alarm_at, mod_),
-    MLUA_SYM_F(add_alarm_in_us, mod_),
-    MLUA_SYM_F(add_alarm_in_ms, mod_),
-    MLUA_SYM_F(cancel_alarm, mod_),
-    MLUA_SYM_F(add_repeating_timer_us, mod_),
-    MLUA_SYM_F(add_repeating_timer_ms, mod_),
-    MLUA_SYM_F(cancel_repeating_timer, mod_),
+    MLUA_SYM_F_THREAD(add_alarm_at, mod_),
+    MLUA_SYM_F_THREAD(add_alarm_in_us, mod_),
+    MLUA_SYM_F_THREAD(add_alarm_in_ms, mod_),
+    MLUA_SYM_F_THREAD(cancel_alarm, mod_),
+    MLUA_SYM_F_THREAD(add_repeating_timer_us, mod_),
+    MLUA_SYM_F_THREAD(add_repeating_timer_ms, mod_),
+    MLUA_SYM_F_THREAD(cancel_repeating_timer, mod_),
 };
 
 MLUA_OPEN_MODULE(pico.time) {

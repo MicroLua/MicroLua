@@ -580,11 +580,7 @@ MLUA_SYMBOLS(PIO_syms) = {
     MLUA_SYM_F(claim_sm_mask, PIO_),
     MLUA_SYM_F(claim_unused_sm, PIO_),
     MLUA_SYM_F(wait_irq, PIO_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(enable_irq, PIO_),
-#else
-    MLUA_SYM_V(enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(enable_irq, PIO_),
 };
 
 static int mod_get_default_sm_config(lua_State* ls) {

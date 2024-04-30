@@ -324,11 +324,7 @@ MLUA_SYMBOLS(UART_syms) = {
     MLUA_SYM_F(is_readable_within_us, UART_),
     MLUA_SYM_F(get_dreq, UART_),
     MLUA_SYM_F(enable_loopback, UART_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(enable_irq, UART_),
-#else
-    MLUA_SYM_V(enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(enable_irq, UART_),
 };
 
 MLUA_SYMBOLS(module_syms) = {

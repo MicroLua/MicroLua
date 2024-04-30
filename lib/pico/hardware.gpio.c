@@ -343,13 +343,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_drive_strength, mod_),
     MLUA_SYM_F(get_drive_strength, mod_),
     MLUA_SYM_F(set_irq_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(set_irq_callback, mod_),
-    MLUA_SYM_F(set_irq_enabled_with_callback, mod_),
-#else
-    MLUA_SYM_V(set_irq_callback, boolean, false),
-    MLUA_SYM_V(set_irq_enabled_with_callback, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(set_irq_callback, mod_),
+    MLUA_SYM_F_THREAD(set_irq_enabled_with_callback, mod_),
     MLUA_SYM_F(set_dormant_irq_enabled, mod_),
     MLUA_SYM_F(get_irq_event_mask, mod_),
     MLUA_SYM_F(acknowledge_irq, mod_),

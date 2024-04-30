@@ -214,11 +214,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_phase_correct, mod_),
     MLUA_SYM_F(set_enabled, mod_),
     MLUA_SYM_F(set_mask_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(set_irq_handler, mod_),
-#else
-    MLUA_SYM_V(set_irq_handler, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(set_irq_handler, mod_),
     MLUA_SYM_F(set_irq_enabled, mod_),
     MLUA_SYM_F(set_irq_mask_enabled, mod_),
     MLUA_SYM_F(clear_irq, mod_),

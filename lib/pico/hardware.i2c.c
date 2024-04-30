@@ -353,11 +353,7 @@ MLUA_SYMBOLS(I2C_syms) = {
     MLUA_SYM_F(read_byte_raw, I2C_),
     MLUA_SYM_F(write_byte_raw, I2C_),
     MLUA_SYM_F(get_dreq, I2C_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(enable_irq, I2C_),
-#else
-    MLUA_SYM_V(enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(enable_irq, I2C_),
 };
 
 MLUA_SYMBOLS(module_syms) = {

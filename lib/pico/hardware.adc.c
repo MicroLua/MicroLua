@@ -93,11 +93,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(fifo_get, mod_),
     MLUA_SYM_F(fifo_get_blocking, mod_),
     MLUA_SYM_F(fifo_drain, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(fifo_enable_irq, mod_),
-#else
-    MLUA_SYM_V(fifo_enable_irq, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(fifo_enable_irq, mod_),
 };
 
 MLUA_OPEN_MODULE(hardware.adc) {

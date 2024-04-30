@@ -224,18 +224,11 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(set_enabled, mod_),
     MLUA_SYM_F(is_enabled, mod_),
     MLUA_SYM_F(set_mask_enabled, mod_),
-#if LIB_MLUA_MOD_MLUA_THREAD
-    MLUA_SYM_F(set_handler, mod_),
-    MLUA_SYM_F(set_exclusive_handler, mod_),
+    MLUA_SYM_F_THREAD(set_handler, mod_),
+    MLUA_SYM_F_THREAD(set_exclusive_handler, mod_),
     // irq_get_exclusive_handler: not useful in Lua
-    MLUA_SYM_F(add_shared_handler, mod_),
-    MLUA_SYM_F(remove_handler, mod_),
-#else
-    MLUA_SYM_V(set_handler, boolean, false),
-    MLUA_SYM_V(set_exclusive_handler, boolean, false),
-    MLUA_SYM_V(add_shared_handler, boolean, false),
-    MLUA_SYM_V(remove_handler, boolean, false),
-#endif
+    MLUA_SYM_F_THREAD(add_shared_handler, mod_),
+    MLUA_SYM_F_THREAD(remove_handler, mod_),
     MLUA_SYM_F(has_shared_handler, mod_),
     // irq_get_vtable_handler: not useful in Lua
     MLUA_SYM_F(clear, mod_),
