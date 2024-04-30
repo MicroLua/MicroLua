@@ -16,7 +16,7 @@ function test_sys_clock(t)
     testing_clocks.restore_sys_clock(t)
 
     stdlib.set_sys_clock_48mhz()
-    stdlib.setup_default_uart()
+    testing_clocks.fix_uart_baudrate()
     expect_clk_sys(t, 48000000)
 
     local vco, div1, div2 = stdlib.check_sys_clock_khz(123456789)
@@ -26,17 +26,17 @@ function test_sys_clock(t)
 
     testing_clocks.wait_uart_idle()
     stdlib.set_sys_clock_pll(vco, div1, div2)
-    stdlib.setup_default_uart()
+    testing_clocks.fix_uart_baudrate()
     expect_clk_sys(t, 125000000)
 
     testing_clocks.wait_uart_idle()
     local ok = stdlib.set_sys_clock_khz(123456789)
-    stdlib.setup_default_uart()
+    testing_clocks.fix_uart_baudrate()
     t:expect(not ok, "Sys clock change unexpectedly succeeded")
 
     testing_clocks.wait_uart_idle()
     local ok = stdlib.set_sys_clock_khz(133000)
-    stdlib.setup_default_uart()
+    testing_clocks.fix_uart_baudrate()
     t:expect(ok, "Sys clock change failed")
     expect_clk_sys(t, 133000000)
 end

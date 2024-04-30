@@ -8,6 +8,10 @@ local uart = require 'hardware.uart'
 local stdio = require 'pico.stdio'
 local stdlib = require 'pico.stdlib'
 
+function fix_uart_baudrate()
+    if uart.default then uart.default:set_baudrate(uart.DEFAULT_BAUD_RATE) end
+end
+
 function wait_uart_idle()
     if uart.default then uart.default:tx_wait_blocking() end
 end
@@ -18,7 +22,7 @@ function restore_sys_clock(t)
         stdio.flush()
         wait_uart_idle()
         stdlib.set_sys_clock_khz(sys_khz, true)
-        stdlib.setup_default_uart()
+        fix_uart_baudrate()
     end)
     stdio.flush()
     wait_uart_idle()

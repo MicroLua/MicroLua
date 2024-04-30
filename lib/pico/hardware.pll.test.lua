@@ -14,7 +14,7 @@ function test_init(t)
 
     -- Switch to pll_usb. This turns off pll_sys.
     stdlib.set_sys_clock_48mhz()
-    stdlib.setup_default_uart()
+    testing_clocks.fix_uart_baudrate()
     local clk = regs.FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY
     t:expect(clocks.frequency_count_khz(clk)):label("pll_sys"):eq(0)
 
