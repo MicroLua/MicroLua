@@ -10,6 +10,20 @@ local testing_uart = require 'mlua.testing.uart'
 local pico = require 'pico'
 local stdio_uart = require 'pico.stdio.uart'
 
+local function set_function(pin, func)
+    -- gpio.set_function() clears all overrides, so they can't be used
+    -- to avoid spurious output or input. Pulls are in a different
+    -- register and aren't affected, so we use that instead.
+    local up, down = gpio.is_pulled_up(pin), gpio.is_pulled_down(pin)
+    gpio.pull_up(pin)
+    local old = gpio.get_function(pin)
+    gpio.set_function(pin, func)
+    return function()
+        gpio.set_function(pin, old)
+        gpio.set_pulls(pin, up, down)
+    end
+end
+
 function test_init(t)
     local tx, rx = testing_uart.find_pins(uart.default)
     t:expect(tx):label("tx"):eq(pico.DEFAULT_UART_TX_PIN)
@@ -24,19 +38,8 @@ function test_init(t)
         uart.default:tx_wait_blocking()
         local got_tx, got_rx
         do  -- No output in this block
-            local done<close> = function()
-                gpio.set_function(tx, gpio.FUNC_UART)
-                gpio.set_function(rx, gpio.FUNC_UART)
-                gpio.disable_pulls(tx)
-                gpio.disable_pulls(rx)
-            end
-            -- gpio.set_function() clears all overrides, so they can't be used
-            -- to avoid spurious output or input. Pulls are in a different
-            -- register and aren't affected, so we use that instead.
-            gpio.pull_up(tx)
-            gpio.pull_up(rx)
-            gpio.set_function(tx, gpio.FUNC_NULL)
-            gpio.set_function(rx, gpio.FUNC_NULL)
+            local tx_func<close> = set_function(tx, gpio.FUNC_NULL)
+            local rx_func<close> = set_function(rx, gpio.FUNC_NULL)
             stdio_uart[fn]()
             got_tx, got_rx = testing_uart.find_pins(uart.default)
         end
