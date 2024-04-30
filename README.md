@@ -27,10 +27,8 @@ MicroLua is licensed under the [MIT](LICENSE.md) license.
   [Raspberry Pi](https://www.raspberrypi.com/), a variety of cheap modules in
   various shapes and configurations are readily available for purchase.
 
-I had been wanting to play with Lua for a very long time, without having a
-concrete use case for it. Similarly, I wanted to explore the RP2040 but didn't
-have a concrete project for it. MicroLua served as an excuse to get started with
-both.
+But to be honest, it's just an excuse for me to play with Lua and the RP2040,
+and see how far I can push them.
 
 ## Features
 
@@ -66,9 +64,6 @@ easy to interface to C code.
 
 - **Add more bindings for the Pico SDK.** Next on the list are USB, Wifi and
   Bluetooth. Eventually, most SDK libraries will have a binding.
-- **Tune garbage collection.** Garbage collection parameters are currently left
-  at their default value, which may not be ideal for a memory-constrained
-  target.
 - **Improve cross-core communication.** Each core runs its own Lua interpreter,
   so they cannot communicate directly through shared Lua state. Currently, the
   only way for the cores to communicate is the SIO FIFOs, which is fairly
@@ -77,42 +72,13 @@ easy to interface to C code.
   cross-chip channels could enable fast communication between multiple RP2040
   chips.
 
-## Building
-
-Here's how to build and run the test suite on a Raspberry Pi Pico module.
-
-```shell
-# Configure the location of the Pico SDK. Adjust for your setup.
-$ export PICO_SDK_PATH="${HOME}/pico-sdk"
-
-# Clone the repository and initialize submodules.
-$ git clone https://github.com/MicroLua/MicroLua.git
-$ cd MicroLua
-$ git submodule update --init
-
-# Connect a Picoprobe to the target, on the UART and optionally on the debug
-# port. Then view the Picoprobe's UART connection in a separate terminal.
-# The "term" script uses socat.
-$ tools/term /dev/ttyACM0
-
-# Build the unit tests.
-$ cmake -S . -B build -DPICO_BOARD=pico
-$ make -j9 -C build/bin
-
-# Start the target in BOOTSEL mode and flash it with picotool.
-$ picotool load -x build/bin/mlua_tests.elf
-
-# Alternatively, start the target in BOOTSEL mode and copy to its boot drive.
-$ cp build/bin/mlua_tests.uf2 /mnt/RPI-RP2/
-```
-
 ## Examples
 
 The [MicroLua-examples](https://github.com/MicroLua/MicroLua-examples)
 repository contains example programs that demonstrate how to use the features of
 the RP2040 from Lua.
 
-Here's the `blink` example in MicroLua, a translation of the
+Here's the `blink` example in MicroLua, a direct translation of the
 [`blink`](https://github.com/raspberrypi/pico-examples/tree/master/blink)
 example from the [`pico-examples`](https://github.com/raspberrypi/pico-examples)
 repository.
@@ -144,6 +110,27 @@ end
 - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
   the Pico SDK.
 - [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the Pico SDK.
+
+## Test suite
+
+Here's how to build and run the test suite.
+
+```shell
+# Configure the location of the Pico SDK. Adjust for your setup.
+$ export PICO_SDK_PATH="${HOME}/pico-sdk"
+
+# Clone the repository and initialize submodules.
+$ git clone --recurse-submodules https://github.com/MicroLua/MicroLua.git
+$ cd MicroLua
+
+# Build the test suite for the host and run it.
+$ tools/run-tests -l -p host
+
+# Build the test suite for a "pico" board, flash it with picotool and connect
+# to its virtual serial port with socat to view the test results. The target
+# should be in BOOTSEL mode.
+$ tools/run-tests -l -p pico -c -DPICO_BOARD=pico
+```
 
 ## Contributing
 
