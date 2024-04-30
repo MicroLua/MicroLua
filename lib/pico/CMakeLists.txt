@@ -63,7 +63,10 @@ endfunction()
 
 mlua_add_lua_modules(mlua_test_00_setup 00_setup.test.lua)
 target_link_libraries(mlua_test_00_setup INTERFACE
+    mlua_mod_hardware.gpio
     mlua_mod_hardware.uart
+    mlua_mod_mlua.testing.uart
+    mlua_mod_pico.stdio
     mlua_mod_pico.stdlib
 )
 
