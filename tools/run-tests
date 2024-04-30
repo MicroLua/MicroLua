@@ -18,17 +18,21 @@ EOT
 
 PLATFORM="host"
 LOOP="0"
+JOBS="9"
 CMAKE_ARGS=()
 
 SRC="$(dirname "$(dirname "$0")")"
 
-OPTS="$(getopt -o "c:hlp:" -l "cmake-arg:,help,loop,platform:" -n "$(basename "$0")" -- "$@")"
+OPTS="$(getopt -o "c:hj:lp:" \
+            -l "cmake-arg:,help,jobs:,loop,parallel:,platform:" \
+            -n "$(basename "$0")" -- "$@")"
 [[ $? -ne 0 ]] && exit 2
 eval set -- "${OPTS}"
 while true; do
     case "$1" in
         -c|--cmake-arg) CMAKE_ARGS+=("$2"); shift 2;;
         -h|--help) usage; exit 0;;
+        -j|--jobs|--parallel) JOBS="$2"; shift 2;;
         -l|--loop) LOOP="1"; shift;;
         -p|--platform)
             PLATFORM="$2"
@@ -87,7 +91,8 @@ while true; do
     on-failure-exit "${res}" || continue
 
     # Build tests.
-    make -j9 -C "${BUILD}/bin" mlua_tests && res=$? || res=$?
+    cmake --build "${BUILD}" --parallel="${JOBS}" --target=mlua_tests \
+        && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
     # Run tests.
