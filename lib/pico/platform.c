@@ -6,6 +6,7 @@
 #if PICO_ON_DEVICE
 #include "hardware/exception.h"
 #include "hardware/flash.h"
+#include "pico/async_context_threadsafe_background.h"
 #endif
 
 bi_decl(bi_program_feature_group_with_flags(
@@ -68,6 +69,20 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
 }
 
 #if PICO_ON_DEVICE
+
+static async_context_threadsafe_background_t context;
+
+async_context_t* mlua_async_context(void) {
+    if (luai_unlikely(context.low_priority_irq_num == 0)) {
+        async_context_threadsafe_background_config_t cfg =
+            async_context_threadsafe_background_default_config();
+        if (!async_context_threadsafe_background_init(&context, &cfg)) {
+            panic("async context initialization failed");
+            return NULL;
+        }
+    }
+    return &context.core;
+}
 
 extern char const __flash_binary_start[];
 

@@ -87,6 +87,11 @@ static inline bool mlua_wait(uint64_t deadline) {
 
 #if PICO_ON_DEVICE
 
+#include "pico/async_context.h"
+
+// Return the global async_context_t.
+async_context_t* mlua_async_context(void);
+
 // Return a description of the flash memory of the platform, or NULL if the
 // platform doesn't have flash memory.
 MLuaFlash const* mlua_platform_flash(void);

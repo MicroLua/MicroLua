@@ -8,6 +8,7 @@ target_sources(mlua_platform INTERFACE platform.c)
 mlua_mirrored_target_link_libraries(mlua_platform INTERFACE
     hardware_sync
     hardware_timer
+    pico_async_context_threadsafe_background
     pico_binary_info
     pico_platform
     pico_time
@@ -564,6 +565,19 @@ target_link_libraries(mlua_mod_pico.board INTERFACE
 mlua_add_lua_modules(mlua_test_pico.board pico.board.test.lua)
 target_link_libraries(mlua_test_pico.board INTERFACE
     mlua_mod_pico.board
+)
+
+mlua_add_c_module(mlua_mod_pico.cyw43 pico.cyw43.c)
+target_compile_definitions(mlua_mod_pico.cyw43_headers INTERFACE
+    CYW43_CONFIG_FILE="mlua/cyw43_configport.h"
+)
+target_include_directories(mlua_mod_pico.cyw43_headers INTERFACE
+    include_pico.cyw43)
+target_link_libraries(mlua_mod_pico.cyw43 INTERFACE
+    cyw43_driver_picow
+    pico_cyw43_driver
+    pico_unique_id
+    mlua_mod_mlua.thread
 )
 
 mlua_add_c_module(mlua_mod_pico.i2c_slave pico.i2c_slave.c)
