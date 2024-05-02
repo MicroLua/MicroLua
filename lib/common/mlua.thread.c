@@ -891,13 +891,13 @@ static int handler_thread(lua_State* ls) {
 static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
     // Call the event handler.
     lua_pushvalue(ls, lua_upvalueindex(1));  // handler
-    lua_callk(ls, 0, 0, 0, &handler_thread_2);
+    lua_callk(ls, 0, 1, 0, &handler_thread_2);
     return handler_thread_2(ls, LUA_OK, 0);
 }
 
 static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
-    // Suspend until the event gets pending.
-    lua_pushnil(ls);
+    // Suspend until the event gets pending or the deadline returned by the
+    // handler elapses.
     return mlua_thread_yield(ls, 1, &handler_thread_1, 0);
 }
 
