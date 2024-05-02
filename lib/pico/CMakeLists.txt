@@ -577,7 +577,13 @@ target_link_libraries(mlua_mod_pico.cyw43 INTERFACE
     cyw43_driver_picow
     pico_cyw43_driver
     pico_unique_id
+)
+
+mlua_add_c_module(mlua_mod_pico.cyw43.wifi pico.cyw43.wifi.c)
+target_link_libraries(mlua_mod_pico.cyw43.wifi INTERFACE
+    mlua_mod_mlua.int64
     mlua_mod_mlua.thread
+    mlua_mod_pico.cyw43
 )
 
 mlua_add_c_module(mlua_mod_pico.i2c_slave pico.i2c_slave.c)
