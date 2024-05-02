@@ -727,7 +727,7 @@ local function pmain(opts, args)
     local opts, args = cli.parse_args(argv)
     cli.parse_opts(opts, {
         output = cli.bool_opt(false),
-        prompt = cli.bool_opt(argv == nil),
+        prompt = cli.bool_opt(true),
         results = cli.int_opt(0),
         runs = cli.int_opt(1),
         stats = cli.bool_opt(false),

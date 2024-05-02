@@ -12,39 +12,47 @@ die() {
 
 usage() {
     cat >&2 <<EOT
-Usage: $(basename "$0") [option ...]
+Usage: $(basename "$0") --target=TARGET [option ...] [-- arg ...]
 EOT
 }
 
+SOURCE="."
+BUILD=""
 PLATFORM="host"
-LOOP="0"
+TARGET="bin/mlua_tests"
+LOOP=0
 JOBS="9"
 CMAKE_ARGS=()
 
-SRC="$(dirname "$(dirname "$0")")"
+MLUA_PATH="$(realpath "$(dirname "$0")/..")"
 
-OPTS="$(getopt -o "c:hj:lp:" \
-            -l "cmake-arg:,help,jobs:,loop,parallel:,platform:" \
+OPTS="$(getopt -o "b:c:hj:lp:s:t:" \
+            -l "build:,cmake-arg:,help,jobs:,loop,parallel:,platform:,source:,target:" \
             -n "$(basename "$0")" -- "$@")"
 [[ $? -ne 0 ]] && exit 2
 eval set -- "${OPTS}"
 while true; do
     case "$1" in
+        -b|--build) BUILD="$2"; shift 2;;
         -c|--cmake-arg) CMAKE_ARGS+=("$2"); shift 2;;
         -h|--help) usage; exit 0;;
         -j|--jobs|--parallel) JOBS="$2"; shift 2;;
-        -l|--loop) LOOP="1"; shift;;
+        -l|--loop) LOOP=1; shift;;
         -p|--platform)
             PLATFORM="$2"
-            [[ -f "${SRC}/lib/${PLATFORM}/platform.cmake" ]] \
+            [[ -f "${MLUA_PATH}/lib/${PLATFORM}/platform.cmake" ]] \
                 || die "invalid platform: ${PLATFORM}"
             shift 2;;
+        -s|--source) SOURCE="$2"; shift 2;;
+        -t|--target) TARGET="$2"; shift 2;;
         --) shift; break;;
         *) echo "ERROR: option parsing error" >&2; exit 2;;
     esac
 done
 
-BUILD="${SRC}/build-${PLATFORM}"
+[[ -n "${BUILD}" ]] || BUILD="${SOURCE}/build-${PLATFORM}"
+SOURCE="$(realpath "${SOURCE}")"
+BUILD="$(realpath "${BUILD}")"
 
 on-failure-exit() {
     [[ "$1" -eq 0 ]] && return 0
@@ -54,10 +62,8 @@ on-failure-exit() {
     return 1
 }
 
-run-tests-host() {
-    local args=()
-    [[ "${LOOP}" -ne 0 ]] && args+=(--prompt)
-    "${BUILD}/bin/mlua_tests" "${args[@]}" "$@"
+run-host() {
+    "${BUILD}/${TARGET}" "$@"
 }
 
 find-tty-dev() {
@@ -76,27 +82,34 @@ find-tty-dev() {
     done
 }
 
-run-tests-pico() {
-    # TODO: Extract test result from output
-    picotool load -u -x "${BUILD}/bin/mlua_tests.elf" -F && res=$? || res=$?
+run-pico() {
+    # TODO: Provide args to test binary through USB endpoint
+    # TODO: Extract test result from USB endpoint
+    local bin="${BUILD}/${TARGET}.elf" usb_stdio
+    picotool info -a "${bin}" | grep -Fq 'USB stdin / stdout' \
+        && usb_stdio=1 || usb_stdio=0
+    picotool load -u -x "${bin}" -F && res=$? || res=$?
     on-failure-exit "${res}" || return 1
-    "${SRC}/tools/term" "$(find-tty-dev)"
+    if [[ "${usb_stdio}" -ne 0 ]]; then
+        "${MLUA_PATH}/tools/term" "$(find-tty-dev)"
+    else
+        read
+    fi
 }
 
-cd "${SRC}"
 while true; do
     # Configure.
-    cmake -S "${SRC}" -B "${BUILD}" -DMLUA_PLATFORM="${PLATFORM}" \
+    cmake -S "${SOURCE}" -B "${BUILD}" -DMLUA_PLATFORM="${PLATFORM}" \
         "${CMAKE_ARGS[@]}" && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
     # Build tests.
-    cmake --build "${BUILD}" --parallel="${JOBS}" --target=mlua_tests \
-        && res=$? || res=$?
+    cmake --build "${BUILD}" --parallel="${JOBS}" \
+        --target="$(basename "${TARGET}")" && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
     # Run tests.
-    "run-tests-${PLATFORM}" "$@" && res=$? || res=$?
+    "run-${PLATFORM}" "$@" && res=$? || res=$?
     [[ "${res}" -ge 128 ]] && exit "${res}"
     [[ "${LOOP}" -ne 0 ]] || exit "${res}"
 done
