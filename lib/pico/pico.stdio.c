@@ -102,7 +102,11 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return_ctx, 1);
 }
 
-#endif  // LIB_MLUA_MOD_MLUA_THREAD
+#else  // !LIB_MLUA_MOD_MLUA_THREAD
+
+static bool chars_available_reset() { return true; }
+
+#endif  // !LIB_MLUA_MOD_MLUA_THREAD
 
 static int getchar_loop(lua_State* ls, bool timeout) {
     if (timeout) {
