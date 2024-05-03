@@ -26,6 +26,9 @@ extern "C" {
 // Return the number of trailing zero bits of the given value.
 #define MLUA_CTZ(v) __builtin_ctz(v)
 
+// Return the size of a field in a struct.
+#define MLUA_SIZEOF_FIELD(t, m) sizeof(((t*)0)->m)
+
 // MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
 #define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
