@@ -45,6 +45,89 @@ This module exposes the constants defined in the
 [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)
 header for the target platform. It is auto-generated.
 
+## `pico.cyw43`
+
+**Library:** [`pico_cyw43_driver`](https://www.raspberrypi.com/documentation/pico-sdk/networking.html#pico_cyw43_driver),
+header: [`pico/cyw43_driver.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_cyw43_driver/include/pico/cyw43_driver.h),
+sources: [`pico_cyw43_driver`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_cyw43_driver),
+[`cyw43-driver`](https://github.com/georgerobotics/cyw43-driver/tree/main/src)\
+**Module:** [`pico.cyw43`](../lib/pico/pico.cyw43.c),
+build target: `mlua_mod_pico.cyw43`
+
+This module exposes the driver for the CYW43 on the Pico W.
+
+- `VERSION_*: integer`\
+  The driver version.
+
+- `TRACE_*: integer`\
+  Trace flags.
+
+- `LINK_*: integer`\
+  Link statuses.
+
+- `WPA_AUTH_PSK: integer`\
+  `WPA2_AUTH_PSK: integer`\
+  STA and AP settings.
+
+- `AUTH_*: integer`\
+  Authorization types.
+
+- `*_POWERSAVE_MODE: integer`\
+  Power save modes.
+
+- `CHANNEL_NONE: integer`\
+  Value to use when not selecting a particular channel.
+
+- `ITF_STA: integer`\
+  `ITF_AP: integer`\
+  Network interface types for station and access point modes, respectively.
+
+- `COUNTRY_*: integer`\
+  Country codes.
+
+- `init() -> boolean`\
+  Initialize the driver. Returns `true` iff initialization succeeded.
+
+- `deinit()`\
+  De-initializes the driver.
+
+- `gpio_set(num, value)`\
+  Set a GPIO on the CYW43.
+
+- `gpio_get(num) -> boolean`\
+  Get the state of a GPIO on the CYW43.
+
+## `pico.cyw43.wifi`
+
+**Library:** sources: [`cyw43-driver`](https://github.com/georgerobotics/cyw43-driver/tree/main/src)\
+**Module:** [`pico.cyw43.wifi`](../lib/pico/pico.cyw43.wifi.c),
+build target: `mlua_mod_pico.cyw43.wifi`
+
+This module exposes the Wi-Fi functionality of the CYW43 driver.
+
+- `SCAN_ACTIVE: integer`\
+  `SCAN_PASSIVE: integer`\
+  Scan types for active and passive scanning, respectively.
+
+- `set_up(itf, up, country)`\
+  Turn on Wi-Fi and set the country for regulation purposes. `itf` is either
+  `ITF_STA` for station mode or `ITF_AP` for access point mode.
+
+- `scan(opts, on_result, queue = 8) -> Thread | (fail, msg, err)`\
+  Start a scan for Wi-Fi networks. The scan options `opts` can be either `nil`
+  or a table with keys `ssid` (when present, scan only networks with that SSID),
+  and `scan_type` (one of the `SCAN_*` constants). `on_result` is called for
+  each detected network. The returned thread terminates when the scan completes.
+
+  - `on_result(result, dropped)`\
+    `result` is a table with keys: `ssid`, `bssid`, `rssi`, `channel` and
+    `auth_mode`. `dropped` is the number of result that had to be dropped
+    because the result queue was full. If this is non-zero, the size of the
+    queue (`queue`) should be increased.
+
+- `scan_active() -> boolean`\
+  Return true iff a scan is currently in progress.
+
 ## `pico.i2c_slave`
 
 **Library:** [`pico_i2c_slave`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_i2c_slave),
