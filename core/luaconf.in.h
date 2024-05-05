@@ -59,6 +59,6 @@
 // lua_writestringerror is used by panic(), warn() and debug.debug(). Use our
 // own simplified implementation to avoid depending on sprintf.
 #define lua_writestringerror(s, p) mlua_writestringerror(s, p)
-void mlua_writestringerror(char const* fmt, char const* param);
+void mlua_writestringerror(char const* fmt, ...);
 
 #endif

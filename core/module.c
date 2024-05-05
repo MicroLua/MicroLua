@@ -3,6 +3,8 @@
 
 #include "mlua/module.h"
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "lualib.h"
@@ -16,6 +18,30 @@ MLuaGlobal* mlua_global(lua_State* ls) {
 
 int mlua_index_undefined(lua_State* ls) {
     return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
+}
+
+void mlua_writestringerror(char const* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int i = 0;
+    for (;;) {
+        char c = fmt[i];
+        if (c == '\0') {
+            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
+            fflush(stderr);
+            break;
+        } else if (c == '%' && fmt[i + 1] == 's') {
+            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
+            char const* param = va_arg(ap, char const*);
+            int plen = strlen(param);
+            if (plen > 0) fwrite(param, sizeof(char), plen, stderr);
+            fmt += i + 2;
+            i = 0;
+        } else {
+            ++i;
+        }
+    }
+    va_end(ap);
 }
 
 void mlua_sym_push_boolean(lua_State* ls, MLuaSymVal const* value) {

@@ -11,9 +11,6 @@
 extern "C" {
 #endif
 
-// Write a string with an optional "%s" placeholder for the parameter to stderr.
-void mlua_writestringerror(char const* fmt, char const* param);
-
 // Create a new Lua interpreter.
 lua_State* mlua_new_interpreter(void);
 

@@ -4,33 +4,12 @@
 #include "mlua/main.h"
 
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mlua/module.h"
 #include "mlua/platform.h"
 #include "mlua/util.h"
-
-void mlua_writestringerror(char const* fmt, char const* param) {
-    int i = 0;
-    for (;;) {
-        char c = fmt[i];
-        if (c == '\0') {
-            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
-            fflush(stderr);
-            return;
-        } else if (c == '%' && fmt[i + 1] == 's') {
-            if (i > 0) fwrite(fmt, sizeof(char), i, stderr);
-            int plen = strlen(param);
-            if (plen > 0) fwrite(param, sizeof(char), plen, stderr);
-            fmt += i + 2;
-            i = 0;
-        } else {
-            ++i;
-        }
-    }
-}
 
 static int getfield(lua_State* ls) {
     lua_gettable(ls, 1);

@@ -59,6 +59,9 @@ MLuaGlobal* mlua_global(lua_State* ls);
 // as an __index function for strict tables.
 int mlua_index_undefined(lua_State* ls);
 
+// Write a string with optional "%s" placeholders for the parameters to stderr.
+void mlua_writestringerror(char const* fmt, ...);
+
 // The name of a metatable for weak keys.
 extern char const mlua_WeakK_name[];
 
