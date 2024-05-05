@@ -851,7 +851,7 @@ that value.
 
 - `Matcher:raises([want])`\
   Declare an expectations that calling the value raises an error whose value
-  matches the string pattern `want`.
+  matches the string pattern `want`, or equals `want` if it isn't a string.
 
 ### Test helper modules
 

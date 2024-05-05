@@ -264,9 +264,14 @@ function Matcher:raises(want)
     local ok, err = pcall(function() if e then e(v) else v() end end)
     if ok then
         self:_fail("%s didn't raise an error", self:_label())
-    elseif want and not err:find(want) then
-        self:_fail("%s raised an error that doesn't match @{+CYAN}%s@{NORM}\n  @{+WHITE}%s@{NORM}",
-                   self:_label(), repr(want), err)
+    elseif want and type(err) == 'string' then
+        if not err:find(want) then
+            self:_fail("%s raised @{+WHITE}%s@{NORM}, doesn't match @{+CYAN}%s@{NORM}",
+                       self:_label(), self:_repr(err), repr(want))
+        end
+    elseif want and err ~= want then
+        self:_fail("%s raised @{+WHITE}%s@{NORM}, want @{+CYAN}%s@{NORM}",
+                   self:_label(), self:_repr(err), self:_repr(want))
     end
 end
 
