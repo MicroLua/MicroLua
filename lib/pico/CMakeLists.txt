@@ -55,6 +55,14 @@ function(mlua_platform_bin_tests TARGET)
         PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
         PICO_USE_STACK_GUARDS=1
     )
+    mlua_target_config(mlua_tests
+        GPIO_PIN1:integer=2
+        GPIO_PIN2:integer=3
+        I2C_MASTER_SCL:integer=5
+        I2C_MASTER_SDA:integer=4
+        I2C_SLAVE_SCL:integer=7
+        I2C_SLAVE_SDA:integer=6
+    )
     target_link_libraries("${TARGET}" PRIVATE
         mlua_mod_pico.stdio
         mlua_mod_pico.stdio.usb
