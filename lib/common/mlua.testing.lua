@@ -293,6 +293,7 @@ function Test:patch(tab, name, value)
     local old = rawget(tab, name)
     self:cleanup(function() rawset(tab, name, old) end)
     rawset(tab, name, value)
+    return value
 end
 
 function Test:repr(v)

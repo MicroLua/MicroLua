@@ -730,7 +730,7 @@ The `Test` class represents a single unit test.
   Registers the function `fn` to be called after the test completes. Cleanup
   functions are executed in the reverse order of registration.
 
-- `Test:patch(tab, name, value)`\
+- `Test:patch(tab, name, value) -> value`\
   Set `tab[name]` to `value`, and restore the previous value at the end of the
   test.
 

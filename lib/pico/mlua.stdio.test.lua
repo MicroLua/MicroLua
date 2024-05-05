@@ -33,8 +33,7 @@ function test_streams_BNB(t)
 end
 
 function test_print(t)
-    local r = io.Recorder()
-    t:patch(_G, 'stdout', r)
+    local r = t:patch(_G, 'stdout', io.Recorder())
 
     local v = setmetatable({}, {__tostring = function() return '(v)' end})
     print(1, 2.3, "4-5", v)

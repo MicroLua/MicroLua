@@ -16,8 +16,7 @@ function test_read(t)
 end
 
 function test_write(t)
-    local r = io.Recorder()
-    t:patch(_G, 'stdout', r)
+    local r = t:patch(_G, 'stdout', io.Recorder())
 
     io.write('12', '|34')
     io.printf('|%s|%d', '56', 78)
