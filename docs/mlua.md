@@ -53,6 +53,11 @@ The test modules can be useful as usage examples.
   statistics must be enabled by setting the `MLUA_ALLOC_STATS` compile
   definition to `1`. When disabled, all return values are `nil`.
 
+- `log_errors(fn, stream = _G.stderr) -> function`\
+  Wrap a function to log all raised errors with a traceback to an output stream.
+  Return values and errors are forwarded unchanged. This is useful to wrap
+  functions whose errors are otherwise silently dropped, e.g. thread functions.
+
 ## `mlua.bits`
 
 **Module:** [`mlua.bits`](../lib/common/mlua.bits.c),
@@ -881,7 +886,9 @@ When this module is linked in, the interpreter setup code creates a new thread
 to run the configured main function, then runs `main()`.
 
 - `start(fn, [name]) -> Thread`\
-  Start a new thread that runs `fn()`, optionally giving it a name.
+  Start a new thread that runs `fn()`, optionally giving it a name. Errors
+  raised by `fn` are silently dropped; `_G.log_errors()` can be useful to
+  make such errors more visible.
 
 - `shutdown(result)` *[yields]*\
   Shut down the thread scheduler, and return `result` from `main()`. This

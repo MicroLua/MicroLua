@@ -37,6 +37,40 @@ function test_equal(t)
     t:expect(t.expr(_G).equal(1, tab)):eq(true)
 end
 
+function test_alloc_stats(t)
+    local count1, size1, used1, peak1 = alloc_stats()
+    local a = 'abc' .. 'def'
+    local count2, size2, used2, peak2 = alloc_stats()
+    t:expect(count2 - count1):label("count delta"):gt(0):lt(10)
+    t:expect(size2 - size1):label("size delta"):gt(0):lt(1000)
+    t:expect(peak1):label("peak1"):gte(used1)
+    t:expect(peak2):label("peak2"):gte(used2)
+    t:expect(peak2):label("peak2"):gte(peak1)
+end
+
+function test_log_errors(t)
+    local r = t:patch(_G, 'stderr', io.Recorder())
+
+    local wfn = log_errors(function(a, b, c) return c, b, a end)
+    t:expect(t.mexpr.wfn(1, 2, 3)):eq{3, 2, 1}
+    t:expect(t.expr(r):is_empty()):eq(true)
+
+    wfn = log_errors(function(a, b, c) thread.yield() return b, c, a end)
+    t:expect(t.mexpr.wfn(2, 3, 4)):eq{3, 4, 2}
+    t:expect(t.expr(r):is_empty()):eq(true)
+
+    wfn = log_errors(function(e) error(e) end)
+    t:expect(t.expr.wfn("boom")):raises("boom")
+    t:expect(tostring(r)):label("stderr")
+        :matches("^ERROR: mlua%.test:%d+: boom\nstack traceback:\n")
+
+    local r2 = io.Recorder()
+    local wfn2 = log_errors(function(e) error(e) end, r2)
+    t:expect(t.expr.wfn2(123456)):raises(123456)
+    t:expect(tostring(r2)):label("r2")
+        :matches("^ERROR: 123456\nstack traceback:\n")
+end
+
 local private_var = 'private'
 public_var = 'public'
 

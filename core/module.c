@@ -44,6 +44,27 @@ void mlua_writestringerror(char const* fmt, ...) {
     va_end(ap);
 }
 
+int mlua_log_error(lua_State* ls) {
+    char const* msg = lua_tostring(ls, 1);
+    if (msg == NULL) msg = luaL_tolstring(ls, 1, NULL);
+    luaL_traceback(ls, ls, msg, 1);
+    lua_pushfstring(ls, "ERROR: %s\n", lua_tostring(ls, -1));
+    if (!lua_isnoneornil(ls, lua_upvalueindex(1))) {
+        lua_getfield(ls, lua_upvalueindex(1), "write");
+        lua_pushvalue(ls, lua_upvalueindex(1));
+        lua_rotate(ls, -3, -1);
+        lua_call(ls, 2, 0);
+    } else if (lua_getglobal(ls, "stderr") != LUA_TNIL) {
+        lua_getfield(ls, -1, "write");
+        lua_rotate(ls, -2, 1);
+        lua_rotate(ls, -3, -1);
+        lua_call(ls, 2, 0);
+    } else {
+        mlua_writestringerror("%s", lua_tostring(ls, -2));
+    }
+    return lua_settop(ls, 1), 1;
+}
+
 void mlua_sym_push_boolean(lua_State* ls, MLuaSymVal const* value) {
     lua_pushboolean(ls, value->boolean);
 }
@@ -148,6 +169,31 @@ static int global_alloc_stats(lua_State* ls) {
     (void)reset;
     return 0;
 #endif
+}
+
+static int global_log_errors_2(lua_State* ls, int status, lua_KContext ctx);
+
+static int global_log_errors_1(lua_State* ls) {
+    int args = lua_gettop(ls);
+    bool has_stream = !lua_isnoneornil(ls, lua_upvalueindex(2));
+    if (has_stream) lua_pushvalue(ls, lua_upvalueindex(2));
+    lua_pushcclosure(ls, &mlua_log_error, has_stream ? 1 : 0);
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_rotate(ls, 1, 2);
+    int status = lua_pcallk(ls, args, LUA_MULTRET, 1, 0, &global_log_errors_2);
+    return global_log_errors_2(ls, status, 0);
+}
+
+static int global_log_errors_2(lua_State* ls, int status, lua_KContext ctx) {
+    if (status == LUA_OK || status == LUA_YIELD) return lua_gettop(ls) - 1;
+    lua_settop(ls, 2);
+    return lua_error(ls);
+}
+
+static int global_log_errors(lua_State* ls) {
+    if (lua_gettop(ls) > 2) lua_settop(ls, 2);
+    lua_pushcclosure(ls, &global_log_errors_1, lua_isnoneornil(ls, 2) ? 1 : 2);
+    return 1;
 }
 
 static int index2(lua_State* ls) {
@@ -397,6 +443,8 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "equal");
     lua_pushcfunction(ls, &global_alloc_stats);
     lua_setglobal(ls, "alloc_stats");
+    lua_pushcfunction(ls, &global_log_errors);
+    lua_setglobal(ls, "log_errors");
 
     // Set a metatable on functions.
     lua_pushcfunction(ls, &Function___close);  // Any function will do

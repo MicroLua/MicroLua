@@ -62,6 +62,11 @@ int mlua_index_undefined(lua_State* ls);
 // Write a string with optional "%s" placeholders for the parameters to stderr.
 void mlua_writestringerror(char const* fmt, ...);
 
+// Log the error passed as argument with a traceback to the first upvalue, or
+// stderr if the upvalue is none or nil, and return the error unchanged. This
+// function can be used as a message handler in pcalls.
+int mlua_log_error(lua_State* ls);
+
 // The name of a metatable for weak keys.
 extern char const mlua_WeakK_name[];
 
