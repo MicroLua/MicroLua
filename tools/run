@@ -24,7 +24,7 @@ LOOP=0
 JOBS="9"
 CMAKE_ARGS=()
 
-MLUA_PATH="$(realpath "$(dirname "$0")/..")"
+MLUA_PATH="$(readlink -f "$(dirname "$0")/..")"
 
 OPTS="$(getopt -o "b:c:hj:lp:s:t:" \
             -l "build:,cmake-arg:,help,jobs:,loop,parallel:,platform:,source:,target:" \
@@ -51,8 +51,8 @@ while true; do
 done
 
 [[ -n "${BUILD}" ]] || BUILD="${SOURCE}/build-${PLATFORM}"
-SOURCE="$(realpath "${SOURCE}")"
-BUILD="$(realpath "${BUILD}")"
+SOURCE="$(readlink -f "${SOURCE}")"
+BUILD="$(readlink -f "${BUILD}")"
 
 on-failure-exit() {
     [[ "$1" -eq 0 ]] && return 0
@@ -70,7 +70,7 @@ find-tty-dev() {
     local tty_path usb_path dev
     while true; do
         for tty_path in /sys/class/tty/ttyACM*; do
-            usb_path="$(realpath "${tty_path}/device/..")"
+            usb_path="$(readlink -f "${tty_path}/device/..")"
             [[ "$(cat "${usb_path}/idVendor")" == "2e8a" ]] || continue
             [[ "$(cat "${usb_path}/idProduct")" == "000a" ]] || continue
             dev="/dev/$(basename "${tty_path}")"
