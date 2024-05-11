@@ -13,6 +13,17 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+int mlua_cyw43_push_err(lua_State* ls, int err, char const* msg) {
+    mlua_push_fail(ls, msg);
+    lua_pushinteger(ls, err);
+    return 3;
+}
+
+int mlua_cyw43_push_result(lua_State* ls, int err, char const* msg) {
+    if (luai_likely(err == 0)) return lua_pushboolean(ls, true), 1;
+    return mlua_cyw43_push_err(ls, err, msg);
+}
+
 static int mod_init(lua_State* ls) {
     async_context_t* ctx = mlua_async_context();
     bool res = cyw43_driver_init(ctx);
@@ -23,6 +34,45 @@ static int mod_init(lua_State* ls) {
 static int mod_deinit(lua_State* ls) {
     cyw43_driver_deinit(mlua_async_context());
     return 0;
+}
+
+static int mod_is_initialized(lua_State* ls) {
+    return lua_pushboolean(ls, cyw43_is_initialized(&cyw43_state)), 1;
+}
+
+static int mod_ioctl(lua_State* ls) {
+    uint32_t cmd = luaL_checkinteger(ls, 1);
+    size_t len;
+    char const* data = luaL_checklstring(ls, 2, &len);
+    uint32_t itf = luaL_checkinteger(ls, 3);
+    luaL_Buffer buf;
+    uint8_t* bdata = (uint8_t*)luaL_buffinitsize(ls, &buf, len);
+    luaL_addlstring(&buf, data, len);
+    int err = cyw43_ioctl(&cyw43_state, cmd, len, bdata, itf);
+    if (err != 0) {
+        return mlua_cyw43_push_err(ls, err, "failed ioctl");
+    }
+    luaL_pushresult(&buf);
+    return 1;
+}
+
+static int mod_tcpip_link_status(lua_State* ls) {
+    int itf = luaL_checkinteger(ls, 1);
+    return lua_pushinteger(ls, cyw43_tcpip_link_status(&cyw43_state, itf)), 1;
+}
+
+static int mod_link_status_str(lua_State* ls) {
+    char const* msg = "unknown";
+    switch (luaL_checkinteger(ls, 1)) {
+    case CYW43_LINK_DOWN: msg = "link down"; break;
+    case CYW43_LINK_JOIN: msg = "joining"; break;
+    case CYW43_LINK_NOIP: msg = "no IP address"; break;
+    case CYW43_LINK_UP: msg = "link up"; break;
+    case CYW43_LINK_FAIL: msg = "connection failure"; break;
+    case CYW43_LINK_NONET: msg = "no SSID found"; break;
+    case CYW43_LINK_BADAUTH: msg = "authentication failure"; break;
+    }
+    return lua_pushstring(ls, msg), 1;
 }
 
 #if CYW43_GPIO
@@ -137,6 +187,10 @@ MLUA_SYMBOLS(module_syms) = {
 
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),
+    MLUA_SYM_F(is_initialized, mod_),
+    MLUA_SYM_F(ioctl, mod_),
+    MLUA_SYM_F(tcpip_link_status, mod_),
+    MLUA_SYM_F(link_status_str, mod_),
 #if CYW43_GPIO
     MLUA_SYM_F(gpio_set, mod_),
     MLUA_SYM_F(gpio_get, mod_),
