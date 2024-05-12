@@ -20,3 +20,7 @@ function test_flash(t)
     t:expect(pico.flash_binary_start <= pico.flash_binary_end,
              "flash_binary_start > flash_binary_end")
 end
+
+function test_error_str(t)
+    t:expect(t.expr(pico).error_str(pico.ERROR_TIMEOUT)):eq("timeout")
+end

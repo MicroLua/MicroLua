@@ -22,6 +22,24 @@ static void mod_flash_binary_end(lua_State* ls, MLuaSymVal const* value) {
     lua_pushinteger(ls, (uintptr_t)__flash_binary_end);
 }
 
+static int mod_error_str(lua_State* ls) {
+    char const* msg = "unknown error";
+    switch (luaL_checkinteger(ls, 1)) {
+    case PICO_ERROR_NONE: msg = "no error"; break;
+    case PICO_ERROR_TIMEOUT: msg = "timeout"; break;
+    case PICO_ERROR_GENERIC: msg = "generic error"; break;
+    case PICO_ERROR_NO_DATA: msg = "no data"; break;
+    case PICO_ERROR_NOT_PERMITTED: msg = "not permitted"; break;
+    case PICO_ERROR_INVALID_ARG: msg = "invalid argument"; break;
+    case PICO_ERROR_IO: msg = "I/O error"; break;
+    case PICO_ERROR_BADAUTH: msg = "bad authentication"; break;
+    case PICO_ERROR_CONNECT_FAILED: msg = "connection failed"; break;
+    case PICO_ERROR_INSUFFICIENT_RESOURCES:
+        msg = "insufficient resources"; break;
+    }
+    return lua_pushstring(ls, msg), 1;
+}
+
 static int mod_xip_ctr(lua_State* ls) {
     bool clear = mlua_to_cbool(ls, 1);
     uint32_t hit = xip_ctrl_hw->ctr_hit, acc = xip_ctrl_hw->ctr_acc;
@@ -136,6 +154,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(CYW43_WL_GPIO_LED_PIN, boolean, false),
 #endif
 
+    MLUA_SYM_F(error_str, mod_),
     MLUA_SYM_F(xip_ctr, mod_),
 };
 

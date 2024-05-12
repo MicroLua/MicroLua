@@ -33,6 +33,28 @@ tests: [`pico.test`](../lib/pico/pico.test.lua)
   `flash_binary_end, integer`\
   The start and end address of the binary in flash memory.
 
+- `OK: integer`\
+  `ERROR_*: integer`\
+  Common error codes for the Pico SDK.
+
+- `SDK_VERSION_*: integer`\
+  `SDK_VERSION_STRING: string`\
+  The SDK major and minor version and the revision of the Pico SDK.
+
+- `DEFAULT_*: integer`\
+  `FLASH_*: integer`\
+  `SMPS_MODE_PIN: integer`\
+  `CYW43_WL_GPIO_COUNT: integer`\
+  `CYW43_WL_GPIO_LED_PIN: integer`\
+  Per-board defaults and constants, as defined in the board-specific headers.
+
+- `error_str(err) -> string`\
+  Return a description of the given `pico.ERROR_*` error code.
+
+- `xip_ctr(clear = false) -> (hit, acc)`\
+  Return the number of hits and the total number of accesses to the XIP cache.
+  When `clear` is `true`, clear the counters after reading them.
+
 ## `pico.board`
 
 **Library:** [`pico_base`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_base),
