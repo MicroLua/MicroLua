@@ -65,7 +65,7 @@ tests: [`pico.board.test`](../lib/pico/pico.board.test.lua)
 
 This module exposes the constants defined in the
 [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)
-header for the target platform. It is auto-generated.
+header for the target board. It is auto-generated.
 
 ## `pico.cyw43`
 
@@ -76,9 +76,10 @@ sources: [`pico_cyw43_driver`](https://github.com/raspberrypi/pico-sdk/blob/mast
 **Module:** [`pico.cyw43`](../lib/pico/pico.cyw43.c),
 build target: `mlua_mod_pico.cyw43`
 
-This module exposes the driver for the CYW43 on the Pico W.
+This module exposes the driver for the CYW43 on the Pico W. Errors returned by
+the functions in this module correspond to `pico.ERROR_*` constants.
 
-- `VERSION_*: integer`\
+- `VERSION: integer`\
   The driver version.
 
 - `TRACE_*: integer`\
@@ -113,6 +114,19 @@ This module exposes the driver for the CYW43 on the Pico W.
 - `deinit()`\
   De-initializes the driver.
 
+- `is_initialized() -> boolean`\
+  Return `true` iff the driver has been initialized.
+
+- `ioctl(cmd, data, itf) -> string | (fail, err)`\
+  Issue a control command to the CYW43. Returns the (possibly modified) data.
+
+- `tcpip_link_status() -> integer`\
+  Return the link status, a superset of the Wi-Fi link status, as one of the
+  `LINK_*` values.
+
+- `link_status_str(status) -> string`\
+  Return a string describing the given link status.
+
 - `gpio_set(num, value)`\
   Set a GPIO on the CYW43.
 
@@ -125,17 +139,41 @@ This module exposes the driver for the CYW43 on the Pico W.
 **Module:** [`pico.cyw43.wifi`](../lib/pico/pico.cyw43.wifi.c),
 build target: `mlua_mod_pico.cyw43.wifi`
 
-This module exposes the Wi-Fi functionality of the CYW43 driver.
+This module exposes the Wi-Fi functionality of the CYW43 driver. Errors returned
+by the functions in this module correspond to `pico.ERROR_*` constants.
 
 - `SCAN_ACTIVE: integer`\
   `SCAN_PASSIVE: integer`\
   Scan types for active and passive scanning, respectively.
 
+- `*_PM: integer`\
+  Predefined power management values.
+
 - `set_up(itf, up, country)`\
   Turn on Wi-Fi and set the country for regulation purposes. `itf` is either
-  `ITF_STA` for station mode or `ITF_AP` for access point mode.
+  `ITF_STA` for the station interface or `ITF_AP` for the access point
+  interface.
 
-- `scan(opts, on_result, queue = 8) -> Thread | (fail, msg, err)`\
+- `pm(value) -> true | (fail, err)`\
+  Set the Wi-Fi power management mode.
+
+- `get_pm() -> integer | (fail, err)`\
+  Return the current Wi-Fi power management mode.
+
+- `pm_value(pm_mode, pm2_sleep_ret_ms, li_beacon_period, li_dtim_period, li_assoc) -> integer`\
+  Compute a power management mode from power management parameters.
+
+- `link_status(itf) -> integer`\
+  Return the Wi-Fi link status of an interface, as one of the `cyw43.LINK_*`
+  values.
+
+- `get_mac(itf) -> string | (fail, err)`\
+  Return the MAC address of an interface.
+
+- `update_multicast_filter(address, add) -> true | (fail, err)`\
+  Add (`add = true`) or remove (`add = false`) a multicast group address.
+
+- `scan(opts, on_result, queue = 8) -> Thread | (fail, err)`\
   Start a scan for Wi-Fi networks. The scan options `opts` can be either `nil`
   or a table with keys `ssid` (when present, scan only networks with that SSID),
   and `scan_type` (one of the `SCAN_*` constants). `on_result` is called for
@@ -149,6 +187,20 @@ This module exposes the Wi-Fi functionality of the CYW43 driver.
 
 - `scan_active() -> boolean`\
   Return true iff a scan is currently in progress.
+
+- `join(ssid, key = nil, auth = cyw43.AUTH_OPEN, bssid = nil, channel = cyw43.CHANNEL_NONE) -> true | (fail, err)`\
+  Initiate a connection to a Wi-Fi network on the `ITF_STA` interface. The
+  connection is established in the background, and its status can be polled with
+  `link_status()` or `cyw43.tcpip_link_status()`.
+
+- `leave(itf) -> true | (fail, err)`\
+  Disassociate an interface from a Wi-Fi network.
+
+- `get_rssi() -> integer | (fail, err)`\
+  Return the signal strength (RSSI) of the Wi-Fi network.
+
+- `get_bssid() -> string | (fail, err)`\
+  Return the BSSID of the connected Wi-Fi network.
 
 ## `pico.i2c_slave`
 
