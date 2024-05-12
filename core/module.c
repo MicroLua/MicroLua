@@ -60,7 +60,7 @@ int mlua_log_error(lua_State* ls) {
         lua_rotate(ls, -3, -1);
         lua_call(ls, 2, 0);
     } else {
-        mlua_writestringerror("%s", lua_tostring(ls, -2));
+        mlua_writestringerror("%s", lua_tostring(ls, -1));
     }
     return lua_settop(ls, 1), 1;
 }

@@ -11,6 +11,11 @@
 extern "C" {
 #endif
 
+// Log errors raised by main() to stderr.
+#ifndef MLUA_LOG_MAIN_ERRORS
+#define MLUA_LOG_MAIN_ERRORS 0
+#endif
+
 // Create a new Lua interpreter.
 lua_State* mlua_new_interpreter(void);
 

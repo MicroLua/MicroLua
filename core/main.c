@@ -55,6 +55,11 @@ static int pmain(lua_State* ls) {
     if (has_main) {
         lua_getfield(ls, -1, "start");  // Start the thread
         lua_rotate(ls, -3, -1);
+#if MLUA_LOG_MAIN_ERRORS
+        lua_getglobal(ls, "log_errors");
+        lua_rotate(ls, -2, 1);
+        lua_call(ls, 1, 1);
+#endif
         lua_pushliteral(ls, "main");
         lua_call(ls, 2, 0);
     }
@@ -153,13 +158,28 @@ void mlua_close_interpreter(lua_State* ls) {
     free(ud);
 }
 
+static int log_error(lua_State* ls) {
+    char const* msg = lua_tostring(ls, 1);
+    if (msg == NULL) msg = luaL_tolstring(ls, 1, NULL);
+    luaL_traceback(ls, ls, msg, 1);
+    mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
+    return lua_settop(ls, 1), 1;
+}
+
 int mlua_run_main(lua_State* ls, int args) {
     mlua_platform_setup_interpreter(ls);
+#if MLUA_LOG_MAIN_ERRORS
+    lua_pushcfunction(ls, &log_error);
+#endif
     lua_pushcfunction(ls, pmain);
-    lua_rotate(ls, 1, 1);
+    lua_rotate(ls, 1, MLUA_LOG_MAIN_ERRORS ? 2 : 1);
 
     int res = EXIT_FAILURE;
-    if (lua_pcall(ls, 2 + args, 1, 0) != LUA_OK || lua_isstring(ls, -1)) {
+    if (lua_pcall(ls, 2 + args, 1, MLUA_LOG_MAIN_ERRORS ? 1 : 0) != LUA_OK) {
+#if !MLUA_LOG_MAIN_ERRORS
+        mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
+#endif
+    } else if (lua_isstring(ls, -1)) {
         mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
     } else if (lua_isnil(ls, -1)
                || (lua_isboolean(ls, -1) && lua_toboolean(ls, -1))) {
