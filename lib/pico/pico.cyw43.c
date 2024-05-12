@@ -13,15 +13,15 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-int mlua_cyw43_push_err(lua_State* ls, int err, char const* msg) {
-    mlua_push_fail(ls, msg);
+int mlua_cyw43_push_err(lua_State* ls, int err) {
+    luaL_pushfail(ls);
     lua_pushinteger(ls, err);
-    return 3;
+    return 2;
 }
 
-int mlua_cyw43_push_result(lua_State* ls, int err, char const* msg) {
+int mlua_cyw43_push_result(lua_State* ls, int err) {
     if (luai_likely(err == 0)) return lua_pushboolean(ls, true), 1;
-    return mlua_cyw43_push_err(ls, err, msg);
+    return mlua_cyw43_push_err(ls, err);
 }
 
 static int mod_init(lua_State* ls) {
@@ -50,7 +50,7 @@ static int mod_ioctl(lua_State* ls) {
     luaL_addlstring(&buf, data, len);
     int err = cyw43_ioctl(&cyw43_state, cmd, len, bdata, itf);
     if (err != 0) {
-        return mlua_cyw43_push_err(ls, err, "failed ioctl");
+        return mlua_cyw43_push_err(ls, err);
     }
     luaL_pushresult(&buf);
     return 1;
@@ -84,16 +84,17 @@ static int check_gpio(lua_State* ls, int arg) {
 }
 
 static int mod_gpio_set(lua_State* ls) {
-    int res = cyw43_gpio_set(&cyw43_state, check_gpio(ls, 1),
-                             mlua_to_cbool(ls, 2));
-    if (res != 0) return luaL_pushfail(ls), 1;
-    return lua_pushboolean(ls, true), 1;
+    int gpio = check_gpio(ls, 1);
+    bool value = mlua_to_cbool(ls, 2);
+    int err = cyw43_gpio_set(&cyw43_state, gpio, value);
+    return mlua_cyw43_push_result(ls, err);
 }
 
 static int mod_gpio_get(lua_State* ls) {
+    int gpio = check_gpio(ls, 1);
     bool value;
-    int res = cyw43_gpio_get(&cyw43_state, check_gpio(ls, 1), &value);
-    if (res != 0) return luaL_pushfail(ls), 1;
+    int err = cyw43_gpio_get(&cyw43_state, gpio, &value);
+    if (err != 0) return luaL_pushfail(ls), 1;
     return lua_pushboolean(ls, value), 1;
 }
 
@@ -102,9 +103,7 @@ static int mod_gpio_get(lua_State* ls) {
 MLUA_SYMBOLS(module_syms) = {
     // TODO: Move WiFi-only symbols to pico.cyw43.wifi
     // From cyw43.h
-    MLUA_SYM_V(VERSION_MAJOR, integer, CYW43_VERSION_MAJOR),
-    MLUA_SYM_V(VERSION_MINOR, integer, CYW43_VERSION_MINOR),
-    MLUA_SYM_V(VERSION_MICRO, integer, CYW43_VERSION_MICRO),
+    MLUA_SYM_V(VERSION, integer, CYW43_VERSION),
     MLUA_SYM_V(TRACE_ASYNC_EV, integer, CYW43_TRACE_ASYNC_EV),
     MLUA_SYM_V(TRACE_ETH_TX, integer, CYW43_TRACE_ETH_TX),
     MLUA_SYM_V(TRACE_ETH_RX, integer, CYW43_TRACE_ETH_RX),

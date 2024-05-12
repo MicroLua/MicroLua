@@ -48,13 +48,13 @@ static int mod_set_up(lua_State* ls) {
 static int mod_pm(lua_State* ls) {
     uint32_t pm = luaL_checkinteger(ls, 1);
     int err = cyw43_wifi_pm(&cyw43_state, pm);
-    return mlua_cyw43_push_result(ls, err, "failed to set PM");
+    return mlua_cyw43_push_result(ls, err);
 }
 
 static int mod_get_pm(lua_State* ls) {
     uint32_t pm;
     int err = cyw43_wifi_get_pm(&cyw43_state, &pm);
-    if (err != 0) return mlua_cyw43_push_err(ls, err, "failed to get PM");
+    if (err != 0) return mlua_cyw43_push_err(ls, err);
     return lua_pushinteger(ls, pm), 1;
 }
 
@@ -90,7 +90,7 @@ static int mod_get_mac(lua_State* ls) {
     int itf = luaL_checkinteger(ls, 1);
     uint8_t mac[6];
     int err = cyw43_wifi_get_mac(&cyw43_state, itf, mac);
-    if (err != 0) return mlua_cyw43_push_err(ls, err, "failed to get MAC");
+    if (err != 0) return mlua_cyw43_push_err(ls, err);
     return lua_pushlstring(ls, (char const*)mac, sizeof(mac)), 1;
 }
 
@@ -103,7 +103,7 @@ static int mod_update_multicast_filter(lua_State* ls) {
     // a mistake, as it doesn't modify it.
     int err = cyw43_wifi_update_multicast_filter(&cyw43_state, (uint8_t*)addr,
                                                  add);
-    return mlua_cyw43_push_result(ls, err, "failed to update multicast filter");
+    return mlua_cyw43_push_result(ls, err);
 }
 
 static int handle_scan_result(void* ptr, cyw43_ev_scan_result_t const* result) {
@@ -232,7 +232,7 @@ static int mod_scan(lua_State* ls) {
     int err = cyw43_wifi_scan(&cyw43_state, &opts, NULL, &handle_scan_result);
     if (err != 0) {
         mlua_event_disable(ls, &wifi_state.scan_event);
-        return mlua_cyw43_push_err(ls, err, "failed to start scan");
+        return mlua_cyw43_push_err(ls, err);
     }
 
     // Start the event handler thread.
@@ -265,26 +265,26 @@ static int mod_join(lua_State* ls) {
                   "invalid bssid length");
     int err = cyw43_wifi_join(&cyw43_state, ssid_len, ssid, key_len, key,
                               auth_type, bssid, channel);
-    return mlua_cyw43_push_result(ls, err, "failed to initiate join");
+    return mlua_cyw43_push_result(ls, err);
 }
 
 static int mod_leave(lua_State* ls) {
     uint32_t itf = luaL_checkinteger(ls, 1);
-    return mlua_cyw43_push_result(ls, cyw43_wifi_leave(&cyw43_state, itf),
-                                  "failed to leave");
+    int err = cyw43_wifi_leave(&cyw43_state, itf);
+    return mlua_cyw43_push_result(ls, err);
 }
 
 static int mod_get_rssi(lua_State* ls) {
     int32_t rssi;
     int err = cyw43_wifi_get_rssi(&cyw43_state, &rssi);
-    if (err != 0) mlua_cyw43_push_err(ls, err, "failed to get RSSI");
+    if (err != 0) mlua_cyw43_push_err(ls, err);
     return lua_pushinteger(ls, rssi), 1;
 }
 
 static int mod_get_bssid(lua_State* ls) {
     uint8_t bssid[6];
     int err = cyw43_wifi_get_bssid(&cyw43_state, bssid);
-    if (err != 0) mlua_cyw43_push_err(ls, err, "failed to get BSSID");
+    if (err != 0) mlua_cyw43_push_err(ls, err);
     return lua_pushlstring(ls, (char const*)bssid, sizeof(bssid)), 1;
 }
 

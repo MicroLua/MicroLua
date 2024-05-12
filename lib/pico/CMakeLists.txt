@@ -607,6 +607,30 @@ target_link_libraries(mlua_test_pico.i2c_slave INTERFACE
     mlua_mod_pico.i2c_slave
 )
 
+mlua_add_c_module(mlua_mod_pico.lwip pico.lwip.c)
+target_compile_definitions(mlua_mod_pico.lwip_headers INTERFACE
+    CYW43_LWIP=1
+)
+target_include_directories(mlua_mod_pico.lwip_headers INTERFACE
+    include_pico.lwip)
+target_link_libraries(mlua_mod_pico.lwip INTERFACE
+    pico_lwip_core
+    pico_lwip_nosys
+)
+
+mlua_add_c_module(mlua_mod_pico.lwip.pbuf pico.lwip.pbuf.c)
+target_link_libraries(mlua_mod_pico.lwip.pbuf INTERFACE
+    mlua_mod_pico.lwip
+)
+
+mlua_add_c_module(mlua_mod_pico.lwip.udp pico.lwip.udp.c)
+target_compile_definitions(mlua_mod_pico.lwip.udp_headers INTERFACE
+    LWIP_UDP=1
+)
+target_link_libraries(mlua_mod_pico.lwip.udp INTERFACE
+    mlua_mod_pico.lwip
+)
+
 mlua_add_c_module(mlua_mod_pico.multicore pico.multicore.c)
 target_link_libraries(mlua_mod_pico.multicore INTERFACE
     mlua_mod_mlua.thread

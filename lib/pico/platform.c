@@ -73,6 +73,7 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
 static async_context_threadsafe_background_t context;
 
 async_context_t* mlua_async_context(void) {
+    // TODO: Don't make this lazy; initialize it from all modules that use it
     if (luai_unlikely(context.low_priority_irq_num == 0)) {
         async_context_threadsafe_background_config_t cfg =
             async_context_threadsafe_background_default_config();
