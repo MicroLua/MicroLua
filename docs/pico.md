@@ -90,7 +90,7 @@ the functions in this module correspond to `pico.ERROR_*` constants.
 
 - `WPA_AUTH_PSK: integer`\
   `WPA2_AUTH_PSK: integer`\
-  STA and AP settings.
+  STA and AP auth settings.
 
 - `AUTH_*: integer`\
   Authorization types.
@@ -132,6 +132,17 @@ the functions in this module correspond to `pico.ERROR_*` constants.
 
 - `gpio_get(num) -> boolean`\
   Get the state of a GPIO on the CYW43.
+
+## `pico.cyw43.util`
+
+**Module:** [`pico.cyw43.util`](../lib/pico/pico.cyw43.util.lua),
+build target: `mlua_mod_pico.cyw43.util`
+
+This module provides helper functions to work with the CYW43.
+
+- `wifi_connect(ssid, password, auth, timeout) -> true | (nil, msg)`\
+  Connect to a Wi-Fi network on the `ITF_STA` interface, and wait for the link
+  status to become `LINK_UP` or the connection to fail with a permanent error.
 
 ## `pico.cyw43.wifi`
 

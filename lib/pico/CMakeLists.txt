@@ -587,6 +587,13 @@ target_link_libraries(mlua_mod_pico.cyw43 INTERFACE
     pico_unique_id
 )
 
+mlua_add_lua_modules(mlua_mod_pico.cyw43.util pico.cyw43.util.lua)
+target_link_libraries(mlua_mod_pico.cyw43.util INTERFACE
+    mlua_mod_pico.cyw43
+    mlua_mod_pico.cyw43.wifi
+    mlua_mod_pico.time
+)
+
 mlua_add_c_module(mlua_mod_pico.cyw43.wifi pico.cyw43.wifi.c)
 target_link_libraries(mlua_mod_pico.cyw43.wifi INTERFACE
     mlua_mod_mlua.int64
