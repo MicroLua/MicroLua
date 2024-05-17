@@ -66,7 +66,9 @@ static int mod_sleep_for(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(module_syms) = {
-    MLUA_SYM_V(ticks_per_second, integer, 1000000),
+    MLUA_SYM_V(ms, integer, 1000),
+    MLUA_SYM_V(sec, integer, 1000 * 1000),
+    MLUA_SYM_V(min, integer, 60 * 1000 * 1000),
 
     MLUA_SYM_F(ticks, mod_),
     MLUA_SYM_F(ticks64, mod_),

@@ -459,7 +459,7 @@ function Test:_run(fn)
         local out = root._stdout
         local indent = (' '):rep(2 * level)
         local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
-        local right = ('%.3f s'):format(duration / time.ticks_per_second)
+        local right = ('%.3f s'):format(duration / time.sec)
         io.fprintf(out, "%s%s %s\n", io.ansi(left),
                    (' '):rep(78 - #io.ansi(left, io.empty_tags) - #right),
                    right)
@@ -610,8 +610,7 @@ function Test:_main(runs)
     self:_progress_end('')
     io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total in %.3f s\n",
               self.npass, self.nskip, self.nfail, self.nerror,
-              self.npass + self.nskip + self.nfail + self.nerror,
-              dt / time.ticks_per_second)
+              self.npass + self.nskip + self.nfail + self.nerror, dt / time.sec)
     self:_print_stats(stdout, '')
     io.printf("Result: %s\n", io.ansi(self:_result()))
 end

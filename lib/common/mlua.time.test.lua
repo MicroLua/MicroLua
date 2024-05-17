@@ -18,7 +18,9 @@ local function for_each_ticks(t, fn)
 end
 
 function test_ticks(t)
-    t:expect(t.expr(time).ticks_per_second):eq(1e6)
+    t:expect(t.expr(time).ms):eq(1000)
+    t:expect(t.expr(time).sec):eq(1000 * 1000)
+    t:expect(t.expr(time).min):eq(60 * 1000 * 1000)
     t:expect(t.expr(time).ticks64())
         :gte(time.min_ticks):lte(time.max_ticks)
     t:expect(t.expr(time).ticks()):apply(math.type):op('type is'):eq('integer')

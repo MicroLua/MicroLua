@@ -999,8 +999,10 @@ tests: [`mlua.time.test`](../lib/common/mlua.time.test.lua)
 
 This module provides platform-independent time functionality.
 
-- `ticks_per_second: integer = 1e6`\
-  The number of ticks counted per second.
+- `ms: integer = 1000`\
+  `sec: integer = 1000 * 1000`\
+  `min: integer = 60 * 1000 * 1000`\
+  The number of ticks counted per millisecond, second and minute, respectively.
 
 - `ticks_min: Int64`\
   `ticks_max: Int64`\
