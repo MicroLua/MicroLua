@@ -77,7 +77,7 @@ static int mod_push_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 2);
     if (!mlua_thread_blocking(ls)) {
         lua_settop(ls, 1);
-        mlua_push_timeout_time(ls, timeout);
+        mlua_push_deadline(ls, timeout);
         return mod_push_timeout_us_1(ls, LUA_OK, 0);
     }
     uint32_t data = luaL_checkinteger(ls, 1);
@@ -126,7 +126,7 @@ static int mod_pop_timeout_us(lua_State* ls) {
     MLuaEvent* event = &fifo_state[get_core_num()].event;
     if (mlua_event_can_wait(ls, event, 0)) {
         lua_settop(ls, 0);
-        mlua_push_timeout_time(ls, timeout);
+        mlua_push_deadline(ls, timeout);
         return mlua_event_wait(ls, event, 0, &pop_loop, 1);
     }
 

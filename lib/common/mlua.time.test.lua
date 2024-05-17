@@ -56,6 +56,49 @@ function test_to_ticks64(t)
     end
 end
 
+function test_compare(t)
+    local now = time.ticks()
+    for _, test in ipairs{
+        {now, now, 0},
+        {now - 1, now, -1},
+        {now + 1, now, 1},
+        {int64('0x0123456789abcdef'), int64('0x0123456789abcdef'), 0},
+        {int64('0x0123456789abcdee'), int64('0x0123456789abcdef'), -1},
+        {int64('0x0123456789abcdf0'), int64('0x0123456789abcdef'), 1},
+        {time.min_ticks, time.max_ticks, -1},
+        {time.max_ticks, time.min_ticks, 1},
+    } do
+        local lhs, rhs, want = table.unpack(test)
+        t:expect(t.expr(time).compare(lhs, rhs)):eq(want)
+    end
+end
+
+function test_diff(t)
+    local now = time.ticks()
+    for _, test in ipairs{
+        {now, now, 0},
+        {now - 1, now + 2, 3},
+        {now + 3, now - 4, -7},
+        {int64('0x0123456789abcdef'), int64('0x7123456789abcdef'),
+         int64('0x7000000000000000')},
+        {int64('0x7123456789abcdef'), int64('0x0123456789abcdef'),
+         int64('-0x7000000000000000')},
+        {time.min_ticks, time.max_ticks, time.max_ticks - time.min_ticks},
+        {time.max_ticks, time.min_ticks, time.min_ticks - time.max_ticks},
+    } do
+        local lhs, rhs, want = table.unpack(test)
+        t:expect(t.expr(time).diff(lhs, rhs)):eq(want)
+    end
+end
+
+function test_deadline(t)
+    for _, test in ipairs{10000, int64('0x123456789')} do
+        local now = test <= math.maxinteger and time.ticks() or time.ticks64()
+        local got = time.deadline(test) - now
+        t:expect(got):label('timeout'):gte(test):lt(test + 200)
+    end
+end
+
 function test_sleep_BNB(t)
     local delay = 2000
     for_each_ticks(t, function(ticks)

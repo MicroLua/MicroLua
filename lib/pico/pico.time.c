@@ -27,19 +27,19 @@ static int mod_get_absolute_time_int(lua_State* ls) {
 }
 
 static int mod_make_timeout_time_us(lua_State* ls) {
-    mlua_push_timeout_time(ls, mlua_check_int64(ls, 1));
-    return 1;
+    uint64_t delay = mlua_check_int64(ls, 1);
+    return mlua_push_deadline(ls, delay), 1;
 }
 
 static int mod_make_timeout_time_ms(lua_State* ls) {
-    lua_Unsigned delta = luaL_checkinteger(ls, 1);
+    lua_Unsigned delay_ms = luaL_checkinteger(ls, 1);
 #if MLUA_IS64INT
-    lua_pushinteger(ls, mlua_timeout_time(mlua_ticks(), delta * 1000));
+    lua_pushinteger(ls, mlua_timeout_time(mlua_ticks(), delay_ms * 1000));
 #else
-    if (delta <= LUA_MAXINTEGER / 1000) {
-        lua_pushinteger(ls, mlua_ticks() + delta * 1000);
+    if (delay_ms <= LUA_MAXINTEGER / 1000) {
+        lua_pushinteger(ls, mlua_ticks() + delay_ms * 1000);
     } else {
-        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_ms(delta)));
+        mlua_push_int64(ls, to_us_since_boot(make_timeout_time_ms(delay_ms)));
     }
 #endif
     return 1;
@@ -67,7 +67,7 @@ static int mod_sleep_us(lua_State* ls) {
     if (delay == 0) return 0;
     if (!mlua_thread_blocking(ls)) {
         lua_settop(ls, 0);
-        mlua_push_timeout_time(ls, delay);
+        mlua_push_deadline(ls, delay);
         return mlua_thread_suspend(ls, &mod_sleep_until_1, 0, 1);
     }
     sleep_us(delay);

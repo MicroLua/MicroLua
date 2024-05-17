@@ -18,7 +18,7 @@ extern "C" {
 #define MLUA_TICKS_MAX ((uint64_t)INT64_MAX)
 
 // Return the absolute time corresponding to a timeout, relative to a time.
-static inline uint64_t mlua_timeout_time(uint64_t time, uint64_t timeout) {
+static inline uint64_t mlua_timeout_deadline(uint64_t time, uint64_t timeout) {
     uint64_t t = time + timeout;
     return t <= MLUA_TICKS_MAX ? t : MLUA_TICKS_MAX;
 }

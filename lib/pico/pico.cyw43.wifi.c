@@ -153,7 +153,7 @@ static int handle_scan_result_event(lua_State* ls) {
                 lua_pushnil(ls);
                 return lua_error(ls);
             }
-            return mlua_push_timeout_time(ls, 200000), 1;
+            return mlua_push_deadline(ls, 200000), 1;
         }
 
         // Call the handler

@@ -130,7 +130,7 @@ static int mod_getchar_timeout_us(lua_State* ls) {
     uint32_t timeout = luaL_checkinteger(ls, 1);
     if (mlua_event_can_wait(ls, &stdio_state.event, 0)) {
         lua_settop(ls, 0);
-        mlua_push_timeout_time(ls, timeout);
+        mlua_push_deadline(ls, timeout);
         return mlua_event_wait(ls, &stdio_state.event, 0, &getchar_loop, 1);
     }
     lua_pushinteger(ls, getchar_timeout_us(timeout));

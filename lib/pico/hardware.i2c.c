@@ -174,7 +174,7 @@ static int I2C_write_blocking(lua_State* ls) {
 static int I2C_write_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 5);
     lua_settop(ls, 4);
-    mlua_push_timeout_time(ls, timeout);
+    mlua_push_deadline(ls, timeout);
     return I2C_write_blocking(ls);
 }
 
@@ -302,7 +302,7 @@ static int I2C_read_blocking(lua_State* ls) {
 static int I2C_read_timeout_us(lua_State* ls) {
     uint64_t timeout = mlua_check_int64(ls, 5);
     lua_settop(ls, 4);
-    mlua_push_timeout_time(ls, timeout);
+    mlua_push_deadline(ls, timeout);
     return I2C_read_blocking(ls);
 }
 

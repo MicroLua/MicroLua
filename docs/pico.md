@@ -143,6 +143,7 @@ This module provides helper functions to work with the CYW43.
 - `wifi_connect(ssid, password, auth, timeout) -> true | (nil, msg)`\
   Connect to a Wi-Fi network on the `ITF_STA` interface, and wait for the link
   status to become `LINK_UP` or the connection to fail with a permanent error.
+  The timeout is specified in ticks.
 
 ## `pico.cyw43.wifi`
 
@@ -532,7 +533,7 @@ functionality is therefore not exposed to Lua and left for use by C code.
 
 - `make_timeout_time_ms(delay) -> integer | Int64`\
   Return an [absolute time](mlua.md#absolute-time) that is `delay` milliseconds
-  in the future. `delay` is interpreted as a `uint32_t`.
+  in the future. `delay` is interpreted as an unsigned integer.
 
 - `absolute_time_diff_us(from, to) -> integer | Int64`\
   Return the difference in microseconds between the

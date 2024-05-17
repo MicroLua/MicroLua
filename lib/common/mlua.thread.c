@@ -49,12 +49,14 @@ typedef enum ThreadFlags {
 #define FP_COUNT 1
 
 // Upvalue indexes for main.
-#define UV_HEAD 1
-#define UV_TAIL 2
-#define UV_TIMERS 3
-#define UV_THREADS 4
-#define UV_JOINERS 5
-#define UV_NAMES 6
+typedef enum MainUpvalueIndex {
+    UV_HEAD = 1,
+    UV_TAIL,
+    UV_TIMERS,
+    UV_THREADS,
+    UV_JOINERS,
+    UV_NAMES,
+} MainUpvalueIndex;
 
 // Return a reference to the main thread.
 static inline lua_State* main_thread(lua_State* ls) {

@@ -1019,6 +1019,20 @@ This module provides platform-independent time functionality.
   the current absolute time is used. The result is always within the range
   `[now + math.mininteger; now + math.maxinteger]`.
 
+- `compare(lhs, rhs) -> integer`\
+  Return -1 if the [absolute time](#absolute-time) `lhs` is before the
+  [absolute time](#absolute-time) `rhs`, 1 if `lhs` is after `rhs`, and 0 if
+  they are equal.
+
+- `diff(from, to) -> integer | Int64`\
+  Return the time difference from [absolute time](#absolute-time) `from` to
+  [absolute time](#absolute-time) `to`. The result is positive if `from` is
+  before `to`, and negative if `from` is after `to`.
+
+- `deadline(delay) -> integer | Int64`\
+  Return an [absolute time](#absolute-time) that is `delay` ticks in the future.
+  `delay` is interpreted as a `uint64_t`.
+
 - `sleep_until(time)` *[yields]*\
   Suspend the current thread until the given [absolute time](#absolute-time) is
   reached.

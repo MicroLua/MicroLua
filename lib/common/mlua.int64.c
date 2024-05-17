@@ -137,11 +137,11 @@ uint64_t mlua_check_time(lua_State* ls, int arg) {
     return luaL_typeerror(ls, arg, "integer or Int64");
 }
 
-void mlua_push_timeout_time(lua_State* ls, uint64_t timeout) {
+void mlua_push_deadline(lua_State* ls, uint64_t timeout) {
     if (luai_likely(timeout <= LUA_MAXINTEGER)) {
         lua_pushinteger(ls, mlua_ticks() + (lua_Unsigned)timeout);
     } else {
-        mlua_push_int64(ls, mlua_timeout_time(mlua_ticks64(), timeout));
+        mlua_push_int64(ls, mlua_timeout_deadline(mlua_ticks64(), timeout));
     }
 }
 

@@ -18,8 +18,25 @@ static int mod_ticks64(lua_State* ls) {
 
 static int mod_to_ticks64(lua_State* ls) {
     lua_Unsigned t = luaL_checkinteger(ls, 1);
-    return mlua_push_int64(ls, mlua_to_ticks64(t,
-        luaL_opt(ls, (uint64_t)mlua_check_int64, 2, mlua_ticks64()))), 1;
+    uint64_t now = luaL_opt(ls, (uint64_t)mlua_check_int64, 2, mlua_ticks64());
+    return mlua_push_int64(ls, mlua_to_ticks64(t, now)), 1;
+}
+
+static int mod_compare(lua_State* ls) {
+    uint64_t lhs = mlua_check_time(ls, 1);
+    uint64_t rhs = mlua_check_time(ls, 2);
+    return lua_pushinteger(ls, lhs < rhs ? -1 : lhs == rhs ? 0 : 1), 1;
+}
+
+static int mod_diff(lua_State* ls) {
+    uint64_t from = mlua_check_time(ls, 1);
+    uint64_t to = mlua_check_time(ls, 2);
+    return mlua_push_minint(ls, to - from), 1;
+}
+
+static int mod_deadline(lua_State* ls) {
+    uint64_t delay = mlua_check_int64(ls, 1);
+    return mlua_push_deadline(ls, delay), 1;
 }
 
 static int mod_sleep_until_1(lua_State* ls, int status, lua_KContext ctx);
@@ -44,7 +61,7 @@ static int mod_sleep_for(lua_State* ls) {
     int64_t delay = mlua_check_int64(ls, 1);
     if (delay <= 0) return 0;
     lua_settop(ls, 0);
-    mlua_push_timeout_time(ls, delay);
+    mlua_push_deadline(ls, delay);
     return mod_sleep_until(ls);
 }
 
@@ -54,6 +71,9 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(ticks, mod_),
     MLUA_SYM_F(ticks64, mod_),
     MLUA_SYM_F(to_ticks64, mod_),
+    MLUA_SYM_F(compare, mod_),
+    MLUA_SYM_F(diff, mod_),
+    MLUA_SYM_F(deadline, mod_),
     MLUA_SYM_F(sleep_until, mod_),
     MLUA_SYM_F(sleep_for, mod_),
 };
