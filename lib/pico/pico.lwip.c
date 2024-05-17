@@ -3,6 +3,7 @@
 
 #include <string.h>
 
+#include "lwip/err.h"
 #include "lwip/init.h"
 #include "lwip/ip_addr.h"
 #include "pico/lwip_nosys.h"
@@ -23,6 +24,13 @@ int mlua_lwip_push_result(lua_State* ls, err_t err) {
 }
 
 char const mlua_IPAddr_name[] = "pico.lwip.IPAddr";
+
+ip_addr_t* mlua_new_IPAddr(lua_State* ls) {
+    ip_addr_t* ud = lua_newuserdatauv(ls, sizeof(ip_addr_t), 0);
+    luaL_getmetatable(ls, mlua_IPAddr_name);
+    lua_setmetatable(ls, -2);
+    return ud;
+}
 
 static int IPAddr___tostring(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
@@ -64,11 +72,33 @@ static int mod_deinit(lua_State* ls) {
     return 0;
 }
 
+static int mod_err_str(lua_State* ls) {
+    char const* msg = "unknown error";
+    switch (luaL_checkinteger(ls, 1)) {
+    case ERR_OK: msg = "no error"; break;
+    case ERR_MEM: msg = "out of memory"; break;
+    case ERR_BUF: msg = "buffer error"; break;
+    case ERR_TIMEOUT: msg = "timeout"; break;
+    case ERR_RTE: msg = "routing problem"; break;
+    case ERR_INPROGRESS: msg = "operation in progress"; break;
+    case ERR_VAL: msg = "illegal value"; break;
+    case ERR_WOULDBLOCK: msg = "operation would block"; break;
+    case ERR_USE: msg = "address in use"; break;
+    case ERR_ALREADY: msg = "already connecting"; break;
+    case ERR_ISCONN: msg = "connection already established"; break;
+    case ERR_CONN: msg = "not connected"; break;
+    case ERR_IF: msg = "low-level netif error"; break;
+    case ERR_ABRT: msg = "connection aborted"; break;
+    case ERR_RST: msg = "connection reset"; break;
+    case ERR_CLSD: msg = "connection closed"; break;
+    case ERR_ARG: msg = "illegal argument"; break;
+    }
+    return lua_pushstring(ls, msg), 1;
+}
+
 static int mod_ipaddr_aton(lua_State* ls) {
     char const* addr = luaL_checkstring(ls, 1);
-    ip_addr_t* ia = lua_newuserdatauv(ls, sizeof(ip_addr_t), 0);
-    luaL_getmetatable(ls, mlua_IPAddr_name);
-    lua_setmetatable(ls, -2);
+    ip_addr_t* ia = mlua_new_IPAddr(ls);
     return ipaddr_aton(addr, ia) != 0 ? 1 : 0;
 }
 
@@ -93,9 +123,13 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(ERR_RST, integer, ERR_RST),
     MLUA_SYM_V(ERR_CLSD, integer, ERR_CLSD),
     MLUA_SYM_V(ERR_ARG, integer, ERR_ARG),
+    MLUA_SYM_V(IPADDR_TYPE_V4, integer, IPADDR_TYPE_V4),
+    MLUA_SYM_V(IPADDR_TYPE_V6, integer, IPADDR_TYPE_V6),
+    MLUA_SYM_V(IPADDR_TYPE_ANY, integer, IPADDR_TYPE_ANY),
 
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),
+    MLUA_SYM_F(err_str, mod_),
     MLUA_SYM_F(ipaddr_aton, mod_),
     MLUA_SYM_F(ipaddr_ntoa, mod_),
 };

@@ -626,6 +626,15 @@ target_link_libraries(mlua_mod_pico.lwip INTERFACE
     pico_lwip_nosys
 )
 
+mlua_add_c_module(mlua_mod_pico.lwip.dns pico.lwip.dns.c)
+target_compile_definitions(mlua_mod_pico.lwip.dns_headers INTERFACE
+    LWIP_DNS=1
+)
+target_link_libraries(mlua_mod_pico.lwip.dns INTERFACE
+    mlua_mod_mlua.thread
+    mlua_mod_pico.lwip
+)
+
 mlua_add_c_module(mlua_mod_pico.lwip.pbuf pico.lwip.pbuf.c)
 target_link_libraries(mlua_mod_pico.lwip.pbuf INTERFACE
     mlua_mod_pico.lwip

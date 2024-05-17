@@ -77,6 +77,8 @@ MLUA_SYMBOLS(module_syms) = {
 };
 
 MLUA_OPEN_MODULE(pico.lwip.pbuf) {
+    mlua_require(ls, "pico.lwip", false);
+
     // Create the module.
     mlua_new_module(ls, 0, module_syms);
 

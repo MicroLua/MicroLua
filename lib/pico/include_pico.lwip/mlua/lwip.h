@@ -33,12 +33,18 @@ static inline void mlua_lwip_unlock(void) {
     async_context_release_lock(mlua_async_context());
 }
 
+// Push a new IPAddr value.
+ip_addr_t* mlua_new_IPAddr(lua_State* ls);
+
 // Get an IPAddr value at the given stack index, or raise an error if the stack
 // entry is not an IPAddr userdata.
 static inline ip_addr_t* mlua_check_IPAddr(lua_State* ls, int arg) {
     extern char const mlua_IPAddr_name[];
     return luaL_checkudata(ls, arg, mlua_IPAddr_name);
 }
+
+// Push a new PBUF value.
+struct pbuf** mlua_new_PBUF(lua_State* ls);
 
 // Get a PBUF value at the given stack index, or raise an error if the stack
 // entry is not a PBUF userdata.
