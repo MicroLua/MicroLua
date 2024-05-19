@@ -24,6 +24,25 @@
 #endif
 #endif
 
+static int mod_getserver(lua_State* ls) {
+    u8_t index = luaL_checkinteger(ls, 1);
+    ip_addr_t* res = mlua_new_IPAddr(ls);
+    mlua_lwip_lock();
+    *res = *dns_getserver(index);
+    mlua_lwip_unlock();
+    return 1;
+}
+
+static int mod_setserver(lua_State* ls) {
+    u8_t index = luaL_checkinteger(ls, 1);
+    ip_addr_t const* server = NULL;
+    if (!lua_isnoneornil(ls, 2)) server = mlua_check_IPAddr(ls, 2);
+    mlua_lwip_lock();
+    dns_setserver(index, server);
+    mlua_lwip_unlock();
+    return 0;
+}
+
 typedef enum ReqStatus {
     STATUS_WAITING,
     STATUS_FOUND,
@@ -129,6 +148,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(ADDRTYPE_IPV6_IPV4, integer, LWIP_DNS_ADDRTYPE_IPV6_IPV4),
     MLUA_SYM_V(MAX_SERVERS, integer, DNS_MAX_SERVERS),
 
+    MLUA_SYM_F(getserver, mod_),
+    MLUA_SYM_F(setserver, mod_),
     MLUA_SYM_F(gethostbyname, mod_),
 };
 
