@@ -36,17 +36,22 @@ static inline void mlua_event_unlock(void) {
 
 // An event. The state is a tagged union of two pointers:
 //  - If the state is zero, the event is disabled.
-//  - If the state is non-zero and the EVENT_PENDING bit isn't set, the event is
-//    enabled and the state contains a pointer to the pending event queue.
-//  - If the state is non-zero and the EVENT_PENDING bit is set, the event is
-//    pending and the state contains a pointer to the next pending event in the
-//    queue.
+//  - If the lower bits are EVENT_IDLE, the event is enabled and the state
+//    contains a pointer to the pending event queue.
+//  - If the lower bits are EVENT_PENDING, the event is pending and the state
+//    contains a pointer to the next pending event in the queue.
+//  - If the lower bits are EVENT_ABANDONED, the event was abandoned, and can be
+//    disabled with mlua_event_disable_abandoned().
 typedef struct MLuaEvent {
     uintptr_t state;
 } MLuaEvent;
 
 // Enable an event. Returns false iff the event was already enabled.
 bool mlua_event_enable(lua_State* ls, MLuaEvent* ev);
+
+// Abandon an event. This keeps the event enabled, but allows disabling it from
+// a non-Lua context with mlua_event_disable_abandoned().
+void mlua_event_abandon(lua_State* ls, MLuaEvent* ev);
 
 // Disable an event.
 void mlua_event_disable(lua_State* ls, MLuaEvent* ev);
@@ -73,6 +78,9 @@ static inline void mlua_event_set(MLuaEvent* ev) {
     mlua_event_set_nolock(ev);
     mlua_event_unlock();
 }
+
+// Disable an event, and return true, iff the event has been abandoned.
+bool mlua_event_disable_abandoned(MLuaEvent* ev);
 
 // Dispatch pending events.
 void mlua_event_dispatch(lua_State* ls, uint64_t deadline);

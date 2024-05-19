@@ -21,7 +21,7 @@ static __attribute__((constructor)) void init(void) {
 // A pending event queue. Events that are made pending are pushed to the tail,
 // and event dispatching pops from the head. The queue is a linked list, where
 // the state of each pending event contains a pointer to the next pending event,
-// with the EVENT_PENDING bit set.
+// with the lower bits set to EVENT_PENDING.
 typedef struct EventQueue {
     MLuaEvent* head;
     MLuaEvent* tail;
@@ -29,14 +29,19 @@ typedef struct EventQueue {
 
 static_assert(sizeof(EventQueue) <= LUA_EXTRASPACE, "LUA_EXTRASPACE too small");
 
-#define EVENT_PENDING (1u << 0)
+typedef enum EventState {
+    EVENT_IDLE = 0,
+    EVENT_PENDING = 1,
+    EVENT_ABANDONED = 2,
+    EVENT_MASK = 3,
+} EventState;
 
-static inline bool is_pending(MLuaEvent const* ev) {
-    return (ev->state & EVENT_PENDING) != 0;
+static inline EventState event_state(MLuaEvent const* ev) {
+    return ev->state & EVENT_MASK;
 }
 
 static inline MLuaEvent* next_pending(MLuaEvent const* ev) {
-    return (MLuaEvent*)(ev->state & ~EVENT_PENDING);
+    return (MLuaEvent*)(ev->state & ~EVENT_MASK);
 }
 
 static inline EventQueue* get_queue(lua_State* ls) {
@@ -46,16 +51,16 @@ static inline EventQueue* get_queue(lua_State* ls) {
 static void remove_pending_nolock(EventQueue* q, MLuaEvent const* ev) {
     if (q->head == ev) {
         q->head = next_pending(ev);
-    } else {
-        for (MLuaEvent* cur = q->head;;) {
-            MLuaEvent* next = next_pending(cur);
-            if (next == NULL) break;
-            if (next == ev) {
-                cur->state = ev->state;
-                break;
-            }
-            cur = next;
+        return;
+    }
+    for (MLuaEvent* cur = q->head;;) {
+        MLuaEvent* next = next_pending(cur);
+        if (next == NULL) break;
+        if (next == ev) {
+            cur->state = ev->state;
+            break;
         }
+        cur = next;
     }
 }
 
@@ -71,21 +76,30 @@ bool mlua_event_enable(lua_State* ls, MLuaEvent* ev) {
     return true;
 }
 
-void mlua_event_disable(lua_State* ls, MLuaEvent* ev) {
-    EventQueue* q = get_queue(ls);
+void disable_event(lua_State* ls, MLuaEvent* ev, uintptr_t state) {
     mlua_event_lock();
     if (ev->state == 0) {
         mlua_event_unlock();
         return;
     }
-    if (is_pending(ev)) remove_pending_nolock(q, ev);
-    ev->state = 0;
+    if (event_state(ev) == EVENT_PENDING) {
+        remove_pending_nolock(get_queue(ls), ev);
+    }
+    ev->state = state;
     mlua_event_unlock();
     mlua_event_remove_watcher(ls, ev);
 }
 
+void mlua_event_abandon(lua_State* ls, MLuaEvent* ev) {
+    disable_event(ls, ev, EVENT_ABANDONED);
+}
+
+void mlua_event_disable(lua_State* ls, MLuaEvent* ev) {
+    disable_event(ls, ev, 0);
+}
+
 void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
-    if (ev->state == 0 || is_pending(ev)) return;
+    if (ev->state == 0 || event_state(ev) != EVENT_IDLE) return;
     EventQueue* q = (EventQueue*)ev->state;
     ev->state = (uintptr_t)NULL | EVENT_PENDING;
     if (q->head == NULL) {
@@ -95,6 +109,14 @@ void __time_critical_func(mlua_event_set_nolock)(MLuaEvent* ev) {
         q->tail = ev;
     }
     __sev();
+}
+
+bool mlua_event_disable_abandoned(MLuaEvent* ev) {
+    mlua_event_lock();
+    bool res = ev->state == EVENT_ABANDONED;
+    if (res) ev->state = 0;
+    mlua_event_unlock();
+    return res;
 }
 
 void mlua_event_dispatch(lua_State* ls, uint64_t deadline) {
