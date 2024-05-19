@@ -11,7 +11,7 @@
 
 char const mlua_PBUF_name[] = "pico.lwip.PBUF";
 
-static struct pbuf** new_PBUF(lua_State* ls) {
+struct pbuf** mlua_new_PBUF(lua_State* ls) {
     struct pbuf** pb = lua_newuserdatauv(ls, sizeof(struct pbuf*), 0);
     *pb = NULL;
     luaL_getmetatable(ls, mlua_PBUF_name);
@@ -55,7 +55,7 @@ static int mod_alloc(lua_State* ls) {
     pbuf_layer layer = luaL_checkinteger(ls, 1);
     u16_t length = luaL_checkinteger(ls, 2);
     pbuf_type type = luaL_optinteger(ls, 3, PBUF_RAM);
-    struct pbuf** pb = new_PBUF(ls);
+    struct pbuf** pb = mlua_new_PBUF(ls);
     mlua_lwip_lock();
     *pb = pbuf_alloc(layer, length, type);
     mlua_lwip_unlock();

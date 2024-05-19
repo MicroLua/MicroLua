@@ -631,6 +631,7 @@ target_compile_definitions(mlua_mod_pico.lwip.dns_headers INTERFACE
     LWIP_DNS=1
 )
 target_link_libraries(mlua_mod_pico.lwip.dns INTERFACE
+    mlua_mod_mlua.int64
     mlua_mod_mlua.thread
     mlua_mod_pico.lwip
 )
