@@ -32,6 +32,26 @@ ip_addr_t* mlua_new_IPAddr(lua_State* ls) {
     return ud;
 }
 
+static int IPAddr_is_any(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    return lua_pushboolean(ls, ip_addr_isany(addr)), 1;
+}
+
+static int IPAddr_is_multicast(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    return lua_pushboolean(ls, ip_addr_ismulticast(addr)), 1;
+}
+
+static int IPAddr_is_loopback(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    return lua_pushboolean(ls, ip_addr_isloopback(addr)), 1;
+}
+
+static int IPAddr_is_linklocal(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    return lua_pushboolean(ls, ip_addr_islinklocal(addr)), 1;
+}
+
 static int IPAddr___tostring(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
     luaL_Buffer buf;
@@ -48,9 +68,14 @@ static int IPAddr___tostring(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(IPAddr_syms) = {
+    MLUA_SYM_F(is_any, IPAddr_),
+    MLUA_SYM_F(is_multicast, IPAddr_),
+    MLUA_SYM_F(is_loopback, IPAddr_),
+    MLUA_SYM_F(is_linklocal, IPAddr_),
 };
 
 MLUA_SYMBOLS_NOHASH(IPAddr_syms_nh) = {
+    // TODO: MLUA_SYM_F_NH(__eq, IPAddr_),
     MLUA_SYM_F_NH(__tostring, IPAddr_),
 };
 
