@@ -18,7 +18,7 @@ local function for_each_ticks(t, fn)
 end
 
 function test_ticks(t)
-    t:expect(t.expr(time).ms):eq(1000)
+    t:expect(t.expr(time).msec):eq(1000)
     t:expect(t.expr(time).sec):eq(1000 * 1000)
     t:expect(t.expr(time).min):eq(60 * 1000 * 1000)
     t:expect(t.expr(time).ticks64())
