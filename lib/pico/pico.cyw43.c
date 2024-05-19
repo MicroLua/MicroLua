@@ -56,10 +56,14 @@ static int mod_ioctl(lua_State* ls) {
     return 1;
 }
 
+#if CYW43_LWIP
+
 static int mod_tcpip_link_status(lua_State* ls) {
     int itf = luaL_checkinteger(ls, 1);
     return lua_pushinteger(ls, cyw43_tcpip_link_status(&cyw43_state, itf)), 1;
 }
+
+#endif  // CYW43_LWIP
 
 static int mod_link_status_str(lua_State* ls) {
     char const* msg = "unknown";
@@ -188,7 +192,11 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(deinit, mod_),
     MLUA_SYM_F(is_initialized, mod_),
     MLUA_SYM_F(ioctl, mod_),
+#if CYW43_LWIP
     MLUA_SYM_F(tcpip_link_status, mod_),
+#else
+    MLUA_SYM_V(tcpip_link_status, boolean, false),
+#endif
     MLUA_SYM_F(link_status_str, mod_),
 #if CYW43_GPIO
     MLUA_SYM_F(gpio_set, mod_),
