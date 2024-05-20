@@ -124,12 +124,12 @@ $ git clone --recurse-submodules https://github.com/MicroLua/MicroLua.git
 $ cd MicroLua
 
 # Build the test suite for the host and run it.
-$ tools/run -l -p host
+$ tools/run -l -t bin/mlua_tests -p host
 
 # Build the test suite for a "pico" board, flash it with picotool and connect
 # to its virtual serial port with socat to view the test results. The target
 # should be in BOOTSEL mode.
-$ tools/run -l -p pico -c -DPICO_BOARD=pico
+$ tools/run -l -t bin/mlua_tests -p pico -c -DPICO_BOARD=pico
 ```
 
 ## Contributing
