@@ -517,6 +517,7 @@ target_link_libraries(mlua_mod_mlua.testing.i2c INTERFACE
     mlua_mod_hardware.gpio
     mlua_mod_hardware.i2c
     mlua_mod_mlua.list
+    mlua_mod_mlua.time
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.platform mlua.testing.platform.lua)

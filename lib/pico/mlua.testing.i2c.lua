@@ -6,6 +6,7 @@ _ENV = module(...)
 local gpio = require 'hardware.gpio'
 local i2c = require 'hardware.i2c'
 local list = require 'mlua.list'
+local time = require 'mlua.time'
 
 pins = {
     [0] = {sda = {0, 4, 8, 12, 16, 20, 24, 28},
@@ -38,6 +39,7 @@ function set_up(t, baud, sda0, scl0, sda1, scl1)
     for _, pin in ipairs{sda0, scl0} do
         gpio.init(pin)
         gpio.pull_up(pin)
+        time.sleep_for(100)  -- Give signal time to rise
         t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
     end
 
@@ -54,6 +56,7 @@ function set_up(t, baud, sda0, scl0, sda1, scl1)
         for _, pin in ipairs{sda1, scl1} do
             gpio.init(pin)
             gpio.pull_up(pin)
+            time.sleep_for(100)  -- Give signal time to rise
             t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
         end
 
