@@ -354,6 +354,7 @@ static void to_program(lua_State* ls, pio_program_t* prog) {
         luaL_error(ls, "program too large");
         return;
     }
+    prog->origin = -1;
     if (lua_getfield(ls, 2, "origin") != LUA_TNIL) {
         prog->origin = luaL_checkinteger(ls, -1);
     }
