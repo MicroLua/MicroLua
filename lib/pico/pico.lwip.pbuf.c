@@ -3,6 +3,8 @@
 
 #include "lwip/pbuf.h"
 
+#include <string.h>
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/lwip.h"
@@ -48,39 +50,63 @@ static int PBUF_get(lua_State* ls) {
     return len;
 }
 
-static int PBUF_read(lua_State* ls) {
-    struct pbuf* pb = mlua_check_PBUF(ls, 1);
-    lua_Unsigned off = luaL_checkinteger(ls, 2);
-    lua_Integer len = luaL_checkinteger(ls, 3);
-    if (pb == NULL) return 0;
-    if (off >= pb->tot_len || len <= 0) return lua_pushliteral(ls, ""), 1;
-    luaL_Buffer buf;
-    void* dst = luaL_buffinitsize(ls, &buf,
-                                  len <= pb->tot_len ? len : pb->tot_len);
-    mlua_lwip_lock();
-    len = pbuf_copy_partial(pb, dst, len, off);
-    mlua_lwip_unlock();
-    return luaL_pushresultsize(&buf, len), 1;
-}
-
 static int PBUF___len(lua_State* ls) {
     struct pbuf* pb = mlua_check_PBUF(ls, 1);
     if (pb == NULL) return 0;
     return lua_pushinteger(ls, pb->tot_len), 1;
 }
 
+static void PBUF_read(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+                      void* dest) {
+    mlua_lwip_lock();
+    pbuf_copy_partial((struct pbuf*)ptr, dest, len, offset);
+    mlua_lwip_unlock();
+}
+
+static void PBUF_write(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+                       void const* src) {
+    mlua_lwip_lock();
+    pbuf_take_at((struct pbuf*)ptr, src, len, offset);
+    mlua_lwip_unlock();
+}
+
+static void PBUF_fill(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+                      int value) {
+    mlua_lwip_lock();
+    u16_t off;
+    struct pbuf* pb = pbuf_skip((struct pbuf*)ptr, offset, &off);
+    if (pb != NULL && off > 0) {
+        lua_Unsigned size = len;
+        if (off + size > pb->len) size = pb->len - off;
+        memset(pb->payload + off, value, size);
+        len -= size;
+        pb = pb->next;
+    }
+    while (pb != NULL && len > 0) {
+        lua_Unsigned size = len;
+        if (size > pb->len) size = pb->len;
+        memset(pb->payload, value, size);
+        len -= size;
+        pb = pb->next;
+    }
+    mlua_lwip_unlock();
+}
+
+MLuaBufferVt const PBUF_vt = {.read = &PBUF_read, .write = &PBUF_write,
+                              .fill = &PBUF_fill};
+
 static int PBUF___buffer(lua_State* ls) {
     struct pbuf* pb = mlua_check_PBUF(ls, 1);
     if (pb == NULL) return 0;
-    lua_pushlightuserdata(ls, pb->payload);
-    lua_pushinteger(ls, pb->len);
-    return 2;
+    lua_pushlightuserdata(ls, pb);
+    lua_pushinteger(ls, pb->tot_len);
+    lua_pushlightuserdata(ls, (void*)&PBUF_vt);
+    return 3;
 }
 
 MLUA_SYMBOLS(PBUF_syms) = {
     MLUA_SYM_F(free, PBUF_),
     MLUA_SYM_F(get, PBUF_),
-    MLUA_SYM_F(read, PBUF_),
 };
 
 #define PBUF___close PBUF_free

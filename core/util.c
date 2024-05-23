@@ -47,15 +47,16 @@ void* mlua_check_userdata_or_nil(lua_State* ls, int arg) {
     return ud;
 }
 
-void* mlua_get_buffer(lua_State* ls, int arg, size_t* size) {
-    if (luaL_getmetafield(ls, arg, "__buffer") == LUA_TNIL) return NULL;
+bool mlua_get_buffer(lua_State* ls, int arg, MLuaBuffer* buf) {
+    if (luaL_getmetafield(ls, arg, "__buffer") == LUA_TNIL) return false;
     lua_pushvalue(ls, arg);
-    lua_call(ls, 1, 2);
-    void* ptr = lua_touserdata(ls, -2);
-    luaL_argexpected(ls, ptr != NULL, -2, "userdata");
-    *size = luaL_checkinteger(ls, -1);
-    lua_pop(ls, 2);
-    return ptr;
+    lua_call(ls, 1, 3);
+    buf->ptr = lua_touserdata(ls, -3);
+    luaL_argexpected(ls, buf->ptr != NULL, -3, "userdata");
+    buf->size = luaL_checkinteger(ls, -2);
+    buf->vt = lua_touserdata(ls, -1);
+    lua_pop(ls, 3);
+    return true;
 }
 
 int mlua_push_fail(lua_State* ls, char const* err) {

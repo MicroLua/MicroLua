@@ -124,9 +124,10 @@ A buffer is an object that provides low-level access to a block of mutable
 memory. To be recognized as a buffer, an object must implement the `__buffer`
 metamethod.
 
-- `Object:__buffer() -> (ptr, size)`\
-  Return a pointer to, and the size of the buffer. `ptr` is a light userdata,
-  and `size` is an unsigned integer.
+- `Object:__buffer() -> (ptr, size, [vtable])`\
+  Return a pointer to the buffer, its size, and an optional `MLuaBufferVt*`.
+  `ptr` and `vtable` are light userdata, and `size` is an unsigned integer. If
+  `vtable` is missing or nil, then `ptr` points at a contiguous block of memory.
 
 ## Read-only tables
 

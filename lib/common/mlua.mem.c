@@ -40,26 +40,30 @@ MLUA_SYMBOLS_NOHASH(Buffer_syms_nh) = {
     MLUA_SYM_F_NH(__buffer, Buffer_),
 };
 
-static int read_mem(lua_State* ls, void const* src, size_t size) {
-    if (size <= 0) return lua_pushliteral(ls, ""), 1;
+static int buf_read(lua_State* ls, MLuaBuffer const* src, lua_Unsigned offset,
+                    lua_Unsigned len) {
+    if (len == 0) return lua_pushliteral(ls, ""), 1;
     luaL_Buffer buf;
-    void* dest = (void*)luaL_buffinitsize(ls, &buf, size);
-    memcpy(dest, src, size);
-    return luaL_pushresultsize(&buf, size), 1;
+    void* dest = (void*)luaL_buffinitsize(ls, &buf, len);
+    if (src->vt != NULL) {
+        src->vt->read(src->ptr, offset, len, dest);
+    } else {
+        memcpy(dest, src->ptr + offset, len);
+    }
+    return luaL_pushresultsize(&buf, len), 1;
 }
 
 static int mod_read(lua_State* ls) {
+    MLuaBuffer buf = {.vt = NULL};
     int ok;
-    void const* ptr = (void const*)mlua_to_intptrx(ls, 1, &ok);
-    if (ok) return read_mem(ls, ptr, luaL_optinteger(ls, 2, 1));
-    size_t size = 0;
-    ptr = mlua_get_buffer(ls, 1, &size);
-    luaL_argexpected(ls, ptr != NULL, 1, "integer or buffer");
+    buf.ptr = (void*)mlua_to_intptrx(ls, 1, &ok);
+    if (ok) return buf_read(ls, &buf, 0, luaL_optinteger(ls, 2, 1));
+    luaL_argexpected(ls, mlua_get_buffer(ls, 1, &buf), 1, "integer or buffer");
     lua_Unsigned offset = luaL_optinteger(ls, 2, 0);
-    luaL_argcheck(ls, offset <= size, 2, "out of bounds");
-    lua_Unsigned len = luaL_optinteger(ls, 3, size - offset);
-    luaL_argcheck(ls, offset + len <= size, 3, "out of bounds");
-    return read_mem(ls, ptr + offset, len);
+    luaL_argcheck(ls, offset <= buf.size, 2, "out of bounds");
+    lua_Unsigned len = luaL_optinteger(ls, 3, buf.size - offset);
+    luaL_argcheck(ls, offset + len <= buf.size, 3, "out of bounds");
+    return buf_read(ls, &buf, offset, len);
 }
 
 static int mod_write(lua_State* ls) {
@@ -71,12 +75,15 @@ static int mod_write(lua_State* ls) {
         memcpy(ptr, src, len);
         return 0;
     }
-    size_t size = 0;
-    ptr = mlua_get_buffer(ls, 1, &size);
-    luaL_argexpected(ls, ptr != NULL, 1, "integer or buffer");
+    MLuaBuffer buf;
+    luaL_argexpected(ls, mlua_get_buffer(ls, 1, &buf), 1, "integer or buffer");
     lua_Unsigned offset = luaL_optinteger(ls, 3, 0);
-    luaL_argcheck(ls, offset + len <= size, 3, "out of bounds");
-    memcpy(ptr + offset, src, len);
+    luaL_argcheck(ls, offset + len <= buf.size, 3, "out of bounds");
+    if (buf.vt != NULL) {
+        buf.vt->write(buf.ptr, offset, len, src);
+    } else {
+        memcpy(buf.ptr + offset, src, len);
+    }
     return 0;
 }
 
@@ -88,14 +95,17 @@ static int mod_fill(lua_State* ls) {
         memset(ptr, value, luaL_optinteger(ls, 3, 1));
         return 0;
     }
-    size_t size = 0;
-    ptr = mlua_get_buffer(ls, 1, &size);
-    luaL_argexpected(ls, ptr != NULL, 1, "integer or buffer");
+    MLuaBuffer buf;
+    luaL_argexpected(ls, mlua_get_buffer(ls, 1, &buf), 1, "integer or buffer");
     lua_Unsigned offset = luaL_optinteger(ls, 3, 0);
-    luaL_argcheck(ls, offset <= size, 3, "out of bounds");
-    lua_Unsigned len = luaL_optinteger(ls, 4, size - offset);
-    luaL_argcheck(ls, offset + len <= size, 4, "out of bounds");
-    memset(ptr + offset, value, len);
+    luaL_argcheck(ls, offset <= buf.size, 3, "out of bounds");
+    lua_Unsigned len = luaL_optinteger(ls, 4, buf.size - offset);
+    luaL_argcheck(ls, offset + len <= buf.size, 4, "out of bounds");
+    if (buf.vt != NULL) {
+        buf.vt->fill(buf.ptr, offset, len, value);
+    } else {
+        memset(buf.ptr + offset, value, len);
+    }
     return 0;
 }
 
