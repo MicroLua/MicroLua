@@ -139,14 +139,14 @@ static int handle_scan_result_event(lua_State* ls) {
     for (;;) {
         mlua_event_lock();
         bool avail = q->len > 0;
+        lua_Integer dropped = 0;
         if (avail) {
             result = q->items[q->head];
-            ++q->head;
-            if (q->head >= q->cap) q->head -= q->cap;
+            if (++q->head == q->cap) q->head = 0;
             --q->len;
+            dropped = q->dropped;
+            q->dropped = 0;
         }
-        lua_Integer dropped = q->dropped;
-        q->dropped = 0;
         mlua_event_unlock();
         if (!avail) {
             if (!cyw43_wifi_scan_active(&cyw43_state)) {

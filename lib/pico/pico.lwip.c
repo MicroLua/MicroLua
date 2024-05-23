@@ -52,6 +52,12 @@ static int IPAddr_is_linklocal(lua_State* ls) {
     return lua_pushboolean(ls, ip_addr_islinklocal(addr)), 1;
 }
 
+static int IPAddr___eq(lua_State* ls) {
+    ip_addr_t const* lhs = mlua_check_IPAddr(ls, 1);
+    ip_addr_t const* rhs = mlua_check_IPAddr(ls, 2);
+    return lua_pushboolean(ls, ip_addr_cmp(lhs, rhs)), 1;
+}
+
 static int IPAddr___tostring(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
     luaL_Buffer buf;
@@ -75,7 +81,7 @@ MLUA_SYMBOLS(IPAddr_syms) = {
 };
 
 MLUA_SYMBOLS_NOHASH(IPAddr_syms_nh) = {
-    // TODO: MLUA_SYM_F_NH(__eq, IPAddr_),
+    MLUA_SYM_F_NH(__eq, IPAddr_),
     MLUA_SYM_F_NH(__tostring, IPAddr_),
 };
 

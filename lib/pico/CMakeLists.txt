@@ -647,7 +647,9 @@ target_compile_definitions(mlua_mod_pico.lwip.udp_headers INTERFACE
     LWIP_UDP=1
 )
 target_link_libraries(mlua_mod_pico.lwip.udp INTERFACE
+    mlua_mod_mlua.thread
     mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.pbuf
 )
 
 mlua_add_c_module(mlua_mod_pico.multicore pico.multicore.c)

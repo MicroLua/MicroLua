@@ -46,6 +46,9 @@ typedef struct MLuaEvent {
     uintptr_t state;
 } MLuaEvent;
 
+// Initialize an event.
+inline void mlua_event_init(MLuaEvent* ev) { ev->state = 0; }
+
 // Enable an event. Returns false iff the event was already enabled.
 bool mlua_event_enable(lua_State* ls, MLuaEvent* ev);
 
