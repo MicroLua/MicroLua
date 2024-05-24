@@ -103,12 +103,7 @@ static int gethostbyname_done(lua_State* ls) {
 static int mod_gethostbyname(lua_State* ls) {
     char const* hostname = luaL_checkstring(ls, 1);
     u8_t addrtype = luaL_optinteger(ls, 2, LWIP_DNS_ADDRTYPE_DEFAULT);
-    int dlidx = 0;
-    if (!lua_isnoneornil(ls, 3)) {
-        mlua_push_deadline(ls, mlua_check_int64(ls, 3));
-        lua_replace(ls, 3);
-        dlidx = 3;
-    }
+    lua_settop(ls, 3);  // Ensure deadline is set
 
     // Find an available slot.
     GHBNState* state = ghbn_state;
@@ -137,7 +132,7 @@ static int mod_gethostbyname(lua_State* ls) {
         state->status = STATUS_NOT_FOUND;
         return mlua_lwip_push_err(ls, err);
     }
-    return mlua_event_wait(ls, &state->event, 0, &gethostbyname_loop, dlidx);
+    return mlua_event_wait(ls, &state->event, 0, &gethostbyname_loop, 3);
 }
 
 MLUA_SYMBOLS(module_syms) = {

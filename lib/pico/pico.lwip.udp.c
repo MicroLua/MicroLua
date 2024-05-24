@@ -105,6 +105,7 @@ static int recv_loop(lua_State* ls, bool timeout) {
 static int UDP_recv(lua_State* ls) {
     UDP* udp = luaL_checkudata(ls, 1, UDP_name);
     luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    lua_settop(ls, 2);  // Ensure deadline is set
     return mlua_event_wait(ls, &udp->event, 0, &recv_loop, 2);
 }
 
