@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -73,6 +74,36 @@ typedef struct MLuaBuffer {
 // Apply the buffer protocol to the given argument, and return the buffer
 // pointer and size.
 bool mlua_get_buffer(lua_State* ls, int arg, MLuaBuffer* buf);
+
+// Read from a buffer.
+static inline void mlua_buffer_read(MLuaBuffer const* buf, lua_Unsigned off,
+                                    lua_Unsigned len, void* dest) {
+    if (buf->vt != NULL) {
+        buf->vt->read(buf->ptr, off, len, dest);
+    } else {
+        memcpy(dest, buf->ptr + off, len);
+    }
+}
+
+// Write to a buffer.
+static inline void mlua_buffer_write(MLuaBuffer const* buf, lua_Unsigned off,
+                                     lua_Unsigned len, void const* src) {
+    if (buf->vt != NULL) {
+        buf->vt->write(buf->ptr, off, len, src);
+    } else {
+        memcpy(buf->ptr + off, src, len);
+    }
+}
+
+// Fill a part of a buffer.
+static inline void mlua_buffer_fill(MLuaBuffer const* buf, lua_Unsigned off,
+                                    lua_Unsigned len, int value) {
+    if (buf->vt != NULL) {
+        buf->vt->fill(buf->ptr, off, len, value);
+    } else {
+        memset(buf->ptr + off, value, len);
+    }
+}
 
 // Push a failure and an error message, and return the number of pushed values.
 int mlua_push_fail(lua_State* ls, char const* err);

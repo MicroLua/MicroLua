@@ -32,24 +32,6 @@ static int PBUF_free(lua_State* ls) {
     return 0;
 }
 
-static int PBUF_get(lua_State* ls) {
-    struct pbuf* pb = mlua_check_PBUF(ls, 1);
-    lua_Integer off = luaL_checkinteger(ls, 2);
-    lua_Integer len = luaL_optinteger(ls, 3, 1);
-    if (len <= 0) return 0;
-    lua_settop(ls, 1);
-    if (luai_unlikely(!lua_checkstack(ls, len))) {
-        return luaL_error(ls, "too many results");
-    }
-    for (lua_Integer i = 0; i < len; ++i) {
-        mlua_lwip_lock();
-        int v = pbuf_try_get_at(pb, off++);
-        mlua_lwip_unlock();
-        if (v >= 0) lua_pushinteger(ls, v); else lua_pushnil(ls);
-    }
-    return len;
-}
-
 static int PBUF___len(lua_State* ls) {
     struct pbuf* pb = mlua_check_PBUF(ls, 1);
     if (pb == NULL) return 0;
@@ -106,7 +88,6 @@ static int PBUF___buffer(lua_State* ls) {
 
 MLUA_SYMBOLS(PBUF_syms) = {
     MLUA_SYM_F(free, PBUF_),
-    MLUA_SYM_F(get, PBUF_),
 };
 
 #define PBUF___close PBUF_free

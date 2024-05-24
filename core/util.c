@@ -51,6 +51,7 @@ bool mlua_get_buffer(lua_State* ls, int arg, MLuaBuffer* buf) {
     if (luaL_getmetafield(ls, arg, "__buffer") == LUA_TNIL) return false;
     lua_pushvalue(ls, arg);
     lua_call(ls, 1, 3);
+    if (lua_isnil(ls, -3)) return lua_pop(ls, 3), false;
     buf->ptr = lua_touserdata(ls, -3);
     luaL_argexpected(ls, buf->ptr != NULL, -3, "userdata");
     buf->size = luaL_checkinteger(ls, -2);

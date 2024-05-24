@@ -573,6 +573,14 @@ implementing the [buffer protocol](core.md#buffer-protocol) and raw memory
   `fill(address, value = 0, len = 1)`\
   Fill a range of raw data in a buffer or in memory.
 
+- `get(buffer, offset, len = 1) -> (integer, ...)`\
+  `get(address, len = 1) -> (integer, ...)`\
+  Get individual bytes from a buffer or from memory.
+
+- `set(buffer, offset, [value, ...])`\
+  `set(address, [value, ...])`\
+  Set individual bytes in a buffer or in memory.
+
 - `alloc(size) -> Buffer`\
   Allocate a memory buffer of the given size.
 

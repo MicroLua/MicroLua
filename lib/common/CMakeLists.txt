@@ -177,6 +177,7 @@ mlua_add_lua_modules(mlua_test_mlua.mem mlua.mem.test.lua)
 target_link_libraries(mlua_test_mlua.mem INTERFACE
     mlua_mod_mlua.mem
     mlua_mod_string
+    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.oo mlua.oo.lua)
