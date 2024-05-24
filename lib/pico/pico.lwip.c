@@ -85,6 +85,9 @@ MLUA_SYMBOLS_NOHASH(IPAddr_syms_nh) = {
     MLUA_SYM_F_NH(__tostring, IPAddr_),
 };
 
+static void mod_IP_ANY_TYPE(lua_State* ls, MLuaSymVal const* value) {
+    *mlua_new_IPAddr(ls) = *IP_ANY_TYPE;
+}
 
 static int mod_init(lua_State* ls) {
     async_context_t* ctx = mlua_async_context();
@@ -157,6 +160,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(IPADDR_TYPE_V4, integer, IPADDR_TYPE_V4),
     MLUA_SYM_V(IPADDR_TYPE_V6, integer, IPADDR_TYPE_V6),
     MLUA_SYM_V(IPADDR_TYPE_ANY, integer, IPADDR_TYPE_ANY),
+    MLUA_SYM_P(IP_ANY_TYPE, mod_),
 
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),

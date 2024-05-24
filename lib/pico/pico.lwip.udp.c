@@ -72,14 +72,55 @@ static int UDP_free(lua_State* ls) {
     return 0;
 }
 
+static int UDP_bind(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
+    u16_t port = luaL_checkinteger(ls, 3);
+    mlua_lwip_lock();
+    err_t err = udp_bind(udp->pcb, addr, port);
+    mlua_lwip_unlock();
+    return mlua_lwip_push_result(ls, err);
+}
+
+static int UDP_connect(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
+    u16_t port = luaL_checkinteger(ls, 3);
+    mlua_lwip_lock();
+    err_t err = udp_connect(udp->pcb, addr, port);
+    mlua_lwip_unlock();
+    return mlua_lwip_push_result(ls, err);
+}
+
+static int UDP_disconnect(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    mlua_lwip_lock();
+    udp_disconnect(udp->pcb);
+    mlua_lwip_unlock();
+    return 0;
+}
+
+static int UDP_send(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    struct pbuf* pb = mlua_check_PBUF(ls, 2);
+    mlua_lwip_lock();
+    err_t err = udp_send(udp->pcb, pb);
+    mlua_lwip_unlock();
+    return mlua_lwip_push_result(ls, err);
+}
+
 static int UDP_sendto(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
-    ip_addr_t* ip = mlua_check_IPAddr(ls, 3);
+    ip_addr_t* addr = mlua_check_IPAddr(ls, 3);
     u16_t port = luaL_checkinteger(ls, 4);
     mlua_lwip_lock();
-    err_t err = udp_sendto(udp->pcb, pb, ip, port);
+    err_t err = udp_sendto(udp->pcb, pb, addr, port);
     mlua_lwip_unlock();
     return mlua_lwip_push_result(ls, err);
 }
@@ -111,10 +152,10 @@ static int UDP_recv(lua_State* ls) {
 
 MLUA_SYMBOLS(UDP_syms) = {
     MLUA_SYM_F(free, UDP_),
-    // MLUA_SYM_F(bind, UDP_),
-    // MLUA_SYM_F(connect, UDP_),
-    // MLUA_SYM_F(disconnect, UDP_),
-    // MLUA_SYM_F(send, UDP_),
+    MLUA_SYM_F(bind, UDP_),
+    MLUA_SYM_F(connect, UDP_),
+    MLUA_SYM_F(disconnect, UDP_),
+    MLUA_SYM_F(send, UDP_),
     MLUA_SYM_F(sendto, UDP_),
     MLUA_SYM_F(recv, UDP_),
 };
