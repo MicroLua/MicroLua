@@ -88,7 +88,7 @@ async_context_t* mlua_async_context(void) {
 extern char const __flash_binary_start[];
 
 static MLuaFlash const flash = {
-    .address = (uintptr_t)__flash_binary_start,
+    .ptr = __flash_binary_start,
     .size = PICO_FLASH_SIZE_BYTES,
     .write_size = FLASH_PAGE_SIZE,
     .erase_size = FLASH_SECTOR_SIZE,

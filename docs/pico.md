@@ -29,9 +29,9 @@ tests: [`pico.test`](../lib/pico/pico.test.lua)
 - `build_target: string`\
   The name of the build target for the program.
 
-- `flash_binary_start: integer`\
-  `flash_binary_end, integer`\
-  The start and end address of the binary in flash memory.
+- `flash_binary_start: pointer`\
+  `flash_binary_end, pointer`\
+  Pointers to the start and end of the binary in flash memory.
 
 - `OK: integer`\
   `ERROR_*: integer`\
@@ -324,68 +324,68 @@ tests: [`pico.standard_link.test`](../lib/pico/pico.standard_link.test.lua)
 
 This module exposes symbols defined in the linker table.
 
-- `FLASH: integer = 0x10000000`\
+- `FLASH: pointer = pointer(0x10000000)`\
   `FLASH_SIZE: integer = 0x200000`\
-  `RAM: integer = 0x20000000`\
+  `RAM: pointer = pointer(0x20000000)`\
   `RAM_SIZE: integer = 0x40000`\
-  `SCRATCH_X: integer = 0x20040000`\
+  `SCRATCH_X: pointer = pointer(0x20040000)`\
   `SCRATCH_X_SIZE: integer = 0x1000`\
-  `SCRATCH_Y: integer = 0x20041000`\
+  `SCRATCH_Y: pointer = pointer(0x20041000)`\
   `SCRATCH_Y_SIZE: integer = 0x1000`\
-  The addresses and sizes of the memory areas, as used by the linker.
+  Pointers to, and sizes of the memory areas, as used by the linker.
 
-- `flash_binary_start: integer = __flash_binary_start`\
-  `flash_binary_end: integer = __flash_binary_end`\
+- `flash_binary_start: pointer = __flash_binary_start`\
+  `flash_binary_end: pointer = __flash_binary_end`\
   The start and end of the binary in `FLASH`.
 
-- `logical_binary_start: integer = __logical_binary_start`\
+- `logical_binary_start: pointer = __logical_binary_start`\
   The logical start of the binary, i.e. the part after the second stage
   bootloader.
 
-- `binary_info_header_end: integer = __binary_info_header_end`\
+- `binary_info_header_end: pointer = __binary_info_header_end`\
   The end of the binary info header.
 
-- `binary_info_start: integer = __binary_info_start`\
-  `binary_info_end: integer = __binary_info_end`\
+- `binary_info_start: pointer = __binary_info_start`\
+  `binary_info_end: pointer = __binary_info_end`\
   The start and end of the binary info.
 
-- `ram_vector_table: integer = ram_vector_table`\
+- `ram_vector_table: pointer = ram_vector_table`\
   The address of the vector table in RAM.
 
-- `data_source: integer = __etext`\
-  `data_start: integer = __data_start__`\
-  `data_end: integer = __data_end__`\
+- `data_source: pointer = __etext`\
+  `data_start: pointer = __data_start__`\
+  `data_end: pointer = __data_end__`\
   The source (in `FLASH`), start and end (in `RAM`) of initialized data.
 
-- `bss_start: integer = __bss_start__`\
-  `bss_end: integer = __bss_end__`\
+- `bss_start: pointer = __bss_start__`\
+  `bss_end: pointer = __bss_end__`\
   The start and end of zero-initialized data.
 
-- `scratch_x_source: integer = __scratch_x_source__`\
-  `scratch_x_start: integer = __scratch_x_start__`\
-  `scratch_x_end: integer = __scratch_x_end__`\
+- `scratch_x_source: pointer = __scratch_x_source__`\
+  `scratch_x_start: pointer = __scratch_x_start__`\
+  `scratch_x_end: pointer = __scratch_x_end__`\
   The source (in `FLASH`), start and end (in `SCRATCH_X`) of data allocated in
   scratch X.
 
-- `scratch_y_source: integer = __scratch_y_source__`\
-  `scratch_y_start: integer = __scratch_y_start__`\
-  `scratch_y_end: integer = __scratch_y_end__`\
+- `scratch_y_source: pointer = __scratch_y_source__`\
+  `scratch_y_start: pointer = __scratch_y_start__`\
+  `scratch_y_end: pointer = __scratch_y_end__`\
   The source (in `FLASH`), start and end (in `SCRATCH_Y`) of data allocated in
   scratch Y.
 
-- `heap_start: integer = __end__`\
-  `heap_limit: integer = __HeapLimit`\
-  `heap_end: integer = __StackLimit`\
+- `heap_start: pointer = __end__`\
+  `heap_limit: pointer = __HeapLimit`\
+  `heap_end: pointer = __StackLimit`\
   The start of the heap, its guaranteed limit (as set by `PICO_HEAP_SIZE`) and
   its end.
 
-- `stack1_bottom: integer = __StackOneBottom`\
-  `stack1_top: integer = __StackOneTop`\
+- `stack1_bottom: pointer = __StackOneBottom`\
+  `stack1_top: pointer = __StackOneTop`\
   The bottom and top of the stack for core 1. The stack size is set by
   `PICO_CORE1_STACK_SIZE`.
 
-- `stack_bottom: integer = __StackBottom`\
-  `stack_top: integer = __StackTop`\
+- `stack_bottom: pointer = __StackBottom`\
+  `stack_top: pointer = __StackTop`\
   The bottom and top of the stack for core 0. The stack size is set by
   `PICO_STACK_SIZE`.
 

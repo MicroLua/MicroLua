@@ -13,5 +13,5 @@ function test_flash(t)
     local flash = platform.flash
     if not flash then t:skip("platform has no flash") end
     t:expect(flash):label("flash")
-        :has('address'):has('size'):has('write_size'):has('erase_size')
+        :has('ptr'):has('size'):has('write_size'):has('erase_size')
 end

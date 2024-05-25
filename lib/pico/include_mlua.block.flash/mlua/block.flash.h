@@ -13,7 +13,7 @@ extern "C" {
 // A block device in QSPI flash.
 typedef struct MLuaBlockFlash {
     MLuaBlockDev dev;
-    char const* start;
+    void const* start;
 } MLuaBlockFlash;
 
 // Initialize a flash block device. "offset" must be aligned to a

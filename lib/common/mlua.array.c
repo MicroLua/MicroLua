@@ -342,9 +342,9 @@ static int array_cap(lua_State* ls) {
     return lua_pushinteger(ls, arr->cap), 1;
 }
 
-static int array_addr(lua_State* ls) {
+static int array_ptr(lua_State* ls) {
     Array const* arr = check_array(ls, 1);
-    return mlua_push_intptr(ls, (uintptr_t)arr->data), 1;
+    return lua_pushlightuserdata(ls, arr->data), 1;
 }
 
 static int array___eq(lua_State* ls) {
@@ -496,7 +496,7 @@ MLUA_SYMBOLS(array_syms) = {
     MLUA_SYM_F(size, array_),
     MLUA_SYM_F(len, array_),
     MLUA_SYM_F(cap, array_),
-    MLUA_SYM_F(addr, array_),
+    MLUA_SYM_F(ptr, array_),
     MLUA_SYM_F(get, array_),
     MLUA_SYM_F(set, array_),
     MLUA_SYM_F(append, array_),

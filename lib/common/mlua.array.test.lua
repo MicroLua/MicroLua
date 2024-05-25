@@ -12,6 +12,13 @@ local repr = require 'mlua.repr'
 local string = require 'string'
 local table = require 'table'
 
+function test_buffer(t)
+    local a = array('j', 0)
+    local ptr, len = a:__buffer()
+    t:expect(t.expr(a):ptr()):eq(ptr)
+    t:expect(#a):label("#a"):eq(len // ('j'):packsize())
+end
+
 function test_size(t)
     local _ = array  -- Capture the upvalue
     t:expect(t.expr.array('i0', 0)):raises("out of limits")

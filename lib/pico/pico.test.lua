@@ -11,7 +11,8 @@ function set_up(t)
              pico.build_target)
     t:printf("Flash: %08x, binary: %08x - %08x (%.1f%%)\n",
              pico.FLASH_SIZE_BYTES,
-             pico.flash_binary_start, pico.flash_binary_end,
+             pico.flash_binary_start - pointer(0),
+             pico.flash_binary_end - pointer(0),
              (pico.flash_binary_end - pico.flash_binary_start)
              / pico.FLASH_SIZE_BYTES * 100)
 end

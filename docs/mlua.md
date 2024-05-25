@@ -637,7 +637,7 @@ This module exposes platform-specific functionality under a common interface.
 
 - `flash: table | false`\
   A description of the flash memory provided by the platform, or `false` if the
-  platform doesn't have any flash memory. The table has the fields `address`,
+  platform doesn't have any flash memory. The table has the fields `ptr`,
   `size`, `write_size` and `erase_size`.
 
 ## `mlua.repr`

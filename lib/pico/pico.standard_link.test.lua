@@ -47,12 +47,13 @@ function set_up(t)
     for _, section in ipairs(sections) do
         local name = section[1]
         if name == name:upper() then
-            t:printf("%s: %08x, size: %x\n", name, standard_link[name],
+            t:printf("%s: %08x, size: %x\n", name,
+                     standard_link[name] - pointer(0),
                      standard_link[name .. '_SIZE'])
         else t:printf("%s:\n", name) end
         for i = 2, #section do
             local sym = section[i]
-            t:printf("  %-23s: %08x\n", sym, standard_link[sym])
+            t:printf("  %-23s: %08x\n", sym, standard_link[sym] - pointer(0))
         end
     end
 end

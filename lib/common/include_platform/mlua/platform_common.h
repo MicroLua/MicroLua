@@ -42,10 +42,10 @@ static inline uint64_t mlua_to_ticks64(lua_Unsigned ticks, uint64_t now) {
 
 // A description of flash memory.
 typedef struct MLuaFlash {
-    uintptr_t address;
-    uintptr_t size;
-    uintptr_t write_size;
-    uintptr_t erase_size;
+    void const* ptr;
+    size_t size;
+    size_t write_size;
+    size_t erase_size;
 } MLuaFlash;
 
 #ifdef __cplusplus

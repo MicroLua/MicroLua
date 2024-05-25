@@ -31,7 +31,8 @@ static int flash_dev_write(MLuaBlockDev* dev, uint64_t off, void const* src,
     MLuaBlockFlash* f = (MLuaBlockFlash*)dev;
     if (off + size > f->dev.size) return MLUA_EINVAL;
     uint32_t save = save_and_disable_interrupts();
-    flash_range_program((f->start + off) - __flash_binary_start, src, size);
+    flash_range_program((f->start + off) - (void const*)__flash_binary_start,
+                        src, size);
     restore_interrupts(save);
     return MLUA_EOK;
 }
@@ -40,7 +41,8 @@ static int flash_dev_erase(MLuaBlockDev* dev, uint64_t off, size_t size) {
     MLuaBlockFlash* f = (MLuaBlockFlash*)dev;
     if (off + size > f->dev.size) return MLUA_EINVAL;
     uint32_t save = save_and_disable_interrupts();
-    flash_range_erase((f->start + off) - __flash_binary_start, size);
+    flash_range_erase((f->start + off) - (void const*)__flash_binary_start,
+                      size);
     restore_interrupts(save);
     return MLUA_EOK;
 }

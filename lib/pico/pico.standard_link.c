@@ -8,7 +8,7 @@
 #define EXTERN_SYM(n, en) \
 extern char const en[]; \
 static void mod_ ## n(lua_State* ls, MLuaSymVal const* value) { \
-    lua_pushinteger(ls, (uintptr_t)en); \
+    lua_pushlightuserdata(ls, (void*)en); \
 }
 
 EXTERN_SYM(flash_binary_start, __flash_binary_start)

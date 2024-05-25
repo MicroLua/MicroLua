@@ -14,13 +14,13 @@ static void mod_flash(lua_State* ls, MLuaSymVal const* value) {
         return;
     }
     lua_createtable(ls, 0, 4);
-    mlua_push_intptr(ls, flash->address);
-    lua_setfield(ls, -2, "address");
-    mlua_push_intptr(ls, flash->size);
+    lua_pushlightuserdata(ls, (void*)flash->ptr);
+    lua_setfield(ls, -2, "ptr");
+    mlua_push_size(ls, flash->size);
     lua_setfield(ls, -2, "size");
-    mlua_push_intptr(ls, flash->write_size);
+    mlua_push_size(ls, flash->write_size);
     lua_setfield(ls, -2, "write_size");
-    mlua_push_intptr(ls, flash->erase_size);
+    mlua_push_size(ls, flash->erase_size);
     lua_setfield(ls, -2, "erase_size");
 }
 

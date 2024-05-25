@@ -133,24 +133,24 @@ This module exposes DMA functionality.
 - `channel_set_config(channel, config, trigger)`\
   Set the configuration for a channel.
 
-- `channel_set_read_addr(channel, addr, trigger)`\
-  Set the initial read address for a channel. `addr` can be `nil`, an integer, a
-  string or a [buffer](core.md#buffer-protocol).
+- `channel_set_read_addr(channel, ptr, trigger)`\
+  Set the initial read address for a channel. `ptr` can be `nil`, a string or a
+  [buffer](core.md#buffer-protocol).
 
-- `channel_set_write_addr(channel, addr, trigger)`\
-  Set the initial write address for a channel. `addr` can be `nil`, an integer
-  or a [buffer](core.md#buffer-protocol).
+- `channel_set_write_addr(channel, ptr, trigger)`\
+  Set the initial write address for a channel. `ptr` can be `nil` or a
+  [buffer](core.md#buffer-protocol).
 
 - `channel_set_trans_count(channel, count, trigger)`\
   Set the number of bus transfers the channel will do.
 
-- `channel_configure(channel, config, write_addr, read_addr, count, trigger)`\
+- `channel_configure(channel, config, write_ptr, read_ptr, count, trigger)`\
   Configure all parameters of a channel.
 
-- `channel_transfer_from_buffer_now(channel, read_addr, count)`\
+- `channel_transfer_from_buffer_now(channel, read_ptr, count)`\
   Start a transfer from a buffer immediately.
 
-- `channel_transfer_to_buffer_now(channel, write_addr, count)`\
+- `channel_transfer_to_buffer_now(channel, write_ptr, count)`\
   Start a transfer to a buffer immediately.
 
 - `start_channel_mask(mask)`\

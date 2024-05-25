@@ -15,11 +15,11 @@ extern char const __flash_binary_start[];
 extern char const __flash_binary_end[];
 
 static void mod_flash_binary_start(lua_State* ls, MLuaSymVal const* value) {
-    lua_pushinteger(ls, (uintptr_t)__flash_binary_start);
+    lua_pushlightuserdata(ls, (void*)__flash_binary_start);
 }
 
 static void mod_flash_binary_end(lua_State* ls, MLuaSymVal const* value) {
-    lua_pushinteger(ls, (uintptr_t)__flash_binary_end);
+    lua_pushlightuserdata(ls, (void*)__flash_binary_end);
 }
 
 static int mod_error_str(lua_State* ls) {

@@ -7,7 +7,7 @@ local mem = require 'mlua.mem'
 local string = require 'string'
 local table = require 'table'
 
-function test_misc(t)
+function test_buffer(t)
     local buf = mem.alloc(10)
     local ptr, len = buf:__buffer()
     t:expect(t.expr(buf):ptr()):eq(ptr)
