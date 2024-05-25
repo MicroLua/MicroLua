@@ -36,11 +36,11 @@ function set_up(t, baud, sda0, scl0, sda1, scl1)
         gpio.deinit(scl0)
         inst0:deinit()
     end)
+    local pins = list()
     for _, pin in ipairs{sda0, scl0} do
         gpio.init(pin)
         gpio.pull_up(pin)
-        time.sleep_for(100)  -- Give signal time to rise
-        t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
+        pins:append(pin)
     end
 
     if sda1 and scl1 then
@@ -56,10 +56,14 @@ function set_up(t, baud, sda0, scl0, sda1, scl1)
         for _, pin in ipairs{sda1, scl1} do
             gpio.init(pin)
             gpio.pull_up(pin)
-            time.sleep_for(100)  -- Give signal time to rise
-            t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
+            pins:append(pin)
         end
+    end
 
+    for _, pin in pins:ipairs() do
+        t:assert(gpio.get_pad(pin), "Pin %s is forced low", pin)
+    end
+    if sda1 and scl1 then
         for _, pp in ipairs{{sda0, sda1}, {scl0, scl1}} do
             local mpin, spin = pp[1], pp[2]
             local done<close> = function()
