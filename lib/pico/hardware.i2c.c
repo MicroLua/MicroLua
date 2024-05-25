@@ -25,8 +25,7 @@ static i2c_inst_t** new_I2C(lua_State* ls) {
 }
 
 static int I2C_regs(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)i2c_get_hw(mlua_check_I2C(ls, 1)));
-    return 1;
+    return lua_pushlightuserdata(ls, i2c_get_hw(mlua_check_I2C(ls, 1))), 1;
 }
 
 #if LIB_MLUA_MOD_MLUA_THREAD

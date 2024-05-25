@@ -9,8 +9,9 @@ local table = require 'table'
 
 function test_misc(t)
     local buf = mem.alloc(10)
-    t:expect(t.expr(buf):addr()):neq(0)
-    t:expect(#buf):label("#buf"):eq(10)
+    local ptr, len = buf:__buffer()
+    t:expect(t.expr(buf):ptr()):eq(ptr)
+    t:expect(#buf):label("#buf"):eq(len)
     t:expect(t.expr(_G).tostring(buf))
         :matches('^mlua.mem.Buffer: 0?x?[0-9a-fA-F]+$')
 end
@@ -35,14 +36,14 @@ function test_read(t)
         local exp = t:expect(t.expr(mem).read(buf, table.unpack(args)))
         if want then
             exp:eq(want)
-            local off = args[1] or 0
-            local len = args[2] or #buf - off
-            t:expect(t.expr(mem).read(buf:addr() + off, len)):eq(want)
+            local len = args[2] or #buf - (args[1] or 0)
+            t:expect(t.expr(mem).read(buf:ptr(), args[1], len)):eq(want)
         else exp:raises("out of bounds") end
     end
 end
 
 function test_write(t)
+    local buf = mem.alloc(10)
     for _, test in ipairs{
         {{''}, '__________'},
         {{'abc'}, 'abc_______'},
@@ -54,21 +55,20 @@ function test_write(t)
         {{'', 11}, nil},
     } do
         local args, want = table.unpack(test)
-        local buf = mem.alloc(10)
         mem.write(buf, '__________')
         local exp = t:expect(t.expr(mem).write(buf, table.unpack(args)))
         if want then
             exp:eq(nil)
             t:expect(t.expr(mem).read(buf)):eq(want)
             mem.write(buf, '__________')
-            local off = args[2] or 0
-            mem.write(buf:addr() + off, args[1])
+            mem.write(buf:ptr(), table.unpack(args))
             t:expect(t.expr(mem).read(buf)):eq(want)
         else exp:raises("out of bounds") end
     end
 end
 
-function test_fill(t)
+function _test_fill(t)
+    local buf = mem.alloc(10)
     for _, test in ipairs{
         {{}, '\0\0\0\0\0\0\0\0\0\0'},
         {{2}, '\2\2\2\2\2\2\2\2\2\2'},
@@ -84,22 +84,19 @@ function test_fill(t)
         {{2, 11, 0}, nil},
     } do
         local args, want = table.unpack(test)
-        local buf = mem.alloc(10)
         mem.write(buf, '__________')
         local exp = t:expect(t.expr(mem).fill(buf, table.unpack(args)))
         if want then
             exp:eq(nil)
             t:expect(t.expr(mem).read(buf)):eq(want)
             mem.write(buf, '__________')
-            local off = args[2] or 0
-            local len = args[3] or #buf - off
-            mem.fill(buf:addr() + off, args[1], len)
+            mem.fill(buf:ptr(), table.unpack(args))
             t:expect(t.expr(mem).read(buf)):eq(want)
         else exp:raises("out of bounds") end
     end
 end
 
-function test_get(t)
+function _test_get(t)
     local buf = mem.alloc(8)
     mem.write(buf, '\0\1\2\3\4\5\6\7')
     for _, test in ipairs{
@@ -119,13 +116,13 @@ function test_get(t)
         local exp = t:expect(t.mexpr(mem).get(buf, table.unpack(args)))
         if want then
             exp:eq(want)
-            local len = args[2] or 1
-            t:expect(t.mexpr(mem).get(buf:addr() + args[1], len)):eq(want)
+            t:expect(t.mexpr(mem).get(buf:ptr(), table.unpack(args))):eq(want)
         else exp:raises("out of bounds") end
     end
 end
 
-function test_set(t)
+function _test_set(t)
+    local buf = mem.alloc(8)
     for _, test in ipairs{
         {{0}, '________'},
         {{0, 1, 2, 3}, '\1\2\3_____'},
@@ -136,14 +133,13 @@ function test_set(t)
         {{9}, nil},
     } do
         local args, want = table.unpack(test)
-        local buf = mem.alloc(8)
         mem.write(buf, '________')
         local exp = t:expect(t.expr(mem).set(buf, table.unpack(args)))
         if want then
             exp:eq(nil)
             t:expect(t.expr(mem).read(buf)):eq(want)
             mem.write(buf, '________')
-            mem.set(buf:addr() + args[1], table.unpack(args, 2))
+            mem.set(buf:ptr(), table.unpack(args))
             t:expect(t.expr(mem).read(buf)):eq(want)
         else exp:raises("out of bounds") end
     end

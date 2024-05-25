@@ -348,8 +348,22 @@ function cmd_configmod(args)
     write_file(output, preprocess_cmod(tmpl:gsub('@(%u+)@', sub)))
 end
 
+-- Parse type mapping.
+local function typemap(types)
+    local map = {}
+    for _, it in ipairs(types) do
+        local pat, v, cast = it:match('^([^=]*)=([^:]+):(.*)$')
+        if not pat then pat, v = it:match('^([^=]*)=(.*)$') end
+        if not pat then raise("invalid type definition: %s", it) end
+        table.insert(map, {pat, v, cast or ''})
+    end
+    table.insert(map, {':"', 'string', ''})
+    table.insert(map, {'', 'integer', ''})
+    return map
+end
+
 -- Parse preprocessor symbols that define values.
-function parse_defines(text, excludes, strip)
+local function parse_defines(text, excludes, strip, types)
     local syms = {}
     for line in lines(text) do
         local csym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
@@ -367,7 +381,13 @@ function parse_defines(text, excludes, strip)
                 break
             end
         end
-        syms[sym] = {val:sub(1, 1) == '"' and 'string' or 'integer', csym}
+        for _, it in ipairs(types) do
+            local pat, typ, cast = table.unpack(it)
+            if sv:match(pat) then
+                syms[sym] = {typ, cast, csym}
+                break
+            end
+        end
         ::continue::
     end
     return syms
@@ -377,17 +397,18 @@ end
 -- file.
 function cmd_headermod(args)
     local mod, include, defines, template, output = table.unpack(args, 1, 5)
-    local kwargs = parse_kwargs({'EXCLUDE', 'STRIP'}, slice(args, 6))
-    local syms = parse_defines(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP)
+    local kwargs = parse_kwargs({'EXCLUDE', 'STRIP', 'TYPES'}, slice(args, 6))
+    local syms = parse_defines(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP,
+                               typemap(kwargs.TYPES))
     local names = {}
     for sym in pairs(syms) do table.insert(names, sym) end
     table.sort(names)
     local symdefs = {}
     for _, name in ipairs(names) do
-        local typ, csym = table.unpack(syms[name])
+        local typ, cast, csym = table.unpack(syms[name])
         table.insert(symdefs, ('#ifdef %s'):format(csym))
         table.insert(symdefs,
-            ('    MLUA_SYM_V_H(%s, %s, %s),'):format(name, typ, csym))
+            ('    MLUA_SYM_V_H(%s, %s, %s%s),'):format(name, typ, cast, csym))
         table.insert(symdefs, '#else')
         table.insert(symdefs,
             ('    MLUA_SYM_V_H(%s, boolean, false),'):format(name))

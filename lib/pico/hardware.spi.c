@@ -40,8 +40,7 @@ static inline spi_inst_t* to_SPI(lua_State* ls, int arg) {
 }
 
 static int SPI_regs(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)spi_get_hw(check_SPI(ls, 1)));
-    return 1;
+    return lua_pushlightuserdata(ls, spi_get_hw(check_SPI(ls, 1))), 1;
 }
 
 #if LIB_MLUA_MOD_MLUA_THREAD

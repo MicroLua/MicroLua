@@ -300,10 +300,17 @@ foreach(path IN LISTS paths)
     cmake_path(GET path STEM LAST_ONLY name)
     string(TOUPPER "${name}" uname)
     set(target "mlua_mod_hardware.regs.${name}")
-    mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
-        EXCLUDE "_ACCESS:\"...?\"$" "_RESET:\"%-\"$" "^isr_"
-        STRIP "^(${uname}_)"
-    )
+    if("${name}" STREQUAL addressmap)
+        mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
+            EXCLUDE "^NUM_" "^PIO_INSTRUCTION_" "_[KM]HZ:" "_IRQ:"
+            TYPES "_BITS:=integer" "=lightuserdata:(void*)(uintptr_t)"
+        )
+    else()
+        mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
+            EXCLUDE "_ACCESS:\"...?\"$" "_RESET:\"%-\"$" "^isr_"
+            STRIP "^(${uname}_)"
+        )
+    endif()
     target_link_libraries("${target}" INTERFACE hardware_regs)
     target_link_libraries(mlua_test_hardware.regs INTERFACE "${target}")
 endforeach()

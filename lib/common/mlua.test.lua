@@ -117,6 +117,28 @@ function test_strict(t)
 
 end
 
+function test_pointer(t)
+    local p1 = pointer(123) + 45
+    t:expect(t.expr(_G).tostring(p1)):matches('^pointer: 0?x?[0-9a-fA-F]+$')
+    local p2 = p1 - 23
+    t:expect(p2):label("p2"):eq(pointer(145))
+    t:expect(p1 - p2):label("p1 - p2"):eq(23)
+
+    t:expect(p1 == p1):label("p1 == p1"):eq(true)
+    t:expect(p1 == p2):label("p1 == p2"):eq(false)
+
+    t:expect(p1 < p1):label("p1 < p1"):eq(false)
+    t:expect(p1 < p2):label("p1 < p2"):eq(false)
+    t:expect(p2 < p1):label("p2 < p1"):eq(true)
+
+    t:expect(p1 <= p1):label("p1 <= p1"):eq(true)
+    t:expect(p1 <= p2):label("p1 <= p2"):eq(false)
+    t:expect(p2 <= p1):label("p2 <= p1"):eq(true)
+
+    t:expect(t.mexpr(getmetatable(p1)).__buffer(p1)):eq{p1}
+    t:expect(t.mexpr(getmetatable(p2)).__buffer(p2)):eq{p2}
+end
+
 function test_Function_close(t)
     local called = false
     do
@@ -129,8 +151,7 @@ function test_Function_close(t)
         local want = "Some error"
         local f<close> = function(err)
             called = true
-            t:expect(err == want,
-                     "Unexpected error: got %q, want %q", err, want)
+            t:expect(err):label("err"):eq(want)
         end
         error(want, 0)
     end)

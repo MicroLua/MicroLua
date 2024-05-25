@@ -339,7 +339,7 @@ void mlua_set_metaclass(lua_State* ls) {
 extern MLuaModule const __start_mlua_module_registry[];
 extern MLuaModule const __stop_mlua_module_registry[];
 
-static int preload___index(lua_State* ls) {
+static int Preload___index(lua_State* ls) {
     char const* name = luaL_checkstring(ls, 2);
     for (MLuaModule const* m = __start_mlua_module_registry;
             m != __stop_mlua_module_registry; ++m) {
@@ -350,7 +350,7 @@ static int preload___index(lua_State* ls) {
     return 0;
 }
 
-static int preload_next(lua_State* ls) {
+static int Preload_next(lua_State* ls) {
     MLuaModule const* m = __start_mlua_module_registry;
     if (!lua_isnil(ls, 2)) {
         char const* name = lua_tostring(ls, 2);
@@ -368,27 +368,85 @@ static int preload_next(lua_State* ls) {
     return 2;
 }
 
-static int preload___pairs(lua_State* ls) {
-    lua_pushcfunction(ls, &preload_next);
+static int Preload___pairs(lua_State* ls) {
+    lua_pushcfunction(ls, &Preload_next);
     return 1;
 }
 
 static char const Preload_name[] = "mlua.Preload";
 
 MLUA_SYMBOLS_NOHASH(Preload_syms) = {
-    MLUA_SYM_V_NH(__index, function, &preload___index),
-    MLUA_SYM_V_NH(__pairs, function, &preload___pairs),
+    MLUA_SYM_F_NH(__index, Preload_),
+    MLUA_SYM_F_NH(__pairs, Preload_),
 };
 
-static int return_ctx(lua_State* ls, int status, lua_KContext ctx) {
-    return ctx;
+static int pointer___add(lua_State* ls) {
+    luaL_argexpected(ls, lua_islightuserdata(ls, 1), 1, "pointer");
+    void* ptr = lua_touserdata(ls, 1);
+    ptrdiff_t off = luaL_checkinteger(ls, 2);
+    return lua_pushlightuserdata(ls, ptr + off), 1;
 }
+
+static int pointer___sub(lua_State* ls) {
+    luaL_argexpected(ls, lua_islightuserdata(ls, 1), 1, "pointer");
+    void* ptr = lua_touserdata(ls, 1);
+    switch (lua_type(ls, 2)) {
+    case LUA_TLIGHTUSERDATA:
+        lua_pushinteger(ls, ptr - lua_touserdata(ls, 2));
+        break;
+    case LUA_TNUMBER: {
+        int ok;
+        ptrdiff_t off = lua_tointegerx(ls, 2, &ok);
+        if (ok) {
+            lua_pushlightuserdata(ls, ptr - off);
+            break;
+        }
+        __attribute__((fallthrough));
+    }
+    default:
+        return luaL_typeerror(ls, 2, "pointer or integer");
+    }
+    return 1;
+}
+
+static int pointer___lt(lua_State* ls) {
+    luaL_argexpected(ls, lua_islightuserdata(ls, 1), 1, "pointer");
+    luaL_argexpected(ls, lua_islightuserdata(ls, 2), 2, "pointer");
+    lua_pushboolean(ls, lua_touserdata(ls, 1) < lua_touserdata(ls, 2));
+    return 1;
+}
+
+static int pointer___le(lua_State* ls) {
+    luaL_argexpected(ls, lua_islightuserdata(ls, 1), 1, "pointer");
+    luaL_argexpected(ls, lua_islightuserdata(ls, 2), 2, "pointer");
+    lua_pushboolean(ls, lua_touserdata(ls, 1) <= lua_touserdata(ls, 2));
+    return 1;
+}
+
+static int global_pointer(lua_State* ls) {
+    lua_pushlightuserdata(ls, (void*)(uintptr_t)luaL_checkinteger(ls, 1));
+    return 1;
+}
+
+static int pointer___buffer(lua_State* ls) {
+    luaL_argexpected(ls, lua_islightuserdata(ls, 1), 1, "pointer");
+    return lua_settop(ls, 1), 1;
+}
+
+static char const pointer_name[] = "pointer";
+
+MLUA_SYMBOLS_NOHASH(pointer_syms) = {
+    MLUA_SYM_F_NH(__add, pointer_),
+    MLUA_SYM_F_NH(__sub, pointer_),
+    MLUA_SYM_F_NH(__lt, pointer_),
+    MLUA_SYM_F_NH(__le, pointer_),
+    MLUA_SYM_F_NH(__buffer, pointer_),
+};
 
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.
-    lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &return_ctx);
-    return 0;
+    return lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &mlua_cont_return_ctx), 0;
 }
 
 char const mlua_WeakK_name[] = "mlua.WeakK";
@@ -428,6 +486,23 @@ void mlua_register_modules(lua_State* ls) {
     }
     lua_pop(ls, 2);  // searchers, package
 
+    // Set a metatable on light userdata.
+    lua_pushlightuserdata(ls, NULL);
+    new_metatable(ls, pointer_name, 0, MLUA_SYMCNT(pointer_syms));
+    set_fields(ls, pointer_syms);
+    lua_setmetatable(ls, -2);
+    lua_pop(ls, 1);
+    lua_pushcfunction(ls, &global_pointer);
+    lua_setglobal(ls, "pointer");
+
+    // Set a metatable on functions.
+    lua_pushcfunction(ls, &Function___close);  // Any function will do
+    lua_createtable(ls, 0, 1);
+    lua_pushcfunction(ls, &Function___close);
+    lua_setfield(ls, -2, "__close");
+    lua_setmetatable(ls, -2);
+    lua_pop(ls, 1);
+
     // Set globals.
     lua_pushstring(ls, LUA_RELEASE);
     lua_setglobal(ls, "_RELEASE");
@@ -445,14 +520,6 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "alloc_stats");
     lua_pushcfunction(ls, &global_log_errors);
     lua_setglobal(ls, "log_errors");
-
-    // Set a metatable on functions.
-    lua_pushcfunction(ls, &Function___close);  // Any function will do
-    lua_createtable(ls, 0, 1);
-    lua_pushcfunction(ls, &Function___close);
-    lua_setfield(ls, -2, "__close");
-    lua_setmetatable(ls, -2);
-    lua_pop(ls, 1);
 
     // Create a metatable for weak keys.
     new_metatable(ls, mlua_WeakK_name, 0, 1);

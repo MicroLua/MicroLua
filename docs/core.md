@@ -104,6 +104,31 @@ of `mlua_add_lua_modules()`. There are a few examples in the
 [MicroLua-examples](https://github.com/MicroLua/MicroLua-examples/blob/master/fennel)
 repository.
 
+## Pointers
+
+The MicroLua runtime sets a metatable on the `lightuserdata` type, to make it
+operate like C pointers (that's effectively what light userdata is). The
+metatable has the following items:
+
+- `__name = 'pointer'`\
+  The name to use in `tostring()`.
+
+- `__add(ptr, offset) -> pointer`\
+  Add an offset to the pointer.
+
+- `__sub(ptr, offset) -> pointer`\
+  `__sub(ptr1, ptr2) -> integer`\
+  Subtract an offset from a pointer, or compute the difference between two
+  pointers.
+
+- `__lt(ptr1, ptr2) -> boolean`\
+  `__le(ptr1, ptr2) -> boolean`\
+  Return the result of the respective comparison operation on the pointers.
+
+- `__buffer(ptr) -> ptr`\
+  Implements the [buffer protocol](#buffer-protocol). No size is
+  returned, so the buffer is considered infinite.
+
 ## Function metatable
 
 The MicroLua runtime sets a metatable on the `function` type with a `__close`
@@ -120,14 +145,15 @@ end  -- Interrupts are restored here, even if range_program() raises an error
 
 ## Buffer protocol
 
-A buffer is an object that provides low-level access to a block of mutable
-memory. To be recognized as a buffer, an object must implement the `__buffer`
-metamethod.
+A buffer is an object that provides low-level access to mutable memory. To be
+recognized as a buffer, an object must implement the `__buffer` metamethod.
 
-- `Object:__buffer() -> (ptr, size, [vtable])`\
-  Return a pointer to the buffer, its size, and an optional `MLuaBufferVt*`.
-  `ptr` and `vtable` are light userdata, and `size` is an unsigned integer. If
-  `vtable` is missing or nil, then `ptr` points at a contiguous block of memory.
+- `Object:__buffer() -> (ptr, [size], [vtable])`\
+  Return a pointer to the buffer, its size, and a `MLuaBufferVt*`. `ptr` and
+  `vtable` are light userdata, and `size` is an unsigned integer. If `size` is
+  missing or nil, the buffer is considered infinite, which disables bounds
+  checks. If `vtable` is missing or nil, then `ptr` points at a contiguous block
+  of memory.
 
 ## Read-only tables
 
@@ -200,7 +226,7 @@ pointer + size        | `string`
 pointer to struct     | `userdata`
 `absolute_time_t`     | `Int64` or `integer`
 
-As a convenience, `bool` function arguments accept `0` as `false`.
+As a convenience, `bool` function arguments accept `0` and `0.0` as `false`.
 
 ## Events
 

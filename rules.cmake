@@ -196,7 +196,7 @@ function(mlua_add_c_module TARGET)
 endfunction()
 
 function(mlua_add_header_module TARGET MOD SRC)
-    cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE;STRIP")
+    cmake_parse_arguments(PARSE_ARGV 3 args "" "" "EXCLUDE;STRIP;TYPES")
     mlua_add_library("${TARGET}")
     cmake_path(ABSOLUTE_PATH SRC)
     set(template "${MLUA_PATH}/core/module_header.in.c")
@@ -212,6 +212,7 @@ function(mlua_add_header_module TARGET MOD SRC)
         COMMAND mlua_tool_gen
             "headermod" "${MOD}" "${SRC}" "${output}.syms" "${template}"
             "${output}" EXCLUDE "${args_EXCLUDE}" STRIP "${args_STRIP}"
+            TYPES "${args_TYPES}"
         COMMAND_EXPAND_LISTS
         VERBATIM
     )

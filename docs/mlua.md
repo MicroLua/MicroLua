@@ -44,6 +44,9 @@ The test modules can be useful as usage examples.
   operator, this function always calls the `__eq` metamethod of either argument
   if it exists, even if the arguments have different types.
 
+- `pointer(address) -> pointer`\
+  Return a [pointer](core.md#pointers) to the given address.
+
 - `alloc_stats(reset = false) -> (count, size, used, peak)`\
   Return statistics about Lua memory allocations. `count` is the number of
   memory allocations performed. `size` is the total amount of memory allocated.
@@ -554,31 +557,27 @@ build target: `mlua_mod_mlua.mem`,
 tests: [`mlua.mem.test`](../lib/common/mlua.mem.test.lua)
 
 This module provides functionality to access the contents of objects
-implementing the [buffer protocol](core.md#buffer-protocol) and raw memory
-(ROM, RAM).
+implementing the [buffer protocol](core.md#buffer-protocol).
 
 > [!IMPORTANT]
 > This module must not be used to access hardware registers. Use the
 > [`hardware.base`](hardware.md#hardwarebase) module instead.
 
 - `read(buffer, offset = 0, len = size - offset) -> string`\
-  `read(address, len = 1) -> string`\
-  Read a range of raw data from a buffer or from memory.
+  Read a range of raw data from a buffer. `len` is required if the buffer
+  doesn't have a size.
 
 - `write(buffer, data, offset = 0)`\
-  `write(address, data)`\
-  Write a range of raw data to a buffer or to memory.
+  Write a range of raw data to a buffer.
 
 - `fill(buffer, value = 0, offset = 0, len = size - offset)`\
-  `fill(address, value = 0, len = 1)`\
-  Fill a range of raw data in a buffer or in memory.
+  Fill a range of raw data in a buffer. `len` is required if the buffer doesn't
+  have a size.
 
-- `get(buffer, offset, len = 1) -> (integer, ...)`\
-  `get(address, len = 1) -> (integer, ...)`\
+- `get(buffer, offset, len = 1) -> (value, ...)`\
   Get individual bytes from a buffer or from memory.
 
 - `set(buffer, offset, [value, ...])`\
-  `set(address, [value, ...])`\
   Set individual bytes in a buffer or in memory.
 
 - `alloc(size) -> Buffer`\
@@ -596,12 +595,11 @@ The `Buffer` type (`mlua.mem.Buffer`) holds a fixed-size memory buffer.
 - `#Buffer -> integer`\
   Return the size of the buffer.
 
-- `Buffer:addr() -> integer`\
-  Return the address of the buffer in memory.
+- `Buffer:ptr() -> pointer`\
+  Return a pointer to the start of the buffer.
 
 - `Buffer:__buffer() -> (ptr, size)`\
-  Return the address and size of the buffer. Implements the
-  [buffer protocol](core.md#buffer-protocol).
+  Implements the [buffer protocol](core.md#buffer-protocol).
 
 ## `mlua.oo`
 

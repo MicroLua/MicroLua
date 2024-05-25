@@ -32,9 +32,9 @@ function test_config(t)
 end
 
 function test_regs(t)
-    t:expect(t.expr(dma).regs()):fmt(hex8):eq(addressmap.DMA_BASE)
+    t:expect(t.expr(dma).regs()):eq(addressmap.DMA_BASE)
     for i = 0, dma.NUM_CHANNELS - 1 do
-        t:expect(t.expr(dma).regs(i)):fmt(hex8)
+        t:expect(t.expr(dma).regs(i))
             :eq(addressmap.DMA_BASE + i * regs.CH1_READ_ADDR_OFFSET)
     end
 end

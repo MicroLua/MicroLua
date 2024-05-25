@@ -21,9 +21,9 @@ local function hex8(v) return ('0x%08x'):format(v) end
 function test_introspect(t)
     t:expect(t.expr(pwm).gpio_to_slice_num(13)):eq(6)
     t:expect(t.expr(pwm).gpio_to_channel(13)):eq(pwm.CHAN_B)
-    t:expect(t.expr(pwm).regs()):fmt(hex8):eq(addressmap.PWM_BASE)
+    t:expect(t.expr(pwm).regs()):eq(addressmap.PWM_BASE)
     for i = 0, pwm.NUM_SLICES - 1 do
-        t:expect(t.expr(pwm).regs(i)):fmt(hex8)
+        t:expect(t.expr(pwm).regs(i))
             :eq(addressmap.PWM_BASE + i * regs.CH1_CSR_OFFSET)
     end
 end

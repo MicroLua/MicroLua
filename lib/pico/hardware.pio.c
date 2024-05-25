@@ -344,8 +344,7 @@ static int PIO_sm(lua_State* ls) {
 }
 
 static int PIO_regs(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)check_PIO(ls, 1));
-    return 1;
+    return lua_pushlightuserdata(ls, check_PIO(ls, 1)), 1;
 }
 
 static void to_program(lua_State* ls, pio_program_t* prog) {

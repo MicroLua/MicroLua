@@ -74,8 +74,8 @@ static int mod_get_default_config(lua_State* ls) {
 }
 
 static int mod_regs(lua_State* ls) {
-    lua_pushinteger(ls, lua_isnoneornil(ls, 1) ? (uintptr_t)pwm_hw
-                        : (uintptr_t)&pwm_hw->slice[check_slice(ls, 1)]);
+    lua_pushlightuserdata(ls, lua_isnoneornil(ls, 1) ? (void*)pwm_hw
+                              : (void*)&pwm_hw->slice[check_slice(ls, 1)]);
     return 1;
 }
 

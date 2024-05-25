@@ -33,8 +33,7 @@ static inline uart_inst_t* to_UART(lua_State* ls, int arg) {
 }
 
 static int UART_regs(lua_State* ls) {
-    lua_pushinteger(ls, (uintptr_t)uart_get_hw(mlua_check_UART(ls, 1)));
-    return 1;
+    return lua_pushlightuserdata(ls, uart_get_hw(mlua_check_UART(ls, 1))), 1;
 }
 
 static int UART_is_tx_busy(lua_State* ls) {

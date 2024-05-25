@@ -38,29 +38,29 @@ build target: `mlua_mod_hardware.base`,
 tests: [`hardware.base.test`](../lib/pico/hardware.base.test.lua)
 
 The [`hardware.regs.*`](#hardwareregs) modules provide constants for peripheral
-block addresses (`hardware.regs.addressmap`), register offsets and bit masks.
+block pointers (`hardware.regs.addressmap`), register offsets and bit masks.
 
-- `read8(address, count = 1) -> (value, ...)`\
-  Read `count` 8-bit values from consecutive addresses starting at `address`.
+- `read8(ptr, count = 1) -> (value, ...)`\
+  Read `count` 8-bit values from consecutive addresses starting at `ptr`.
 
-- `read16(address, count = 1) -> (value, ...)`\
-  Read `count` 16-bit values from consecutive addresses starting at `address`,
-  which must be 16-bit aligned.
+- `read16(ptr, count = 1) -> (value, ...)`\
+  Read `count` 16-bit values from consecutive addresses starting at `ptr`, which
+  must be 16-bit aligned.
 
-- `read32(address, count = 1) -> (value, ...)`\
-  Read `count` 32-bit values from consecutive addresses starting at `address`,
-  which must be 32-bit aligned.
+- `read32(ptr, count = 1) -> (value, ...)`\
+  Read `count` 32-bit values from consecutive addresses starting at `ptr`, which
+  must be 32-bit aligned.
 
-- `write8(address, [value, ...])`\
-  Write 8-bit values to consecutive addresses starting at `address`.
+- `write8(ptr, [value, ...])`\
+  Write 8-bit values to consecutive addresses starting at `ptr`.
 
-- `write16(address, [value, ...])`\
-  Write 16-bit values to consecutive addresses starting at `address`, which must
-  be 16-bit aligned.
+- `write16(ptr, [value, ...])`\
+  Write 16-bit values to consecutive addresses starting at `ptr`, which must be
+  16-bit aligned.
 
-- `write32(address, [value, ...])`\
-  Write 32-bit values to consecutive addresses starting at `address`, which must
-  be 32-bit aligned.
+- `write32(ptr, [value, ...])`\
+  Write 32-bit values to consecutive addresses starting at `ptr`, which must be
+  32-bit aligned.
 
 ## `hardware.clocks`
 
@@ -107,10 +107,10 @@ This module exposes DMA functionality.
 - `get_channel_config(channel) -> Config`\
   Get the current configuration of a channel.
 
-- `regs([channel]) -> integer`\
-  When `channel` is absent or `nil`, return the base address of the peripheral
-  registers (`DMA_BASE`). Otherwise, return the base address of the registers
-  for the given channel.
+- `regs([channel]) -> pointer`\
+  When `channel` is absent or `nil`, return a pointer to the base of the
+  peripheral registers (`DMA_BASE`). Otherwise, return a pointer to the base
+  of the registers for the given channel.
 
 - `channel_claim(channel)`\
   Mark a channel as used.
@@ -342,8 +342,8 @@ default I2C peripheral, if defined, can be accessed as `default`.
 - `default: I2C | boolean`\
   The default `I2C` instance, or `false` if `PICO_DEFAULT_I2C` is unset.
 
-- `I2C:regs() -> integer`\
-  Return the base address of the peripheral registers (`I2Cx_BASE`).
+- `I2C:regs() -> pointer`\
+  Return a pointer to the base of the peripheral registers (`I2Cx_BASE`).
 
 - `I2C:write_blocking(addr, src, nostop) -> integer | nil` *[yields]*\
   `I2C:write_blocking_until(addr, src, nostop, time) -> integer | nil` *[yields]*\
@@ -658,8 +658,8 @@ the `PIO` class.
 - `PIO:get_index() -> integer`\
   Return the instance number of the peripheral.
 
-- `PIO:regs() -> integer`\
-  Return the base address of the peripheral registers (`PIOx_BASE`).
+- `PIO:regs() -> pointer`\
+  Return a pointer to the base of the peripheral registers (`PIOx_BASE`).
 
 - `PIO:gpio_init(pin)`\
   Set up the function select for the GPIO to use output from the PIO instance.
@@ -870,10 +870,10 @@ configuration functionality. All library functions that take an
 - `NUM_SLICES: integer`\
   The number of PWM slices available on the target.
 
-- `regs([slice]) -> integer`\
-  When `slice` is absent or `nil`, return the base address of the peripheral
-  registers (`PWM_BASE`). Otherwise, return the base address of the registers
-  for the given slice.
+- `regs([slice]) -> pointer`\
+  When `slice` is absent or `nil`, return a pointer to the base of the
+  peripheral registers (`PWM_BASE`). Otherwise, return a pointer to the base
+  of the registers for the given slice.
 
 - `set_irq_handler(handler) -> Thread`\
   Set a PWM wrap IRQ handler. Returns the
@@ -914,8 +914,9 @@ excluded:
 
 Here's the list of modules and their source header for reference:
 
-- `hardware.regs.adc`: [`hardware/regs/adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/adc.h)
 - `hardware.regs.addressmap`: [`hardware/regs/addressmap.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/addressmap.h)
+  - The constants that specify addresses are [pointers](core.md#pointers).
+- `hardware.regs.adc`: [`hardware/regs/adc.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/adc.h)
 - `hardware.regs.busctrl`: [`hardware/regs/busctrl.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/busctrl.h)
 - `hardware.regs.clocks`: [`hardware/regs/clocks.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/clocks.h)
 - `hardware.regs.dma`: [`hardware/regs/dma.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2040/hardware_regs/include/hardware/regs/dma.h)
@@ -1024,8 +1025,8 @@ default SPI peripheral, if defined, can be accessed as `default`.
 - `default: SPI | boolean`\
   The default `SPI` instance, or `false` if `PICO_DEFAULT_SPI` is unset.
 
-- `SPI:regs() -> integer`\
-  Return the base address of the peripheral registers (`SPIx_BASE`).
+- `SPI:regs() -> pointer`\
+  Return a pointer to the base of the peripheral registers (`SPIx_BASE`).
 
 - `SPI:write_read_blocking(src) -> string` *[yields]*\
   `SPI:write_blocking(src)` *[yields]*\
@@ -1153,8 +1154,8 @@ default UART peripheral, if defined, can be accessed as `default`.
 - `default: UART | boolean`\
   The default `UART` instance, or `false` if `PICO_DEFAULT_UART` is unset.
 
-- `UART:regs() -> integer`\
-  Return the base address of the peripheral registers (`UARTx_BASE`).
+- `UART:regs() -> pointer`\
+  Return a pointer to the base of the peripheral registers (`UARTx_BASE`).
 
 - `UART:is_tx_busy() -> boolean`\
   Return `true` iff the TX FIFO is busy.

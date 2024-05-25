@@ -24,7 +24,7 @@ function test_erase_program(t)
         local done<close> = function() sync.restore_interrupts(save) end
         flash.range_erase(offs, flash.SECTOR_SIZE)
     end
-    t:expect(t.expr(mem).read(addressmap.XIP_BASE + offs, flash.SECTOR_SIZE))
+    t:expect(t.expr(mem).read(addressmap.XIP_BASE, offs, flash.SECTOR_SIZE))
         :eq(('\xff'):rep(flash.SECTOR_SIZE))
 
     -- Program and verify the first page of the last sector.
@@ -34,7 +34,7 @@ function test_erase_program(t)
         local done<close> = function() sync.restore_interrupts(save) end
         flash.range_program(offs, data)
     end
-    t:expect(t.expr(mem).read(addressmap.XIP_BASE + offs, #data)):eq(data)
+    t:expect(t.expr(mem).read(addressmap.XIP_BASE, offs, #data)):eq(data)
 end
 
 function test_get_unique_id(t)

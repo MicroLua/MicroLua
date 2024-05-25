@@ -147,8 +147,8 @@ static int mod_get_channel_config(lua_State* ls) {
 }
 
 static int mod_regs(lua_State* ls) {
-    lua_pushinteger(ls, lua_isnoneornil(ls, 1) ? (uintptr_t)dma_hw
-                        : (uintptr_t)&dma_hw->ch[check_channel(ls, 1)]);
+    lua_pushlightuserdata(ls, lua_isnoneornil(ls, 1) ? (void*)dma_hw
+                              : (void*)&dma_hw->ch[check_channel(ls, 1)]);
     return 1;
 }
 

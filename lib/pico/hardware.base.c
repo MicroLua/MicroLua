@@ -8,19 +8,22 @@
 #include "mlua/module.h"
 
 static io_rw_8* check_io_rw_8(lua_State* ls, int arg) {
-    return (io_rw_8*)(uintptr_t)luaL_checkinteger(ls, arg);
+    luaL_argexpected(ls, lua_islightuserdata(ls, arg), arg, "pointer");
+    return lua_touserdata(ls, arg);
 }
 
 static io_rw_16* check_io_rw_16(lua_State* ls, int arg) {
-    uintptr_t addr = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, (addr & 0x1) == 0, arg, "not 16-bit aligned");
-    return (io_rw_16*)addr;
+    luaL_argexpected(ls, lua_islightuserdata(ls, arg), arg, "pointer");
+    io_rw_16* ptr = lua_touserdata(ls, arg);
+    luaL_argcheck(ls, ((uintptr_t)ptr & 0x1) == 0, arg, "not 16-bit aligned");
+    return ptr;
 }
 
 static io_rw_32* check_io_rw_32(lua_State* ls, int arg) {
-    uintptr_t addr = luaL_checkinteger(ls, arg);
-    luaL_argcheck(ls, (addr & 0x3) == 0, arg, "not 32-bit aligned");
-    return (io_rw_32*)addr;
+    luaL_argexpected(ls, lua_islightuserdata(ls, arg), arg, "pointer");
+    io_rw_32* ptr = lua_touserdata(ls, arg);
+    luaL_argcheck(ls, ((uintptr_t)ptr & 0x3) == 0, arg, "not 32-bit aligned");
+    return ptr;
 }
 
 #define READ_FN(bits) \
@@ -28,6 +31,7 @@ static int mod_read ## bits(lua_State* ls) { \
     io_rw_ ## bits* ptr = check_io_rw_ ## bits(ls, 1); \
     int count = luaL_optinteger(ls, 2, 1); \
     if (count <= 0) return 0; \
+    lua_settop(ls, 0); \
     luaL_checkstack(ls, count, "too many results"); \
     for (int i = 0; i < count; ++i) lua_pushinteger(ls, *ptr++); \
     return count; \

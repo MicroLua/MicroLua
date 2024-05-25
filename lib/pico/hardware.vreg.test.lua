@@ -10,7 +10,7 @@ local vreg_and_chip_reset = require 'hardware.regs.vreg_and_chip_reset'
 
 local function get_voltage()
     return (base.read32(addressmap.VREG_AND_CHIP_RESET_BASE
-                       + vreg_and_chip_reset.VREG_OFFSET)
+                        + vreg_and_chip_reset.VREG_OFFSET)
             & vreg_and_chip_reset.VREG_VSEL_BITS)
            >> vreg_and_chip_reset.VREG_VSEL_LSB
 end
