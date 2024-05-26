@@ -238,14 +238,10 @@ static int UART_getc(lua_State* ls) {
 }
 
 static int is_readable_loop(lua_State* ls, bool timeout) {
-    if (timeout) {
-        lua_pushboolean(ls, false);
-        return 1;
-    }
     uart_inst_t* inst = to_UART(ls, 1);
-    if (!uart_is_readable(inst)) return -1;
-    lua_pushboolean(ls, true);
-    return 1;
+    bool readable = uart_is_readable(inst);
+    if (!(readable || timeout)) return -1;
+    return lua_pushboolean(ls, readable), 1;
 }
 
 static int UART_is_readable_within_us(lua_State* ls) {
@@ -253,8 +249,8 @@ static int UART_is_readable_within_us(lua_State* ls) {
     uint32_t timeout = luaL_checkinteger(ls, 2);
     MLuaEvent* event = &uart_state[uart_get_index(inst)].rx_event;
     if (mlua_event_can_wait(ls, event, 0)) {
+        lua_settop(ls, 1);
         mlua_push_deadline(ls, timeout);
-        lua_replace(ls, 2);
         return mlua_event_wait(ls, event, 0, &is_readable_loop, 2);
     }
     lua_pushboolean(ls, uart_is_readable_within_us(inst, timeout));

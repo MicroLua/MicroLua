@@ -76,7 +76,6 @@ static int push_addr(lua_State* ls, ip_addr_t* addr) {
 }
 
 static int gethostbyname_loop(lua_State* ls, bool timeout) {
-    if (timeout) return mlua_lwip_push_err(ls, ERR_TIMEOUT);
     GHBNState* state = lua_touserdata(ls, -1);
     mlua_lwip_lock();
     uint8_t status = state->status;
@@ -84,7 +83,9 @@ static int gethostbyname_loop(lua_State* ls, bool timeout) {
     switch (status) {
     case STATUS_FOUND: return push_addr(ls, &state->addr);
     case STATUS_NOT_FOUND: return lua_pushboolean(ls, false), 1;
-    default: return -1;
+    default:
+        if (!timeout) return -1;
+        return mlua_lwip_push_err(ls, ERR_TIMEOUT);
     }
 }
 

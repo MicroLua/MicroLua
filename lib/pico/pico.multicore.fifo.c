@@ -103,11 +103,11 @@ static int mod_push_timeout_us_1(lua_State* ls, int status, lua_KContext ctx) {
 #endif  // LIB_MLUA_MOD_MLUA_THREAD
 
 static int pop_loop(lua_State* ls, bool timeout) {
-    if (timeout) return 0;
     if (multicore_fifo_rvalid()) {
         lua_pushinteger(ls, sio_hw->fifo_rd);
         return 1;
     }
+    if (timeout) return 0;
     irq_set_enabled(SIO_IRQ_PROC0 + get_core_num(), true);
     return -1;
 }

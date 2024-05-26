@@ -864,13 +864,8 @@ static int mlua_event_wait_2(lua_State* ls, int status,
     MLuaEventLoopFn loop = (MLuaEventLoopFn)lua_touserdata(ls, -2);
     int index = lua_tointeger(ls, -1);
     lua_pop(ls, 3);  // Restore the stack for loop
-    int res = loop(ls, false);
-    if (res < 0) {
-        if (index == 0 || !mlua_time_reached(ls, index)) {
-            return mlua_event_wait_1(ls, evs, mask, loop, index);
-        }
-        res = loop(ls, true);
-    }
+    int res = loop(ls, index != 0 && mlua_time_reached(ls, index));
+    if (res < 0) return mlua_event_wait_1(ls, evs, mask, loop, index);
     unwatch_events(ls, evs, mask);
     return res;
 }

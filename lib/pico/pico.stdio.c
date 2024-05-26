@@ -109,13 +109,9 @@ static bool chars_available_reset() { return true; }
 #endif  // !LIB_MLUA_MOD_MLUA_THREAD
 
 static int getchar_loop(lua_State* ls, bool timeout) {
-    if (timeout) {
-        lua_pushinteger(ls, PICO_ERROR_TIMEOUT);
-        return 1;
-    }
-    if (!chars_available_reset()) return -1;
-    lua_pushinteger(ls, getchar());
-    return 1;
+    if (chars_available_reset()) return lua_pushinteger(ls, getchar()), 1;
+    if (!timeout) return -1;
+    return lua_pushinteger(ls, PICO_ERROR_TIMEOUT), 1;
 }
 
 static int mod_getchar(lua_State* ls) {

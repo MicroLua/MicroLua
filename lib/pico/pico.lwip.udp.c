@@ -126,12 +126,11 @@ static int UDP_sendto(lua_State* ls) {
 }
 
 static int recv_loop(lua_State* ls, bool timeout) {
-    if (timeout) return 0;
     UDP* udp = to_UDP(ls, 1);
     mlua_lwip_lock();
     bool empty = udp->len == 0;
     mlua_lwip_unlock();
-    if (empty) return -1;
+    if (empty) return timeout ? 0 : -1;
     Packet* pkt = &udp->packets[udp->head];
     *mlua_new_PBUF(ls) = pkt->p;
     *mlua_new_IPAddr(ls) = pkt->addr;
