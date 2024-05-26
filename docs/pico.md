@@ -185,17 +185,17 @@ by the functions in this module correspond to `pico.ERROR_*` constants.
 - `update_multicast_filter(address, add) -> true | (fail, err)`\
   Add (`add = true`) or remove (`add = false`) a multicast group address.
 
-- `scan(opts, on_result, queue = 8) -> Thread | (fail, err)`\
-  Start a scan for Wi-Fi networks. The scan options `opts` can be either `nil`
-  or a table with keys `ssid` (when present, scan only networks with that SSID),
-  and `scan_type` (one of the `SCAN_*` constants). `on_result` is called for
-  each detected network. The returned thread terminates when the scan completes.
+- `scan(opts = nil, queue = 8) -> iterator`\
+  Perform a scan for Wi-Fi networks. The scan options `opts` are a table with
+  keys `ssid` (when present, scan only networks with that SSID), and `scan_type`
+  (one of the `SCAN_*` constants). The iterator produces `(result, dropped)`
+  values:
 
-  - `on_result(result, dropped)`\
-    `result` is a table with keys: `ssid`, `bssid`, `rssi`, `channel` and
-    `auth_mode`. `dropped` is the number of result that had to be dropped
-    because the result queue was full. If this is non-zero, the size of the
-    queue (`queue`) should be increased.
+  - `result`: A table with keys: `ssid`, `bssid`, `rssi`, `channel` and
+    `auth_mode`.
+  - `dropped`: The number of results that had to be dropped because the result
+    queue was full. If this is non-zero, the size of the queue (`queue`) should
+    be increased.
 
 - `scan_active() -> boolean`\
   Return true iff a scan is currently in progress.

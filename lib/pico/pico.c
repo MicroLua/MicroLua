@@ -1,9 +1,8 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "pico.h"
-
 #include "hardware/structs/xip_ctrl.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -23,21 +22,8 @@ static void mod_flash_binary_end(lua_State* ls, MLuaSymVal const* value) {
 }
 
 static int mod_error_str(lua_State* ls) {
-    char const* msg = "unknown error";
-    switch (luaL_checkinteger(ls, 1)) {
-    case PICO_ERROR_NONE: msg = "no error"; break;
-    case PICO_ERROR_TIMEOUT: msg = "timeout"; break;
-    case PICO_ERROR_GENERIC: msg = "generic error"; break;
-    case PICO_ERROR_NO_DATA: msg = "no data"; break;
-    case PICO_ERROR_NOT_PERMITTED: msg = "not permitted"; break;
-    case PICO_ERROR_INVALID_ARG: msg = "invalid argument"; break;
-    case PICO_ERROR_IO: msg = "I/O error"; break;
-    case PICO_ERROR_BADAUTH: msg = "bad authentication"; break;
-    case PICO_ERROR_CONNECT_FAILED: msg = "connection failed"; break;
-    case PICO_ERROR_INSUFFICIENT_RESOURCES:
-        msg = "insufficient resources"; break;
-    }
-    return lua_pushstring(ls, msg), 1;
+    int err = luaL_checkinteger(ls, 1);
+    return lua_pushstring(ls, mlua_pico_error_str(err)), 1;
 }
 
 static int mod_xip_ctr(lua_State* ls) {

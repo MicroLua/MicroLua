@@ -130,56 +130,52 @@ static int handle_scan_result(void* ptr, cyw43_ev_scan_result_t const* result) {
     return 0;
 }
 
-static int handle_scan_result_event_2(lua_State* ls, int status,
-                                      lua_KContext ctx);
-
-static int handle_scan_result_event(lua_State* ls) {
-    ScanQueue* q = lua_touserdata(ls, lua_upvalueindex(1));
+static int scan_next_loop(lua_State* ls, bool timeout) {
+    ScanQueue* q = lua_touserdata(ls, 1);
     ScanResult result;
-    for (;;) {
-        mlua_event_lock();
-        bool avail = q->len > 0;
-        lua_Integer dropped = 0;
-        if (avail) {
-            result = q->items[q->head];
-            if (++q->head == q->cap) q->head = 0;
-            --q->len;
-            dropped = q->dropped;
-            q->dropped = 0;
-        }
-        mlua_event_unlock();
-        if (!avail) {
-            if (!cyw43_wifi_scan_active(&cyw43_state)) {
-                lua_pushnil(ls);
-                return lua_error(ls);
-            }
-            return mlua_push_deadline(ls, 200000), 1;
-        }
-
-        // Call the handler
-        lua_pushvalue(ls, lua_upvalueindex(2));  // handler
-        lua_createtable(ls, 0, 5);
-        lua_pushinteger(ls, result.rssi);
-        lua_setfield(ls, -2, "rssi");
-        lua_pushinteger(ls, result.channel);
-        lua_setfield(ls, -2, "channel");
-        lua_pushinteger(ls, result.auth_mode);
-        lua_setfield(ls, -2, "auth_mode");
-        lua_pushlstring(ls, (char*)result.bssid, sizeof(result.bssid));
-        lua_setfield(ls, -2, "bssid");
-        lua_pushlstring(ls, (char*)result.ssid, result.ssid_len);
-        lua_setfield(ls, -2, "ssid");
-        lua_pushinteger(ls, dropped);
-        lua_callk(ls, 2, 0, 0, &handle_scan_result_event_2);
+    lua_Integer dropped = 0;
+    mlua_event_lock();
+    bool avail = q->len > 0;
+    if (avail) {
+        result = q->items[q->head];
+        if (++q->head == q->cap) q->head = 0;
+        --q->len;
+        dropped = q->dropped;
+        q->dropped = 0;
     }
+    mlua_event_unlock();
+    if (!avail) {
+        if (!cyw43_wifi_scan_active(&cyw43_state)) return 0;
+        if (timeout) {
+            lua_pop(ls, 1);
+            mlua_push_deadline(ls, 200000);
+        }
+        return -1;
+    }
+
+    // Return a result.
+    lua_createtable(ls, 0, 5);
+    lua_pushinteger(ls, result.rssi);
+    lua_setfield(ls, -2, "rssi");
+    lua_pushinteger(ls, result.channel);
+    lua_setfield(ls, -2, "channel");
+    lua_pushinteger(ls, result.auth_mode);
+    lua_setfield(ls, -2, "auth_mode");
+    lua_pushlstring(ls, (char*)result.bssid, sizeof(result.bssid));
+    lua_setfield(ls, -2, "bssid");
+    lua_pushlstring(ls, (char*)result.ssid, result.ssid_len);
+    lua_setfield(ls, -2, "ssid");
+    lua_pushinteger(ls, dropped);
+    return 2;
 }
 
-static int handle_scan_result_event_2(lua_State* ls, int status,
-                                      lua_KContext ctx) {
-    return handle_scan_result_event(ls);
+static int scan_next(lua_State* ls) {
+    lua_settop(ls, 1);
+    mlua_push_deadline(ls, 200000);
+    return mlua_event_wait(ls, &wifi_state.scan_event, 0, &scan_next_loop, 2);
 }
 
-static int scan_result_handler_done(lua_State* ls) {
+static int scan_done(lua_State* ls) {
     mlua_event_lock();
     cyw43_state.wifi_scan_state = 2;  // Stop the scan
     wifi_state.scan_queue = NULL;
@@ -212,19 +208,23 @@ static void parse_scan_options(lua_State* ls, int arg,
 static int mod_scan(lua_State* ls) {
     cyw43_wifi_scan_options_t opts = {};
     parse_scan_options(ls, 1, &opts);
-    lua_Integer cap = luaL_optinteger(ls, 3, 0);
+    lua_Integer cap = luaL_optinteger(ls, 2, 0);
     if (cap <= 0) cap = 8;
     luaL_argcheck(
         ls, (lua_Unsigned)cap < (1u << MLUA_SIZEOF_FIELD(ScanQueue, cap) * 8),
-        3, "too large");
+        2, "too large");
+    lua_settop(ls, 0);
 
-    // Create scan queue.
+    // Prepare the iterator.
+    lua_pushcfunction(ls, &scan_next);
     ScanQueue* q = lua_newuserdatauv(
         ls, sizeof(ScanQueue) + cap * sizeof(ScanResult), 0);
     q->head = q->len = q->dropped = 0;
     q->cap = cap;
+    lua_pushnil(ls);
+    lua_pushcfunction(ls, &scan_done);
 
-    // Start scan.
+    // Start the scan.
     if (!mlua_event_enable(ls, &wifi_state.scan_event)) {
         return luaL_error(ls, "WiFi: scan already in progress");
     }
@@ -232,17 +232,10 @@ static int mod_scan(lua_State* ls) {
     int err = cyw43_wifi_scan(&cyw43_state, &opts, NULL, &handle_scan_result);
     if (err != 0) {
         mlua_event_disable(ls, &wifi_state.scan_event);
-        return mlua_cyw43_push_err(ls, err);
+        lua_pushstring(ls, mlua_pico_error_str(err));
+        return lua_error(ls);
     }
-
-    // Start the event handler thread.
-    lua_pushvalue(ls, -1);  // queue
-    lua_pushvalue(ls, 2);  // handler
-    lua_pushcclosure(ls, &handle_scan_result_event, 2);
-    lua_pushvalue(ls, -2);  // queue (to keep it alive)
-    lua_pushcclosure(ls, &scan_result_handler_done, 1);
-    return mlua_event_handle(ls, &wifi_state.scan_event,
-                             &mlua_cont_return_ctx, 1);
+    return 4;
 }
 
 static int mod_scan_active(lua_State* ls) {

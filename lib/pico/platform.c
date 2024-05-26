@@ -68,6 +68,22 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
     lua_gc(ls, LUA_GCINC, 120, 100, 12);
 }
 
+char const* mlua_pico_error_str(int err) {
+    switch (err) {
+    case PICO_ERROR_NONE: return "no error";
+    case PICO_ERROR_TIMEOUT: return "timeout";
+    case PICO_ERROR_GENERIC: return "generic error";
+    case PICO_ERROR_NO_DATA: return "no data";
+    case PICO_ERROR_NOT_PERMITTED: return "not permitted";
+    case PICO_ERROR_INVALID_ARG: return "invalid argument";
+    case PICO_ERROR_IO: return "I/O error";
+    case PICO_ERROR_BADAUTH: return "bad authentication";
+    case PICO_ERROR_CONNECT_FAILED: return "connection failed";
+    case PICO_ERROR_INSUFFICIENT_RESOURCES: return "insufficient resources";
+    default: return "unknown error";
+    }
+}
+
 #if PICO_ON_DEVICE
 
 static async_context_threadsafe_background_t context;

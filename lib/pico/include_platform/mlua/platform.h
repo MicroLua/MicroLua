@@ -9,6 +9,7 @@
 
 #include "hardware/sync.h"
 #include "hardware/timer.h"
+#include "pico.h"
 #include "pico/binary_info.h"
 #include "pico/platform.h"
 #include "pico/time.h"
@@ -84,6 +85,9 @@ static inline bool mlua_wait(uint64_t deadline) {
     __wfe();
     return false;
 }
+
+// Return a description of a PICO_ERROR_* value.
+char const* mlua_pico_error_str(int err);
 
 #if PICO_ON_DEVICE
 
