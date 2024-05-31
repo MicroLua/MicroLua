@@ -30,9 +30,9 @@ target_link_libraries(gen PRIVATE
     gen_main
 )
 
-# Module: microlua
-mlua_add_lua_modules(microlua_main microlua.lua)
-target_link_libraries(microlua_main INTERFACE
+# Module: mlua_cli
+mlua_add_lua_modules(mlua_cli mlua_cli.lua)
+target_link_libraries(mlua_cli INTERFACE
     mlua_mod_io
     mlua_mod_math
     mlua_mod_mlua.block.mem
@@ -50,11 +50,11 @@ target_link_libraries(microlua_main INTERFACE
     mlua_mod_table
 )
 
-# Executable: microlua
-mlua_add_executable(microlua)
-target_compile_definitions(microlua PRIVATE
-    MLUA_MAIN_MODULE=microlua
+# Executable: mlua
+mlua_add_executable(mlua)
+target_compile_definitions(mlua PRIVATE
+    MLUA_MAIN_MODULE=mlua_cli
 )
-target_link_libraries(microlua PRIVATE
-    microlua_main
+target_link_libraries(mlua PRIVATE
+    mlua_cli
 )

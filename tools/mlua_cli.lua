@@ -76,7 +76,7 @@ local function read_uf2(path)
     end
     local buf = mem.alloc(size)
     for _, b in ipairs(blocks) do
-        buf:write(b.data:sub(1, b.payload_size), b.target_addr - start)
+        mem.write(buf, b.data:sub(1, b.payload_size), b.target_addr - start)
     end
     return buf, start
 end
@@ -91,7 +91,7 @@ local function write_uf2(data, addr, path)
         local off = i * 256
         block.target_addr = addr + off
         block.block_no = i
-        block.data = data:read(off, math.min(256, #data - off))
+        block.data = mem.read(data, off, math.min(256, #data - off))
         check(f:write(check(uf2.serialize(block))))
     end
 end
@@ -317,12 +317,12 @@ local function cmd_fs(opts, args)
     end
     if opts.format then
         if not data then data = mem.alloc(size) end
-        data:fill(0xff)
+        mem.fill(data, 0xff)
     elseif opts.device then
         data = read_flash_range(opts, addr, size)
     end
     printf("Filesystem: 0x%08x bytes at 0x%08x\n", #data, addr)
-    local orig = data:read()
+    local orig = mem.read(data)
 
     -- Create the filesystem and mount it.
     local efs<close> = lfs.new(block_mem.new(data, 256, opts.block_size))
@@ -351,7 +351,7 @@ local function cmd_fs(opts, args)
     -- destination if it was modified.
     ok, msg = efs:unmount()
     if not ok then raise("failed to unmount filesystem: %s", msg) end
-    if data:read() == orig then return end
+    if mem.read(data) == orig then return end
     printf("Writing modified filesystem\n")
     local out = opts.output or opts.image or os.tmpname()
     local done<close> = function()

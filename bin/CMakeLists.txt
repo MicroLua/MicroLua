@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 # Executable: standalone binary
-mlua_add_executable(mlua_standalone)
-target_compile_definitions(mlua_standalone PRIVATE
+mlua_add_executable(microlua)
+target_compile_definitions(microlua PRIVATE
     MLUA_SYMBOL_HASH_DEBUG=0
 )
-mlua_target_config(mlua_standalone
+mlua_target_config(microlua
 )
-target_link_libraries(mlua_standalone PRIVATE
+target_link_libraries(microlua PRIVATE
     mlua_mod_mlua.stdio
 )
 mlua_list_targets(modules
@@ -18,8 +18,8 @@ mlua_list_targets(modules
             "^mlua_mod_mlua\\.testing\\..*$"
 )
 list(SORT modules COMPARE NATURAL)
-target_link_libraries(mlua_standalone PRIVATE ${modules})
-mlua_platform_bin_standalone(mlua_standalone)
+target_link_libraries(microlua PRIVATE ${modules})
+mlua_platform_bin_standalone(microlua)
 
 # Executable: unit tests
 mlua_add_executable(mlua_tests)
