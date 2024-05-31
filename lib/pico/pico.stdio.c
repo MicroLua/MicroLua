@@ -1,8 +1,6 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "mlua/pico.stdio.h"
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -16,6 +14,10 @@
 #include "mlua/module.h"
 #include "mlua/thread.h"
 #include "mlua/util.h"
+
+// Silence link-time warnings.
+__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
+__attribute__((weak)) int _unlink(char const* file) { return -1; }
 
 #if LIB_MLUA_MOD_MLUA_THREAD
 
@@ -147,9 +149,9 @@ static int read_loop(lua_State* ls, bool timeout) {
     return do_read(ls, lua_tointeger(ls, -2), lua_tointeger(ls, -1));
 }
 
-int mlua_pico_stdio_read(lua_State* ls, int fd, int index) {
-    lua_Integer len = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, 0 <= len, index, "invalid length");
+int mlua_stdio_read(lua_State* ls, int fd, int arg) {
+    lua_Integer len = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, 0 <= len, arg, "invalid length");
     if (mlua_event_can_wait(ls, &stdio_state.event, 0)) {
         lua_pushinteger(ls, fd);
         lua_pushinteger(ls, len);
@@ -159,20 +161,14 @@ int mlua_pico_stdio_read(lua_State* ls, int fd, int index) {
 }
 
 static int mod_read(lua_State* ls) {
-    return mlua_pico_stdio_read(ls, STDIN_FILENO, 1);
+    return mlua_stdio_read(ls, STDIN_FILENO, 1);
 }
 
-int mlua_pico_stdio_write(lua_State* ls, int fd, int index) {
-    size_t len;
-    char const* s = luaL_checklstring(ls, index, &len);
-    int cnt = write(fd, s, len);
-    if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
-    lua_pushinteger(ls, cnt);
-    return 1;
-}
+// Use the default implementation from mlua.stdio.
+int mlua_stdio_write(lua_State* ls, int fd, int arg);
 
 static int mod_write(lua_State* ls) {
-    return mlua_pico_stdio_write(ls, STDOUT_FILENO, 1);
+    return mlua_stdio_write(ls, STDOUT_FILENO, 1);
 }
 
 MLUA_FUNC_R0(mod_, stdio_, init_all, lua_pushboolean)
@@ -208,6 +204,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(write, mod_),
     MLUA_SYM_F_THREAD(enable_chars_available, mod_),
 };
+
+void mlua_stdio_require(lua_State* ls) {
+    mlua_require(ls, "pico.stdio", false);
+}
 
 MLUA_OPEN_MODULE(pico.stdio) {
     mlua_thread_require(ls);

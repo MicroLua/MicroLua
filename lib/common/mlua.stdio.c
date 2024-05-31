@@ -3,46 +3,28 @@
 
 #include <unistd.h>
 
-#if LIB_PICO_STDIO_SEMIHOSTING
-#include "pico/stdio_semihosting.h"
-#endif
-#if LIB_PICO_STDIO_UART
-#include "pico/stdio_uart.h"
-#endif
-#if LIB_PICO_STDIO_USB
-#include "pico/stdio_usb.h"
-#endif
-
 #include "lua.h"
 #include "lauxlib.h"
 #include "mlua/module.h"
-#if LIB_MLUA_MOD_PICO_STDIO
-#include "mlua/pico.stdio.h"
-#endif
 #include "mlua/util.h"
-
-#if LIB_PICO_STDIO
-// Silence link-time warnings.
-__attribute__((weak)) int _link(char const* old, char const* new) { return -1; }
-__attribute__((weak)) int _unlink(char const* file) { return -1; }
-#endif
 
 static char const InStream_name[] = "mlua.stdio.InStream";
 
-static int InStream_read(lua_State* ls) {
-    int fd = *((int*)luaL_checkudata(ls, 1, InStream_name));
-#if LIB_MLUA_MOD_PICO_STDIO
-    return mlua_pico_stdio_read(ls, fd, 2);
-#else
-    lua_Integer len = luaL_checkinteger(ls, 2);
-    luaL_argcheck(ls, 0 <= len, 2, "invalid length");
+__attribute__((weak, noinline))
+int mlua_stdio_read(lua_State* ls, int fd, int arg) {
+    lua_Integer len = luaL_checkinteger(ls, arg);
+    luaL_argcheck(ls, 0 <= len, arg, "invalid length");
     luaL_Buffer buf;
     char* p = luaL_buffinitsize(ls, &buf, len);
     int cnt = read(fd, p, len);
     if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
     luaL_pushresultsize(&buf, cnt);
     return 1;
-#endif
+}
+
+static int InStream_read(lua_State* ls) {
+    int fd = *((int*)luaL_checkudata(ls, 1, InStream_name));
+    return mlua_stdio_read(ls, fd, 2);
 }
 
 MLUA_SYMBOLS(InStream_syms) = {
@@ -51,18 +33,19 @@ MLUA_SYMBOLS(InStream_syms) = {
 
 static char const OutStream_name[] = "mlua.stdio.OutStream";
 
-static int OutStream_write(lua_State* ls) {
-    int fd = *((int*)luaL_checkudata(ls, 1, OutStream_name));
-#if LIB_MLUA_MOD_PICO_STDIO
-    return mlua_pico_stdio_write(ls, fd, 2);
-#else
+__attribute__((weak, noinline))
+int mlua_stdio_write(lua_State* ls, int fd, int arg) {
     size_t len;
-    char const* s = luaL_checklstring(ls, 2, &len);
+    char const* s = luaL_checklstring(ls, arg, &len);
     int cnt = write(fd, s, len);
     if (cnt < 0) return luaL_fileresult(ls, 0, NULL);
     lua_pushinteger(ls, cnt);
     return 1;
-#endif
+}
+
+static int OutStream_write(lua_State* ls) {
+    int fd = *((int*)luaL_checkudata(ls, 1, OutStream_name));
+    return mlua_stdio_write(ls, fd, 2);
 }
 
 MLUA_SYMBOLS(OutStream_syms) = {
@@ -106,52 +89,11 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(stdout, boolean, false),
 };
 
-// When true, initialize UART-based stdin.
-#ifndef MLUA_STDIO_INIT_UART_IN
-#define MLUA_STDIO_INIT_UART_IN 0
-#endif
-
-// When true, initialize UART-based stdout.
-#ifndef MLUA_STDIO_INIT_UART_OUT
-#define MLUA_STDIO_INIT_UART_OUT 0
-#endif
-
-// When true, initialize USB-based stdio.
-#ifndef MLUA_STDIO_INIT_USB
-#define MLUA_STDIO_INIT_USB 0
-#endif
-
-// When true, initialize semihosting-based stdio.
-#ifndef MLUA_STDIO_INIT_SEMIHOSTING
-#define MLUA_STDIO_INIT_SEMIHOSTING 0
-#endif
-
-static __attribute__((constructor)) void init(void) {
-#if LIB_PICO_STDIO_SEMIHOSTING
-#if MLUA_STDIO_INIT_SEMIHOSTING
-    stdio_semihosting_init();
-#endif
-#endif  // LIB_PICO_STDIO_SEMIHOSTING
-#if LIB_PICO_STDIO_UART
-#if MLUA_STDIO_INIT_UART_IN && MLUA_STDIO_INIT_UART_OUT
-    stdio_uart_init();
-#elif MLUA_STDIO_INIT_UART_IN
-    stdin_uart_init();
-#elif MLUA_STDIO_INIT_UART_OUT
-    stdout_uart_init();
-#endif
-#endif  // LIB_PICO_STDIO_UART
-#if LIB_PICO_STDIO_USB
-#if MLUA_STDIO_INIT_USB
-    stdio_usb_init();
-#endif
-#endif  // LIB_PICO_STDIO_USB
-}
+__attribute__((weak, noinline))
+void mlua_stdio_require(lua_State* ls) {}
 
 MLUA_OPEN_MODULE(mlua.stdio) {
-#if LIB_MLUA_MOD_PICO_STDIO
-    mlua_require(ls, "pico.stdio", false);
-#endif
+    mlua_stdio_require(ls);
 
     mlua_new_module(ls, 0, module_syms);
 

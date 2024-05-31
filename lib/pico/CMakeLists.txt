@@ -711,8 +711,6 @@ target_link_libraries(mlua_test_pico.standard_link INTERFACE
 )
 
 mlua_add_c_module(mlua_mod_pico.stdio pico.stdio.c)
-target_include_directories(mlua_mod_pico.stdio_headers INTERFACE
-    include_pico.stdio)
 target_link_libraries(mlua_mod_pico.stdio INTERFACE
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread_headers
@@ -733,6 +731,7 @@ target_link_libraries(mlua_test_pico.stdio INTERFACE
 mlua_add_c_module(mlua_mod_pico.stdio.semihosting pico.stdio.semihosting.c)
 target_link_libraries(mlua_mod_pico.stdio.semihosting INTERFACE
     hardware_exception
+    mlua_mod_pico.stdio  # For convenience
     pico_stdio_semihosting
 )
 
@@ -746,6 +745,7 @@ target_link_libraries(mlua_test_pico.stdio.semihosting INTERFACE
 mlua_add_c_module(mlua_mod_pico.stdio.uart pico.stdio.uart.c)
 target_link_libraries(mlua_mod_pico.stdio.uart INTERFACE
     mlua_mod_hardware.uart_headers
+    mlua_mod_pico.stdio  # For convenience
     pico_stdio_uart
 )
 
@@ -762,6 +762,7 @@ target_link_libraries(mlua_test_pico.stdio.uart INTERFACE
 mlua_add_c_module(mlua_mod_pico.stdio.usb pico.stdio.usb.c)
 target_link_libraries(mlua_mod_pico.stdio.usb INTERFACE
     pico_stdio_usb
+    mlua_mod_pico.stdio  # For convenience
 )
 
 mlua_add_lua_modules(mlua_test_pico.stdio.usb pico.stdio.usb.test.lua)
