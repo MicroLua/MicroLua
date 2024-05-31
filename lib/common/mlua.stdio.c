@@ -108,12 +108,12 @@ MLUA_SYMBOLS(module_syms) = {
 
 // When true, initialize UART-based stdin.
 #ifndef MLUA_STDIO_INIT_UART_IN
-#define MLUA_STDIO_INIT_UART_IN 1
+#define MLUA_STDIO_INIT_UART_IN 0
 #endif
 
 // When true, initialize UART-based stdout.
 #ifndef MLUA_STDIO_INIT_UART_OUT
-#define MLUA_STDIO_INIT_UART_OUT 1
+#define MLUA_STDIO_INIT_UART_OUT 0
 #endif
 
 // When true, initialize USB-based stdio.

@@ -25,8 +25,6 @@ function(mlua_platform_bin_standalone TARGET)
     target_compile_definitions("${TARGET}" PRIVATE
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=1<<20
-        MLUA_STDIO_INIT_UART_IN=1
-        MLUA_STDIO_INIT_UART_OUT=1
         MLUA_STDIO_INIT_USB=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
         PICO_MAX_SHARED_IRQ_HANDLERS=16
