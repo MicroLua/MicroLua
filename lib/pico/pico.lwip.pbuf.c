@@ -11,6 +11,8 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Add unit tests
+
 char const mlua_PBUF_name[] = "pico.lwip.PBUF";
 
 struct pbuf** mlua_new_PBUF(lua_State* ls) {
@@ -38,25 +40,25 @@ static int PBUF___len(lua_State* ls) {
     return lua_pushinteger(ls, pb->tot_len), 1;
 }
 
-static void PBUF_read(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+static void PBUF_read(void* ptr, lua_Unsigned off, lua_Unsigned len,
                       void* dest) {
     mlua_lwip_lock();
-    pbuf_copy_partial((struct pbuf*)ptr, dest, len, offset);
+    pbuf_copy_partial((struct pbuf*)ptr, dest, len, off);
     mlua_lwip_unlock();
 }
 
-static void PBUF_write(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+static void PBUF_write(void* ptr, lua_Unsigned off, lua_Unsigned len,
                        void const* src) {
     mlua_lwip_lock();
-    pbuf_take_at((struct pbuf*)ptr, src, len, offset);
+    pbuf_take_at((struct pbuf*)ptr, src, len, off);
     mlua_lwip_unlock();
 }
 
-static void PBUF_fill(void* ptr, lua_Unsigned offset, lua_Unsigned len,
+static void PBUF_fill(void* ptr, lua_Unsigned off, lua_Unsigned len,
                       int value) {
     mlua_lwip_lock();
     u16_t off;
-    struct pbuf* pb = pbuf_skip((struct pbuf*)ptr, offset, &off);
+    struct pbuf* pb = pbuf_skip((struct pbuf*)ptr, off, &off);
     if (pb != NULL && off > 0) {
         lua_Unsigned size = len;
         if (off + size > pb->len) size = pb->len - off;
@@ -74,8 +76,17 @@ static void PBUF_fill(void* ptr, lua_Unsigned offset, lua_Unsigned len,
     mlua_lwip_unlock();
 }
 
+static lua_Unsigned PBUF_find(void* ptr, lua_Unsigned off, lua_Unsigned len,
+                              void const* needle, lua_Unsigned needle_len) {
+    mlua_lwip_lock();
+    u16_t pos = pbuf_memfind((struct pbuf*)ptr, needle, needle_len, off);
+    mlua_lwip_unlock();
+    if (pos == 0xffff || pos + needle_len > off + len) return LUA_MAXUNSIGNED;
+    return pos;
+}
+
 MLuaBufferVt const PBUF_vt = {.read = &PBUF_read, .write = &PBUF_write,
-                              .fill = &PBUF_fill};
+                              .fill = &PBUF_fill, .find = &PBUF_find};
 
 static int PBUF___buffer(lua_State* ls) {
     struct pbuf* pb = mlua_check_PBUF(ls, 1);

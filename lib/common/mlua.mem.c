@@ -79,6 +79,22 @@ static int mod_read(lua_State* ls) {
     return luaL_pushresultsize(&buf, len), 1;
 }
 
+static int mod_read_cstr(lua_State* ls) {
+    MLuaBuffer src;
+    check_ro_buffer(ls, 1, &src);
+    lua_Unsigned off = luaL_optinteger(ls, 2, 0);
+    lua_Unsigned len = luaL_optinteger(ls, 3, src.size - off);
+    check_bounds(ls, &src, off, 2, len, 3);
+
+    uint8_t zero = 0;
+    lua_Unsigned end = mlua_buffer_find(&src, off, len, &zero, 1);
+    if (end != LUA_MAXUNSIGNED) len = end - off;
+    luaL_Buffer buf;
+    void* dest = luaL_buffinitsize(ls, &buf, len);
+    mlua_buffer_read(&src, off, len, dest);
+    return luaL_pushresultsize(&buf, len), 1;
+}
+
 static int mod_write(lua_State* ls) {
     MLuaBuffer dest;
     luaL_argexpected(ls, mlua_get_buffer(ls, 1, &dest), 1, "integer or buffer");
@@ -101,6 +117,21 @@ static int mod_fill(lua_State* ls) {
 
     mlua_buffer_fill(&dest, off, len, value);
     return 0;
+}
+
+static int mod_find(lua_State* ls) {
+    MLuaBuffer src;
+    check_ro_buffer(ls, 1, &src);
+    size_t needle_len;
+    char const* needle = luaL_checklstring(ls, 2, &needle_len);
+    lua_Unsigned off = luaL_optinteger(ls, 3, 0);
+    lua_Unsigned len = luaL_optinteger(ls, 4, src.size - off);
+    check_bounds(ls, &src, off, 3, len, 4);
+    luaL_argcheck(ls, off + needle_len <= src.size, 2, "out of bounds");
+
+    lua_Unsigned pos = mlua_buffer_find(&src, off, len, needle, needle_len);
+    if (pos == LUA_MAXUNSIGNED) return 0;
+    return lua_pushinteger(ls, pos), 1;
 }
 
 static int mod_get(lua_State* ls) {
@@ -157,8 +188,10 @@ static int mod_mallinfo(lua_State* ls) {
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(read, mod_),
+    MLUA_SYM_F(read_cstr, mod_),
     MLUA_SYM_F(write, mod_),
     MLUA_SYM_F(fill, mod_),
+    MLUA_SYM_F(find, mod_),
     MLUA_SYM_F(get, mod_),
     MLUA_SYM_F(set, mod_),
     MLUA_SYM_F(alloc, mod_),

@@ -567,12 +567,18 @@ implementing the [buffer protocol](core.md#buffer-protocol).
   Read a range of raw data from a buffer. `len` is required if the buffer
   doesn't have a size.
 
+- `read_cstr(buffer, offset = 0, max_len = size - offset) -> string`\
+  Read a zero-terminated string from a buffer.
+
 - `write(buffer, data, offset = 0)`\
   Write a range of raw data to a buffer.
 
 - `fill(buffer, value = 0, offset = 0, len = size - offset)`\
   Fill a range of raw data in a buffer. `len` is required if the buffer doesn't
   have a size.
+
+- `find(buffer, str, offset = 0, len = size - offset) -> integer | nil`\
+  Find a substring in a buffer, and return its starting offset.
 
 - `get(buffer, offset, len = 1) -> (value, ...)`\
   Get individual bytes from a buffer or from memory.

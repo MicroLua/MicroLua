@@ -43,6 +43,9 @@ mlua_add_core_c_module(utf8 lutf8lib.c)
 
 # The entry point of the Lua interpreter.
 mlua_add_library(mlua_core_main INTERFACE)
+target_compile_definitions(mlua_core_main INTERFACE
+    _GNU_SOURCE
+)
 target_sources(mlua_core_main INTERFACE
     main.c
     module.c

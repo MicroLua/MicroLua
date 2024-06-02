@@ -61,6 +61,8 @@ typedef struct MLuaBufferVt {
     void (*read)(void*, lua_Unsigned, lua_Unsigned, void*);
     void (*write)(void*, lua_Unsigned, lua_Unsigned, void const*);
     void (*fill)(void*, lua_Unsigned, lua_Unsigned, int);
+    lua_Unsigned (*find)(void*, lua_Unsigned, lua_Unsigned, void const*,
+                         lua_Unsigned);
 } MLuaBufferVt;
 
 // The parameters returned by the buffer protocol. When vt is NULL, the buffer
@@ -102,6 +104,18 @@ static inline void mlua_buffer_fill(MLuaBuffer const* buf, lua_Unsigned off,
         buf->vt->fill(buf->ptr, off, len, value);
     } else {
         memset(buf->ptr + off, value, len);
+    }
+}
+
+// Find a substring of a buffer.
+static inline lua_Unsigned mlua_buffer_find(
+        MLuaBuffer const* buf, lua_Unsigned off, lua_Unsigned len,
+        void const* needle, lua_Unsigned needle_len) {
+    if (buf->vt != NULL) {
+        return buf->vt->find(buf->ptr, off, len, needle, needle_len);
+    } else {
+        void const* pos = memmem(buf->ptr + off, len, needle, needle_len);
+        return pos != NULL ? (lua_Unsigned)(pos - buf->ptr) : LUA_MAXUNSIGNED;
     }
 }
 
