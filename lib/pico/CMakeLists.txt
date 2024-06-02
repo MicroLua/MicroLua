@@ -700,6 +700,18 @@ target_link_libraries(mlua_test_pico.platform INTERFACE
     mlua_mod_pico.platform
 )
 
+mlua_add_c_module(mlua_mod_pico.rand pico.rand.c)
+target_link_libraries(mlua_mod_pico.rand INTERFACE
+    mlua_mod_mlua.int64
+    pico_rand
+)
+
+mlua_add_lua_modules(mlua_test_pico.rand pico.rand.test.lua)
+target_link_libraries(mlua_test_pico.rand INTERFACE
+    mlua_mod_mlua.int64
+    mlua_mod_pico.rand
+)
+
 mlua_add_c_module(mlua_mod_pico.standard_link pico.standard_link.c)
 target_link_libraries(mlua_mod_pico.standard_link INTERFACE
     pico_base

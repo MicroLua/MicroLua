@@ -331,7 +331,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(PARITY_NONE, integer, UART_PARITY_NONE),
     MLUA_SYM_V(PARITY_EVEN, integer, UART_PARITY_EVEN),
     MLUA_SYM_V(PARITY_ODD, integer, UART_PARITY_ODD),
-    // uart_default_tx_wait_blocking: Use default.tx_wait_blocking() instead
+    // uart_default_tx_wait_blocking: Use default.tx_wait_blocking()
 };
 
 MLUA_OPEN_MODULE(hardware.uart) {

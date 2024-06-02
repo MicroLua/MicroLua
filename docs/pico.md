@@ -314,6 +314,24 @@ This module exposes the constants defined in
 - `busy_wait_at_least_cycles(cycles)`\
   This function doesn't yield.
 
+## `pico.rand`
+
+**Library:** [`pico_rand`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_rand),
+header: [`pico/rand.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_rand/include/pico/rand.h),
+sources: [`pico_rand`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_rand)\
+**Module:** [`pico.rand`](../lib/pico/pico.rand.c),
+build target: `mlua_mod_pico.rand`,
+tests: [`pico.rand.test`](../lib/pico/pico.rand.test.lua)
+
+- `get_rand_32() -> integer`\
+  Generate a random 32-bit value.
+
+- `get_rand_64() -> Int64`\
+  Generate a random 64-bit value.
+
+- `get_rand_128() -> (Int64, Int64)`\
+  Generate a random 128-bit value, as a pair of 64-bit values.
+
 ## `pico.standard_link`
 
 **Library:** [`pico_standard_link`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_standard_link),
