@@ -581,6 +581,18 @@ target_link_libraries(mlua_test_pico.board INTERFACE
     mlua_mod_pico.board
 )
 
+mlua_add_c_module(mlua_mod_pico.bootrom pico.bootrom.c)
+target_link_libraries(mlua_mod_pico.bootrom INTERFACE
+    pico_bootrom
+)
+
+mlua_add_lua_modules(mlua_test_pico.bootrom pico.bootrom.test.lua)
+target_link_libraries(mlua_test_pico.bootrom INTERFACE
+    mlua_mod_mlua.list
+    mlua_mod_mlua.mem
+    mlua_mod_pico.bootrom
+)
+
 mlua_add_c_module(mlua_mod_pico.cyw43 pico.cyw43.c)
 target_compile_definitions(mlua_mod_pico.cyw43_headers INTERFACE
     CYW43_CONFIG_FILE="mlua/cyw43_configport.h"

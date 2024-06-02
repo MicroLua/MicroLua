@@ -67,6 +67,43 @@ This module exposes the constants defined in the
 [`boards/*.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/boards/include/boards)
 header for the target board. It is auto-generated.
 
+## `pico.bootrom`
+
+**Library:** [`pico_bootrom`](https://www.raspberrypi.com/documentation/pico-sdk/runtime.html#pico_bootrom),
+header: [`pico/bootrom.h`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_bootrom/include/pico/bootrom.h),
+sources: [`pico_bootrom`](https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_bootrom)\
+**Module:** [`pico.bootrom`](../lib/pico/pico.bootrom.c),
+build target: `mlua_mod_pico.bootrom`,
+tests: [`pico.bootrom.test`](../lib/pico/pico.bootrom.test.lua)
+
+- `START: pointer = pointer(0x00000000)`\
+  `SIZE: integer = 0x40000`\
+  A pointer to the bootrom, and its size.
+
+- `VERSION: integer`\
+  The version of the bootrom.
+
+- `FUNC_*: integer`\
+  Lookup codes for various bootrom functions.
+
+- `INTF_MASS_STORAGE: integer`\
+  `INTF_PICOBOOT: integer`\
+  Interfaces that can be disabled in `reset_usb_boot()`.
+
+- `table_code(id) -> integer`\
+  Return a lookup code for a two-character identifier.
+
+- `func_lookup([code, ...]) -> pointer`\
+  Look up bootrom functions by code.
+
+- `data_lookup([code, ...]) -> pointer`\
+  Look up bootrom addresses by code.
+
+- `reset_usb_boot(pin_mask, disable_interface_mask)`\
+  Reboot the device into BOOTSEL mode. `pin_mask` is either 0 or a single bit
+  set for the GPIO to use to indicate activity. `disable_interface_mask` is a
+  bit mask of interfaces to disable, an OR of `INTF_*` values.
+
 ## `pico.cyw43`
 
 **Library:** [`pico_cyw43_driver`](https://www.raspberrypi.com/documentation/pico-sdk/networking.html#pico_cyw43_driver),
