@@ -57,12 +57,12 @@ static void PBUF_write(void* ptr, lua_Unsigned off, lua_Unsigned len,
 static void PBUF_fill(void* ptr, lua_Unsigned off, lua_Unsigned len,
                       int value) {
     mlua_lwip_lock();
-    u16_t off;
-    struct pbuf* pb = pbuf_skip((struct pbuf*)ptr, off, &off);
-    if (pb != NULL && off > 0) {
+    u16_t poff;
+    struct pbuf* pb = pbuf_skip((struct pbuf*)ptr, off, &poff);
+    if (pb != NULL && poff > 0) {
         lua_Unsigned size = len;
-        if (off + size > pb->len) size = pb->len - off;
-        memset(pb->payload + off, value, size);
+        if (poff + size > pb->len) size = pb->len - poff;
+        memset(pb->payload + poff, value, size);
         len -= size;
         pb = pb->next;
     }
