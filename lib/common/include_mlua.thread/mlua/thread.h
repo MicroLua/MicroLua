@@ -68,9 +68,6 @@ void mlua_thread_start(lua_State* ls);
 // pushes a boolean indicating if the thread was alive.
 void mlua_thread_kill(lua_State* ls);
 
-// Shut down the thread scheduler.
-void mlua_thread_shutdown(lua_State* ls);
-
 // Prepare an event pointer for multi-event operations. The pointer is updated
 // to the first event in the array for which the mask has a bit set. Returns the
 // mask value to use in the multi-event operations; it corresponds to the mask

@@ -204,8 +204,7 @@ static int index2(lua_State* ls) {
     }
     lua_pushvalue(ls, 1);
     lua_pushvalue(ls, 2);
-    lua_callk(ls, 2, 1, 1, &mlua_cont_return_ctx);
-    return 1;
+    return lua_callk(ls, 2, 1, 1, &mlua_cont_return_ctx), 1;
 }
 
 static int nohash___index(lua_State* ls) {

@@ -11,19 +11,14 @@
 extern "C" {
 #endif
 
-// Log errors raised by main() to stderr.
-#ifndef MLUA_LOG_MAIN_ERRORS
-#define MLUA_LOG_MAIN_ERRORS 0
-#endif
-
 // Create a new Lua interpreter.
 lua_State* mlua_new_interpreter(void);
 
 // Free a Lua interpreter.
 void mlua_close_interpreter(lua_State* ls);
 
-// Load the main module and run its main function.
-int mlua_run_main(lua_State* ls, int args);
+// Load the main module and run the main function.
+int mlua_run_main(lua_State* ls, int nargs, int nres, int msgh);
 
 // Run a Lua interpreter with the configured main module and function on core 0.
 int mlua_main_core0(int argc, char* argv[]);

@@ -725,12 +725,7 @@ local function pmain(opts, args)
 end
 
 function main()
-    local res
-    local done<close> = function()
-        if thread then thread.shutdown(res) end
-    end
-    local ok
-    ok, res = xpcall(pmain, function(err)
+    local ok, res = xpcall(pmain, function(err)
         io.aprintf("\n@{+RED}ERROR:@{NORM} %s\n", debug.traceback(err, 2))
         return err
     end)

@@ -16,7 +16,7 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
-// TODO: Allow passing arguments to main() on core 1
+// TODO: Allow passing arguments to and returning results from main() on core 1
 
 typedef struct CoreState {
     lua_State* ls;
@@ -27,10 +27,19 @@ typedef struct CoreState {
 
 static CoreState core_state[NUM_CORES - 1];
 
+static int find_main(lua_State* ls) {
+    lua_getglobal(ls, "require");
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_call(ls, 1, 1);
+    lua_pushvalue(ls, lua_upvalueindex(2));
+    lua_gettable(ls, -2);
+    return 1;
+}
+
 static void launch_core(void) {
     CoreState* st = &core_state[get_core_num() - 1];
     lua_State* ls = st->ls;
-    mlua_run_main(ls, 0);
+    mlua_run_main(ls, 0, 0, 0);
     // TODO: The event should be disabled after closing the lua_State,
     //       otherwise the core could be reset before the state can be closed.
     mlua_event_disable(ls, &st->shutdown_event);
@@ -64,6 +73,7 @@ static int mod_launch_core1(lua_State* ls) {
     // Launch the interpreter in the other core.
     lua_pushlstring(ls1, module, mlen);
     lua_pushlstring(ls1, fn, flen);
+    lua_pushcclosure(ls1, &find_main, 2);
     multicore_launch_core1(&launch_core);
     return 0;
 }
@@ -158,6 +168,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(launch_core1, mod_),
     // multicore_launch_core1_with_stack: Not useful in Lua
     // multicore_launch_core1_raw: Not useful in Lua
+    // TODO: MLUA_SYM_F(wait_core1, mod_),
     MLUA_SYM_F(set_shutdown_handler, mod_),
 };
 

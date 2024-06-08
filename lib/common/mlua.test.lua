@@ -65,8 +65,8 @@ function test_log_errors(t)
         :matches("^ERROR: mlua%.test:%d+: boom\nstack traceback:\n")
 
     local r2 = io.Recorder()
-    local wfn2 = log_errors(function(e) error(e) end, r2)
-    t:expect(t.expr.wfn2(123456)):raises(123456)
+    wfn = log_errors(function(e) error(e) end, r2)
+    t:expect(t.expr.wfn(123456)):raises(123456)
     t:expect(tostring(r2)):label("r2")
         :matches("^ERROR: 123456\nstack traceback:\n")
 end

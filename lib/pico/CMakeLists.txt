@@ -678,7 +678,10 @@ target_link_libraries(mlua_mod_pico.multicore INTERFACE
 
 mlua_add_lua_modules(mlua_test_pico.multicore pico.multicore.test.lua)
 target_link_libraries(mlua_test_pico.multicore INTERFACE
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.time
     mlua_mod_pico.multicore
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico.multicore.fifo pico.multicore.fifo.c)
