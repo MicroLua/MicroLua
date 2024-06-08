@@ -23,6 +23,29 @@ int mlua_lwip_push_result(lua_State* ls, err_t err) {
     return mlua_lwip_push_err(ls, err);
 }
 
+static char const* mlua_lwip_err_str(err_t err) {
+    switch (err) {
+    case ERR_OK: return "no error";
+    case ERR_MEM: return "out of memory";
+    case ERR_BUF: return "buffer error";
+    case ERR_TIMEOUT: return "timeout";
+    case ERR_RTE: return "routing problem";
+    case ERR_INPROGRESS: return "operation in progress";
+    case ERR_VAL: return "illegal value";
+    case ERR_WOULDBLOCK: return "operation would block";
+    case ERR_USE: return "address in use";
+    case ERR_ALREADY: return "already connecting";
+    case ERR_ISCONN: return "connection already established";
+    case ERR_CONN: return "not connected";
+    case ERR_IF: return "low-level netif error";
+    case ERR_ABRT: return "connection aborted";
+    case ERR_RST: return "connection reset";
+    case ERR_CLSD: return "connection closed";
+    case ERR_ARG: return "illegal argument";
+    default: return "unknown error";
+    }
+}
+
 char const mlua_IPAddr_name[] = "pico.lwip.IPAddr";
 
 ip_addr_t* mlua_new_IPAddr(lua_State* ls) {
@@ -107,27 +130,17 @@ static int mod_deinit(lua_State* ls) {
 }
 
 static int mod_err_str(lua_State* ls) {
-    char const* msg = "unknown error";
-    switch (luaL_checkinteger(ls, 1)) {
-    case ERR_OK: msg = "no error"; break;
-    case ERR_MEM: msg = "out of memory"; break;
-    case ERR_BUF: msg = "buffer error"; break;
-    case ERR_TIMEOUT: msg = "timeout"; break;
-    case ERR_RTE: msg = "routing problem"; break;
-    case ERR_INPROGRESS: msg = "operation in progress"; break;
-    case ERR_VAL: msg = "illegal value"; break;
-    case ERR_WOULDBLOCK: msg = "operation would block"; break;
-    case ERR_USE: msg = "address in use"; break;
-    case ERR_ALREADY: msg = "already connecting"; break;
-    case ERR_ISCONN: msg = "connection already established"; break;
-    case ERR_CONN: msg = "not connected"; break;
-    case ERR_IF: msg = "low-level netif error"; break;
-    case ERR_ABRT: msg = "connection aborted"; break;
-    case ERR_RST: msg = "connection reset"; break;
-    case ERR_CLSD: msg = "connection closed"; break;
-    case ERR_ARG: msg = "illegal argument"; break;
-    }
+    char const* msg = mlua_lwip_err_str(luaL_checkinteger(ls, 1));
     return lua_pushstring(ls, msg), 1;
+}
+
+static int mod_assert(lua_State* ls) {
+    if (luai_likely(lua_toboolean(ls, 1))) return lua_gettop(ls);
+    lua_settop(ls, 2);
+    int ok;
+    lua_Integer err = lua_tointegerx(ls, 2, &ok);
+    if (ok) lua_pushstring(ls, mlua_lwip_err_str(err));
+    return lua_error(ls);
 }
 
 static int mod_ipaddr_aton(lua_State* ls) {
@@ -165,6 +178,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(init, mod_),
     MLUA_SYM_F(deinit, mod_),
     MLUA_SYM_F(err_str, mod_),
+    MLUA_SYM_F(assert, mod_),
     MLUA_SYM_F(ipaddr_aton, mod_),
     MLUA_SYM_F(ipaddr_ntoa, mod_),
 };
