@@ -65,6 +65,17 @@ bool mlua_get_buffer(lua_State* ls, int arg, MLuaBuffer* buf) {
     return true;
 }
 
+bool mlua_get_ro_buffer(lua_State* ls, int arg, MLuaBuffer* buf) {
+    size_t len;
+    buf->ptr = (void*)lua_tolstring(ls, arg, &len);
+    if (buf->ptr != NULL) {
+        buf->vt = NULL;
+        buf->size = len;
+        return true;
+    }
+    return mlua_get_buffer(ls, arg, buf);
+}
+
 int mlua_push_fail(lua_State* ls, char const* err) {
     luaL_pushfail(ls);
     lua_pushstring(ls, err);

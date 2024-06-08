@@ -66,7 +66,7 @@ typedef struct MLuaBufferVt {
 } MLuaBufferVt;
 
 // The parameters returned by the buffer protocol. When vt is NULL, the buffer
-// is a contiguous block of memory.
+// is raw, i.e. a contiguous block of memory.
 typedef struct MLuaBuffer {
     MLuaBufferVt const* vt;
     void* ptr;
@@ -76,6 +76,10 @@ typedef struct MLuaBuffer {
 // Apply the buffer protocol to the given argument, and return the buffer
 // pointer and size.
 bool mlua_get_buffer(lua_State* ls, int arg, MLuaBuffer* buf);
+
+// Apply the buffer protocol to the given argument, and return the buffer
+// pointer and size. Also accepts a string.
+bool mlua_get_ro_buffer(lua_State* ls, int arg, MLuaBuffer* buf);
 
 // Read from a buffer.
 static inline void mlua_buffer_read(MLuaBuffer const* buf, lua_Unsigned off,

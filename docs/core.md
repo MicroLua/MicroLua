@@ -152,8 +152,8 @@ recognized as a buffer, an object must implement the `__buffer` metamethod.
   Return a pointer to the buffer, its size, and a `MLuaBufferVt*`. `ptr` and
   `vtable` are light userdata, and `size` is an unsigned integer. If `size` is
   missing or nil, the buffer is considered infinite, which disables bounds
-  checks. If `vtable` is missing or nil, then `ptr` points at a contiguous block
-  of memory.
+  checks. If `vtable` is missing or nil, the buffer is raw and `ptr` points at a
+  contiguous block of memory.
 
 ## Read-only tables
 

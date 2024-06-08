@@ -41,15 +41,8 @@ MLUA_SYMBOLS_NOHASH(Buffer_syms_nh) = {
 };
 
 static void check_ro_buffer(lua_State* ls, int arg, MLuaBuffer* buf) {
-    size_t len;
-    buf->ptr = (void*)lua_tolstring(ls, arg, &len);
-    if (buf->ptr != NULL) {
-        buf->vt = NULL;
-        buf->size = len;
-        return;
-    }
-    if (mlua_get_buffer(ls, arg, buf)) return;
-    luaL_typeerror(ls, arg, "integer, string or buffer");
+    if (mlua_get_ro_buffer(ls, arg, buf)) return;
+    luaL_typeerror(ls, arg, "string or buffer");
 }
 
 static lua_Unsigned optlen(lua_State* ls, MLuaBuffer const* buf, int arg,
@@ -97,7 +90,7 @@ static int mod_read_cstr(lua_State* ls) {
 
 static int mod_write(lua_State* ls) {
     MLuaBuffer dest;
-    luaL_argexpected(ls, mlua_get_buffer(ls, 1, &dest), 1, "integer or buffer");
+    luaL_argexpected(ls, mlua_get_buffer(ls, 1, &dest), 1, "buffer");
     size_t len;
     void const* src = luaL_checklstring(ls, 2, &len);
     lua_Unsigned off = luaL_optinteger(ls, 3, 0);

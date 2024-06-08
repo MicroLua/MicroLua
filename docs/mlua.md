@@ -130,7 +130,8 @@ This module provides a block device that uses the QSPI flash for storage.
 build target: `mlua_mod_mlua.block.mem`
 
 This module provides a block device that uses a
-[buffer](core.md#buffer-protocol) for storage, i.e. a contiguous block of RAM.
+[raw buffer](core.md#buffer-protocol) for storage, i.e. a contiguous block of
+RAM.
 
 - `new(buffer, size, write_size = 256, erase_size = 256) -> Dev`\
   Create a new memory block device in `buffer`.

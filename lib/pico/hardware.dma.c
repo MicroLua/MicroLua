@@ -25,12 +25,9 @@ static uint check_timer(lua_State* ls, int arg) {
 
 static void const* check_read_addr(lua_State* ls, int arg) {
     if (lua_isnil(ls, arg)) return NULL;
-    size_t len;
-    void const* ptr = lua_tolstring(ls, arg, &len);
-    if (ptr != NULL) return ptr;
     MLuaBuffer buf;
-    if (mlua_get_buffer(ls, arg, &buf) && buf.vt == NULL) return buf.ptr;
-    luaL_typeerror(ls, arg, "nil, string or contiguous buffer");
+    if (mlua_get_ro_buffer(ls, arg, &buf) && buf.vt == NULL) return buf.ptr;
+    luaL_typeerror(ls, arg, "nil, string or raw buffer");
     return NULL;
 }
 
@@ -38,7 +35,7 @@ static void* check_write_addr(lua_State* ls, int arg) {
     if (lua_isnil(ls, arg)) return NULL;
     MLuaBuffer buf;
     if (mlua_get_buffer(ls, arg, &buf) && buf.vt == NULL) return buf.ptr;
-    luaL_typeerror(ls, arg, "nil or contiguous buffer");
+    luaL_typeerror(ls, arg, "nil or raw buffer");
     return NULL;
 }
 
