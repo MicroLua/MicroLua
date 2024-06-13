@@ -892,8 +892,7 @@ static int handler_thread(lua_State* ls) {
 static int handler_thread_1(lua_State* ls, int status, lua_KContext ctx) {
     // Call the event handler.
     lua_pushvalue(ls, lua_upvalueindex(1));  // handler
-    lua_callk(ls, 0, 1, 0, &handler_thread_2);
-    return handler_thread_2(ls, LUA_OK, 0);
+    return mlua_callk(ls, 0, 1, handler_thread_2, 0);
 }
 
 static int handler_thread_2(lua_State* ls, int status, lua_KContext ctx) {
@@ -908,11 +907,9 @@ static int handler_thread_done(lua_State* ls) {
     unwatch_event(ls, ev);
 
     // Call the "handler done" callback.
-    if (!lua_isnil(ls, lua_upvalueindex(1))) {
-        lua_pushvalue(ls, lua_upvalueindex(1));
-        lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if (lua_isnil(ls, lua_upvalueindex(1))) return 0;
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    return mlua_callk(ls, 0, 0, mlua_cont_return, 0);
 }
 
 int mlua_event_handle(lua_State* ls, MLuaEvent* ev, lua_KFunction cont,

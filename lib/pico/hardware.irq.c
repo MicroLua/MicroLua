@@ -66,12 +66,12 @@ static int handle_user_irq_event(lua_State* ls) {
     uint8_t pending = state->pending;
     state->pending &= ~mask;
     restore_interrupts(save);
-    if ((pending & mask) != 0) {  // Call the handler
-        lua_pushvalue(ls, lua_upvalueindex(2));  // handler
-        lua_pushinteger(ls, irq);
-        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if ((pending & mask) == 0) return 0;
+
+    // Call the handler
+    lua_pushvalue(ls, lua_upvalueindex(2));  // handler
+    lua_pushinteger(ls, irq);
+    return mlua_callk(ls, 1, 0, mlua_cont_return, 0);
 }
 
 static int user_irq_handler_done(lua_State* ls) {
@@ -96,7 +96,7 @@ static int set_handler(lua_State* ls, lua_Integer priority) {
     lua_pushcclosure(ls, &handle_user_irq_event, 2);
     lua_pushvalue(ls, 1);  // irq
     lua_pushcclosure(ls, &user_irq_handler_done, 1);
-    return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, ev, &mlua_cont_return, 1);
 }
 
 static int mod_set_handler(lua_State* ls) {

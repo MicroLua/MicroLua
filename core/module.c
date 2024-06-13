@@ -227,7 +227,7 @@ static int index2(lua_State* ls) {
     }
     lua_pushvalue(ls, 1);
     lua_pushvalue(ls, 2);
-    return mlua_callk(ls, 2, 1, mlua_cont_return_ctx, 1);
+    return mlua_callk(ls, 2, 1, mlua_cont_return, 1);
 }
 
 static int nohash___index(lua_State* ls) {
@@ -468,7 +468,7 @@ MLUA_SYMBOLS_NOHASH(pointer_syms) = {
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.
-    return mlua_callk(ls, lua_gettop(ls) - 1, 0, mlua_cont_return_ctx, 0);
+    return mlua_callk(ls, lua_gettop(ls) - 1, 0, mlua_cont_return, 0);
 }
 
 char const mlua_WeakK_name[] = "mlua.WeakK";

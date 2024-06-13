@@ -39,14 +39,12 @@ static int handle_i2c_slave_event_1(lua_State* ls, int status,
     hw_set_bits(&hw->intr_mask, I2C_IC_INTR_MASK_M_RX_FULL_BITS);
 
     // Handle read requests.
-    if ((hw->raw_intr_stat & I2C_IC_RAW_INTR_STAT_RD_REQ_BITS) != 0) {
-        hw->clr_rd_req;
-        hw_set_bits(&hw->intr_mask, I2C_IC_INTR_MASK_M_RD_REQ_BITS);
-        lua_pushvalue(ls, lua_upvalueindex(3));
-        lua_pushvalue(ls, lua_upvalueindex(1));
-        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if ((hw->raw_intr_stat & I2C_IC_RAW_INTR_STAT_RD_REQ_BITS) == 0) return 0;
+    hw->clr_rd_req;
+    hw_set_bits(&hw->intr_mask, I2C_IC_INTR_MASK_M_RD_REQ_BITS);
+    lua_pushvalue(ls, lua_upvalueindex(3));
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    return mlua_callk(ls, 1, 0, mlua_cont_return, 0);
 }
 
 static int i2c_slave_handler_done(lua_State* ls) {
@@ -73,7 +71,7 @@ static int mod_run(lua_State* ls) {
     lua_pushvalue(ls, 1);  // inst
     lua_pushcclosure(ls, &i2c_slave_handler_done, 1);
     return mlua_event_handle(ls, &mlua_i2c_state[i2c_hw_index(inst)].event,
-                             &mlua_cont_return_ctx, 1);
+                             &mlua_cont_return, 1);
 }
 
 MLUA_SYMBOLS(module_syms) = {

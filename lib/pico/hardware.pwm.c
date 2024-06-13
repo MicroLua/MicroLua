@@ -105,12 +105,12 @@ static int handle_pwm_event(lua_State* ls) {
     uint8_t pending = pwm_state.pending;
     pwm_state.pending = 0;
     restore_interrupts(save);
-    if (pending != 0) {  // Call the handler
-        lua_pushvalue(ls, lua_upvalueindex(1));  // handler
-        lua_pushinteger(ls, pending);
-        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if (pending == 0) return 0;
+
+    // Call the handler
+    lua_pushvalue(ls, lua_upvalueindex(1));  // handler
+    lua_pushinteger(ls, pending);
+    return mlua_callk(ls, 1, 0, mlua_cont_return, 0);
 }
 
 static int pwm_handler_done(lua_State* ls) {
@@ -139,7 +139,7 @@ static int mod_set_irq_handler(lua_State* ls) {
     lua_pushvalue(ls, 1);  // handler
     lua_pushcclosure(ls, &handle_pwm_event, 1);
     lua_pushcfunction(ls, &pwm_handler_done);
-    return mlua_event_handle(ls, &pwm_state.event, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, &pwm_state.event, &mlua_cont_return, 1);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD

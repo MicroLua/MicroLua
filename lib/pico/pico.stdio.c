@@ -65,11 +65,11 @@ static int handle_chars_available_event(lua_State* ls) {
     mlua_event_lock();
     bool pending = stdio_state.pending;
     mlua_event_unlock();
-    if (pending) {  // Call the callback
-        lua_rawgetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
-        lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if (!pending) return 0;
+
+    // Call the callback
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &stdio_state.pending);
+    return mlua_callk(ls, 0, 0, mlua_cont_return, 0);
 }
 
 static int chars_available_handler_done(lua_State* ls) {
@@ -101,7 +101,7 @@ static int mod_set_chars_available_callback(lua_State* ls) {
     lua_pop(ls, 1);
     lua_pushcfunction(ls, &handle_chars_available_event);
     lua_pushcfunction(ls, &chars_available_handler_done);
-    return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, &stdio_state.event, &mlua_cont_return, 1);
 }
 
 #else  // !LIB_MLUA_MOD_MLUA_THREAD

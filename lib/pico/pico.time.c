@@ -100,15 +100,13 @@ static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx);
 static int alarm_thread(lua_State* ls) {
     lua_pushcfunction(ls, &mod_sleep_until);
     lua_pushvalue(ls, lua_upvalueindex(1));  // time
-    lua_callk(ls, 1, 0, 0, &alarm_thread_1);
-    return alarm_thread_1(ls, LUA_OK, 0);
+    return mlua_callk(ls, 1, 0, alarm_thread_1, 0);
 }
 
 static int alarm_thread_1(lua_State* ls, int status, lua_KContext ctx) {
     lua_pushvalue(ls, lua_upvalueindex(2));  // callback
     lua_pushthread(ls);
-    lua_callk(ls, 1, 1, ctx, &alarm_thread_2);
-    return alarm_thread_2(ls, LUA_OK, ctx);
+    return mlua_callk(ls, 1, 1, alarm_thread_2, ctx);
 }
 
 static int alarm_thread_2(lua_State* ls, int status, lua_KContext ctx) {

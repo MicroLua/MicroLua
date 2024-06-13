@@ -115,11 +115,11 @@ static int handle_alarm_event(lua_State* ls) {
     bool pending = rtc_state.pending;
     rtc_state.pending = false;
     mlua_event_unlock();
-    if (pending) {  // Call the callback
-        lua_rawgetp(ls, LUA_REGISTRYINDEX, &rtc_state.pending);
-        lua_callk(ls, 0, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if (!pending) return 0;
+
+    // Call the callback
+    lua_rawgetp(ls, LUA_REGISTRYINDEX, &rtc_state.pending);
+    return mlua_callk(ls, 0, 0, mlua_cont_return, 0);
 }
 
 static int alarm_handler_done(lua_State* ls) {
@@ -169,7 +169,7 @@ static int mod_set_alarm(lua_State* ls) {
     }
     lua_pushcfunction(ls, &handle_alarm_event);
     lua_pushcfunction(ls, &alarm_handler_done);
-    return mlua_event_handle(ls, &rtc_state.event, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, &rtc_state.event, &mlua_cont_return, 1);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD

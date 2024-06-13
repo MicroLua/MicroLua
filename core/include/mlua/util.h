@@ -42,7 +42,10 @@ extern "C" {
     k((ls), lua_pcallk((ls), (nargs), (nres), (msgh), (ctx), &k), (ctx))
 
 // A continuation that returns its ctx argument.
-int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
+static inline int mlua_cont_return(lua_State* ls, int status,
+                                   lua_KContext ctx) {
+    return ctx;
+}
 
 // A continuation that returns (top - ctx) values if the call was successful,
 // or re-raises the error at the top of the stack.

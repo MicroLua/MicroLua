@@ -176,7 +176,7 @@ static int main_done(lua_State* ls) {
     mlua_thread_meta(ls, "shutdown");
     lua_pushvalue(ls, lua_upvalueindex(1));
     lua_pushvalue(ls, lua_upvalueindex(2));
-    return mlua_callk(ls, 2, 0, mlua_cont_return_ctx, 0);
+    return mlua_callk(ls, 2, 0, mlua_cont_return, 0);
 }
 
 static int shutdown_on_exit_2(lua_State* ls, int status, lua_KContext ctx);

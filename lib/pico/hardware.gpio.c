@@ -142,7 +142,7 @@ static int mod_set_irq_callback(lua_State* ls) {
     }
     lua_pushcfunction(ls, &handle_irq_event);
     lua_pushcfunction(ls, &irq_handler_done);
-    return mlua_event_handle(ls, event, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, event, &mlua_cont_return, 1);
 }
 
 static int mod_set_irq_enabled(lua_State* ls);

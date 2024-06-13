@@ -57,12 +57,12 @@ static int handle_alarm_event(lua_State* ls) {
     uint8_t pending = alarm_state.pending;
     alarm_state.pending &= ~mask;
     mlua_event_unlock();
-    if ((pending & mask) != 0) {  // Call the callback
-        lua_pushvalue(ls, lua_upvalueindex(2));  // handler
-        lua_pushinteger(ls, alarm);
-        lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx);
-    }
-    return 0;
+    if ((pending & mask) == 0) return 0;
+
+    // Call the callback
+    lua_pushvalue(ls, lua_upvalueindex(2));  // handler
+    lua_pushinteger(ls, alarm);
+    return mlua_callk(ls, 1, 0, mlua_cont_return, 0);
 }
 
 static int alarm_handler_done(lua_State* ls) {
@@ -92,7 +92,7 @@ static int mod_set_callback(lua_State* ls) {
     lua_pushcclosure(ls, &handle_alarm_event, 2);
     lua_pushvalue(ls, 1);  // alarm
     lua_pushcclosure(ls, &alarm_handler_done, 1);
-    return mlua_event_handle(ls, ev, &mlua_cont_return_ctx, 1);
+    return mlua_event_handle(ls, ev, &mlua_cont_return, 1);
 }
 
 #endif  // LIB_MLUA_MOD_MLUA_THREAD
