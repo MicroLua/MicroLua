@@ -9,6 +9,11 @@ int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx) {
     return ctx;
 }
 
+int mlua_cont_return_results(lua_State* ls, int status, lua_KContext ctx) {
+    if (status == LUA_OK || status == LUA_YIELD) return lua_gettop(ls) - ctx;
+    return lua_error(ls);
+}
+
 void mlua_require(lua_State* ls, char const* module, bool keep) {
     lua_getglobal(ls, "require");
     lua_pushstring(ls, module);

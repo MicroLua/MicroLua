@@ -56,8 +56,12 @@ The test modules can be useful as usage examples.
   statistics must be enabled by setting the `MLUA_ALLOC_STATS` compile
   definition to `1`. When disabled, all return values are `nil`.
 
-- `log_errors(fn, stream = _G.stderr) -> function`\
-  Wrap a function to log all raised errors with a traceback to an output stream.
+- `with_traceback(fn) -> function`\
+  Wrap a function to convert raised errors to string and add a traceback. Return
+  values are forwarded unchanged.
+
+- `log_error(fn, stream = _G.stderr) -> function`\
+  Wrap a function to log a raised error with a traceback to an output stream.
   Return values and errors are forwarded unchanged. This is useful to wrap
   functions whose errors are otherwise silently dropped, e.g. thread functions.
 

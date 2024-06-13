@@ -67,6 +67,11 @@ void mlua_writestringerror(char const* fmt, ...);
 __attribute__((noreturn))
 void mlua_abort(char const* fmt, ...);
 
+// Call the function in the first upvalue and return its results. If the
+// function raises an error, convert the error to a string and extend it with a
+// traceback.
+int mlua_with_traceback(lua_State* ls);
+
 // Log the error passed as argument with a traceback to the first upvalue, or
 // stderr if the upvalue is none or nil, and return the error unchanged. This
 // function can be used as a message handler in pcalls.

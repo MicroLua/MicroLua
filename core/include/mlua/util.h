@@ -33,8 +33,20 @@ extern "C" {
 // MLUA_IS64INT is true iff Lua is configured with 64-bit integers.
 #define MLUA_IS64INT (((LUA_MAXINTEGER >> 31) >> 31) >= 1)
 
+// Call lua_callk(), then the continuation.
+#define mlua_callk(ls, nargs, nres, k, ctx) \
+    lua_callk((ls), (nargs), (nres), (ctx), &k), k((ls), LUA_OK, (ctx))
+
+// Call lua_pcallk(), then the continuation.
+#define mlua_pcallk(ls, nargs, nres, msgh, k, ctx) \
+    k((ls), lua_pcallk((ls), (nargs), (nres), (msgh), (ctx), &k), (ctx))
+
 // A continuation that returns its ctx argument.
 int mlua_cont_return_ctx(lua_State* ls, int status, lua_KContext ctx);
+
+// A continuation that returns (top - ctx) values if the call was successful,
+// or re-raises the error at the top of the stack.
+int mlua_cont_return_results(lua_State* ls, int status, lua_KContext ctx);
 
 // Load a module, and optionally keep a reference to it on the stack.
 void mlua_require(lua_State* ls, char const* module, bool keep);

@@ -39,13 +39,13 @@ static void write_stderr(char const* fmt, va_list ap) {
             ++i;
         }
     }
-    va_end(ap);
 }
 
 void mlua_writestringerror(char const* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     write_stderr(fmt, ap);
+    va_end(ap);
 }
 
 __attribute__((noreturn))
@@ -53,7 +53,24 @@ void mlua_abort(char const* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     write_stderr(fmt, ap);
+    va_end(ap);
     mlua_platform_abort();
+}
+
+static int with_traceback_msgh(lua_State* ls) {
+    char const* msg = lua_tostring(ls, 1);
+    if (msg == NULL) msg = luaL_tolstring(ls, 1, NULL);
+    luaL_traceback(ls, ls, msg, 1);
+    lua_replace(ls, 1);
+    return lua_settop(ls, 1), 1;
+}
+
+int mlua_with_traceback(lua_State* ls) {
+    lua_pushcfunction(ls, &with_traceback_msgh);
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_rotate(ls, 1, 2);
+    return mlua_pcallk(ls, lua_gettop(ls) - 2, LUA_MULTRET, 1,
+                       mlua_cont_return_results, 1);
 }
 
 int mlua_log_error(lua_State* ls) {
@@ -150,9 +167,7 @@ static int global_module(lua_State* ls) {
 static int global_try_1(lua_State* ls, int status, lua_KContext ctx);
 
 static int global_try(lua_State* ls) {
-    int status = lua_pcallk(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0, 0,
-                            &global_try_1);
-    return global_try_1(ls, status, 0);
+    return mlua_pcallk(ls, lua_gettop(ls) - 1, LUA_MULTRET, 0, global_try_1, 0);
 }
 
 static int global_try_1(lua_State* ls, int status, lua_KContext ctx) {
@@ -160,7 +175,6 @@ static int global_try_1(lua_State* ls, int status, lua_KContext ctx) {
     luaL_pushfail(ls);
     lua_rotate(ls, -2, 1);
     return 2;
-
 }
 
 static int global_equal(lua_State* ls) {
@@ -183,28 +197,25 @@ static int global_alloc_stats(lua_State* ls) {
 #endif
 }
 
-static int global_log_errors_2(lua_State* ls, int status, lua_KContext ctx);
+static int global_with_traceback(lua_State* ls) {
+    lua_settop(ls, 1);
+    lua_pushcclosure(ls, &mlua_with_traceback, 1);
+    return 1;
+}
 
-static int global_log_errors_1(lua_State* ls) {
+static int global_log_error_1(lua_State* ls) {
     int args = lua_gettop(ls);
     bool has_stream = !lua_isnoneornil(ls, lua_upvalueindex(2));
     if (has_stream) lua_pushvalue(ls, lua_upvalueindex(2));
     lua_pushcclosure(ls, &mlua_log_error, has_stream ? 1 : 0);
     lua_pushvalue(ls, lua_upvalueindex(1));
     lua_rotate(ls, 1, 2);
-    int status = lua_pcallk(ls, args, LUA_MULTRET, 1, 0, &global_log_errors_2);
-    return global_log_errors_2(ls, status, 0);
+    return mlua_pcallk(ls, args, LUA_MULTRET, 1, mlua_cont_return_results, 1);
 }
 
-static int global_log_errors_2(lua_State* ls, int status, lua_KContext ctx) {
-    if (status == LUA_OK || status == LUA_YIELD) return lua_gettop(ls) - 1;
-    lua_settop(ls, 2);
-    return lua_error(ls);
-}
-
-static int global_log_errors(lua_State* ls) {
+static int global_log_error(lua_State* ls) {
     if (lua_gettop(ls) > 2) lua_settop(ls, 2);
-    lua_pushcclosure(ls, &global_log_errors_1, lua_isnoneornil(ls, 2) ? 1 : 2);
+    lua_pushcclosure(ls, &global_log_error_1, lua_isnoneornil(ls, 2) ? 1 : 2);
     return 1;
 }
 
@@ -216,7 +227,7 @@ static int index2(lua_State* ls) {
     }
     lua_pushvalue(ls, 1);
     lua_pushvalue(ls, 2);
-    return lua_callk(ls, 2, 1, 1, &mlua_cont_return_ctx), 1;
+    return mlua_callk(ls, 2, 1, mlua_cont_return_ctx, 1);
 }
 
 static int nohash___index(lua_State* ls) {
@@ -457,7 +468,7 @@ MLUA_SYMBOLS_NOHASH(pointer_syms) = {
 static int Function___close(lua_State* ls) {
     // Call the function itself, passing through the remaining arguments. This
     // makes to-be-closed functions the equivalent of deferreds.
-    return lua_callk(ls, lua_gettop(ls) - 1, 0, 0, &mlua_cont_return_ctx), 0;
+    return mlua_callk(ls, lua_gettop(ls) - 1, 0, mlua_cont_return_ctx, 0);
 }
 
 char const mlua_WeakK_name[] = "mlua.WeakK";
@@ -529,8 +540,10 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "equal");
     lua_pushcfunction(ls, &global_alloc_stats);
     lua_setglobal(ls, "alloc_stats");
-    lua_pushcfunction(ls, &global_log_errors);
-    lua_setglobal(ls, "log_errors");
+    lua_pushcfunction(ls, &global_with_traceback);
+    lua_setglobal(ls, "with_traceback");
+    lua_pushcfunction(ls, &global_log_error);
+    lua_setglobal(ls, "log_error");
 
     // Create a metatable for weak keys.
     new_metatable(ls, mlua_WeakK_name, 0, 1);

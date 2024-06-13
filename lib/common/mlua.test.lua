@@ -48,24 +48,36 @@ function test_alloc_stats(t)
     t:expect(peak2):label("peak2"):gte(peak1)
 end
 
-function test_log_errors(t)
+function test_with_traceback(t)
+    for _, test in ipairs{
+        {function(a, b, c) return c, b, a end, {1, 2, 3}, {3, 2, 1}, nil},
+        {function() error("boom", 0) end, {}, nil, "^boom\nstack traceback:\n"},
+    } do
+        local fn, args, res, err = table.unpack(test)
+        local wfn = with_traceback(fn)
+        local exp = t:expect(t.mexpr.wfn(table.unpack(args)))
+        if not err then exp:eq(res) else exp:raises(err) end
+    end
+end
+
+function test_log_error(t)
     local r = t:patch(_G, 'stderr', io.Recorder())
 
-    local wfn = log_errors(function(a, b, c) return c, b, a end)
+    local wfn = log_error(function(a, b, c) return c, b, a end)
     t:expect(t.mexpr.wfn(1, 2, 3)):eq{3, 2, 1}
     t:expect(t.expr(r):is_empty()):eq(true)
 
-    wfn = log_errors(function(a, b, c) thread.yield() return b, c, a end)
+    wfn = log_error(function(a, b, c) thread.yield() return b, c, a end)
     t:expect(t.mexpr.wfn(2, 3, 4)):eq{3, 4, 2}
     t:expect(t.expr(r):is_empty()):eq(true)
 
-    wfn = log_errors(function(e) error(e) end)
+    wfn = log_error(function(e) error(e) end)
     t:expect(t.expr.wfn("boom")):raises("boom")
     t:expect(tostring(r)):label("stderr")
         :matches("^ERROR: mlua%.test:%d+: boom\nstack traceback:\n")
 
     local r2 = io.Recorder()
-    wfn = log_errors(function(e) error(e) end, r2)
+    wfn = log_error(function(e) error(e) end, r2)
     t:expect(t.expr.wfn(123456)):raises(123456)
     t:expect(tostring(r2)):label("r2")
         :matches("^ERROR: 123456\nstack traceback:\n")
