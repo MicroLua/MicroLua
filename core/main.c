@@ -14,6 +14,8 @@
 #endif
 #include "mlua/util.h"
 
+// TODO: Allow passing arguments to main() and returning results => multicore
+
 // The name of the module containing the main function.
 #ifndef MLUA_MAIN_MODULE
 #define MLUA_MAIN_MODULE main
@@ -24,17 +26,15 @@
 #define MLUA_MAIN_FUNCTION main
 #endif
 
-// Log errors raised by the main function to stderr.
-#ifndef MLUA_MAIN_LOG_ERRORS
-#define MLUA_MAIN_LOG_ERRORS 1
-#endif
-
 // Shut down the thread scheduler when the main function terminates.
 #ifndef MLUA_MAIN_SHUTDOWN
 #define MLUA_MAIN_SHUTDOWN 1
 #endif
 
-// TODO: Allow passing arguments to main() and returning results => multicore
+// Append a traceback to errors raised in main().
+#ifndef MLUA_MAIN_TRACEBACK
+#define MLUA_MAIN_TRACEBACK 1
+#endif
 
 static int pmain(lua_State* ls) {
     // Register compiled-in modules.
@@ -162,14 +162,6 @@ void mlua_close_interpreter(lua_State* ls) {
     free(ud);
 }
 
-static int log_error(lua_State* ls) {
-    char const* msg = lua_tostring(ls, 1);
-    if (msg == NULL) msg = luaL_tolstring(ls, 1, NULL);
-    luaL_traceback(ls, ls, msg, 1);
-    mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
-    return lua_settop(ls, 1), 1;
-}
-
 int mlua_run_main(lua_State* ls, int nargs, int nres, int msgh) {
     mlua_platform_setup_interpreter(ls);
     lua_pushcfunction(ls, pmain);
@@ -183,24 +175,26 @@ static int main_done(lua_State* ls) {
     if (!lua_isyieldable(ls)) return 0;
     mlua_thread_meta(ls, "shutdown");
     lua_pushvalue(ls, lua_upvalueindex(1));
-    return lua_callk(ls, 1, 0, 0, &mlua_cont_return_ctx), 0;
+    lua_pushvalue(ls, lua_upvalueindex(2));
+    return mlua_callk(ls, 2, 0, mlua_cont_return_ctx, 0);
 }
 
 static int shutdown_on_exit_2(lua_State* ls, int status, lua_KContext ctx);
 
 static int shutdown_on_exit(lua_State* ls) {
     lua_pushnil(ls);
-    lua_pushcclosure(ls, &main_done, 1);
+    lua_pushnil(ls);
+    lua_pushcclosure(ls, &main_done, 2);
     lua_pushvalue(ls, lua_upvalueindex(1));
     lua_rotate(ls, 1, 2);
     lua_toclose(ls, 1);
-    int status = lua_pcallk(ls, lua_gettop(ls) - 2, 1, 0, 0,
-                            &shutdown_on_exit_2);
-    return shutdown_on_exit_2(ls, status, 0);
+    return mlua_pcallk(ls, lua_gettop(ls) - 2, 1, 0, shutdown_on_exit_2, 0);
 }
 
 static int shutdown_on_exit_2(lua_State* ls, int status, lua_KContext ctx) {
     lua_setupvalue(ls, 1, 1);  // First result or error
+    lua_pushboolean(ls, !(status == LUA_OK || status == LUA_YIELD));
+    lua_setupvalue(ls, 1, 2);
     return 0;
 }
 
@@ -209,10 +203,8 @@ static int shutdown_on_exit_2(lua_State* ls, int status, lua_KContext ctx) {
 static int find_main(lua_State* ls) {
     mlua_require(ls, MLUA_ESTR(MLUA_MAIN_MODULE), true);
     lua_getfield(ls, -1, MLUA_ESTR(MLUA_MAIN_FUNCTION));
-#if MLUA_MAIN_LOG_ERRORS
-    lua_getglobal(ls, "log_errors");
-    lua_rotate(ls, -2, 1);
-    lua_call(ls, 1, 1);
+#if MLUA_MAIN_TRACEBACK
+    lua_pushcclosure(ls, &mlua_with_traceback, 1);
 #endif
 #if LIB_MLUA_MOD_MLUA_THREAD && MLUA_MAIN_SHUTDOWN
     lua_pushcclosure(ls, &shutdown_on_exit, 1);
@@ -226,10 +218,6 @@ int mlua_main_core0(int argc, char* argv[]) {
         mlua_writestringerror("ERROR: failed to create Lua state\n");
         return EXIT_FAILURE;
     }
-
-#if MLUA_MAIN_LOG_ERRORS
-    lua_pushcfunction(ls, &log_error);
-#endif
 
     // Set _G.arg.
     // TODO: Pass as a single argument to main()
@@ -245,19 +233,30 @@ int mlua_main_core0(int argc, char* argv[]) {
     // Load the main module and run the main function.
     lua_pushcfunction(ls, &find_main);
     int res = EXIT_FAILURE;
-    if (mlua_run_main(ls, 0, 1, MLUA_MAIN_LOG_ERRORS ? 1 : 0) != LUA_OK) {
-#if !MLUA_MAIN_LOG_ERRORS
-        mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
-#endif
-    } else if (lua_isstring(ls, -1)) {
-        mlua_writestringerror("ERROR: %s\n", lua_tostring(ls, -1));
-    } else if (lua_isnil(ls, -1)
-               || (lua_isboolean(ls, -1) && lua_toboolean(ls, -1))) {
-        res = EXIT_SUCCESS;
-    } else if (lua_isinteger(ls, -1)) {
-        res = lua_tointeger(ls, -1);
+    char const* msg = NULL;
+    if (mlua_run_main(ls, 0, 1, 0) == LUA_OK) {
+        int ok;
+        switch (lua_type(ls, -1)) {
+        case LUA_TNIL:
+            res = EXIT_SUCCESS;
+            break;
+        case LUA_TBOOLEAN:
+            if (lua_toboolean(ls, -1)) res = EXIT_SUCCESS;
+            break;
+        case LUA_TNUMBER:
+            res = lua_tointegerx(ls, -1, &ok);
+            if (!ok) res = EXIT_FAILURE;
+            break;
+        case LUA_TSTRING:
+            msg = lua_tostring(ls, -1);
+            break;
+        }
+    } else {
+        msg = lua_tostring(ls, -1);
+        if (msg == NULL) msg = luaL_tolstring(ls, -1, NULL);
     }
-    lua_pop(ls, MLUA_MAIN_LOG_ERRORS ? 2 : 1);
+    if (msg != NULL) mlua_writestringerror("ERROR: %s\n", msg);
+    lua_settop(ls, 0);
     mlua_close_interpreter(ls);
     return res;
 }
