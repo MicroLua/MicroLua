@@ -471,9 +471,7 @@ void mlua_thread_start(lua_State* ls) {
 }
 
 static int mod_shutdown(lua_State* ls) {
-    lua_settop(ls, 1);
-    lua_pushnil(ls);
-    lua_rotate(ls, 1, 1);
+    lua_settop(ls, 2);
     return lua_yield(ls, 2);
 }
 
@@ -507,13 +505,8 @@ static void reset_main_state(lua_State* ls, int arg) {
 static int main_done(lua_State* ls) {
     lua_settop(ls, 0);
 
-    // Get a reference to main.
-    lua_Debug ar;
-    lua_getstack(ls, 2, &ar);  // main is 2 levels above
-    lua_getinfo(ls, "f", &ar);
-
     // Close all threads.
-    lua_getupvalue(ls, 1, UV_THREADS);
+    lua_getupvalue(ls, lua_upvalueindex(1), UV_THREADS);
     lua_pushnil(ls);
     while (lua_next(ls, -2)) {
         lua_pop(ls, 1);  // Remove value
@@ -523,14 +516,18 @@ static int main_done(lua_State* ls) {
     }
     lua_pop(ls, 1);  // Remove THREADS
 
-    reset_main_state(ls, 1);
+    reset_main_state(ls, lua_upvalueindex(1));
     return 0;
 }
 
 static int mod_main(lua_State* ls) {
-    // Defer main_done().
     lua_settop(ls, 0);
-    lua_pushcfunction(ls, &main_done);
+
+    // Defer main_done().
+    lua_Debug ar;
+    lua_getstack(ls, 0, &ar);
+    lua_getinfo(ls, "f", &ar);  // Get a reference to main()
+    lua_pushcclosure(ls, &main_done, 1);
     lua_toclose(ls, -1);
 
     // Run the main scheduling loop.
@@ -664,9 +661,16 @@ static int mod_main(lua_State* ls) {
             continue;
         }
 
-        if (nres > 2) lua_pop(running, nres - 2);
+        if (nres > 2) {
+            lua_pop(running, nres - 2);
+            nres = 2;
+        }
         if (nres == 2) {  // Shutdown
+            bool raise = lua_toboolean(running, -1);
+            lua_pop(running, 1);
             lua_xmove(running, ls, 1);
+            lua_pushnil(running);  // running.NEXT = nil
+            if (raise) return lua_error(ls);
             return 1;
         }
         if (nres == 0) {

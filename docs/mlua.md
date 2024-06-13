@@ -925,10 +925,11 @@ to run the configured main function, then runs `main()`.
   raised by `fn` are silently dropped; `_G.log_errors()` can be useful to
   make such errors more visible.
 
-- `shutdown(result)` *[yields]*\
-  Shut down the thread scheduler, and return `result` from `main()`. This
-  function yields and therefore never returns. During shutdown, all threads are
-  killed and their resources are freed.
+- `shutdown(result, raise = false)` *[yields]*\
+  Shut down the thread scheduler. If `raise` is false, return `result` from
+  `main()`. Otherwise, raise `result` in `main()`. This function yields and
+  therefore never returns. During shutdown, all threads are killed and their
+  resources are freed.
 
 - `yield()` *[yields]*\
   Yield from the running thread. The thread remains in the active queue, and is
