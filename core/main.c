@@ -104,14 +104,13 @@ static void* allocate(void* ud, void* ptr, size_t old_size, size_t new_size) {
 static int on_panic(lua_State* ls) {
     char const* msg = lua_tostring(ls, -1);
     if (msg == NULL) msg = "unknown error";
-    mlua_writestringerror("PANIC: %s\n", msg);
-    mlua_platform_abort();
+    mlua_abort("PANIC: %s\n", msg);
 }
 
 static void warn_print(char const* msg, bool first, bool last) {
-    if (first) mlua_writestringerror("WARNING: ", "");
+    if (first) mlua_writestringerror("WARNING: ");
     mlua_writestringerror("%s", msg);
-    if (last) mlua_writestringerror("\n", "");
+    if (last) mlua_writestringerror("\n");
 }
 
 static void on_warn_cont(void* ud, char const* msg, int cont);
@@ -157,7 +156,7 @@ void mlua_close_interpreter(lua_State* ls) {
     lua_close(ls);
 #if MLUA_ALLOC_STATS
     if (((MLuaGlobal*)ud)->alloc_used != 0) {
-        mlua_writestringerror("WARNING: interpreter memory leak\n", "");
+        mlua_writestringerror("WARNING: interpreter memory leak\n");
     }
 #endif
     free(ud);
@@ -224,7 +223,7 @@ static int find_main(lua_State* ls) {
 int mlua_main_core0(int argc, char* argv[]) {
     lua_State* ls = mlua_new_interpreter();
     if (ls == NULL) {
-        mlua_writestringerror("ERROR: failed to create Lua state\n", NULL);
+        mlua_writestringerror("ERROR: failed to create Lua state\n");
         return EXIT_FAILURE;
     }
 

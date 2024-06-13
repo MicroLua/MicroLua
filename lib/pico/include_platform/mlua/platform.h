@@ -31,7 +31,7 @@ extern "C" {
     bi_decl(bi_string(MLUA_BI_TAG, MLUA_BI_FROZEN_MODULE, #n))
 
 // Abort the program.
-__attribute__((__noreturn__))
+__attribute__((noreturn))
 static inline void mlua_platform_abort(void) { panic(NULL); }
 
 // Perform set up at the very beginning of main().

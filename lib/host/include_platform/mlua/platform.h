@@ -21,7 +21,7 @@ extern "C" {
 #define MLUA_PLATFORM_REGISTER_MODULE(n)
 
 // Abort the program.
-__attribute__((__noreturn__))
+__attribute__((noreturn))
 static inline void mlua_platform_abort(void) { abort(); }
 
 // Perform set up at the very beginning of main().

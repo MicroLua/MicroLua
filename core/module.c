@@ -20,9 +20,7 @@ int mlua_index_undefined(lua_State* ls) {
     return luaL_error(ls, "undefined symbol: %s", lua_tostring(ls, 2));
 }
 
-void mlua_writestringerror(char const* fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
+static void write_stderr(char const* fmt, va_list ap) {
     int i = 0;
     for (;;) {
         char c = fmt[i];
@@ -42,6 +40,20 @@ void mlua_writestringerror(char const* fmt, ...) {
         }
     }
     va_end(ap);
+}
+
+void mlua_writestringerror(char const* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    write_stderr(fmt, ap);
+}
+
+__attribute__((noreturn))
+void mlua_abort(char const* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    write_stderr(fmt, ap);
+    mlua_platform_abort();
 }
 
 int mlua_log_error(lua_State* ls) {
