@@ -467,7 +467,10 @@ This module provides helpers for input / output processing.
 
 - `ansi(s, [tags]) -> string`\
   Substitute tags of the form `@{...}` with the corresponding ANSI escape codes.
-  See the module for supported tags.
+  See the module source for supported tags.
+
+- `aformat(format, ...) -> string`\
+  Substitute tags in `format`, then format the arguments with `string:format()`.
 
 - `aprintf(format, ...) -> integer | nil`\
   Substitute tags in `format`, format the arguments with `string:format()` and
@@ -477,14 +480,21 @@ This module provides helpers for input / output processing.
   Substitute tags in `format`, format the arguments with `string:format()` and
   output the result to `out`.
 
+- `read_all(reader, len) -> string | nil`\
+  Read exactly `len` bytes from `reader`. May return fewer bytes than `len` if
+  the reader reaches the end of the stream.
+
 ### `Recorder`
 
 The `Recorder` type records writes and allows replaying them on another stream.
 
+- `Recorder() -> Recorder`\
+  Create a new `Recorder`.
+
 - `Recorder:is_empty() -> boolean`\
   Return true iff the recorder holds no data.
 
-- `Recorder:write(data)`\
+- `Recorder:write(...)`\
   Write data to the recorder.
 
 - `Recorder:replay(w)`\
@@ -492,6 +502,18 @@ The `Recorder` type records writes and allows replaying them on another stream.
 
 - `tostring(Recorder) -> string`\
   Return the content of the recorder as a string.
+
+### `Indenter`
+
+The `Indenter` type is a wrapper writer that indents written lines, except empty
+ones.
+
+- `Indenter(writer, indent) -> Indenter`\
+  Create an `Indenter` that writes to `writer` and indents with the string
+  `indent`.
+
+- `Indenter:write(...)`\
+  Write data to the indenter.
 
 ## `mlua.list`
 

@@ -58,6 +58,21 @@ function aprintf(format, ...) return printf(ansi(format), ...) end
 -- Print ANSI-formatted to an output stream.
 function afprintf(out, format, ...) return fprintf(out, ansi(format), ...) end
 
+-- Read exactly "len" bytes from a reader. May return fewer bytes if the reader
+-- reaches EOF.
+function read_all(reader, len)
+    local parts, cnt = {}, 0
+    while cnt < len do
+        local data, err = reader:read(len - cnt)
+        if not data then return data, err end
+        local dl = #data
+        if dl == 0 then break end
+        table.insert(parts, data)
+        cnt = cnt + dl
+    end
+    return table.concat(parts)
+end
+
 -- A writer that collects writes and can replay them.
 Recorder = oo.class('Recorder')
 
