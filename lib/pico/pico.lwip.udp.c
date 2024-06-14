@@ -20,9 +20,9 @@ typedef struct Packet {
 
 typedef struct UDP {
     struct udp_pcb* pcb;
-    MLuaEvent event;
+    MLuaEvent recv_event;
     uint8_t head, len, cap, dropped;
-    Packet packets[0];
+    Packet recv_packets[0];
 } UDP;
 
 static void handle_recv(void* arg, struct udp_pcb* pcb, struct pbuf* p,
@@ -32,11 +32,11 @@ static void handle_recv(void* arg, struct udp_pcb* pcb, struct pbuf* p,
         uint i = (uint)udp->head + udp->len;
         if (i >= udp->cap) i -= udp->cap;
         ++udp->len;
-        Packet* pkt = &udp->packets[i];
+        Packet* pkt = &udp->recv_packets[i];
         pkt->p = p;
         pkt->addr = *addr;
         pkt->port = port;
-        mlua_event_set(&udp->event);
+        mlua_event_set(&udp->recv_event);
     } else {
         pbuf_free(p);
         ++udp->dropped;
@@ -53,17 +53,17 @@ static inline UDP* to_UDP(lua_State* ls, int arg) {
     return lua_touserdata(ls, arg);
 }
 
-static int UDP_free(lua_State* ls) {
-    UDP* udp = luaL_checkudata(ls, 1, UDP_name);
+static int UDP_close(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return 0;
     mlua_lwip_lock();
     udp_remove(udp->pcb);
     mlua_lwip_unlock();
     udp->pcb = NULL;
-    if (lua_rawlen(ls, 1) == sizeof(struct pbuf*)) return 0;
-    mlua_event_disable(ls, &udp->event);
+    if (lua_rawlen(ls, 1) == sizeof(struct udp_pcb*)) return 0;
+    mlua_event_disable(ls, &udp->recv_event);
     for (; udp->len > 0; --udp->len) {
-        Packet* pkt = &udp->packets[udp->head];
+        Packet* pkt = &udp->recv_packets[udp->head];
         mlua_lwip_lock();
         pbuf_free(pkt->p);
         mlua_lwip_unlock();
@@ -74,7 +74,7 @@ static int UDP_free(lua_State* ls) {
 
 static int UDP_bind(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
     u16_t port = luaL_checkinteger(ls, 3);
     mlua_lwip_lock();
@@ -85,7 +85,7 @@ static int UDP_bind(lua_State* ls) {
 
 static int UDP_connect(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
     u16_t port = luaL_checkinteger(ls, 3);
     mlua_lwip_lock();
@@ -96,7 +96,7 @@ static int UDP_connect(lua_State* ls) {
 
 static int UDP_disconnect(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     mlua_lwip_lock();
     udp_disconnect(udp->pcb);
     mlua_lwip_unlock();
@@ -105,7 +105,7 @@ static int UDP_disconnect(lua_State* ls) {
 
 static int UDP_send(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     mlua_lwip_lock();
     err_t err = udp_send(udp->pcb, pb);
@@ -115,7 +115,7 @@ static int UDP_send(lua_State* ls) {
 
 static int UDP_sendto(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     ip_addr_t* addr = mlua_check_IPAddr(ls, 3);
     u16_t port = luaL_checkinteger(ls, 4);
@@ -130,8 +130,11 @@ static int recv_loop(lua_State* ls, bool timeout) {
     mlua_lwip_lock();
     bool empty = udp->len == 0;
     mlua_lwip_unlock();
-    if (empty) return timeout ? 0 : -1;
-    Packet* pkt = &udp->packets[udp->head];
+    if (empty) {
+        if (!timeout) return -1;
+        return mlua_lwip_push_err(ls, ERR_TIMEOUT);
+    }
+    Packet* pkt = &udp->recv_packets[udp->head];
     *mlua_new_PBUF(ls) = pkt->p;
     *mlua_new_IPAddr(ls) = pkt->addr;
     lua_pushinteger(ls, pkt->port);
@@ -143,24 +146,25 @@ static int recv_loop(lua_State* ls, bool timeout) {
 }
 
 static int UDP_recv(lua_State* ls) {
-    UDP* udp = luaL_checkudata(ls, 1, UDP_name);
-    luaL_argcheck(ls, udp->pcb != NULL, 1, "closed");
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     lua_settop(ls, 2);  // Ensure deadline is set
-    return mlua_event_wait(ls, &udp->event, 0, &recv_loop, 2);
+    return mlua_event_wait(ls, &udp->recv_event, 0, &recv_loop, 2);
 }
 
 MLUA_SYMBOLS(UDP_syms) = {
-    MLUA_SYM_F(free, UDP_),
+    MLUA_SYM_F(close, UDP_),
     MLUA_SYM_F(bind, UDP_),
     MLUA_SYM_F(connect, UDP_),
     MLUA_SYM_F(disconnect, UDP_),
     MLUA_SYM_F(send, UDP_),
     MLUA_SYM_F(sendto, UDP_),
     MLUA_SYM_F(recv, UDP_),
+    // TODO: recvfrom(), and don't return the address and port in recv()
 };
 
-#define UDP___close UDP_free
-#define UDP___gc UDP_free
+#define UDP___close UDP_close
+#define UDP___gc UDP_close
 
 MLUA_SYMBOLS_NOHASH(UDP_syms_nh) = {
     MLUA_SYM_F_NH(__close, UDP_),
@@ -175,7 +179,7 @@ static int mod_new(lua_State* ls) {
         ls, (lua_Unsigned)cap < (1u << MLUA_SIZEOF_FIELD(UDP, cap) * 8),
         2, "too large");
     size_t size = cap > 0 ? sizeof(UDP) + cap * sizeof(Packet)
-                  : sizeof(struct pbuf*);
+                  : sizeof(struct udp_pcb*);
     UDP* udp = lua_newuserdatauv(ls, size, 0);
     udp->pcb = NULL;
     luaL_getmetatable(ls, UDP_name);
@@ -183,12 +187,12 @@ static int mod_new(lua_State* ls) {
     mlua_lwip_lock();
     udp->pcb = udp_new_ip_type(type);
     mlua_lwip_unlock();
-    if (udp->pcb == NULL) return 0;
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_MEM);
     if (cap == 0) return 1;
     udp->cap = cap;
     udp->head = udp->len = udp->dropped = 0;
-    mlua_event_init(&udp->event);
-    mlua_event_enable(ls, &udp->event);
+    mlua_event_init(&udp->recv_event);
+    mlua_event_enable(ls, &udp->recv_event);
     mlua_lwip_lock();
     udp_recv(udp->pcb, &handle_recv, udp);
     mlua_lwip_unlock();
@@ -207,7 +211,7 @@ MLUA_OPEN_MODULE(pico.lwip.udp) {
     // Create the module.
     mlua_new_module(ls, 0, module_syms);
 
-    // Create the PBUF class.
+    // Create the UDP class.
     mlua_new_class(ls, UDP_name, UDP_syms, UDP_syms_nh);
     lua_pop(ls, 1);
     return 1;

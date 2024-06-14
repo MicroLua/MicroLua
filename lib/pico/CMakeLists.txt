@@ -659,6 +659,17 @@ target_link_libraries(mlua_mod_pico.lwip.pbuf INTERFACE
     mlua_mod_pico.lwip
 )
 
+mlua_add_c_module(mlua_mod_pico.lwip.tcp pico.lwip.tcp.c)
+target_compile_definitions(mlua_mod_pico.lwip.tcp_headers INTERFACE
+    LWIP_TCP=1
+)
+target_link_libraries(mlua_mod_pico.lwip.tcp INTERFACE
+    mlua_mod_mlua.int64
+    mlua_mod_mlua.thread
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.pbuf
+)
+
 mlua_add_c_module(mlua_mod_pico.lwip.udp pico.lwip.udp.c)
 target_compile_definitions(mlua_mod_pico.lwip.udp_headers INTERFACE
     LWIP_UDP=1

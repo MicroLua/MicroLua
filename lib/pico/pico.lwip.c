@@ -12,6 +12,9 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
+// TODO: Set up lwIP as ext/lwip, use 2.2.0 or head, move to mlua.lwip
+// TODO: Look at <https://github.com/cesanta/mongoose>
+
 int mlua_lwip_push_err(lua_State* ls, err_t err) {
     luaL_pushfail(ls);
     lua_pushinteger(ls, err);
