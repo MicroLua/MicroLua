@@ -11,7 +11,7 @@ function(mlua_platform_bin_standalone TARGET)
 endfunction()
 
 # Executable: unit tests
-function(mlua_platform_bin_tests TARGET)
+function(mlua_platform_bin_tests TARGET SUFFIX)
 endfunction()
 
 target_include_directories(mlua_mod_mlua.thread_headers INTERFACE

@@ -17,7 +17,7 @@ function(mlua_set NAME DEFAULT)
         endif()
     endif()
     set("${NAME}" "${${NAME}}" ${ARGN} FORCE)
-    message("${NAME} is ${${NAME}} (${src})")
+    message("${NAME} is \"${${NAME}}\" (${src})")
 endfunction()
 
 # Platform configuration.

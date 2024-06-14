@@ -31,6 +31,9 @@ function(mlua_platform_bin_standalone TARGET)
         PICO_PROGRAM_NAME="MicroLua"
         PICO_PROGRAM_URL="https://github.com/MicroLua/MicroLua"
         PICO_PROGRAM_VERSION_STRING="0.0"
+        PICO_STACK_SIZE=0x1000
+        PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
+        PICO_USE_STACK_GUARDS=1
     )
     target_link_libraries("${TARGET}" PRIVATE
         pico_stdlib
@@ -38,7 +41,7 @@ function(mlua_platform_bin_standalone TARGET)
 endfunction()
 
 # Executable: unit tests
-function(mlua_platform_bin_tests TARGET)
+function(mlua_platform_bin_tests TARGET SUFFIX)
     target_compile_definitions("${TARGET}" PRIVATE
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=100<<10
@@ -48,12 +51,12 @@ function(mlua_platform_bin_tests TARGET)
         PICO_ENTER_USB_BOOT_ON_EXIT=1
         PICO_HEAP_SIZE=0x3c000
         PICO_MAX_SHARED_IRQ_HANDLERS=16
-        PICO_PROGRAM_NAME="MicroLua-tests"
+        PICO_PROGRAM_NAME="MicroLua-tests${SUFFIX}"
         PICO_STACK_SIZE=0x1000
         PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS=1000
         PICO_USE_STACK_GUARDS=1
     )
-    mlua_target_config(mlua_tests
+    mlua_target_config("${TARGET}"
         GPIO_PIN1:integer=2
         GPIO_PIN2:integer=3
         I2C_MASTER_SCL:integer=5
@@ -68,8 +71,8 @@ function(mlua_platform_bin_tests TARGET)
     )
 endfunction()
 
-mlua_add_lua_modules(mlua_test_00_setup 00_setup.test.lua)
-target_link_libraries(mlua_test_00_setup INTERFACE
+mlua_add_lua_modules(mlua_test-ALL_00_setup 00_setup.test.lua)
+target_link_libraries(mlua_test-ALL_00_setup INTERFACE
     mlua_mod_hardware.gpio
     mlua_mod_hardware.uart
     mlua_mod_mlua.testing.uart
@@ -743,8 +746,9 @@ target_link_libraries(mlua_mod_pico.standard_link INTERFACE
     pico_base
 )
 
-mlua_add_lua_modules(mlua_test_pico.standard_link pico.standard_link.test.lua)
-target_link_libraries(mlua_test_pico.standard_link INTERFACE
+mlua_add_lua_modules(mlua_test-ALL_pico.standard_link
+    pico.standard_link.test.lua)
+target_link_libraries(mlua_test-ALL_pico.standard_link INTERFACE
     mlua_mod_pico.standard_link
 )
 
