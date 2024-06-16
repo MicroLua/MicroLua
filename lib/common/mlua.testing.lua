@@ -16,7 +16,7 @@ local util = require 'mlua.util'
 local package = require 'package'
 local string = require 'string'
 
-local def_mod_pat = '%.test$'
+local def_mod_pat = '^(.*)%.test$'
 local def_func_pat = '^test_'
 local blocking_pat = '_BNB$'
 local err_terminate = {}
@@ -197,12 +197,22 @@ function Matcher:_rel_op(want, cmp, op)
     end)
 end
 
+function Matcher:eq_one_of(want, eq)
+    eq = eq or equal
+    return self:_rel_op(want,
+        function(g, w)
+            for _, v in list.ipairs(w) do
+                if eq(g, v) then return true end
+            end
+            return false
+        end,
+        "one of ")
+end
+
 function Matcher:close_to(want, eps)
     return self:_compare(
         want, function(g, w) return w - eps <= g and g <= w + eps end,
-        function()
-            return ('%s ±%s'):format(self:_repr(want), repr(eps))
-        end)
+        function() return ('%s ±%s'):format(self:_repr(want), repr(eps)) end)
 end
 
 function Matcher:close_to_rel(want, fact)
@@ -276,6 +286,15 @@ function Test:__init(name, parent)
     end
 end
 
+function Test:path()
+    local path = self.name
+    self:_up(function(t)
+        if t == self or not t._parent then return end
+        path = ('%s/%s'):format(t.name, path)
+    end)
+    return path
+end
+
 function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
 
 function Test:patch(tab, name, value)
@@ -283,6 +302,15 @@ function Test:patch(tab, name, value)
     self:cleanup(function() rawset(tab, name, old) end)
     rawset(tab, name, value)
     return value
+end
+
+local onces = {}
+
+function Test:once(id, fn)
+    id = ('%s|%s'):format(self:path(), id)
+    if onces[id] then return end
+    fn()
+    onces[id] = true
 end
 
 function Test:repr(v)
@@ -588,10 +616,13 @@ end
 function Test:run_modules(mod_pat, func_pat)
     mod_pat = mod_pat or def_mod_pat
     func_pat = func_pat or def_func_pat
-    for _, name in util.keys(package.preload):sort():ipairs() do
-        if name:find(mod_pat) then
-            self:run(name, function(t) t:run_module(name, func_pat) end)
-        end
+    local mods = list()
+    for name in pairs(package.preload) do
+        if name:find(mod_pat) then mods:append(name) end
+    end
+    mods:sort(function(a, b) return a:match(mod_pat) < b:match(mod_pat) end)
+    for _, name in mods:ipairs() do
+        self:run(name, function(t) t:run_module(name, func_pat) end)
     end
 end
 

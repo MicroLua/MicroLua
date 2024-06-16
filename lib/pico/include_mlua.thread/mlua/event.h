@@ -1,8 +1,8 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_PICO_MLUA_EVENT_H
-#define _MLUA_LIB_PICO_MLUA_EVENT_H
+#ifndef _MLUA_LIB_PICO_MLUA_THREAD_EVENT_H
+#define _MLUA_LIB_PICO_MLUA_THREAD_EVENT_H
 
 #include <stdbool.h>
 #include <stdint.h>

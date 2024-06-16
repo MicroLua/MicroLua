@@ -770,6 +770,10 @@ The `Test` class represents a single unit test.
   An expression factory. `expr` uses only the first return value, while `mexpr`
   packs all return values into a [`List`](#mlualist).
 
+- `Test:path() -> string`\
+  Return a path representing the full name of the test. It is composed of the
+  names of the tests in the hierarchy, separated by `/`.
+
 - `Test:cleanup(fn)`\
   Registers the function `fn` to be called after the test completes. Cleanup
   functions are executed in the reverse order of registration.
@@ -777,6 +781,10 @@ The `Test` class represents a single unit test.
 - `Test:patch(tab, name, value) -> value`\
   Set `tab[name]` to `value`, and restore the previous value at the end of the
   test.
+
+- `Test:once(id, fn)`\
+  Call `fn` if it hasn't been called in any previous test runs, for the same
+  `id` string. The call state is tracked in a global, per `(test_path, id)`.
 
 - `Test:repr(v) -> function`\
   Return a function that calls `util.repr(v)` when called.
@@ -878,6 +886,10 @@ that value.
   Declare an expectation that the value is equal, not equal, less than, less
   than or equal, greater than, or greater than or equal to `want`. Equality and
   inequality comparisons accept an optional equality comparison function.
+
+- `Matcher:eq_one_of(want, eq = _G.equal) -> self`\
+  Declare an expectation that the value is equal to one of the items in the list
+  `want`, using the given equality comparison function.
 
 - `Matcher:close_to(want, eps) -> self`\
   Declare an expectation that the value is within `eps` of `want`.

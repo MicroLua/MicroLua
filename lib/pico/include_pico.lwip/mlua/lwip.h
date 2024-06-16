@@ -1,8 +1,8 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_PICO_PICO_CYW43_H
-#define _MLUA_LIB_PICO_PICO_CYW43_H
+#ifndef _MLUA_LIB_PICO_PICO_LWIP_H
+#define _MLUA_LIB_PICO_PICO_LWIP_H
 
 #include "lwip/ip_addr.h"
 #include "lwip/pbuf.h"

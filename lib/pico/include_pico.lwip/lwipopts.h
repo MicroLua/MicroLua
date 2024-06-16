@@ -1,8 +1,8 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#ifndef _MLUA_LIB_PICO_PICO_LWIP_H
-#define _MLUA_LIB_PICO_PICO_LWIP_H
+#ifndef _MLUA_LIB_PICO_PICO_LWIPOPTS_H
+#define _MLUA_LIB_PICO_PICO_LWIPOPTS_H
 
 #define NO_SYS                      1
 #define LWIP_NETCONN                0
