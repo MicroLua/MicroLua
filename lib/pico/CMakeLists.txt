@@ -672,19 +672,25 @@ target_link_libraries(mlua_mod_pico.lwip INTERFACE
 mlua_add_lua_modules(mlua_test-net_pico.lwip pico.lwip.test.lua)
 target_link_libraries(mlua_test-net_pico.lwip INTERFACE
     mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.dns
-    mlua_mod_pico.lwip.tcp
-    mlua_mod_pico.lwip.udp
 )
 
 mlua_add_c_module(mlua_mod_pico.lwip.dns pico.lwip.dns.c)
 target_compile_definitions(mlua_mod_pico.lwip.dns_headers INTERFACE
     LWIP_DNS=1
+    LWIP_UDP=1
 )
 target_link_libraries(mlua_mod_pico.lwip.dns INTERFACE
     mlua_mod_mlua.int64
     mlua_mod_mlua.thread
     mlua_mod_pico.lwip
+)
+
+mlua_add_lua_modules(mlua_test-net_pico.lwip.dns pico.lwip.dns.test.lua)
+target_link_libraries(mlua_test-net_pico.lwip.dns INTERFACE
+    mlua_mod_mlua.time
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.dns
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico.lwip.pbuf pico.lwip.pbuf.c)

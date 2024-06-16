@@ -26,17 +26,18 @@
 
 static int mod_getserver(lua_State* ls) {
     u8_t index = luaL_checkinteger(ls, 1);
-    ip_addr_t* res = mlua_new_IPAddr(ls);
     mlua_lwip_lock();
-    *res = *dns_getserver(index);
+    ip_addr_t addr = *dns_getserver(index);
     mlua_lwip_unlock();
+    if (ip_addr_cmp(&addr, IP_ANY_TYPE)) return 0;
+    *mlua_new_IPAddr(ls) = addr;
     return 1;
 }
 
 static int mod_setserver(lua_State* ls) {
     u8_t index = luaL_checkinteger(ls, 1);
-    ip_addr_t const* server = NULL;
-    if (!lua_isnoneornil(ls, 2)) server = mlua_check_IPAddr(ls, 2);
+    ip_addr_t const* server = !lua_isnoneornil(ls, 2) ? mlua_check_IPAddr(ls, 2)
+                              : NULL;
     mlua_lwip_lock();
     dns_setserver(index, server);
     mlua_lwip_unlock();
