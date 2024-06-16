@@ -1,6 +1,12 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
+mlua_set(MLUA_TEST_WIFI_SSID "" CACHE STRING "Wi-Fi SSID for unit tests")
+mlua_set(MLUA_TEST_WIFI_PASSWORD "" CACHE STRING
+         "Wi-Fi password for unit tests")
+mlua_set(MLUA_TEST_SERVER_ADDR "" CACHE STRING "Server address for unit tests")
+mlua_set(MLUA_TEST_SERVER_PORT "8080" CACHE STRING "Server port for unit tests")
+
 # Library: platform abstraction layer
 target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
 target_include_directories(mlua_platform_headers INTERFACE include_platform)
@@ -43,13 +49,16 @@ endfunction()
 # Executable: unit tests
 function(mlua_platform_bin_tests TARGET SUFFIX)
     target_compile_definitions("${TARGET}" PRIVATE
+        LWIP_DHCP=1
+        LWIP_IPV4=1
+        LWIP_IPV6=1
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=100<<10
         MLUA_STDIO_INIT_UART_IN=1
         MLUA_STDIO_INIT_UART_OUT=1
         MLUA_STDIO_INIT_USB=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
-        PICO_HEAP_SIZE=0x3c000
+        PICO_HEAP_SIZE=0x30000
         PICO_MAX_SHARED_IRQ_HANDLERS=16
         PICO_PROGRAM_NAME="MicroLua-tests${SUFFIX}"
         PICO_STACK_SIZE=0x1000
@@ -63,6 +72,10 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         I2C_MASTER_SDA:integer=4
         I2C_SLAVE_SCL:integer=7
         I2C_SLAVE_SDA:integer=6
+        SERVER_ADDR:string="${MLUA_TEST_SERVER_ADDR}"
+        SERVER_PORT:string="${MLUA_TEST_SERVER_PORT}"
+        WIFI_PASSWORD:string="${MLUA_TEST_WIFI_PASSWORD}"
+        WIFI_SSID:string="${MLUA_TEST_WIFI_SSID}"
     )
     target_link_libraries("${TARGET}" PRIVATE
         mlua_mod_pico.stdio
@@ -78,6 +91,15 @@ target_link_libraries(mlua_test-ALL_00_setup INTERFACE
     mlua_mod_mlua.testing.uart
     mlua_mod_pico.stdio
     mlua_mod_pico.stdlib
+)
+
+mlua_add_lua_modules(mlua_test-net_10_setup 10_setup.test.lua)
+target_link_libraries(mlua_test-net_10_setup INTERFACE
+    mlua_mod_mlua.time
+    mlua_mod_pico.cyw43
+    mlua_mod_pico.cyw43.util
+    mlua_mod_pico.cyw43.wifi
+    mlua_mod_pico.lwip
 )
 
 mlua_add_c_module(mlua_mod_hardware.adc hardware.adc.c)
@@ -645,6 +667,14 @@ target_include_directories(mlua_mod_pico.lwip_headers INTERFACE
 target_link_libraries(mlua_mod_pico.lwip INTERFACE
     pico_lwip_core
     pico_lwip_nosys
+)
+
+mlua_add_lua_modules(mlua_test-net_pico.lwip pico.lwip.test.lua)
+target_link_libraries(mlua_test-net_pico.lwip INTERFACE
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.dns
+    mlua_mod_pico.lwip.tcp
+    mlua_mod_pico.lwip.udp
 )
 
 mlua_add_c_module(mlua_mod_pico.lwip.dns pico.lwip.dns.c)

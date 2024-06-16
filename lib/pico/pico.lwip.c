@@ -156,6 +156,9 @@ static int mod_ipaddr_aton(lua_State* ls) {
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(VERSION, integer, LWIP_VERSION),
+    MLUA_SYM_V(VERSION_STRING, string, LWIP_VERSION_STRING),
+    MLUA_SYM_V(IPV4, boolean, LWIP_IPV4),
+    MLUA_SYM_V(IPV6, boolean, LWIP_IPV6),
     MLUA_SYM_V(ERR_OK, integer, ERR_OK),
     MLUA_SYM_V(ERR_MEM, integer, ERR_MEM),
     MLUA_SYM_V(ERR_BUF, integer, ERR_BUF),
