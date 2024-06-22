@@ -484,9 +484,16 @@ This module provides helpers for input / output processing.
   Substitute tags in `format`, format the arguments with `string:format()` and
   output the result to `out`.
 
-- `read_all(reader, len) -> string | nil`\
+- `read_all(reader, len, ...) -> string | nil`\
   Read exactly `len` bytes from `reader`. May return fewer bytes than `len` if
-  the reader reaches the end of the stream.
+  the reader reaches the end of the stream. The extra arguments are forwarded
+  to each individual `read()` call.
+
+- `read_line(reader, ...) -> string | nil`\
+  Read one newline-terminated line from `reader`. May return an unterminated
+  line if the reader reaches the end of the stream. The extra arguments are
+  forwarded to each individual `read()` call. Note that this function is
+  inefficient, because it reads one character at a time.
 
 ### `Recorder`
 

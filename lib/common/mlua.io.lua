@@ -60,15 +60,30 @@ function afprintf(out, format, ...) return fprintf(out, ansi(format), ...) end
 
 -- Read exactly "len" bytes from a reader. May return fewer bytes if the reader
 -- reaches EOF.
-function read_all(reader, len)
+function read_all(reader, len, ...)
     local parts, cnt = {}, 0
-    while cnt < len do
-        local data, err = reader:read(len - cnt)
+    while not len or cnt < len do
+        local data, err = reader:read(len and len - cnt or 200, ...)
         if not data then return data, err end
         local dl = #data
         if dl == 0 then break end
         table.insert(parts, data)
         cnt = cnt + dl
+    end
+    return table.concat(parts)
+end
+
+-- Read one newline-terminated line from a reader. May return an unterminated
+-- line if the reader reaches EOF. This function is inefficient, because it
+-- reads one character at a time.
+function read_line(reader, ...)
+    local parts = {}
+    while true do
+        local c, err = reader:read(1, ...)
+        if not c then return c, err end
+        if c == '' then break end
+        table.insert(parts, c)
+        if c == '\n' then break end
     end
     return table.concat(parts)
 end
