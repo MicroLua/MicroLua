@@ -75,7 +75,7 @@ static int UDP_close(lua_State* ls) {
 static int UDP_bind(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
+    ip_addr_t const* addr = luaL_opt(ls, mlua_check_IPAddr, 2, IP_ANY_TYPE);
     u16_t port = luaL_checkinteger(ls, 3);
     mlua_lwip_lock();
     err_t err = udp_bind(udp->pcb, addr, port);
@@ -86,7 +86,7 @@ static int UDP_bind(lua_State* ls) {
 static int UDP_connect(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
+    ip_addr_t const* addr = luaL_opt(ls, mlua_check_IPAddr, 2, IP_ANY_TYPE);
     u16_t port = luaL_checkinteger(ls, 3);
     mlua_lwip_lock();
     err_t err = udp_connect(udp->pcb, addr, port);
@@ -106,7 +106,6 @@ static int UDP_disconnect(lua_State* ls) {
 static int UDP_send(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    // TODO: Add support for read-only buffer argument
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     mlua_lwip_lock();
     err_t err = udp_send(udp->pcb, pb);
@@ -117,7 +116,6 @@ static int UDP_send(lua_State* ls) {
 static int UDP_sendto(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    // TODO: Add support for read-only buffer argument
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     ip_addr_t* addr = mlua_check_IPAddr(ls, 3);
     u16_t port = luaL_checkinteger(ls, 4);

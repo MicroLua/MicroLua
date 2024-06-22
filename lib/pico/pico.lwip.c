@@ -58,6 +58,11 @@ ip_addr_t* mlua_new_IPAddr(lua_State* ls) {
     return ud;
 }
 
+static int IPAddr_type(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    return lua_pushinteger(ls, IP_GET_TYPE(addr)), 1;
+}
+
 static int IPAddr_is_any(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
     return lua_pushboolean(ls, ip_addr_isany(addr)), 1;
@@ -100,6 +105,7 @@ static int IPAddr___tostring(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(IPAddr_syms) = {
+    MLUA_SYM_F(type, IPAddr_),
     MLUA_SYM_F(is_any, IPAddr_),
     MLUA_SYM_F(is_multicast, IPAddr_),
     MLUA_SYM_F(is_loopback, IPAddr_),

@@ -52,7 +52,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_DHCP=1
         LWIP_IPV4=1
         LWIP_IPV6=1
-        LWIP_MEM_SIZE=40000
+        LWIP_MEM_SIZE=30000
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=100<<10
         MLUA_STDIO_INIT_UART_IN=1

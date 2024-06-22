@@ -53,14 +53,18 @@ function verify_data(buf, off, size)
     return pid, true
 end
 
+IPV4 = dns.ADDRTYPE_IPV4
+IPV6 = dns.ADDRTYPE_IPV6
+
 Control = oo.class('Control')
 
-function Control:__init(t)
-    -- TODO: Support IPv6
+function Control:__init(t, atype)
     local dl = time.deadline(5 * time.sec)
-    self.addr = lwip.assert(dns.gethostbyname(config.SERVER_ADDR, nil, dl))
+    self.addr = lwip.assert(
+        dns.gethostbyname(config.SERVER_ADDR, atype or IPV4, dl))
     self.sock = lwip.assert(tcp.new())
     t:cleanup(function() self.sock:close() end)
+    -- TODO: For IPv6, wait for a non link-local address
     lwip.assert(self.sock:connect(self.addr, config.SERVER_PORT, dl))
     local line = lwip.assert(io.read_line(self.sock, dl))
     local port = line:match('^PORT ([0-9]+)\n')
