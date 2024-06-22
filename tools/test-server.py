@@ -74,20 +74,20 @@ class ControlServer(TCPServer):
         super().__init__(addr, ControlHandler)
         self.out = stdout
         self.lock = threading.Lock()
-        self.udp_ports = set(PORTS)
+        self.ports = set(PORTS)
 
     @contextlib.contextmanager
-    def udp_port(self):
+    def port(self):
         try:
             with self.lock:
-                port = self.udp_ports.pop()
+                port = self.ports.pop()
         except KeyError:
-            raise RuntimeError("No UDP port available")
+            raise RuntimeError("No port available")
         try:
             yield port
         finally:
             with self.lock:
-                self.udp_ports.add(port)
+                self.ports.add(port)
 
 
 class ControlHandler(socketserver.StreamRequestHandler):
@@ -95,9 +95,9 @@ class ControlHandler(socketserver.StreamRequestHandler):
     timeout = 1
 
     def handle(self):
-        out = self.server.out
-        out.write(f"Control connection from {self.client_address}\n")
-        try:
+        with self.server.port() as lport:
+            out = self.server.out
+            out.write(f"[{lport}] Connection: {self.client_address}\n")
             self.w = SyncWriter(self.wfile)
 
             # Detect hard disconnections quickly.
@@ -106,23 +106,20 @@ class ControlHandler(socketserver.StreamRequestHandler):
             self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
             self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
 
-            with self.server.udp_port() as lport:
-                self.w.write(f'PORT {lport}\n')
+            self.w.write(f'PORT {lport}\n')
 
-                # Handle command.
-                line = self.rfile.readline().decode('utf-8')
-                if not line: return
-                line = line.removesuffix('\n').removesuffix('\r')
-                out.write(f"Command: {line}\n")
-                cmd, *args = line.split(' ')
-                try:
-                    getattr(self, f'cmd_{cmd}')(lport, *args)
-                    self.w.write('DONE\n')
-                except Exception:
-                    self.w.write('ERROR\n')
-                    raise
-        finally:
-            out.write(f"Control disconnection from {self.client_address}\n")
+            # Handle command.
+            line = self.rfile.readline().decode('utf-8')
+            if not line: return
+            line = line.removesuffix('\n').removesuffix('\r')
+            out.write(f"[{lport}] {line}\n")
+            cmd, *args = line.split(' ')
+            try:
+                getattr(self, f'cmd_{cmd}')(lport, *args)
+                self.w.write('DONE\n')
+            except Exception:
+                self.w.write('ERROR\n')
+                raise
 
     def cmd_udp_send(self, lport, rport, size, count, interval):
         rport, size = int(rport), int(size)

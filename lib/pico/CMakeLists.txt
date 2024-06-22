@@ -5,7 +5,7 @@ mlua_set(MLUA_TEST_WIFI_SSID "" CACHE STRING "Wi-Fi SSID for unit tests")
 mlua_set(MLUA_TEST_WIFI_PASSWORD "" CACHE STRING
          "Wi-Fi password for unit tests")
 mlua_set(MLUA_TEST_SERVER_ADDR "" CACHE STRING "Server address for unit tests")
-mlua_set(MLUA_TEST_SERVER_PORT "8080" CACHE STRING "Server port for unit tests")
+mlua_set(MLUA_TEST_SERVER_PORT "8000" CACHE STRING "Server port for unit tests")
 
 # Library: platform abstraction layer
 target_include_directories(mlua_platform_luaconf INTERFACE include_luaconf)
@@ -52,13 +52,14 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_DHCP=1
         LWIP_IPV4=1
         LWIP_IPV6=1
+        LWIP_MEM_SIZE=40000
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=100<<10
         MLUA_STDIO_INIT_UART_IN=1
         MLUA_STDIO_INIT_UART_OUT=1
         MLUA_STDIO_INIT_USB=1
         PICO_ENTER_USB_BOOT_ON_EXIT=1
-        PICO_HEAP_SIZE=0x30000
+        PICO_HEAP_SIZE=0x20000
         PICO_MAX_SHARED_IRQ_HANDLERS=16
         PICO_PROGRAM_NAME="MicroLua-tests${SUFFIX}"
         PICO_STACK_SIZE=0x1000
@@ -73,7 +74,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         I2C_SLAVE_SCL:integer=7
         I2C_SLAVE_SDA:integer=6
         SERVER_ADDR:string="${MLUA_TEST_SERVER_ADDR}"
-        SERVER_PORT:string="${MLUA_TEST_SERVER_PORT}"
+        SERVER_PORT:integer=${MLUA_TEST_SERVER_PORT}
         WIFI_PASSWORD:string="${MLUA_TEST_WIFI_PASSWORD}"
         WIFI_SSID:string="${MLUA_TEST_WIFI_SSID}"
     )
@@ -550,6 +551,18 @@ target_link_libraries(mlua_mod_mlua.testing.i2c INTERFACE
     mlua_mod_mlua.time
 )
 
+mlua_add_lua_modules(mlua_mod_mlua.testing.lwip mlua.testing.lwip.lua)
+target_link_libraries(mlua_mod_mlua.testing.lwip INTERFACE
+    mlua_mod_mlua.io
+    mlua_mod_mlua.mem
+    mlua_mod_mlua.oo
+    mlua_mod_mlua.time
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.dns
+    mlua_mod_pico.lwip.tcp
+    mlua_mod_string
+)
+
 mlua_add_lua_modules(mlua_mod_mlua.testing.platform mlua.testing.platform.lua)
 target_link_libraries(mlua_mod_mlua.testing.platform INTERFACE
     mlua_mod_mlua.io
@@ -717,6 +730,18 @@ target_link_libraries(mlua_mod_pico.lwip.udp INTERFACE
     mlua_mod_mlua.thread
     mlua_mod_pico.lwip
     mlua_mod_pico.lwip.pbuf
+)
+
+mlua_add_lua_modules(mlua_test-net_pico.lwip.udp pico.lwip.udp.test.lua)
+target_link_libraries(mlua_test-net_pico.lwip.udp INTERFACE
+    mlua_mod_mlua.io
+    mlua_mod_mlua.testing.lwip
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.thread.group
+    mlua_mod_mlua.time
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.udp
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico.multicore pico.multicore.c)
