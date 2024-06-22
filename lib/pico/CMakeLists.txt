@@ -561,6 +561,7 @@ target_link_libraries(mlua_mod_mlua.testing.lwip INTERFACE
     mlua_mod_pico.lwip.dns
     mlua_mod_pico.lwip.tcp
     mlua_mod_string
+    mlua_mod_table
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.platform mlua.testing.platform.lua)

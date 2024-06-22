@@ -12,6 +12,7 @@ local lwip = require 'pico.lwip'
 local dns = require 'pico.lwip.dns'
 local tcp = require 'pico.lwip.tcp'
 local string = require 'string'
+local table = require 'table'
 
 Set = oo.class('Set')
 
@@ -52,15 +53,27 @@ function verify_data(buf, off, size)
     return pid, true
 end
 
-function connect_control(t)
+Control = oo.class('Control')
+
+function Control:__init(t)
     -- TODO: Support IPv6
     local dl = time.deadline(5 * time.sec)
-    local addr = lwip.assert(dns.gethostbyname(config.SERVER_ADDR, nil, dl))
-    local sock = lwip.assert(tcp.new())
-    t:cleanup(function() sock:close() end)
-    lwip.assert(sock:connect(addr, config.SERVER_PORT, dl))
-    local line = lwip.assert(io.read_line(sock, dl))
+    self.addr = lwip.assert(dns.gethostbyname(config.SERVER_ADDR, nil, dl))
+    self.sock = lwip.assert(tcp.new())
+    t:cleanup(function() self.sock:close() end)
+    lwip.assert(self.sock:connect(self.addr, config.SERVER_PORT, dl))
+    local line = lwip.assert(io.read_line(self.sock, dl))
     local port = line:match('^PORT ([0-9]+)\n')
     t:assert(port, "Unexpected PORT line: @{+WHITE}%s@{NORM}", t:repr(line))
-    return sock, addr, tonumber(port)
+    self.port = tonumber(port)
+end
+
+function Control:send(fmt, ...)
+    lwip.assert(self.sock:send(fmt:format(...)))
+end
+
+function Control:wait_close(t)
+    local _helper = t.helper
+    local resp = lwip.assert(io.read_all(self.sock))
+    t:expect(resp):label("done"):eq('DONE\n')
 end

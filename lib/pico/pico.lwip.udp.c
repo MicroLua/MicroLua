@@ -106,6 +106,7 @@ static int UDP_disconnect(lua_State* ls) {
 static int UDP_send(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    // TODO: Add support for read-only buffer argument
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     mlua_lwip_lock();
     err_t err = udp_send(udp->pcb, pb);
@@ -116,6 +117,7 @@ static int UDP_send(lua_State* ls) {
 static int UDP_sendto(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    // TODO: Add support for read-only buffer argument
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     ip_addr_t* addr = mlua_check_IPAddr(ls, 3);
     u16_t port = luaL_checkinteger(ls, 4);
@@ -134,21 +136,32 @@ static int recv_loop(lua_State* ls, bool timeout) {
         if (!timeout) return -1;
         return mlua_lwip_push_err(ls, ERR_TIMEOUT);
     }
+    bool from = lua_toboolean(ls, 3);
     Packet* pkt = &udp->recv_packets[udp->head];
     *mlua_new_PBUF(ls) = pkt->p;
-    *mlua_new_IPAddr(ls) = pkt->addr;
-    lua_pushinteger(ls, pkt->port);
+    if (from) {
+        *mlua_new_IPAddr(ls) = pkt->addr;
+        lua_pushinteger(ls, pkt->port);
+    }
     mlua_lwip_lock();
     if (++udp->head == udp->cap) udp->head = 0;
     --udp->len;
     mlua_lwip_unlock();
-    return 3;
+    return from ? 3 : 1;
 }
 
 static int UDP_recv(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
     lua_settop(ls, 2);  // Ensure deadline is set
+    return mlua_event_wait(ls, &udp->recv_event, 0, &recv_loop, 2);
+}
+
+static int UDP_recvfrom(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    lua_settop(ls, 2);  // Ensure deadline is set
+    lua_pushboolean(ls, true);
     return mlua_event_wait(ls, &udp->recv_event, 0, &recv_loop, 2);
 }
 
@@ -160,7 +173,7 @@ MLUA_SYMBOLS(UDP_syms) = {
     MLUA_SYM_F(send, UDP_),
     MLUA_SYM_F(sendto, UDP_),
     MLUA_SYM_F(recv, UDP_),
-    // TODO: recvfrom(), and don't return the address and port in recv()
+    MLUA_SYM_F(recvfrom, UDP_),
 };
 
 #define UDP___close UDP_close
