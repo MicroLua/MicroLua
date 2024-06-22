@@ -2,16 +2,15 @@
 # Copyright 2024 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
+import argparse
 import contextlib
+import os.path
 import re
 import socket
 import socketserver
 import sys
 import threading
 import time
-
-CONTROL_PORT = 8000
-PORTS = list(range(8001, 8010))
 
 
 def prng(seed):
@@ -70,11 +69,11 @@ class TCPServer(socketserver.ThreadingTCPServer):
 
 
 class ControlServer(TCPServer):
-    def __init__(self, addr, stdout):
-        super().__init__(addr, ControlHandler)
+    def __init__(self, config, stdout):
+        super().__init__(('', config.control_port), ControlHandler)
         self.out = stdout
         self.lock = threading.Lock()
-        self.ports = set(PORTS)
+        self.ports = set(config.test_ports)
 
     @contextlib.contextmanager
     def port(self):
@@ -106,14 +105,17 @@ class ControlHandler(socketserver.StreamRequestHandler):
             self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
             self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
 
+            # Report the allocated test port.
             self.w.write(f'PORT {lport}\n')
 
-            # Handle command.
+            # Read and decode the command.
             line = self.rfile.readline().decode('utf-8')
             if not line: return
             line = line.removesuffix('\n').removesuffix('\r')
             out.write(f"[{lport}] {line}\n")
             cmd, *args = line.split(' ')
+
+            # Run the command.
             try:
                 getattr(self, f'cmd_{cmd}')(lport, *args)
                 self.w.write('DONE\n')
@@ -158,8 +160,38 @@ class ControlHandler(socketserver.StreamRequestHandler):
                     sock.sendto(data, addr)
 
 
+range_re = re.compile('^([0-9]+)-([0-9]+)$')
+
+
+def parse_ports(s):
+    ports = set()
+    for part in s.split(','):
+        if m := range_re.match(part):
+            ports.update(range(int(m.group(1)), int(m.group(2)) + 1))
+        else:
+            ports.add(int(part))
+    return ports
+
+
 def main(argv, stdin, stdout, stderr):
-    with ControlServer(('', CONTROL_PORT), stdout) as server:
+    class Parser(argparse.ArgumentParser):
+        def _print_message(self, message, file=None):
+            super()._print_message(message, stderr)
+    parser = Parser(
+        prog=os.path.basename(argv[0]), add_help=False,
+        usage='%(prog)s [options]',
+        description="Run a test server for networked unit tests.")
+    arg = parser.add_argument_group("Options").add_argument
+    arg('--help', action='help', help="Show this help message and exit.")
+    arg('--control-port', metavar='PORT', type=int, dest='control_port',
+        default=8000, help="The control port number (default: %(default)s).")
+    arg('--test-ports', metavar='PORTS', type=parse_ports, dest='test_ports',
+        default='8001-8009',
+        help="A comma-separated list of ports and port ranges "
+             "(default: %(default)s).")
+
+    config = parser.parse_args(argv[1:])
+    with ControlServer(config, stdout) as server:
         server.serve_forever()
 
 
