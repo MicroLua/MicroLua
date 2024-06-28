@@ -50,9 +50,26 @@ endfunction()
 function(mlua_platform_bin_tests TARGET SUFFIX)
     target_compile_definitions("${TARGET}" PRIVATE
         LWIP_DHCP=1
+        LWIP_ETHARP_STATS=0
+        LWIP_ICMP_STATS=0
+        LWIP_ICMP6_STATS=0
+        LWIP_IGMP_STATS=0
+        LWIP_IP_STATS=0
+        LWIP_IP6_FRAG_STATS=0
+        LWIP_IP6_STATS=0
+        LWIP_IPFRAG_STATS=0
         LWIP_IPV4=1
         LWIP_IPV6=1
-        LWIP_MEM_SIZE=30000
+        LWIP_LINK_STATS=0
+        LWIP_MEM_SIZE=20000
+        LWIP_MEM_STATS=1
+        LWIP_MEMP_STATS=1
+        LWIP_MIB2_STATS=0
+        LWIP_MLD6_STATS=0
+        LWIP_ND6_STATS=0
+        LWIP_STATS_DISPLAY=1
+        LWIP_TCP_STATS=0
+        LWIP_UDP_STATS=0
         MLUA_FS_LOADER_FLAT=1
         MLUA_FS_LOADER_SIZE=100<<10
         MLUA_STDIO_INIT_UART_IN=1
@@ -709,6 +726,14 @@ target_link_libraries(mlua_test-net_pico.lwip.dns INTERFACE
 
 mlua_add_c_module(mlua_mod_pico.lwip.pbuf pico.lwip.pbuf.c)
 target_link_libraries(mlua_mod_pico.lwip.pbuf INTERFACE
+    mlua_mod_pico.lwip
+)
+
+mlua_add_c_module(mlua_mod_pico.lwip.stats pico.lwip.stats.c)
+target_compile_definitions(mlua_mod_pico.lwip.stats_headers INTERFACE
+    LWIP_STATS=1
+)
+target_link_libraries(mlua_mod_pico.lwip.stats INTERFACE
     mlua_mod_pico.lwip
 )
 

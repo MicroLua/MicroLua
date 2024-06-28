@@ -34,8 +34,6 @@
 
 #ifndef NDEBUG
 #define LWIP_DEBUG                  1
-#define LWIP_STATS                  1
-#define LWIP_STATS_DISPLAY          1
 #endif
 
 #ifndef LWIP_TCP
@@ -48,17 +46,23 @@
 #ifndef LWIP_STATS
 #define LWIP_STATS                  0
 #endif
-#ifndef LINK_STATS
-#define LINK_STATS                  0
-#endif
-#ifndef MEM_STATS
-#define MEM_STATS                   0
-#endif
-#ifndef MEMP_STATS
-#define MEMP_STATS                  0
-#endif
-#ifndef SYS_STATS
+
+#define LINK_STATS                  LWIP_LINK_STATS
+#define ETHARP_STATS                LWIP_ETHARP_STATS
+#define IPFRAG_STATS                LWIP_IPFRAG_STATS
+#define IP_STATS                    LWIP_IP_STATS
+#define ICMP_STATS                  LWIP_ICMP_STATS
+#define IGMP_STATS                  LWIP_IGMP_STATS
+#define UDP_STATS                   LWIP_UDP_STATS
+#define TCP_STATS                   LWIP_TCP_STATS
+#define MEM_STATS                   LWIP_MEM_STATS
+#define MEMP_STATS                  LWIP_MEMP_STATS
 #define SYS_STATS                   0
-#endif
+#define IP6_STATS                   LWIP_IP6_STATS
+#define ICMP6_STATS                 LWIP_ICMP6_STATS
+#define IP6_FRAG_STATS              LWIP_IP6_FRAG_STATS
+#define MLD6_STATS                  LWIP_MLD6_STATS
+#define ND6_STATS                   LWIP_ND6_STATS
+#define MIB2_STATS                  LWIP_MIB2_STATS
 
 #endif
