@@ -20,7 +20,6 @@ local function xip_hit_rate(hit1, acc1, hit2, acc2)
 end
 
 local pre_run = Test._pre_run
-
 function Test:_pre_run()
     if not self._parent then pico.xip_ctr(true) end  -- Clear XIP counters
     pre_run(self)
@@ -28,7 +27,6 @@ function Test:_pre_run()
 end
 
 local post_run = Test._post_run
-
 function Test:_post_run()
     self._xip_hit = xip_hit_rate(self._xip_hit, self._xip_acc, pico.xip_ctr())
     self._xip_acc = nil
@@ -36,7 +34,6 @@ function Test:_post_run()
 end
 
 local print_stats = Test._print_stats
-
 function Test:_print_stats(out)
     print_stats(self, out)
     if self._parent then

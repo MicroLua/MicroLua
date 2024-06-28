@@ -576,6 +576,7 @@ target_link_libraries(mlua_mod_mlua.testing.lwip INTERFACE
     mlua_mod_mlua.time
     mlua_mod_pico.lwip
     mlua_mod_pico.lwip.dns
+    mlua_mod_pico.lwip.stats
     mlua_mod_pico.lwip.tcp
     mlua_mod_string
     mlua_mod_table

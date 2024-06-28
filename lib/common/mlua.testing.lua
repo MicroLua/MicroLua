@@ -763,4 +763,5 @@ function main()
     return ok and res
 end
 
+overrides = {}
 try(require, 'mlua.testing.platform')
