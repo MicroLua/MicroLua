@@ -45,8 +45,9 @@ def verify_data(data):
 def udp_socket(port):
     sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_DGRAM)
     try:
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         sock.settimeout(1)
-        sock.bind(('', port))
+        sock.bind(('::', port))
         yield sock
     finally:
         sock.close()
@@ -139,7 +140,7 @@ class ControlHandler(socketserver.StreamRequestHandler):
         with udp_socket(lport) as sock:
             while True:
                 data, addr = sock.recvfrom(1 << 20)
-                if addr == src:
+                if addr[:2] == src:
                     size = len(data)
                     pid, ok = verify_data(data)
                     res = 'OK' if ok else 'BAD'
@@ -152,7 +153,7 @@ class ControlHandler(socketserver.StreamRequestHandler):
             while True:
                 data, addr = sock.recvfrom(1 << 20)
                 self.server.out.write(f"Received UDP packet from {addr}\n")
-                if addr == src:
+                if addr[:2] == src:
                     size = len(data)
                     pid, ok = verify_data(data)
                     res = 'OK' if ok else 'BAD'
