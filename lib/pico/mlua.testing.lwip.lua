@@ -7,10 +7,11 @@ local config = require 'mlua.config'
 local io = require 'mlua.io'
 local mem = require 'mlua.mem'
 local oo = require 'mlua.oo'
+local testing = require 'mlua.testing'
 local time = require 'mlua.time'
 local lwip = require 'pico.lwip'
 local dns = require 'pico.lwip.dns'
-local stats = try(require, 'pico.lwip.stats')
+local stats = require 'pico.lwip.stats'
 local tcp = require 'pico.lwip.tcp'
 local string = require 'string'
 local table = require 'table'
@@ -87,8 +88,7 @@ function Control:wait_close(t)
     t:expect(resp):label("done"):eq('DONE\n')
 end
 
-local testing = require 'mlua.testing'
-if stats and not testing.overrides[...] then
+if not testing.overrides[...] then
     testing.overrides[...] = true
     local Test = testing.Test
 
@@ -105,18 +105,17 @@ if stats and not testing.overrides[...] then
     local print_stats = Test._print_stats
     function Test:_print_stats(out)
         print_stats(self, out)
-        if not self._parent then return end
         if stats.mem then
             local st = stats.mem()
             io.fprintf(
-                out, "lwIP.mem: avail: %s B, used: %s B, max: %s B\n",
+                out, "lwIP mem: avail: %s B, used: %s B, max: %s B\n",
                 st.avail, st.used, st.max)
         end
         if stats.memp then
             for i = 0, stats.MEMP_COUNT - 1 do
                 local st, name = stats.memp(i)
                 io.fprintf(
-                    out, "lwIP.memp[%s]: avail: %s, used: %s, max: %s\n",
+                    out, "lwIP memp[%s]: avail: %s, used: %s, max: %s\n",
                     name or i, st.avail, st.used, st.max)
             end
         end
