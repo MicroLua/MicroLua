@@ -3,7 +3,6 @@
 
 _ENV = module(...)
 
-local io = require 'mlua.io'
 local testing_lwip = require 'mlua.testing.lwip'
 local thread = require 'mlua.thread'
 local group = require 'mlua.thread.group'
@@ -14,14 +13,18 @@ local udp = require 'pico.lwip.udp'
 local table = require 'table'
 
 function test_accessors(t)
-    local sock<close> = udp.new()
-    t:expect(t.expr(sock):options(lwip.SOF_REUSEADDR | lwip.SOF_BROADCAST)):eq(0)
+    local sock<close> = lwip.assert(udp.new())
+    t:expect(t.expr(sock):options(lwip.SOF_REUSEADDR | lwip.SOF_BROADCAST))
+        :eq(0)
     t:expect(t.expr(sock):options(nil, lwip.SOF_REUSEADDR))
         :eq(lwip.SOF_REUSEADDR | lwip.SOF_BROADCAST)
     t:expect(t.expr(sock):options()):eq(lwip.SOF_BROADCAST)
+    t:expect(t.expr(sock):options()):eq(lwip.SOF_BROADCAST)
     t:expect(t.expr(sock):tos(12)):eq(0)
     t:expect(t.expr(sock):tos()):eq(12)
+    t:expect(t.expr(sock):tos()):eq(12)
     t:expect(t.expr(sock):ttl(127)):eq(255)
+    t:expect(t.expr(sock):ttl()):eq(127)
     t:expect(t.expr(sock):ttl()):eq(127)
 end
 
@@ -51,7 +54,7 @@ end
 
 function run_send_test(t, fname, atype, lport, size, count, interval)
     local ctrl = testing_lwip.Control(t, atype)
-    local sock<close> = udp.new(nil, count)
+    local sock<close> = lwip.assert(udp.new(nil, count))
     sock:bind(nil, lport)
     t:expect(t.expr(sock):local_ip()):eq(lwip.IP_ANY_TYPE)
     t:expect(t.expr(sock):local_port()):eq(lport)
@@ -118,7 +121,7 @@ end
 
 function run_recv_test(t, fname, atype, lport, size, count, interval)
     local ctrl = testing_lwip.Control(t, atype)
-    local sock<close> = udp.new(nil, count)
+    local sock<close> = lwip.assert(udp.new(nil, count))
     sock:bind(nil, lport)
     sock:connect(ctrl.addr, ctrl.port)
 

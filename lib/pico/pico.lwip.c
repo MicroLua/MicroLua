@@ -50,25 +50,6 @@ static char const* mlua_lwip_err_str(err_t err) {
     }
 }
 
-int mlua_lwip_ip_options(lua_State* ls, u8_t* options) {
-    u8_t old = *options;
-    if (!lua_isnoneornil(ls, 2)) *options |= luaL_checkinteger(ls, 2);
-    if (!lua_isnoneornil(ls, 3)) *options &= ~luaL_checkinteger(ls, 3);
-    return lua_pushinteger(ls, old), 1;
-}
-
-int mlua_lwip_ip_tos(lua_State* ls, u8_t* tos) {
-    u8_t old = *tos;
-    if (!lua_isnoneornil(ls, 2)) *tos = luaL_checkinteger(ls, 2);
-    return lua_pushinteger(ls, old), 1;
-}
-
-int mlua_lwip_ip_ttl(lua_State* ls, u8_t* ttl) {
-    u8_t old = *ttl;
-    if (!lua_isnoneornil(ls, 2)) *ttl = luaL_checkinteger(ls, 2);
-    return lua_pushinteger(ls, old), 1;
-}
-
 char const mlua_IPAddr_name[] = "pico.lwip.IPAddr";
 
 ip_addr_t* mlua_new_IPAddr(lua_State* ls) {

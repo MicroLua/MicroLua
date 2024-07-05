@@ -164,47 +164,75 @@ static int UDP_recvfrom(lua_State* ls) {
 }
 
 static int UDP_local_ip(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    *mlua_new_IPAddr(ls) = udp->pcb->local_ip;
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    ip_addr_t* addr = mlua_new_IPAddr(ls);
+    mlua_lwip_lock();
+    *addr = pcb->local_ip;
+    mlua_lwip_unlock();
     return 1;
 }
 
 static int UDP_remote_ip(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    *mlua_new_IPAddr(ls) = udp->pcb->remote_ip;
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    ip_addr_t* addr = mlua_new_IPAddr(ls);
+    mlua_lwip_lock();
+    *addr = pcb->remote_ip;
+    mlua_lwip_unlock();
     return 1;
 }
 
 static int UDP_local_port(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    return lua_pushinteger(ls, udp->pcb->local_port), 1;
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    mlua_lwip_lock();
+    u16_t port = pcb->local_port;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, port), 1;
 }
 
 static int UDP_remote_port(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    return lua_pushinteger(ls, udp->pcb->remote_port), 1;
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    mlua_lwip_lock();
+    u16_t port = pcb->remote_port;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, port), 1;
 }
 
 static int UDP_options(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    return mlua_lwip_ip_options(ls, &udp->pcb->so_options);
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    u8_t set = luaL_optinteger(ls, 2, 0);
+    u8_t clear = luaL_optinteger(ls, 3, 0);
+    mlua_lwip_lock();
+    u8_t old = pcb->so_options;
+    pcb->so_options = (pcb->so_options | set) & ~clear;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
 }
 
 static int UDP_tos(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    return mlua_lwip_ip_tos(ls, &udp->pcb->tos);
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    lua_Integer value = luaL_optinteger(ls, 2, -1);
+    mlua_lwip_lock();
+    u8_t old = pcb->tos;
+    if (value != -1) pcb->tos = value;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
 }
 
 static int UDP_ttl(lua_State* ls) {
-    UDP* udp = check_UDP(ls, 1);
-    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    return mlua_lwip_ip_ttl(ls, &udp->pcb->ttl);
+    struct udp_pcb* pcb = check_UDP(ls, 1)->pcb;
+    if (pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    lua_Integer value = luaL_optinteger(ls, 2, -1);
+    mlua_lwip_lock();
+    u8_t old = pcb->ttl;
+    if (value != -1) pcb->ttl = value;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
 }
 
 MLUA_SYMBOLS(UDP_syms) = {

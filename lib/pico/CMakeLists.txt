@@ -763,7 +763,6 @@ target_link_libraries(mlua_mod_pico.lwip.udp INTERFACE
 
 mlua_add_lua_modules(mlua_test-net_pico.lwip.udp pico.lwip.udp.test.lua)
 target_link_libraries(mlua_test-net_pico.lwip.udp INTERFACE
-    mlua_mod_mlua.io
     mlua_mod_mlua.testing.lwip
     mlua_mod_mlua.thread
     mlua_mod_mlua.thread.group
