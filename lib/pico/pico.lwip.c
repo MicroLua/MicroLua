@@ -5,6 +5,7 @@
 
 #include "lwip/err.h"
 #include "lwip/init.h"
+#include "lwip/ip.h"
 #include "lwip/ip_addr.h"
 #include "pico/lwip_nosys.h"
 
@@ -47,6 +48,25 @@ static char const* mlua_lwip_err_str(err_t err) {
     case ERR_ARG: return "illegal argument";
     default: return "unknown error";
     }
+}
+
+int mlua_lwip_ip_options(lua_State* ls, u8_t* options) {
+    u8_t old = *options;
+    if (!lua_isnoneornil(ls, 2)) *options |= luaL_checkinteger(ls, 2);
+    if (!lua_isnoneornil(ls, 3)) *options &= ~luaL_checkinteger(ls, 3);
+    return lua_pushinteger(ls, old), 1;
+}
+
+int mlua_lwip_ip_tos(lua_State* ls, u8_t* tos) {
+    u8_t old = *tos;
+    if (!lua_isnoneornil(ls, 2)) *tos = luaL_checkinteger(ls, 2);
+    return lua_pushinteger(ls, old), 1;
+}
+
+int mlua_lwip_ip_ttl(lua_State* ls, u8_t* ttl) {
+    u8_t old = *ttl;
+    if (!lua_isnoneornil(ls, 2)) *ttl = luaL_checkinteger(ls, 2);
+    return lua_pushinteger(ls, old), 1;
 }
 
 char const mlua_IPAddr_name[] = "pico.lwip.IPAddr";
@@ -182,6 +202,9 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(ERR_RST, integer, ERR_RST),
     MLUA_SYM_V(ERR_CLSD, integer, ERR_CLSD),
     MLUA_SYM_V(ERR_ARG, integer, ERR_ARG),
+    MLUA_SYM_V(SOF_REUSEADDR, integer, SOF_REUSEADDR),
+    MLUA_SYM_V(SOF_KEEPALIVE, integer, SOF_KEEPALIVE),
+    MLUA_SYM_V(SOF_BROADCAST, integer, SOF_BROADCAST),
     MLUA_SYM_V(IPADDR_TYPE_V4, integer, IPADDR_TYPE_V4),
     MLUA_SYM_V(IPADDR_TYPE_V6, integer, IPADDR_TYPE_V6),
     MLUA_SYM_V(IPADDR_TYPE_ANY, integer, IPADDR_TYPE_ANY),

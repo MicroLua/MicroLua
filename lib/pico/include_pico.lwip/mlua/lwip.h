@@ -33,6 +33,15 @@ static inline void mlua_lwip_unlock(void) {
     async_context_release_lock(mlua_async_context());
 }
 
+// Implement a PCB so_options accessor.
+int mlua_lwip_ip_options(lua_State* ls, u8_t* options);
+
+// Implement a PCB tos accessor.
+int mlua_lwip_ip_tos(lua_State* ls, u8_t* tos);
+
+// Implement a PCB ttl accessor.
+int mlua_lwip_ip_ttl(lua_State* ls, u8_t* ttl);
+
 // Push a new IPAddr value.
 ip_addr_t* mlua_new_IPAddr(lua_State* ls);
 

@@ -163,15 +163,67 @@ static int UDP_recvfrom(lua_State* ls) {
     return mlua_event_wait(ls, &udp->recv_event, 0, &recv_loop, 2);
 }
 
+static int UDP_local_ip(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    *mlua_new_IPAddr(ls) = udp->pcb->local_ip;
+    return 1;
+}
+
+static int UDP_remote_ip(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    *mlua_new_IPAddr(ls) = udp->pcb->remote_ip;
+    return 1;
+}
+
+static int UDP_local_port(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    return lua_pushinteger(ls, udp->pcb->local_port), 1;
+}
+
+static int UDP_remote_port(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    return lua_pushinteger(ls, udp->pcb->remote_port), 1;
+}
+
+static int UDP_options(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    return mlua_lwip_ip_options(ls, &udp->pcb->so_options);
+}
+
+static int UDP_tos(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    return mlua_lwip_ip_tos(ls, &udp->pcb->tos);
+}
+
+static int UDP_ttl(lua_State* ls) {
+    UDP* udp = check_UDP(ls, 1);
+    if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
+    return mlua_lwip_ip_ttl(ls, &udp->pcb->ttl);
+}
+
 MLUA_SYMBOLS(UDP_syms) = {
     MLUA_SYM_F(close, UDP_),
     MLUA_SYM_F(bind, UDP_),
+    // TODO: MLUA_SYM_F(bind_netif, UDP_),
     MLUA_SYM_F(connect, UDP_),
     MLUA_SYM_F(disconnect, UDP_),
     MLUA_SYM_F(send, UDP_),
     MLUA_SYM_F(sendto, UDP_),
     MLUA_SYM_F(recv, UDP_),
     MLUA_SYM_F(recvfrom, UDP_),
+    MLUA_SYM_F(local_ip, UDP_),
+    MLUA_SYM_F(remote_ip, UDP_),
+    MLUA_SYM_F(local_port, UDP_),
+    MLUA_SYM_F(remote_port, UDP_),
+    MLUA_SYM_F(options, UDP_),
+    MLUA_SYM_F(tos, UDP_),
+    MLUA_SYM_F(ttl, UDP_),
 };
 
 #define UDP___close UDP_close
