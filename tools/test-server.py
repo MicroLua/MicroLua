@@ -42,6 +42,31 @@ def verify_data(data):
 
 
 @contextlib.contextmanager
+def tcp_listen(port):
+    sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_STREAM)
+    try:
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.settimeout(1)
+        sock.bind(('::', port))
+        sock.listen()
+        yield sock
+    finally:
+        sock.close()
+
+
+@contextlib.contextmanager
+def tcp_accept(sock):
+    conn, addr = sock.accept()
+    try:
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+        sock.settimeout(1)
+        yield conn, addr
+    finally:
+        conn.close()
+
+
+@contextlib.contextmanager
 def udp_socket(port):
     sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_DGRAM)
     try:
@@ -51,6 +76,16 @@ def udp_socket(port):
         yield sock
     finally:
         sock.close()
+
+
+def recv_all(sock, size):
+    data = bytearray(size)
+    view = memoryview(data)
+    while view:
+        cnt = sock.recv_into(view, len(view))
+        if cnt == 0: return data[:-len(view)]
+        view = view[cnt:]
+    return data
 
 
 class SyncWriter:
@@ -123,6 +158,39 @@ class ControlHandler(socketserver.StreamRequestHandler):
             except Exception:
                 self.w.write('ERROR\n')
                 raise
+
+    def cmd_tcp_listen_send(self, lport, rport, size, count, interval):
+        rport, size = int(rport), int(size)
+        count, interval = int(count), int(interval)
+        dest = (self.client_address[0], rport)
+        with tcp_listen(lport) as sock:
+            self.w.write('LISTENING\n')
+            with tcp_accept(sock) as (conn, addr):
+                if addr[:2] != dest:
+                    raise RuntimeError(f"Wrong peer: {addr}")
+                dsize = bytearray([size & 0xff, (size >> 8) & 0xff])
+                for pid in range(count):
+                    data = generate_data(size, pid)
+                    conn.sendall(dsize + data)
+                    time.sleep(interval * 1e-6)
+
+    def cmd_tcp_listen_recv(self, lport, rport):
+        rport = int(rport)
+        src = (self.client_address[0], rport)
+        with tcp_listen(lport) as sock:
+            self.w.write('LISTENING\n')
+            with tcp_accept(sock) as (conn, addr):
+                if addr[:2] != src:
+                    raise RuntimeError(f"Wrong peer: {addr}")
+                while True:
+                    dsize = recv_all(conn, 2)
+                    if len(dsize) < 2: break
+                    size = dsize[0] | (dsize[1] << 8)
+                    data = recv_all(conn, size)
+                    if len(data) < size: break
+                    pid, ok = verify_data(data)
+                    res = 'OK' if ok else 'BAD'
+                    self.w.write(f'RECV {size} {pid} {res}\n')
 
     def cmd_udp_send(self, lport, rport, size, count, interval):
         rport, size = int(rport), int(size)

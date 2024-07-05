@@ -95,7 +95,7 @@ static int TCP_shutdown(lua_State* ls) {
 
 static int TCP_bind(lua_State* ls) {
     TCP* tcp = check_TCP(ls, 1);
-    ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
+    ip_addr_t const* addr = luaL_opt(ls, mlua_check_IPAddr, 2, IP_ANY_TYPE);
     u16_t port = luaL_checkinteger(ls, 3);
     lock_and_check_error(ls, tcp);
     err_t err = tcp_bind(tcp->pcb, addr, port);
@@ -304,13 +304,82 @@ static int TCP_recv(lua_State* ls) {
     return mlua_event_wait(ls, &tcp->recv_event, 0, &recv_loop, 3);
 }
 
-static int TCP_set_prio(lua_State* ls) {
+static int TCP_prio(lua_State* ls) {
     TCP* tcp = check_TCP(ls, 1);
-    u8_t prio = luaL_checkinteger(ls, 2);
-    mlua_lwip_lock();
-    if (tcp->pcb != NULL) tcp_setprio(tcp->pcb, prio);
+    lua_Integer value = luaL_optinteger(ls, 2, -1);
+    lock_and_check_error(ls, tcp);
+    u8_t old = tcp->pcb->prio;
+    if (value != -1) tcp_setprio(tcp->pcb, value);
     mlua_lwip_unlock();
-    return 0;
+    return lua_pushinteger(ls, old), 1;
+}
+
+static int TCP_local_ip(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lock_and_check_error(ls, tcp);
+    ip_addr_t addr;
+    addr = tcp->pcb->local_ip;
+    mlua_lwip_unlock();
+    *mlua_new_IPAddr(ls) = addr;
+    return 1;
+}
+
+static int TCP_remote_ip(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lock_and_check_error(ls, tcp);
+    ip_addr_t addr;
+    addr = tcp->pcb->remote_ip;
+    mlua_lwip_unlock();
+    *mlua_new_IPAddr(ls) = addr;
+    return 1;
+}
+
+static int TCP_local_port(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lock_and_check_error(ls, tcp);
+    u16_t port = tcp->pcb->local_port;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, port), 1;
+}
+
+static int TCP_remote_port(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lock_and_check_error(ls, tcp);
+    lua_Integer port = tcp->pcb->state != LISTEN ? tcp->pcb->remote_port : -1;
+    mlua_lwip_unlock();
+    if (port < 0) return mlua_lwip_push_err(ls, ERR_ARG);
+    return lua_pushinteger(ls, port), 1;
+}
+
+static int TCP_options(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    u8_t set = luaL_optinteger(ls, 2, 0);
+    u8_t clear = luaL_optinteger(ls, 3, 0);
+    lock_and_check_error(ls, tcp);
+    u8_t old = tcp->pcb->so_options;
+    tcp->pcb->so_options = (tcp->pcb->so_options | set) & ~clear;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
+}
+
+static int TCP_tos(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lua_Integer value = luaL_optinteger(ls, 2, -1);
+    lock_and_check_error(ls, tcp);
+    u8_t old = tcp->pcb->tos;
+    if (value != -1) tcp->pcb->tos = value;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
+}
+
+static int TCP_ttl(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    lua_Integer value = luaL_optinteger(ls, 2, -1);
+    lock_and_check_error(ls, tcp);
+    u8_t old = tcp->pcb->ttl;
+    if (value != -1) tcp->pcb->ttl = value;
+    mlua_lwip_unlock();
+    return lua_pushinteger(ls, old), 1;
 }
 
 #define TCP_write TCP_send
@@ -327,7 +396,14 @@ MLUA_SYMBOLS(TCP_syms) = {
     MLUA_SYM_F(write, TCP_),
     MLUA_SYM_F(recv, TCP_),
     MLUA_SYM_F(read, TCP_),
-    MLUA_SYM_F(set_prio, TCP_),
+    MLUA_SYM_F(prio, TCP_),
+    MLUA_SYM_F(local_ip, TCP_),
+    MLUA_SYM_F(remote_ip, TCP_),
+    MLUA_SYM_F(local_port, TCP_),
+    MLUA_SYM_F(remote_port, TCP_),
+    MLUA_SYM_F(options, TCP_),
+    MLUA_SYM_F(tos, TCP_),
+    MLUA_SYM_F(ttl, TCP_),
 };
 
 #define TCP___close TCP_close

@@ -119,7 +119,8 @@ static int mod_alloc(lua_State* ls) {
     mlua_lwip_lock();
     *pb = pbuf_alloc(layer, length, type);
     mlua_lwip_unlock();
-    return *pb != NULL ? 1 : 0;
+    if (*pb == NULL) return mlua_lwip_push_err(ls, ERR_MEM);
+    return 1;
 }
 
 MLUA_SYMBOLS(module_syms) = {

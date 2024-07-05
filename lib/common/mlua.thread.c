@@ -247,7 +247,7 @@ static int Thread_kill(lua_State* ls) {
     lua_State* main = main_thread(ls);
     if (state == STATE_TIMER) remove_timer(main, self);
 
-    // Close the Lua thread and store the termination in self.DEADLINE.
+    // Close the Lua thread and store the termination below self.NEXT.
     lua_xmove(self, ls, 1);  // next = self.NEXT
     if (lua_closethread(self, ls) == LUA_OK) lua_pushnil(self);
     thread_extra(self)->state = STATE_DEAD;

@@ -68,6 +68,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_MIB2_STATS=0
         LWIP_MLD6_STATS=0
         LWIP_ND6_STATS=0
+        LWIP_PBUF_POOL_SIZE=24
         LWIP_STATS_DISPLAY=1
         LWIP_TCP_STATS=0
         LWIP_UDP_STATS=0
@@ -749,6 +750,18 @@ target_link_libraries(mlua_mod_pico.lwip.tcp INTERFACE
     mlua_mod_mlua.thread
     mlua_mod_pico.lwip
     mlua_mod_pico.lwip.pbuf
+)
+
+mlua_add_lua_modules(mlua_test-net_pico.lwip.tcp pico.lwip.tcp.test.lua)
+target_link_libraries(mlua_test-net_pico.lwip.tcp INTERFACE
+    mlua_mod_mlua.mem
+    mlua_mod_mlua.testing.lwip
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.thread.group
+    mlua_mod_mlua.time
+    mlua_mod_pico.lwip
+    mlua_mod_pico.lwip.tcp
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico.lwip.udp pico.lwip.udp.c)
