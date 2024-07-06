@@ -31,7 +31,7 @@ function test_accessors(t)
     t:expect(t.expr(sock):prio()):eq(tcp.PRIO_MAX)
 end
 
-function _test_send(t)
+function test_send(t)
     for _, test in ipairs{
         {"small", nil, {1234}, 64, 10, 10 * time.msec},
         {"large", nil, {1234}, 1200, 10, 50 * time.msec},
