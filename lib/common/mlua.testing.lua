@@ -522,6 +522,8 @@ end
 function Test:_progress_start(out) self._progress = out end
 
 function Test:_progress_tick()
+    -- TODO: Show progress on first line as "Running: %s", updated through
+    --       cursor positioning.
     local progress = self:_root()._progress
     if progress then return progress:write('.') end
 end
