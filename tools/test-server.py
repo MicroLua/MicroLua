@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+from concurrent import futures
 import contextlib
 import os.path
 import re
@@ -11,6 +12,17 @@ import socketserver
 import sys
 import threading
 import time
+import traceback
+
+
+def log_exception(fn):
+    def wrap(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception:
+            traceback.print_exc()
+            raise
+    return wrap
 
 
 def prng(seed):
@@ -39,6 +51,18 @@ def verify_data(data):
         seed, v = prng(seed)
         if d != v: return pid, False
     return pid, True
+
+
+@contextlib.contextmanager
+def tcp_connect(addr):
+    sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_STREAM)
+    try:
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        sock.settimeout(1)
+        sock.connect(addr)
+        yield sock
+    finally:
+        sock.close()
 
 
 @contextlib.contextmanager
@@ -131,47 +155,114 @@ class ControlHandler(socketserver.StreamRequestHandler):
 
     def handle(self):
         with self.server.port() as lport:
-            out = self.server.out
-            out.write(f"[{lport}] Connection: {self.client_address}\n")
-            self.w = SyncWriter(self.wfile)
-
-            # Detect hard disconnections quickly.
-            self.request.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-            self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
-            self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
-            self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
-
-            # Report the allocated test port.
-            self.w.write(f'PORT {lport}\n')
-
-            # Read and decode the command.
-            line = self.rfile.readline().decode('utf-8')
-            if not line: return
-            line = line.removesuffix('\n').removesuffix('\r')
-            out.write(f"[{lport}] {line}\n")
-            cmd, *args = line.split(' ')
-
-            # Run the command.
+            self.server.out.write(
+                f"[{lport}] Connection: {self.client_address}\n")
             try:
-                getattr(self, f'cmd_{cmd}')(lport, *args)
-                self.w.write('DONE\n')
-            except Exception:
-                self.w.write('ERROR\n')
-                raise
+                self.handle_conn(lport)
+            except TimeoutError:
+                self.server.out.write(f"[{lport}] Timeout\n")
+            except BrokenPipeError:
+                self.server.out.write(f"[{lport}] Broken pipe\n")
+            except Exception as e:
+                self.server.out.write(f"[{lport}] Exception:\n")
+                traceback.print_exc(file=self.server.out)
+            else:
+                self.server.out.write(f"[{lport}] Done\n")
+
+    def handle_conn(self, lport):
+        # Detect hard disconnections quickly.
+        conn = self.request
+        conn.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
+
+        # Report the allocated test port.
+        self.w = SyncWriter(self.wfile)
+        self.w.write(f'PORT {lport}\n')
+
+        # Read and decode the command.
+        line = self.rfile.readline().decode('utf-8')
+        if not line: return
+        line = line.removesuffix('\n').removesuffix('\r')
+        self.server.out.write(f"[{lport}] {line}\n")
+        cmd, *args = line.split(' ')
+
+        # Run the command.
+        try:
+            getattr(self, f'cmd_{cmd}')(lport, *args)
+            self.w.write('DONE\n')
+        except Exception:
+            self.w.write('ERROR\n')
+            raise
+
+    def cmd_tcp_connect(self, lport, rport, conns, size, count, interval):
+        rport, conns, size = int(rport), int(conns), int(size)
+        count, interval = int(count), int(interval)
+        dest = (self.client_address[0], rport) + self.client_address[2:]
+        with futures.ThreadPoolExecutor(max_workers=conns) as pool:
+            for i in range(conns):
+                pool.submit(self.handle_connect, dest, i * count, size, count,
+                            interval)
+
+    def handle_connect(self, dest, pid_base, size, count, interval):
+        with tcp_connect(dest) as conn:
+            with futures.ThreadPoolExecutor(max_workers=2) as pool:
+                pool.submit(self.handle_tcp_send, conn, pid_base, size, count,
+                            interval)
+                pool.submit(self.handle_tcp_recv, conn)
+
+    def handle_tcp_send(self, conn, pid_base, size, count, interval):
+        try:
+            dsize = bytearray([size & 0xff, (size >> 8) & 0xff])
+            for pid in range(pid_base, pid_base + count):
+                data = generate_data(size, pid)
+                conn.sendall(dsize + data)
+                time.sleep(interval * 1e-6)
+        finally:
+            conn.shutdown(socket.SHUT_WR)
+
+    def handle_tcp_recv(self, conn):
+        try:
+            while True:
+                dsize = recv_all(conn, 2)
+                if len(dsize) < 2: break
+                size = dsize[0] | (dsize[1] << 8)
+                data = recv_all(conn, size)
+                if len(data) < size: break
+                pid, ok = verify_data(data)
+                res = 'OK' if ok else 'BAD'
+                self.w.write(f'RECV {size} {pid} {res}\n')
+        finally:
+            conn.shutdown(socket.SHUT_RD)
+
+    def send_data(self, conn, pid, size):
+        dsize = bytearray([size & 0xff, (size >> 8) & 0xff])
+        data = generate_data(size, pid)
+        conn.sendall(dsize + data)
+
+    def recv_data(self, conn):
+        dsize = recv_all(conn, 2)
+        if len(dsize) < 2: return False
+        size = dsize[0] | (dsize[1] << 8)
+        data = recv_all(conn, size)
+        if len(data) < size: return False
+        pid, ok = verify_data(data)
+        res = 'OK' if ok else 'BAD'
+        self.w.write(f'RECV {size} {pid} {res}\n')
+        return True
 
     def cmd_tcp_listen_send(self, lport, rport, size, count, interval):
         rport, size = int(rport), int(size)
         count, interval = int(count), int(interval)
-        dest = (self.client_address[0], rport)
+        src = (self.client_address[0], rport)
         with tcp_listen(lport) as sock:
             self.w.write('LISTENING\n')
             with tcp_accept(sock) as (conn, addr):
-                if addr[:2] != dest:
+                if addr[:2] != src:
                     raise RuntimeError(f"Wrong peer: {addr}")
-                dsize = bytearray([size & 0xff, (size >> 8) & 0xff])
                 for pid in range(count):
-                    data = generate_data(size, pid)
-                    conn.sendall(dsize + data)
+                    self.send_data(conn, pid, size)
                     time.sleep(interval * 1e-6)
 
     def cmd_tcp_listen_recv(self, lport, rport):
@@ -182,20 +273,12 @@ class ControlHandler(socketserver.StreamRequestHandler):
             with tcp_accept(sock) as (conn, addr):
                 if addr[:2] != src:
                     raise RuntimeError(f"Wrong peer: {addr}")
-                while True:
-                    dsize = recv_all(conn, 2)
-                    if len(dsize) < 2: break
-                    size = dsize[0] | (dsize[1] << 8)
-                    data = recv_all(conn, size)
-                    if len(data) < size: break
-                    pid, ok = verify_data(data)
-                    res = 'OK' if ok else 'BAD'
-                    self.w.write(f'RECV {size} {pid} {res}\n')
+                while self.recv_data(conn): pass
 
     def cmd_udp_send(self, lport, rport, size, count, interval):
         rport, size = int(rport), int(size)
         count, interval = int(count), int(interval)
-        dest = (self.client_address[0], rport)
+        dest = (self.client_address[0], rport) + self.client_address[2:]
         with udp_socket(lport) as sock:
             for pid in range(count):
                 data = generate_data(size, pid)

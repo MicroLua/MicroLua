@@ -74,17 +74,17 @@ function Control:__init(t, atype)
     self.port = tonumber(port)
 end
 
-function Control:send(fmt, ...)
-    return lwip.assert(self.sock:send(fmt:format(...)))
+function Control:send(dl, fmt, ...)
+    return lwip.assert(self.sock:send(fmt:format(...), dl))
 end
 
 function Control:recv(dl)
     return lwip.assert(io.read_line(self.sock, dl))
 end
 
-function Control:wait_close(t)
+function Control:wait_close(t, dl)
     local _helper = t.helper
-    local resp = lwip.assert(io.read_all(self.sock))
+    local resp = lwip.assert(io.read_all(self.sock, dl))
     t:expect(resp):label("done"):eq('DONE\n')
 end
 

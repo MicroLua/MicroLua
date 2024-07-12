@@ -43,7 +43,7 @@ function test_send(t)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
-                tg:start(with_traceback(function()
+                tg:start(log_error(function()
                     return run_send_test(t, fname, atype, lport,
                                          table.unpack(test, 5))
                 end))
@@ -62,9 +62,9 @@ function run_send_test(t, fname, atype, lport, size, count, interval)
     t:expect(t.expr(sock):remote_ip()):eq(ctrl.addr)
     t:expect(t.expr(sock):remote_port()):eq(ctrl.port)
 
+    local dl = time.deadline(count * interval + 1000 * time.msec)
     local received = testing_lwip.Set()
-    local receiver<close> = thread.start(with_traceback(function()
-        local dl = time.deadline(count * interval + 1000 * time.msec)
+    local receiver<close> = thread.start(log_error(function()
         while true do
             local line = ctrl:recv(dl)
             if line == '' then break end
@@ -74,10 +74,10 @@ function run_send_test(t, fname, atype, lport, size, count, interval)
             if received:add(pid) == count then break end
         end
     end))
-    ctrl:send('udp_recv %s\n', lport)
+    ctrl:send(dl, 'udp_recv %s\n', lport)
 
     local send, to = sock[fname], fname == 'sendto'
-    local sender<close> = thread.start(with_traceback(function()
+    local sender<close> = thread.start(log_error(function()
         for pid = 0, count - 1 do
             local p<close> = lwip.assert(pbuf.alloc(pbuf.TRANSPORT, size))
             testing_lwip.generate_data(pid, size, p, 0)
@@ -110,7 +110,7 @@ function test_recv(t)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
-                tg:start(with_traceback(function()
+                tg:start(log_error(function()
                     return run_recv_test(t, fname, atype, lport,
                                          table.unpack(test, 5))
                 end))
@@ -125,10 +125,10 @@ function run_recv_test(t, fname, atype, lport, size, count, interval)
     lwip.assert(sock:bind(nil, lport))
     lwip.assert(sock:connect(ctrl.addr, ctrl.port))
 
+    local dl = time.deadline(count * interval + 1000 * time.msec)
     local recv, from = sock[fname], fname == 'recvfrom'
     local received = testing_lwip.Set()
-    local receiver<close> = thread.start(with_traceback(function()
-        local dl = time.deadline(count * interval + 1000 * time.msec)
+    local receiver<close> = thread.start(log_error(function()
         while true do
             local p<close>, addr, port = recv(sock, dl)
             if not p then break end
@@ -140,8 +140,8 @@ function run_recv_test(t, fname, atype, lport, size, count, interval)
         end
     end))
 
-    ctrl:send('udp_send %s %s %s %s\n', lport, size, count, interval)
-    ctrl:wait_close(t)
+    ctrl:send(dl, 'udp_send %s %s %s %s\n', lport, size, count, interval)
+    ctrl:wait_close(t, dl)
     receiver:join()
     t:expect(#received):label("received"):eq(count)
 end

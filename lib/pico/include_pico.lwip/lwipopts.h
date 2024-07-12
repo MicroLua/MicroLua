@@ -9,7 +9,6 @@
 #define LWIP_SOCKET                 0
 #define MEM_LIBC_MALLOC             0
 #define MEM_ALIGNMENT               4
-// #define ETH_PAD_SIZE                2
 #define TCP_MSS                     1460
 #define TCP_WND                     (8 * TCP_MSS)
 #define TCP_SND_BUF                 (8 * TCP_MSS)

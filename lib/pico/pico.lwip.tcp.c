@@ -15,22 +15,35 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
-// TODO: Check how micropython does it; it also uses lwIP
+static char const TCP_name[] = "pico.lwip.TCP";
 
 typedef struct TCP {
     struct tcp_pcb* pcb;
     MLuaEvent recv_event;
     MLuaEvent send_event;
-    struct pbuf* recv_head;
-    struct pbuf* recv_tail;
+    union {
+        // For listening sockets. We abuse the "connected" field of struct
+        // tcp_pcb as a "next" pointer for the accept queue. PCBs in the queue
+        // have their "arg" set to TCP_name.
+        struct {
+            struct tcp_pcb* accept_head;
+            struct tcp_pcb* accept_tail;
+        };
+        // For connected sockets.
+        struct {
+            struct pbuf* recv_head;
+            struct pbuf* recv_tail;
+        };
+    };
     u16_t recv_off;
     err_t err;
+    bool listening: 1;
     bool connected: 1;
     bool rx_closed: 1;
 } TCP;
 
 static void handle_err(void* arg, err_t err) {
-    if (arg == NULL) return;
+    if (arg == NULL || arg == TCP_name) return;
     TCP* tcp = arg;
     tcp->err = err != ERR_OK ? err : ERR_CLSD;
     tcp->pcb = NULL;
@@ -38,7 +51,25 @@ static void handle_err(void* arg, err_t err) {
     mlua_event_set(&tcp->send_event);
 }
 
-static char const TCP_name[] = "pico.lwip.TCP";
+static err_t handle_recv(void*, struct tcp_pcb*, struct pbuf*, err_t);
+static err_t handle_sent(void*, struct tcp_pcb*, u16_t);
+static err_t handle_poll(void*, struct tcp_pcb*);
+
+static void set_handlers(struct tcp_pcb* pcb, void* arg) {
+    tcp_arg(pcb, arg);
+    tcp_err(pcb, &handle_err);
+    tcp_recv(pcb, &handle_recv);
+    tcp_sent(pcb, &handle_sent);
+    tcp_poll(pcb, &handle_poll, 2);  // Interval: 1s
+}
+
+static TCP* new_TCP(lua_State* ls) {
+    TCP* tcp = lua_newuserdatauv(ls, sizeof(TCP), 0);
+    memset(tcp, 0, sizeof(*tcp));
+    luaL_getmetatable(ls, TCP_name);
+    lua_setmetatable(ls, -2);
+    return tcp;
+}
 
 static inline TCP* check_TCP(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, TCP_name);
@@ -48,11 +79,14 @@ static inline TCP* to_TCP(lua_State* ls, int arg) {
     return lua_touserdata(ls, arg);
 }
 
+// TODO: Also check that the PCB is not a listener
+
 #define lock_and_check_error(ls, tcp) do { \
     mlua_lwip_lock(); \
-    if ((tcp)->err != ERR_OK) { \
+    err_t err = (tcp)->err; \
+    if (err != ERR_OK) { \
         mlua_lwip_unlock(); \
-        return mlua_lwip_push_err((ls), (tcp)->err); \
+        return mlua_lwip_push_err((ls), err); \
     } \
 } while (false)
 
@@ -67,10 +101,18 @@ static int TCP_close(lua_State* ls) {
         tcp->err = ERR_CLSD;
         tcp->pcb = NULL;
     }
-    for (struct pbuf* p = tcp->recv_head; p != NULL;) {
-        p = pbuf_free_header(p, p->len);
+    if (tcp->listening) {
+        for (struct tcp_pcb* pcb = tcp->accept_head; pcb != NULL;
+                pcb = (void*)pcb->connected) {
+            tcp_abort(pcb);
+        }
+        tcp->accept_head = tcp->accept_tail = NULL;
+    } else {
+        for (struct pbuf* p = tcp->recv_head; p != NULL;) {
+            p = pbuf_free_header(p, p->len);
+        }
+        tcp->recv_head = tcp->recv_tail = NULL;
     }
-    tcp->recv_head = tcp->recv_tail = NULL;
     mlua_lwip_unlock();
     mlua_event_disable(ls, &tcp->recv_event);
     mlua_event_disable(ls, &tcp->send_event);
@@ -103,18 +145,69 @@ static int TCP_bind(lua_State* ls) {
     return mlua_lwip_push_result(ls, err);
 }
 
+static err_t handle_accept(void* arg, struct tcp_pcb* pcb, err_t err) {
+    if (arg == NULL || pcb == NULL) return ERR_ARG;
+    TCP* tcp = arg;
+    set_handlers(pcb, (void*)TCP_name);
+    struct tcp_pcb* t = tcp->accept_tail;
+    if (t != NULL) t->connected = (void*)pcb; else tcp->accept_head = pcb;
+    tcp->accept_tail = pcb;
+    tcp_backlog_delayed(pcb);
+    mlua_event_set(&tcp->recv_event);
+    return ERR_OK;
+}
+
 static int TCP_listen(lua_State* ls) {
     TCP* tcp = check_TCP(ls, 1);
-    // TODO
-    (void)tcp;
-    return 0;
+    u8_t backlog = luaL_optinteger(ls, 2, TCP_DEFAULT_LISTEN_BACKLOG);
+    if (!mlua_event_enable(ls, &tcp->recv_event)) {
+        return luaL_error(ls, "TCP: busy");
+    }
+    lock_and_check_error(ls, tcp);
+    err_t err;
+    struct tcp_pcb* pcb = tcp_listen_with_backlog_and_err(tcp->pcb, backlog,
+                                                          &err);
+    if (pcb != NULL) tcp_accept(pcb, &handle_accept);
+    mlua_lwip_unlock();
+    if (pcb != NULL) {
+        tcp->pcb = pcb;
+        tcp->listening = true;
+    } else {
+        mlua_event_disable(ls, &tcp->recv_event);
+    }
+    return mlua_lwip_push_result(ls, err);
+}
+
+static int accept_loop(lua_State* ls, bool timeout) {
+    TCP* tcp = to_TCP(ls, 1);
+    lock_and_check_error(ls, tcp);
+    struct tcp_pcb* pcb = tcp->accept_head;
+    mlua_lwip_unlock();
+    if (pcb == NULL) {
+        if (!timeout) return -1;
+        return mlua_lwip_push_err(ls, ERR_TIMEOUT);
+    }
+
+    // An incoming PCB is available. Wrap it and return it.
+    TCP* atcp = new_TCP(ls);
+    mlua_event_enable(ls, &atcp->recv_event);
+    mlua_event_enable(ls, &atcp->send_event);
+    atcp->connected = true;
+    lock_and_check_error(ls, tcp);
+    atcp->pcb = pcb;
+    tcp_backlog_accepted(pcb);
+    tcp_arg(pcb, atcp);
+    tcp->accept_head = (void*)pcb->connected;
+    pcb->connected = NULL;
+    if (tcp->accept_head == NULL) tcp->accept_tail = NULL;
+    mlua_lwip_unlock();
+    return 1;
 }
 
 static int TCP_accept(lua_State* ls) {
     TCP* tcp = check_TCP(ls, 1);
-    // TODO
-    (void)tcp;
-    return 0;
+    lua_settop(ls, 2);  // Ensure deadline is set
+    return mlua_event_wait(ls, &tcp->recv_event, 0, &accept_loop, 2);
 }
 
 static err_t handle_connected(void* arg, struct tcp_pcb* pcb, err_t err) {
@@ -157,6 +250,7 @@ static int TCP_connect(lua_State* ls) {
     lock_and_check_error(ls, tcp);
     err_t err = tcp_connect(tcp->pcb, addr, port, &handle_connected);
     mlua_lwip_unlock();
+    // TODO: Disable events on error?
     if (err != ERR_OK) return mlua_lwip_push_err(ls, err);
     lua_rotate(ls, 2, 1);
     lua_settop(ls, 2);
@@ -164,14 +258,19 @@ static int TCP_connect(lua_State* ls) {
 }
 
 static err_t handle_sent(void* arg, struct tcp_pcb* pcb, u16_t len) {
-    if (arg == NULL) return tcp_abort(pcb), ERR_ABRT;
+    if (arg == NULL || arg == TCP_name) return tcp_abort(pcb), ERR_ABRT;
     TCP* tcp = arg;
     mlua_event_set(&tcp->send_event);
     return ERR_OK;
 }
 
 static err_t handle_poll(void* arg, struct tcp_pcb* pcb) {
-    if (arg == NULL) return tcp_abort(pcb), ERR_ABRT;
+    if (arg == NULL) {
+        return tcp_abort(pcb), ERR_ABRT;
+    } else if (arg == TCP_name) {
+        // The incoming connection hasn't been accepted yet.
+        return ERR_OK;
+    }
     TCP* tcp = arg;
     mlua_event_set(&tcp->send_event);
     return ERR_OK;
@@ -216,7 +315,7 @@ static int send_loop(lua_State* ls, bool timeout) {
         ++index;
         offset = 0;
     }
-    // TODO: Make the call to tcp_output() optional
+    // TODO: Make the call to tcp_output() optional?
     lock_and_check_error(ls, tcp);
     err_t err = tcp_output(tcp->pcb);
     mlua_lwip_unlock();
@@ -238,6 +337,10 @@ static err_t handle_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p,
     if (arg == NULL) {
         if (p != NULL) pbuf_free(p);
         return tcp_abort(pcb), ERR_ABRT;
+    } else if (arg == TCP_name) {
+        // The incoming connection hasn't been accepted yet. Refuse the data, it
+        // will be re-received later.
+        return ERR_MEM;
     }
     TCP* tcp = arg;
     if (p != NULL) {
@@ -416,21 +519,14 @@ MLUA_SYMBOLS_NOHASH(TCP_syms_nh) = {
 
 static int mod_new(lua_State* ls) {
     u8_t type = luaL_optinteger(ls, 1, IPADDR_TYPE_ANY);
-    TCP* tcp = lua_newuserdatauv(ls, sizeof(TCP), 0);
-    memset(tcp, 0, sizeof(*tcp));
-    luaL_getmetatable(ls, TCP_name);
-    lua_setmetatable(ls, -2);
+    TCP* tcp = new_TCP(ls);
     mlua_lwip_lock();
     tcp->pcb = tcp_new_ip_type(type);
     if (tcp->pcb == NULL) {
         mlua_lwip_unlock();
         return mlua_lwip_push_err(ls, ERR_MEM);
     }
-    tcp_arg(tcp->pcb, tcp);
-    tcp_err(tcp->pcb, &handle_err);
-    tcp_recv(tcp->pcb, &handle_recv);
-    tcp_sent(tcp->pcb, &handle_sent);
-    tcp_poll(tcp->pcb, &handle_poll, 2);  // Interval: 1s
+    set_handlers(tcp->pcb, tcp);
     mlua_lwip_unlock();
     return 1;
 }

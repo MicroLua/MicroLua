@@ -28,7 +28,7 @@ function test_gethostbyname(t)
         local addr, err = dns.gethostbyname(host, typ,
                                             time.deadline(5 * time.sec))
         t:expect(err == nil, "DNS request failed: %s",
-                 function() lwip.err_str(err) end)
+                 function() return lwip.err_str(err) end)
         if err ~= nil then goto continue end
         for i, a in ipairs(want) do
             if type(a) == 'string' then want[i] = lwip.ipaddr_aton(a) end
