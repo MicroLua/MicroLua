@@ -777,10 +777,6 @@ The `Test` class represents a single unit test.
   An expression factory. `expr` uses only the first return value, while `mexpr`
   packs all return values into a [`List`](#mlualist).
 
-- `Test:path() -> string`\
-  Return a path representing the full name of the test. It is composed of the
-  names of the tests in the hierarchy, separated by `/`.
-
 - `Test:cleanup(fn)`\
   Registers the function `fn` to be called after the test completes. Cleanup
   functions are executed in the reverse order of registration.
@@ -791,7 +787,7 @@ The `Test` class represents a single unit test.
 
 - `Test:once(id, fn)`\
   Call `fn` if it hasn't been called in any previous test runs, for the same
-  `id` string. The call state is tracked in a global, per `(test_path, id)`.
+  `id` string. The call state is tracked in a global.
 
 - `Test:repr(v) -> function`\
   Return a function that calls `util.repr(v)` when called.

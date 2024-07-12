@@ -286,15 +286,6 @@ function Test:__init(name, parent)
     end
 end
 
-function Test:path()
-    local path = self.name
-    self:_up(function(t)
-        if t == self or not t._parent then return end
-        path = ('%s/%s'):format(t.name, path)
-    end)
-    return path
-end
-
 function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
 
 function Test:patch(tab, name, value)
@@ -307,7 +298,6 @@ end
 local onces = {}
 
 function Test:once(id, fn)
-    id = ('%s|%s'):format(self:path(), id)
     if onces[id] then return end
     fn()
     onces[id] = true
