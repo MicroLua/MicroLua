@@ -79,7 +79,19 @@ static inline TCP* to_TCP(lua_State* ls, int arg) {
     return lua_touserdata(ls, arg);
 }
 
-// TODO: Also check that the PCB is not a listener
+static TCP* check_listen_TCP(lua_State* ls, int arg) {
+    TCP* tcp = luaL_testudata(ls, arg, TCP_name);
+    luaL_argexpected(ls, tcp != NULL && tcp->listening, arg,
+                     "listener pico.lwip.TCP");
+    return tcp;
+}
+
+static TCP* check_conn_TCP(lua_State* ls, int arg) {
+    TCP* tcp = luaL_testudata(ls, arg, TCP_name);
+    luaL_argexpected(ls, tcp != NULL && !tcp->listening, arg,
+                     "connection pico.lwip.TCP");
+    return tcp;
+}
 
 #define lock_and_check_error(ls, tcp) do { \
     mlua_lwip_lock(); \
@@ -120,7 +132,7 @@ static int TCP_close(lua_State* ls) {
 }
 
 static int TCP_shutdown(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     bool rx = mlua_to_cbool(ls, 2);
     bool tx = mlua_to_cbool(ls, 3);
     lock_and_check_error(ls, tcp);
@@ -205,7 +217,7 @@ static int accept_loop(lua_State* ls, bool timeout) {
 }
 
 static int TCP_accept(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_listen_TCP(ls, 1);
     lua_settop(ls, 2);  // Ensure deadline is set
     return mlua_event_wait(ls, &tcp->recv_event, 0, &accept_loop, 2);
 }
@@ -236,7 +248,7 @@ static int connect_loop(lua_State* ls, bool timeout) {
 }
 
 static int TCP_connect(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
     u16_t port = luaL_checkinteger(ls, 3);
     lua_settop(ls, 4);  // Ensure deadline is set
@@ -250,8 +262,11 @@ static int TCP_connect(lua_State* ls) {
     lock_and_check_error(ls, tcp);
     err_t err = tcp_connect(tcp->pcb, addr, port, &handle_connected);
     mlua_lwip_unlock();
-    // TODO: Disable events on error?
-    if (err != ERR_OK) return mlua_lwip_push_err(ls, err);
+    if (err != ERR_OK) {
+        mlua_event_disable(ls, &tcp->recv_event);
+        mlua_event_disable(ls, &tcp->send_event);
+        return mlua_lwip_push_err(ls, err);
+    }
     lua_rotate(ls, 2, 1);
     lua_settop(ls, 2);
     return mlua_event_wait(ls, &tcp->recv_event, 0, &connect_loop, 2);
@@ -323,7 +338,7 @@ static int send_loop(lua_State* ls, bool timeout) {
 }
 
 static int TCP_send(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     // TODO: Support WRITE_FLAG_MORE
     // TODO: Support !WRITE_FLAG_COPY by waiting for "sent"
     if (!mlua_is_time(ls, -1)) lua_pushnil(ls);  // deadline
@@ -400,7 +415,7 @@ static int recv_loop(lua_State* ls, bool timeout) {
 }
 
 static int TCP_recv(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     lua_Integer len = luaL_checkinteger(ls, 2);
     if (len <= 0) return lua_pushliteral(ls, ""), 1;
     lua_settop(ls, 3);  // Ensure deadline is set
@@ -428,7 +443,7 @@ static int TCP_local_ip(lua_State* ls) {
 }
 
 static int TCP_remote_ip(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     lock_and_check_error(ls, tcp);
     ip_addr_t addr;
     addr = tcp->pcb->remote_ip;
@@ -446,7 +461,7 @@ static int TCP_local_port(lua_State* ls) {
 }
 
 static int TCP_remote_port(lua_State* ls) {
-    TCP* tcp = check_TCP(ls, 1);
+    TCP* tcp = check_conn_TCP(ls, 1);
     lock_and_check_error(ls, tcp);
     lua_Integer port = tcp->pcb->state != LISTEN ? tcp->pcb->remote_port : -1;
     mlua_lwip_unlock();
