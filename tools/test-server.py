@@ -71,7 +71,7 @@ def tcp_listen(port):
     try:
         sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.settimeout(1)
+        sock.settimeout(0.2)
         sock.bind(('::', port))
         sock.listen()
         yield sock
@@ -84,7 +84,7 @@ def tcp_accept(sock):
     conn, addr = sock.accept()
     try:
         conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        sock.settimeout(1)
+        sock.settimeout(0.2)
         yield conn, addr
     finally:
         conn.close()
@@ -95,7 +95,7 @@ def udp_socket(port):
     sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_DGRAM)
     try:
         sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-        sock.settimeout(1)
+        sock.settimeout(0.2)
         sock.bind(('::', port))
         yield sock
     finally:
@@ -151,7 +151,7 @@ class ControlServer(TCPServer):
 
 class ControlHandler(socketserver.StreamRequestHandler):
     disable_nagle_algorithm = True
-    timeout = 1
+    timeout = 0.2
 
     def handle(self):
         with self.server.port() as lport:
@@ -189,12 +189,7 @@ class ControlHandler(socketserver.StreamRequestHandler):
         cmd, *args = line.split(' ')
 
         # Run the command.
-        try:
-            getattr(self, f'cmd_{cmd}')(lport, *args)
-            self.w.write('DONE\n')
-        except Exception:
-            self.w.write('ERROR\n')
-            raise
+        getattr(self, f'cmd_{cmd}')(lport, *args)
 
     def cmd_tcp_connect(self, lport, rport, conns, size, count, interval):
         rport, conns, size = int(rport), int(conns), int(size)
@@ -211,6 +206,20 @@ class ControlHandler(socketserver.StreamRequestHandler):
                 pool.submit(self.handle_tcp_send, conn, pid_base, size, count,
                             interval)
                 pool.submit(self.handle_tcp_recv, conn)
+
+    def cmd_tcp_listen(self, lport, rport, size, count, interval):
+        rport, size = int(rport), int(size)
+        count, interval = int(count), int(interval)
+        src = (self.client_address[0], rport)
+        with tcp_listen(lport) as sock:
+            self.w.write('LISTENING\n')
+            with tcp_accept(sock) as (conn, addr):
+                if addr[:2] != src:
+                    raise RuntimeError(f"Wrong peer: {addr}")
+                with futures.ThreadPoolExecutor(max_workers=2) as pool:
+                    pool.submit(self.handle_tcp_send, conn, 0, size, count,
+                                interval)
+                    pool.submit(self.handle_tcp_recv, conn)
 
     def handle_tcp_send(self, conn, pid_base, size, count, interval):
         try:
@@ -236,80 +245,32 @@ class ControlHandler(socketserver.StreamRequestHandler):
         finally:
             conn.shutdown(socket.SHUT_RD)
 
-    def send_data(self, conn, pid, size):
-        dsize = bytearray([size & 0xff, (size >> 8) & 0xff])
-        data = generate_data(size, pid)
-        conn.sendall(dsize + data)
-
-    def recv_data(self, conn):
-        dsize = recv_all(conn, 2)
-        if len(dsize) < 2: return False
-        size = dsize[0] | (dsize[1] << 8)
-        data = recv_all(conn, size)
-        if len(data) < size: return False
-        pid, ok = verify_data(data)
-        res = 'OK' if ok else 'BAD'
-        self.w.write(f'RECV {size} {pid} {res}\n')
-        return True
-
-    def cmd_tcp_listen_send(self, lport, rport, size, count, interval):
+    def cmd_udp(self, lport, rport, size, count, interval):
         rport, size = int(rport), int(size)
         count, interval = int(count), int(interval)
-        src = (self.client_address[0], rport)
-        with tcp_listen(lport) as sock:
+        with udp_socket(lport) as sock:
             self.w.write('LISTENING\n')
-            with tcp_accept(sock) as (conn, addr):
-                if addr[:2] != src:
-                    raise RuntimeError(f"Wrong peer: {addr}")
-                for pid in range(count):
-                    self.send_data(conn, pid, size)
-                    time.sleep(interval * 1e-6)
+            with futures.ThreadPoolExecutor(max_workers=2) as pool:
+                pool.submit(self.handle_udp_send, sock, rport, size, count,
+                            interval)
+                pool.submit(self.handle_udp_recv, sock, rport)
 
-    def cmd_tcp_listen_recv(self, lport, rport):
-        rport = int(rport)
-        src = (self.client_address[0], rport)
-        with tcp_listen(lport) as sock:
-            self.w.write('LISTENING\n')
-            with tcp_accept(sock) as (conn, addr):
-                if addr[:2] != src:
-                    raise RuntimeError(f"Wrong peer: {addr}")
-                while self.recv_data(conn): pass
-
-    def cmd_udp_send(self, lport, rport, size, count, interval):
-        rport, size = int(rport), int(size)
-        count, interval = int(count), int(interval)
+    def handle_udp_send(self, sock, rport, size, count, interval):
         dest = (self.client_address[0], rport) + self.client_address[2:]
-        with udp_socket(lport) as sock:
-            for pid in range(count):
-                data = generate_data(size, pid)
-                sock.sendto(data, dest)
-                time.sleep(interval * 1e-6)
+        for pid in range(count):
+            data = generate_data(size, pid)
+            sock.sendto(data, dest)
+            time.sleep(interval * 1e-6)
 
-    def cmd_udp_recv(self, lport, rport):
-        rport = int(rport)
+    def handle_udp_recv(self, sock, rport):
         src = (self.client_address[0], rport)
-        with udp_socket(lport) as sock:
-            while True:
-                data, addr = sock.recvfrom(1 << 20)
-                if addr[:2] == src:
-                    size = len(data)
-                    pid, ok = verify_data(data)
-                    res = 'OK' if ok else 'BAD'
-                    self.w.write(f'RECV {size} {pid} {res}\n')
-
-    def cmd_udp_echo(self, lport, rport):
-        rport = int(rport)
-        src = (self.client_address[0], rport)
-        with udp_socket(lport) as sock:
-            while True:
-                data, addr = sock.recvfrom(1 << 20)
-                self.server.out.write(f"Received UDP packet from {addr}\n")
-                if addr[:2] == src:
-                    size = len(data)
-                    pid, ok = verify_data(data)
-                    res = 'OK' if ok else 'BAD'
-                    self.w.write(f'RECV {size} {pid} {res}\n')
-                    sock.sendto(data, addr)
+        while True:
+            data, addr = sock.recvfrom(1 << 20)
+            if addr[:2] == src:
+                size = len(data)
+                pid, ok = verify_data(data)
+                res = 'OK' if ok else 'BAD'
+                self.w.write(f'RECV {size} {pid} {res}\n')
 
 
 range_re = re.compile('^([0-9]+)-([0-9]+)$')

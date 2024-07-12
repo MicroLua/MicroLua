@@ -137,7 +137,7 @@ function run_send_test(t, atype, lport, size, count, interval)
     t:expect(t.expr(sock):local_port()):eq(lport)
 
     local dl = time.deadline(count * interval + 1000 * time.msec)
-    ctrl:send(dl, 'tcp_listen_recv %s\n', lport)
+    ctrl:send(dl, 'tcp_listen %s 0 0 0\n', lport)
     t:assert(ctrl:recv(dl)):label("listening"):eq('LISTENING\n')
 
     local received = testing_lwip.Set()
@@ -198,7 +198,7 @@ function run_recv_test(t, atype, lport, size, count, interval)
     lwip.assert(sock:bind(nil, lport))
 
     local dl = time.deadline(count * interval + 1000 * time.msec)
-    ctrl:send(dl, 'tcp_listen_send %s %s %s %s\n', lport, size, count, interval)
+    ctrl:send(dl, 'tcp_listen %s %s %s %s\n', lport, size, count, interval)
     t:assert(ctrl:recv(dl)):label("listening"):eq('LISTENING\n')
 
     lwip.assert(sock:connect(ctrl.addr, ctrl.port))
@@ -217,7 +217,6 @@ function run_recv_test(t, atype, lport, size, count, interval)
         end
     end))
 
-    ctrl:wait_close(t, dl)
     receiver:join()
     t:expect(#received):label("received"):eq(count)
 end

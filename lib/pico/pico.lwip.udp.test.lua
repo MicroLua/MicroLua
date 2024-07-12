@@ -33,7 +33,7 @@ function test_send(t)
         {"send", 'send', nil, {1234}, 64, 10, 10 * time.msec},
         {"small", 'sendto', nil, {1234}, 64, 10, 10 * time.msec},
         {"large", 'sendto', nil, {1234}, 1200, 10, 50 * time.msec},
-        {"many", 'sendto', nil, {1234}, 64, 100, 10 * time.msec},
+        {"many", 'sendto', nil, {1234}, 64, 100, 5 * time.msec},
         {"fast", 'sendto', nil, {1234}, 8, 10, 1 * time.usec},
         {"multi", 'sendto', nil, {1234, 5678, 910}, 64, 10, 10 * time.msec},
         {"IPv4", 'sendto', testing_lwip.IPV4, {1234}, 64, 10, 10 * time.msec},
@@ -63,6 +63,9 @@ function run_send_test(t, fname, atype, lport, size, count, interval)
     t:expect(t.expr(sock):remote_port()):eq(ctrl.port)
 
     local dl = time.deadline(count * interval + 1000 * time.msec)
+    ctrl:send(dl, 'udp %s 0 0 0\n', lport)
+    t:assert(ctrl:recv(dl)):label("listening"):eq('LISTENING\n')
+
     local received = testing_lwip.Set()
     local receiver<close> = thread.start(log_error(function()
         while true do
@@ -74,7 +77,6 @@ function run_send_test(t, fname, atype, lport, size, count, interval)
             if received:add(pid) == count then break end
         end
     end))
-    ctrl:send(dl, 'udp_recv %s\n', lport)
 
     local send, to = sock[fname], fname == 'sendto'
     local sender<close> = thread.start(log_error(function()
@@ -90,7 +92,6 @@ function run_send_test(t, fname, atype, lport, size, count, interval)
         end
     end))
 
-    sender:join()
     receiver:join()
     t:expect(#received):label("received"):eq(count)
 end
@@ -100,7 +101,7 @@ function test_recv(t)
         {"recv", 'recv', nil, {1234}, 64, 10, 10 * time.msec},
         {"small", 'recvfrom', nil, {1234}, 64, 10, 10 * time.msec},
         {"large", 'recvfrom', nil, {1234}, 1200, 10, 10 * time.msec},
-        {"many", 'recvfrom', nil, {1234}, 64, 100, 10 * time.msec},
+        {"many", 'recvfrom', nil, {1234}, 64, 100, 5 * time.msec},
         {"fast", 'recvfrom', nil, {1234}, 64, 10, 1 * time.usec},
         {"multi", 'recvfrom', nil, {1234, 5678, 910}, 64, 10, 10 * time.msec},
         {"IPv4", 'recvfrom', testing_lwip.IPV4, {1234}, 64, 10, 10 * time.msec},
@@ -140,8 +141,8 @@ function run_recv_test(t, fname, atype, lport, size, count, interval)
         end
     end))
 
-    ctrl:send(dl, 'udp_send %s %s %s %s\n', lport, size, count, interval)
-    ctrl:wait_close(t, dl)
+    ctrl:send(dl, 'udp %s %s %s %s\n', lport, size, count, interval)
+
     receiver:join()
     t:expect(#received):label("received"):eq(count)
 end
