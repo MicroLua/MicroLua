@@ -60,7 +60,7 @@ ip_addr_t* mlua_new_IPAddr(lua_State* ls) {
 }
 
 static int IPAddr_type(lua_State* ls) {
-    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    ip_addr_t const* __attribute__((unused)) addr = mlua_check_IPAddr(ls, 1);
     return lua_pushinteger(ls, IP_GET_TYPE(addr)), 1;
 }
 

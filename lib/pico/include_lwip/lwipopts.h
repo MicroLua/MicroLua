@@ -116,6 +116,7 @@
 #ifndef LWIP_STATS
 #define LWIP_STATS                  0
 #endif
+#if LWIP_STATS
 #define LINK_STATS                  LWIP_LINK_STATS
 #define ETHARP_STATS                LWIP_ETHARP_STATS
 #define IPFRAG_STATS                LWIP_IPFRAG_STATS
@@ -133,5 +134,6 @@
 #define MLD6_STATS                  LWIP_MLD6_STATS
 #define ND6_STATS                   LWIP_ND6_STATS
 #define MIB2_STATS                  LWIP_MIB2_STATS
+#endif  // LWIP_STATS
 
 #endif
