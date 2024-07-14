@@ -115,11 +115,11 @@ target_link_libraries(mlua_test-ALL_00_setup INTERFACE
 
 mlua_add_lua_modules(mlua_test-net_10_setup 10_setup.test.lua)
 target_link_libraries(mlua_test-net_10_setup INTERFACE
+    mlua_mod_lwip
     mlua_mod_mlua.time
     mlua_mod_pico.cyw43
     mlua_mod_pico.cyw43.util
     mlua_mod_pico.cyw43.wifi
-    mlua_mod_pico.lwip
 )
 
 mlua_add_c_module(mlua_mod_hardware.adc hardware.adc.c)
@@ -506,6 +506,99 @@ target_link_libraries(mlua_test_hardware.xosc INTERFACE
     mlua_mod_hardware.xosc
 )
 
+mlua_add_c_module(mlua_mod_lwip lwip.c)
+target_compile_definitions(mlua_mod_lwip_headers INTERFACE
+    CYW43_LWIP=1
+)
+target_include_directories(mlua_mod_lwip_headers INTERFACE
+    include_lwip)
+target_link_libraries(mlua_mod_lwip INTERFACE
+    pico_lwip_core
+    pico_lwip_nosys
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip lwip.test.lua)
+target_link_libraries(mlua_test-net_lwip INTERFACE
+    mlua_mod_lwip
+)
+
+mlua_add_c_module(mlua_mod_lwip.dns lwip.dns.c)
+target_compile_definitions(mlua_mod_lwip.dns_headers INTERFACE
+    LWIP_DNS=1
+    LWIP_UDP=1
+)
+target_link_libraries(mlua_mod_lwip.dns INTERFACE
+    mlua_mod_lwip
+    mlua_mod_mlua.int64
+    mlua_mod_mlua.thread
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.dns lwip.dns.test.lua)
+target_link_libraries(mlua_test-net_lwip.dns INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.dns
+    mlua_mod_mlua.time
+    mlua_mod_table
+)
+
+mlua_add_c_module(mlua_mod_lwip.pbuf lwip.pbuf.c)
+target_link_libraries(mlua_mod_lwip.pbuf INTERFACE
+    mlua_mod_lwip
+)
+
+mlua_add_c_module(mlua_mod_lwip.stats lwip.stats.c)
+target_compile_definitions(mlua_mod_lwip.stats_headers INTERFACE
+    LWIP_STATS=1
+)
+target_link_libraries(mlua_mod_lwip.stats INTERFACE
+    mlua_mod_lwip
+)
+
+mlua_add_c_module(mlua_mod_lwip.tcp lwip.tcp.c)
+target_compile_definitions(mlua_mod_lwip.tcp_headers INTERFACE
+    LWIP_TCP=1
+)
+target_link_libraries(mlua_mod_lwip.tcp INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.pbuf
+    mlua_mod_mlua.int64
+    mlua_mod_mlua.thread
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.tcp lwip.tcp.test.lua)
+target_link_libraries(mlua_test-net_lwip.tcp INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.tcp
+    mlua_mod_mlua.mem
+    mlua_mod_mlua.testing.lwip
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.thread.group
+    mlua_mod_mlua.time
+    mlua_mod_table
+)
+
+mlua_add_c_module(mlua_mod_lwip.udp lwip.udp.c)
+target_compile_definitions(mlua_mod_lwip.udp_headers INTERFACE
+    LWIP_UDP=1
+)
+target_link_libraries(mlua_mod_lwip.udp INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.pbuf
+    mlua_mod_mlua.thread
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.udp lwip.udp.test.lua)
+target_link_libraries(mlua_test-net_lwip.udp INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.pbuf
+    mlua_mod_lwip.udp
+    mlua_mod_mlua.testing.lwip
+    mlua_mod_mlua.thread
+    mlua_mod_mlua.thread.group
+    mlua_mod_mlua.time
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_mlua.block.flash mlua.block.flash.c)
 target_include_directories(mlua_mod_mlua.block.flash_headers INTERFACE
     include_mlua.block.flash)
@@ -572,15 +665,15 @@ target_link_libraries(mlua_mod_mlua.testing.i2c INTERFACE
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.lwip mlua.testing.lwip.lua)
 target_link_libraries(mlua_mod_mlua.testing.lwip INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.dns
+    mlua_mod_lwip.stats
+    mlua_mod_lwip.tcp
     mlua_mod_mlua.io
     mlua_mod_mlua.mem
     mlua_mod_mlua.oo
     mlua_mod_mlua.testing
     mlua_mod_mlua.time
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.dns
-    mlua_mod_pico.lwip.stats
-    mlua_mod_pico.lwip.tcp
     mlua_mod_string
     mlua_mod_table
 )
@@ -691,99 +784,6 @@ mlua_add_lua_modules(mlua_test_pico.i2c_slave pico.i2c_slave.test.lua)
 target_link_libraries(mlua_test_pico.i2c_slave INTERFACE
     mlua_mod_mlua.testing.i2c
     mlua_mod_pico.i2c_slave
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip pico.lwip.c)
-target_compile_definitions(mlua_mod_pico.lwip_headers INTERFACE
-    CYW43_LWIP=1
-)
-target_include_directories(mlua_mod_pico.lwip_headers INTERFACE
-    include_pico.lwip)
-target_link_libraries(mlua_mod_pico.lwip INTERFACE
-    pico_lwip_core
-    pico_lwip_nosys
-)
-
-mlua_add_lua_modules(mlua_test-net_pico.lwip pico.lwip.test.lua)
-target_link_libraries(mlua_test-net_pico.lwip INTERFACE
-    mlua_mod_pico.lwip
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip.dns pico.lwip.dns.c)
-target_compile_definitions(mlua_mod_pico.lwip.dns_headers INTERFACE
-    LWIP_DNS=1
-    LWIP_UDP=1
-)
-target_link_libraries(mlua_mod_pico.lwip.dns INTERFACE
-    mlua_mod_mlua.int64
-    mlua_mod_mlua.thread
-    mlua_mod_pico.lwip
-)
-
-mlua_add_lua_modules(mlua_test-net_pico.lwip.dns pico.lwip.dns.test.lua)
-target_link_libraries(mlua_test-net_pico.lwip.dns INTERFACE
-    mlua_mod_mlua.time
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.dns
-    mlua_mod_table
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip.pbuf pico.lwip.pbuf.c)
-target_link_libraries(mlua_mod_pico.lwip.pbuf INTERFACE
-    mlua_mod_pico.lwip
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip.stats pico.lwip.stats.c)
-target_compile_definitions(mlua_mod_pico.lwip.stats_headers INTERFACE
-    LWIP_STATS=1
-)
-target_link_libraries(mlua_mod_pico.lwip.stats INTERFACE
-    mlua_mod_pico.lwip
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip.tcp pico.lwip.tcp.c)
-target_compile_definitions(mlua_mod_pico.lwip.tcp_headers INTERFACE
-    LWIP_TCP=1
-)
-target_link_libraries(mlua_mod_pico.lwip.tcp INTERFACE
-    mlua_mod_mlua.int64
-    mlua_mod_mlua.thread
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.pbuf
-)
-
-mlua_add_lua_modules(mlua_test-net_pico.lwip.tcp pico.lwip.tcp.test.lua)
-target_link_libraries(mlua_test-net_pico.lwip.tcp INTERFACE
-    mlua_mod_mlua.mem
-    mlua_mod_mlua.testing.lwip
-    mlua_mod_mlua.thread
-    mlua_mod_mlua.thread.group
-    mlua_mod_mlua.time
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.tcp
-    mlua_mod_table
-)
-
-mlua_add_c_module(mlua_mod_pico.lwip.udp pico.lwip.udp.c)
-target_compile_definitions(mlua_mod_pico.lwip.udp_headers INTERFACE
-    LWIP_UDP=1
-)
-target_link_libraries(mlua_mod_pico.lwip.udp INTERFACE
-    mlua_mod_mlua.thread
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.pbuf
-)
-
-mlua_add_lua_modules(mlua_test-net_pico.lwip.udp pico.lwip.udp.test.lua)
-target_link_libraries(mlua_test-net_pico.lwip.udp INTERFACE
-    mlua_mod_mlua.testing.lwip
-    mlua_mod_mlua.thread
-    mlua_mod_mlua.thread.group
-    mlua_mod_mlua.time
-    mlua_mod_pico.lwip
-    mlua_mod_pico.lwip.pbuf
-    mlua_mod_pico.lwip.udp
-    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_pico.multicore pico.multicore.c)

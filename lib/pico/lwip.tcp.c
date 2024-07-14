@@ -1,11 +1,11 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "lwip/pbuf.h"
-#include "lwip/tcp.h"
-
 #include <stdbool.h>
 #include <string.h>
+
+#include "lwip/pbuf.h"
+#include "lwip/tcp.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -15,7 +15,7 @@
 #include "mlua/thread.h"
 #include "mlua/util.h"
 
-static char const TCP_name[] = "pico.lwip.TCP";
+static char const TCP_name[] = "lwip.TCP";
 
 typedef struct TCP {
     struct tcp_pcb* pcb;
@@ -82,14 +82,14 @@ static inline TCP* to_TCP(lua_State* ls, int arg) {
 static TCP* check_listen_TCP(lua_State* ls, int arg) {
     TCP* tcp = luaL_testudata(ls, arg, TCP_name);
     luaL_argexpected(ls, tcp != NULL && tcp->listening, arg,
-                     "listener pico.lwip.TCP");
+                     "listener lwip.TCP");
     return tcp;
 }
 
 static TCP* check_conn_TCP(lua_State* ls, int arg) {
     TCP* tcp = luaL_testudata(ls, arg, TCP_name);
     luaL_argexpected(ls, tcp != NULL && !tcp->listening, arg,
-                     "connection pico.lwip.TCP");
+                     "connection lwip.TCP");
     return tcp;
 }
 
@@ -228,7 +228,7 @@ static err_t handle_connected(void* arg, struct tcp_pcb* pcb, err_t err) {
     if (err != ERR_OK) {
         // The documentation doesn't say if the PCB has been freed or not. It
         // does say that this never happens.
-        mlua_abort("BUG: pico.lwip.tcp: handle_connected: err != ERR_OK\n");
+        mlua_abort("BUG: lwip.tcp: handle_connected: err != ERR_OK\n");
     }
     tcp->connected = true;
     mlua_event_set(&tcp->recv_event);
@@ -372,7 +372,7 @@ static err_t handle_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p,
     } else {
         // The documentation doesn't say if the PCB has been freed or not. From
         // the sources, this should never happen.
-        mlua_abort("BUG: pico.lwip.tcp: handle_recv: err != ERR_OK");
+        mlua_abort("BUG: lwip.tcp: handle_recv: err != ERR_OK");
     }
     mlua_event_set(&tcp->recv_event);
     return ERR_OK;
@@ -556,11 +556,11 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(new, mod_),
 };
 
-MLUA_OPEN_MODULE(pico.lwip.tcp) {
+MLUA_OPEN_MODULE(lwip.tcp) {
     mlua_thread_require(ls);
     mlua_require(ls, "mlua.int64", false);
-    mlua_require(ls, "pico.lwip", false);
-    mlua_require(ls, "pico.lwip.pbuf", false);
+    mlua_require(ls, "lwip", false);
+    mlua_require(ls, "lwip.pbuf", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

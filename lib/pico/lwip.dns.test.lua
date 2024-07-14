@@ -3,9 +3,9 @@
 
 _ENV = module(...)
 
+local lwip = require 'lwip'
+local dns = require 'lwip.dns'
 local time = require 'mlua.time'
-local lwip = require 'pico.lwip'
-local dns = require 'pico.lwip.dns'
 local table = require 'table'
 
 function set_up(t)

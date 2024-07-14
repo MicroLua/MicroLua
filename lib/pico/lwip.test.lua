@@ -3,7 +3,7 @@
 
 _ENV = module(...)
 
-local lwip = require 'pico.lwip'
+local lwip = require 'lwip'
 
 function set_up(t)
     t:printf("lwIP: %s, IPv4: %s, IPv6: %s\n", lwip.VERSION_STRING, lwip.IPV4,

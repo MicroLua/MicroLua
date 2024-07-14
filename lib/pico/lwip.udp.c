@@ -1,9 +1,9 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "lwip/udp.h"
-
 #include <stdbool.h>
+
+#include "lwip/udp.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -43,7 +43,7 @@ static void handle_recv(void* arg, struct udp_pcb* pcb, struct pbuf* p,
     }
 }
 
-static char const UDP_name[] = "pico.lwip.UDP";
+static char const UDP_name[] = "lwip.UDP";
 
 static inline UDP* check_UDP(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, UDP_name);
@@ -294,10 +294,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(new, mod_),
 };
 
-MLUA_OPEN_MODULE(pico.lwip.udp) {
+MLUA_OPEN_MODULE(lwip.udp) {
     mlua_thread_require(ls);
-    mlua_require(ls, "pico.lwip", false);
-    mlua_require(ls, "pico.lwip.pbuf", false);
+    mlua_require(ls, "lwip", false);
+    mlua_require(ls, "lwip.pbuf", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

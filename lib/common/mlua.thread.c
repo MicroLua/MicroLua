@@ -346,6 +346,7 @@ static int Thread_join_1(lua_State* ls, int status, lua_KContext ctx) {
 }
 
 static int Thread_join_2(lua_State* ls, lua_State* self) {
+    // TODO: Return results of thread function to caller
     if (lua_isnil(self, FP_NEXT - 1)) return 0;
     lua_pushvalue(self, FP_NEXT - 1);
     lua_xmove(self, ls, 1);

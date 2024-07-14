@@ -3,16 +3,16 @@
 
 _ENV = module(...)
 
+local lwip = require 'lwip'
+local dns = require 'lwip.dns'
+local stats = require 'lwip.stats'
+local tcp = require 'lwip.tcp'
 local config = require 'mlua.config'
 local io = require 'mlua.io'
 local mem = require 'mlua.mem'
 local oo = require 'mlua.oo'
 local testing = require 'mlua.testing'
 local time = require 'mlua.time'
-local lwip = require 'pico.lwip'
-local dns = require 'pico.lwip.dns'
-local stats = require 'pico.lwip.stats'
-local tcp = require 'pico.lwip.tcp'
 local string = require 'string'
 local table = require 'table'
 

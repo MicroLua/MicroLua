@@ -1,11 +1,10 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "lwip/dns.h"
-
 #include <stdbool.h>
 #include <string.h>
 
+#include "lwip/dns.h"
 #include "pico/platform.h"
 
 #include "lua.h"
@@ -150,10 +149,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(gethostbyname, mod_),
 };
 
-MLUA_OPEN_MODULE(pico.lwip.dns) {
+MLUA_OPEN_MODULE(lwip.dns) {
     mlua_thread_require(ls);
+    mlua_require(ls, "lwip", false);
     mlua_require(ls, "mlua.int64", false);
-    mlua_require(ls, "pico.lwip", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

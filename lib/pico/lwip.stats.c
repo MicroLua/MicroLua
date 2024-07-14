@@ -329,8 +329,8 @@ MLUA_SYMBOLS(module_syms) = {
 #endif
 };
 
-MLUA_OPEN_MODULE(pico.lwip.stats) {
-    mlua_require(ls, "pico.lwip", false);
+MLUA_OPEN_MODULE(lwip.stats) {
+    mlua_require(ls, "lwip", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

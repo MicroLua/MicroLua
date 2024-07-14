@@ -1,9 +1,9 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "lwip/pbuf.h"
-
 #include <string.h>
+
+#include "lwip/pbuf.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -13,7 +13,7 @@
 
 // TODO: Add unit tests
 
-char const mlua_PBUF_name[] = "pico.lwip.PBUF";
+char const mlua_PBUF_name[] = "lwip.PBUF";
 
 struct pbuf** mlua_new_PBUF(lua_State* ls) {
     struct pbuf** pb = lua_newuserdatauv(ls, sizeof(struct pbuf*), 0);
@@ -137,8 +137,8 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(alloc, mod_),
 };
 
-MLUA_OPEN_MODULE(pico.lwip.pbuf) {
-    mlua_require(ls, "pico.lwip", false);
+MLUA_OPEN_MODULE(lwip.pbuf) {
+    mlua_require(ls, "lwip", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

@@ -3,13 +3,13 @@
 
 _ENV = module(...)
 
+local lwip = require 'lwip'
+local pbuf = require 'lwip.pbuf'
+local udp = require 'lwip.udp'
 local testing_lwip = require 'mlua.testing.lwip'
 local thread = require 'mlua.thread'
 local group = require 'mlua.thread.group'
 local time = require 'mlua.time'
-local lwip = require 'pico.lwip'
-local pbuf = require 'pico.lwip.pbuf'
-local udp = require 'pico.lwip.udp'
 local table = require 'table'
 
 function test_accessors(t)

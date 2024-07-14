@@ -3,12 +3,12 @@
 
 _ENV = module(...)
 
+local lwip = require 'lwip'
 local config = require 'mlua.config'
 local time = require 'mlua.time'
 local cyw43 = require 'pico.cyw43'
 local util = require 'pico.cyw43.util'
 local wifi = require 'pico.cyw43.wifi'
-local lwip = require 'pico.lwip'
 
 -- TOOD: Abort all tests if initialization fails
 
