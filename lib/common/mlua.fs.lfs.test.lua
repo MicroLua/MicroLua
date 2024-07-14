@@ -21,6 +21,10 @@ local function write_file(path, data)
 end
 
 function set_up(t)
+    local v, dv = lfs.VERSION, lfs.DISK_VERSION
+    t:printf("littlefs: %s.%s, disk: %s.%s\n", (v >> 16) & 0xffff, v & 0xffff,
+             (dv >> 16) & 0xffff, dv & 0xffff)
+
     -- Create a filesystem in RAM.
     dev = block_mem.new(mem.alloc(32 << 10, 256, 256))
     local size = dev:size()
