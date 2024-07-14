@@ -4,3 +4,6 @@
 [submodule "lua"]
     path = ext/lua
     url = https://github.com/lua/lua.git
+[submodule "lwip"]
+    path = ext/lwip
+    url = https://github.com/lwip-tcpip/lwip.git

@@ -4,6 +4,7 @@
 message("MLUA_PATH is ${MLUA_PATH} (${MLUA_PATH_SRC})")
 set(MLUA_LITTLEFS_SOURCE_DIR "${MLUA_PATH}/ext/littlefs" CACHE INTERNAL "")
 set(MLUA_LUA_SOURCE_DIR "${MLUA_PATH}/ext/lua" CACHE INTERNAL "")
+set(MLUA_LWIP_SOURCE_DIR "${MLUA_PATH}/ext/lwip" CACHE INTERNAL "")
 
 function(mlua_set NAME DEFAULT)
     set(src "from cache")

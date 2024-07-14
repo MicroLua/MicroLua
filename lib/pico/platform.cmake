@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 macro(mlua_pre_project)
+    set(PICO_LWIP_PATH "${MLUA_LWIP_SOURCE_DIR}")
     include("${MLUA_PATH}/lib/pico/pico_sdk_import.cmake")
 endmacro()
 
