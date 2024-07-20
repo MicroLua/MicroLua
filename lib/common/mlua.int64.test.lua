@@ -376,7 +376,7 @@ end
 
 function test_concat(t)
     if not pcall(function() return 1 .. 2 end) then
-        t:skip("Automatic number => string conversions disabled")
+        t:skip("automatic number => string conversions disabled")
     end
 
     local values = {-1, 3, -7, 13, -1234, 2468}

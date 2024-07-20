@@ -51,6 +51,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
     target_compile_definitions("${TARGET}" PRIVATE
         LWIP_DHCP=1
         LWIP_ETHARP_STATS=0
+        LWIP_HAVE_LOOPIF=1
         LWIP_ICMP_STATS=0
         LWIP_ICMP6_STATS=0
         LWIP_IGMP_STATS=0
@@ -61,6 +62,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_IPV4=1
         LWIP_IPV6=1
         LWIP_LINK_STATS=0
+        LWIP_LOOPIF_MULTICAST=1
         LWIP_MEM_SIZE=20000
         LWIP_MEM_STATS=1
         LWIP_MEMP_NUM_TCP_PCB=10
@@ -68,6 +70,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_MIB2_STATS=0
         LWIP_MLD6_STATS=0
         LWIP_ND6_STATS=0
+        LWIP_NETIF_LOOPBACK=1
         LWIP_PBUF_POOL_SIZE=24
         LWIP_STATS_DISPLAY=1
         LWIP_TCP_STATS=0
@@ -116,6 +119,8 @@ target_link_libraries(mlua_test-ALL_00_setup INTERFACE
 mlua_add_lua_modules(mlua_test-net_10_setup 10_setup.test.lua)
 target_link_libraries(mlua_test-net_10_setup INTERFACE
     mlua_mod_lwip
+    mlua_mod_lwip.ip6
+    mlua_mod_lwip.netif
     mlua_mod_mlua.time
     mlua_mod_pico.cyw43
     mlua_mod_pico.cyw43.util
@@ -555,6 +560,21 @@ target_compile_definitions(mlua_mod_lwip.ip6_headers INTERFACE
 )
 target_link_libraries(mlua_mod_lwip.ip6 INTERFACE
     mlua_mod_lwip
+)
+
+mlua_add_c_module(mlua_mod_lwip.netif lwip.netif.c)
+target_link_libraries(mlua_mod_lwip.netif INTERFACE
+    mlua_mod_lwip
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.netif lwip.netif.test.lua)
+target_link_libraries(mlua_test-net_lwip.netif INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.ip4
+    mlua_mod_lwip.ip6
+    mlua_mod_lwip.netif
+    mlua_mod_mlua.io
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_lwip.pbuf lwip.pbuf.c)

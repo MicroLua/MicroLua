@@ -1,6 +1,7 @@
 // Copyright 2024 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
+#include <ctype.h>
 #include <string.h>
 
 #include "lwip/err.h"
@@ -12,9 +13,6 @@
 #include "mlua/lwip.h"
 #include "mlua/module.h"
 #include "mlua/util.h"
-
-// TODO: Set up lwIP as ext/lwip, use 2.2.0 or head, move to mlua.lwip
-// TODO: Look at <https://github.com/cesanta/mongoose>
 
 int mlua_lwip_push_err(lua_State* ls, err_t err) {
     luaL_pushfail(ls);
@@ -69,6 +67,12 @@ static int IPAddr_is_any(lua_State* ls) {
     return lua_pushboolean(ls, ip_addr_isany(addr)), 1;
 }
 
+static int IPAddr_is_broadcast(lua_State* ls) {
+    ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
+    struct netif* netif = mlua_check_NetIf(ls, 2);
+    return lua_pushboolean(ls, ip_addr_isbroadcast(addr, netif)), 1;
+}
+
 static int IPAddr_is_multicast(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
     return lua_pushboolean(ls, ip_addr_ismulticast(addr)), 1;
@@ -101,6 +105,8 @@ static int IPAddr___tostring(lua_State* ls) {
             return luaL_error(ls, "buffer too small");
         }
     }
+    size_t len = strlen(res);
+    for (size_t i = 0; i < len; ++i) res[i] = tolower(res[i]);
     luaL_addsize(&buf, strlen(res));
     return luaL_pushresult(&buf), 1;
 }
@@ -108,6 +114,7 @@ static int IPAddr___tostring(lua_State* ls) {
 MLUA_SYMBOLS(IPAddr_syms) = {
     MLUA_SYM_F(type, IPAddr_),
     MLUA_SYM_F(is_any, IPAddr_),
+    MLUA_SYM_F(is_broadcast, IPAddr_),
     MLUA_SYM_F(is_multicast, IPAddr_),
     MLUA_SYM_F(is_loopback, IPAddr_),
     MLUA_SYM_F(is_linklocal, IPAddr_),

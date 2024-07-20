@@ -17,14 +17,12 @@ end
 
 function test_gethostbyname(t)
     for _, test in ipairs{
-        {'dns.google', lwip.IPV4 and dns.ADDRTYPE_IPV4 or false,
-         {'8.8.8.8', '8.8.4.4'}},
-        {'dns.google', lwip.IPV6 and dns.ADDRTYPE_IPV6 or false,
+        {'dns.google', dns.ADDRTYPE_IPV4, {'8.8.8.8', '8.8.4.4'}},
+        {'dns.google', dns.ADDRTYPE_IPV6,
          {'2001:4860:4860::8888', '2001:4860:4860::8844'}},
         {'this.is.invalid', nil, {false}},
     } do
         local host, typ, want = table.unpack(test)
-        if typ == false then goto continue end
         local addr, err = dns.gethostbyname(host, typ,
                                             time.deadline(5 * time.sec))
         t:expect(err == nil, "DNS request failed: %s",

@@ -68,7 +68,14 @@ struct pbuf** mlua_new_PBUF(lua_State* ls);
 // entry is not a PBUF userdata.
 static inline struct pbuf* mlua_check_PBUF(lua_State* ls, int arg) {
     extern char const mlua_PBUF_name[];
-    return *((struct pbuf**)luaL_checkudata(ls, arg, mlua_PBUF_name));
+    return *(struct pbuf**)luaL_checkudata(ls, arg, mlua_PBUF_name);
+}
+
+// Get a NetIf value at the given stack index, or raise an error if the stack
+// entry is not a NetIf userdata.
+static inline struct netif* mlua_check_NetIf(lua_State* ls, int arg) {
+    extern char const mlua_NetIf_name[];
+    return *(struct netif**)luaL_checkudata(ls, arg, mlua_NetIf_name);
 }
 
 #ifdef __cplusplus
