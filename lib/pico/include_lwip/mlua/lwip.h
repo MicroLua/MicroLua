@@ -52,6 +52,15 @@ static inline ip_addr_t* mlua_check_IPAddr4(lua_State* ls, int arg) {
     return addr;
 }
 
+// Get an IPv6 IPAddr value at the given stack index, or raise an error if the
+// stack entry is not an IPv6 IPAddr userdata.
+static inline ip_addr_t* mlua_check_IPAddr6(lua_State* ls, int arg) {
+    extern char const mlua_IPAddr_name[];
+    ip_addr_t* addr = luaL_checkudata(ls, arg, mlua_IPAddr_name);
+    luaL_argexpected(ls, IP_IS_V6(addr), arg, "IPv6 address");
+    return addr;
+}
+
 // Push a new PBUF value.
 struct pbuf** mlua_new_PBUF(lua_State* ls);
 

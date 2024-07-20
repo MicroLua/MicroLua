@@ -549,6 +549,14 @@ target_link_libraries(mlua_mod_lwip.ip4 INTERFACE
     mlua_mod_lwip
 )
 
+mlua_add_c_module(mlua_mod_lwip.ip6 lwip.ip6.c)
+target_compile_definitions(mlua_mod_lwip.ip6_headers INTERFACE
+    LWIP_IPV6=1
+)
+target_link_libraries(mlua_mod_lwip.ip6 INTERFACE
+    mlua_mod_lwip
+)
+
 mlua_add_c_module(mlua_mod_lwip.pbuf lwip.pbuf.c)
 target_link_libraries(mlua_mod_lwip.pbuf INTERFACE
     mlua_mod_lwip
