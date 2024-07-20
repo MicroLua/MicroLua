@@ -26,9 +26,8 @@ local function has_non_linklocal_addr(nif)
     end
 end
 
-local function wait_non_linklocal_addr(nif, timeout)
-    local dl = time.deadline(timeout)
-    while time.compare(time.ticks(), dl) < 0 do
+local function wait_non_linklocal_addr(nif, deadline)
+    while time.compare(time.ticks(), deadline) < 0 do
         if has_non_linklocal_addr(nif) then return true end
     end
 end
@@ -44,11 +43,11 @@ function set_up(t)
     end)
     t:once(module_name .. '|wifi', function()
         wifi.set_up(cyw43.ITF_STA, true, cyw43.COUNTRY_WORLDWIDE)
+        local dl = time.deadline(30 * time.sec)
         local ok, err = util.wifi_connect(
-            config.WIFI_SSID, config.WIFI_PASSWORD, cyw43.AUTH_WPA2_AES_PSK,
-            30 * time.sec)
+            config.WIFI_SSID, config.WIFI_PASSWORD, cyw43.AUTH_WPA2_AES_PSK, dl)
         t:assert(ok, "failed to connect: %s", err)
-        t:assert(wait_non_linklocal_addr(netif.default(), 10 * time.sec),
+        t:assert(wait_non_linklocal_addr(netif.default(), dl),
                  "no non-linklocal IPv6 address")
     end)
 end

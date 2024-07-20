@@ -8,8 +8,7 @@ local pico = require 'pico'
 local cyw43 = require 'pico.cyw43'
 local wifi = require 'pico.cyw43.wifi'
 
-function wifi_connect(ssid, password, auth, timeout)
-    local deadline = time.deadline(timeout)
+function wifi_connect(ssid, password, auth, deadline)
     local status = cyw43.LINK_NONET
     while true do
         if status == cyw43.LINK_NONET then
@@ -22,6 +21,6 @@ function wifi_connect(ssid, password, auth, timeout)
         elseif time.compare(time.ticks(), deadline) >= 0 then
             return nil, "connection timed out"
         end
-        time.sleep_for(200000)
+        time.sleep_for(200 * time.msec)
     end
 end
