@@ -541,6 +541,14 @@ target_link_libraries(mlua_test-net_lwip.dns INTERFACE
     mlua_mod_table
 )
 
+mlua_add_c_module(mlua_mod_lwip.ip4 lwip.ip4.c)
+target_compile_definitions(mlua_mod_lwip.ip4_headers INTERFACE
+    LWIP_IPV4=1
+)
+target_link_libraries(mlua_mod_lwip.ip4 INTERFACE
+    mlua_mod_lwip
+)
+
 mlua_add_c_module(mlua_mod_lwip.pbuf lwip.pbuf.c)
 target_link_libraries(mlua_mod_lwip.pbuf INTERFACE
     mlua_mod_lwip

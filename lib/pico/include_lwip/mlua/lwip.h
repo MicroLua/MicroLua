@@ -43,6 +43,15 @@ static inline ip_addr_t* mlua_check_IPAddr(lua_State* ls, int arg) {
     return luaL_checkudata(ls, arg, mlua_IPAddr_name);
 }
 
+// Get an IPv4 IPAddr value at the given stack index, or raise an error if the
+// stack entry is not an IPv4 IPAddr userdata.
+static inline ip_addr_t* mlua_check_IPAddr4(lua_State* ls, int arg) {
+    extern char const mlua_IPAddr_name[];
+    ip_addr_t* addr = luaL_checkudata(ls, arg, mlua_IPAddr_name);
+    luaL_argexpected(ls, IP_IS_V4(addr), arg, "IPv4 address");
+    return addr;
+}
+
 // Push a new PBUF value.
 struct pbuf** mlua_new_PBUF(lua_State* ls);
 
