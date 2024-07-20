@@ -5,6 +5,7 @@
 #define _MLUA_LIB_PICO_MLUA_LWIP_H
 
 #include "lwip/ip_addr.h"
+#include "lwip/netif.h"
 #include "lwip/pbuf.h"
 #include "pico/async_context.h"
 
