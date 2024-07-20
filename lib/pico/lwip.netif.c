@@ -108,11 +108,9 @@ static int NetIf_set_ip4(lua_State* ls) {
 #endif
 }
 
-static int NetIf_ip6(lua_State* ls) {
 #if LWIP_IPV6
-    struct netif* netif = mlua_check_NetIf(ls, 1);
-    lua_Unsigned idx = luaL_checkinteger(ls, 2);
-    if (idx >= LWIP_IPV6_NUM_ADDRESSES) return mlua_lwip_push_err(ls, ERR_ARG);
+
+static void get_ip6_item(lua_State* ls, struct netif* netif, u8_t idx) {
     mlua_lwip_lock();
     ip_addr_t ip = *netif_ip_addr6(netif, idx);
     u8_t state = netif_ip6_addr_state(netif, idx);
@@ -127,6 +125,34 @@ static int NetIf_ip6(lua_State* ls) {
     lua_pushinteger(ls, valid);
     lua_pushinteger(ls, pref);
 #endif
+}
+
+#endif  // LWIP_IPV6
+
+static int NetIf_ip6_next(lua_State* ls) {
+#if LWIP_IPV6
+    struct netif* netif = mlua_check_NetIf(ls, 1);
+    u8_t idx = lua_isnoneornil(ls, 2) ? 0 : luaL_checkinteger(ls, 2) + 1;
+    if (idx >= LWIP_IPV6_NUM_ADDRESSES) return 0;
+    lua_pushinteger(ls, idx);
+    get_ip6_item(ls, netif, idx);
+    return LWIP_IPV6_ADDRESS_LIFETIMES ? 5 : 3;
+#else
+    return 0;
+#endif
+}
+
+static int NetIf_ip6(lua_State* ls) {
+    struct netif* netif = mlua_check_NetIf(ls, 1);
+    if (lua_isnoneornil(ls, 2)) {
+        lua_pushcfunction(ls, &NetIf_ip6_next);
+        lua_rotate(ls, 1, -1);
+        return 2;
+    }
+#if LWIP_IPV6
+    lua_Unsigned idx = luaL_checkinteger(ls, 2);
+    if (idx >= LWIP_IPV6_NUM_ADDRESSES) return mlua_lwip_push_err(ls, ERR_ARG);
+    get_ip6_item(ls, netif, idx);
     return LWIP_IPV6_ADDRESS_LIFETIMES ? 4 : 2;
 #else
     return mlua_lwip_push_err(ls, ERR_ARG);
@@ -265,6 +291,21 @@ static int mod_find(lua_State* ls) {
     return 1;
 }
 
+static int iter_next(lua_State* ls) {
+    u8_t index = lua_isnoneornil(ls, 2) ? 1
+                 : netif_get_index(mlua_check_NetIf(ls, 2)) + 1;
+    mlua_lwip_lock();
+    struct netif* netif = netif_get_by_index(index);
+    mlua_lwip_unlock();
+    if (netif == NULL) return 0;
+    *new_NetIf(ls) = netif;
+    return 1;
+}
+
+static int mod_iter(lua_State* ls) {
+    return lua_pushcfunction(ls, &iter_next), 1;
+}
+
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(FLAG_UP, integer, NETIF_FLAG_UP),
     MLUA_SYM_V(FLAG_BROADCAST, integer, NETIF_FLAG_BROADCAST),
@@ -277,6 +318,7 @@ MLUA_SYMBOLS(module_syms) = {
 
     MLUA_SYM_F(_default, mod_),
     MLUA_SYM_F(find, mod_),
+    MLUA_SYM_F(iter, mod_),
 };
 
 MLUA_OPEN_MODULE(lwip.netif) {

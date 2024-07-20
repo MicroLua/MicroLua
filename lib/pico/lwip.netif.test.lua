@@ -43,10 +43,7 @@ local function addr_life(v)
 end
 
 function set_up(t)
-    local i = 1
-    while true do
-        local nif = netif.find(i)
-        if not nif then break end
+    for nif in netif.iter() do
         local flags, fnames = nif:flags(), {}
         for _, f in ipairs{'UP', 'LINK_UP', 'BROADCAST', 'ETHARP', 'ETHERNET',
                            'IGMP', 'MLD6'} do
@@ -65,8 +62,7 @@ function set_up(t)
         if ip then
             t:printf("    inet @{+MAGENTA}%s@{NORM}/%s gw %s\n", ip, mask, gw)
         end
-        for j = 0, netif.IPV6_NUM_ADDRESSES - 1 do
-            local ip, state, valid, pref = nif:ip6(j)
+        for _, ip, state, valid, pref in nif:ip6() do
             if state ~= lwip.IP6_ADDR_INVALID then
                 local scope = ip6.multicast_scope(ip)
                 t:printf("    inet6 @{+BLUE}%s@{NORM} scope %s %s\n", ip,
@@ -77,7 +73,6 @@ function set_up(t)
                 end
             end
         end
-        i = i + 1
     end
 end
 

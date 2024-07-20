@@ -17,8 +17,7 @@ local wifi = require 'pico.cyw43.wifi'
 local module_name = ...
 
 local function has_non_linklocal_addr(nif)
-    for i = 0, netif.IPV6_NUM_ADDRESSES - 1 do
-        local ip, state = nif:ip6(i)
+    for _, ip, state in nif:ip6() do
         if state & (ip6.ADDR_TENTATIVE | ip6.ADDR_VALID) ~= 0
                 and not ip:is_linklocal() then
             return true
