@@ -534,7 +534,6 @@ target_compile_definitions(mlua_mod_lwip.dns_headers INTERFACE
 )
 target_link_libraries(mlua_mod_lwip.dns INTERFACE
     mlua_mod_lwip
-    mlua_mod_mlua.int64
     mlua_mod_mlua.thread
 )
 
@@ -552,6 +551,14 @@ target_compile_definitions(mlua_mod_lwip.ip4_headers INTERFACE
 )
 target_link_libraries(mlua_mod_lwip.ip4 INTERFACE
     mlua_mod_lwip
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.ip4 lwip.ip4.test.lua)
+target_link_libraries(mlua_test-net_lwip.ip4 INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.ip4
+    mlua_mod_lwip.netif
+    mlua_mod_table
 )
 
 mlua_add_c_module(mlua_mod_lwip.ip6 lwip.ip6.c)
