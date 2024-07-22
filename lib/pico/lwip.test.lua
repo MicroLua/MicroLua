@@ -22,5 +22,5 @@ function test_assert(t)
 end
 
 function test_IPAddr(t)
-    -- TODO
+    t:expect(t.expr(lwip).IP_ANY_TYPE:type()):eq(lwip.IPADDR_TYPE_ANY)
 end

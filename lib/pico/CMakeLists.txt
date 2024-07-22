@@ -569,6 +569,14 @@ target_link_libraries(mlua_mod_lwip.ip6 INTERFACE
     mlua_mod_lwip
 )
 
+mlua_add_lua_modules(mlua_test-net_lwip.ip6 lwip.ip6.test.lua)
+target_link_libraries(mlua_test-net_lwip.ip6 INTERFACE
+    mlua_mod_lwip
+    mlua_mod_lwip.ip6
+    mlua_mod_lwip.netif
+    mlua_mod_table
+)
+
 mlua_add_c_module(mlua_mod_lwip.netif lwip.netif.c)
 target_link_libraries(mlua_mod_lwip.netif INTERFACE
     mlua_mod_lwip
