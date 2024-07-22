@@ -41,13 +41,15 @@ ansi_tags = {
     ['+CYAN'] = '\x1b[96m',
     ['+WHITE'] = '\x1b[97m',
 
-    CLR = '\x1b[3J\x1b[H\x1b[2J'
+    CLR = '\x1b[3J\x1b[H\x1b[2J',
+    SAVE = '\x1b[s',
+    RESTORE = '\x1b[u',
 }
 
 function empty_tags() return '' end
 
 -- Substitute @{...} tags in the given string.
-function ansi(s, tags) return s:gsub('@{([A-Z+]+)}', tags or ansi_tags) end
+function ansi(s, tags) return s:gsub('@{([A-Z_+]+)}', tags or ansi_tags) end
 
 -- ANSI-format a string.
 function aformat(format, ...) return ansi(format):format(...) end

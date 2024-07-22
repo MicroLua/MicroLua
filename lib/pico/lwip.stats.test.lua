@@ -32,7 +32,6 @@ function test_mem_stats(t)
     for _, ss in ipairs{'mem', 'memp'} do
         t:expect(t.expr(stats).SUBSYSTEMS):has(ss)
         local fn = stats[ss]
-        t:printf("%s\n", fn)
         if fn ~= false then
             t:expect((fn(0))):label(ss):has('avail'):has('used'):has('max')
         end

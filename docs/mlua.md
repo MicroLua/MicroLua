@@ -768,6 +768,9 @@ the library works is by looking at the test suite included with MicroLua.
 
 The `Test` class represents a single unit test.
 
+- `name: string`\
+  The name of the test.
+
 - `Test.helper`\
   A value that can be assigned to a local variable of a test helper to skip it
   when determining the location of a test failure.
@@ -776,6 +779,10 @@ The `Test` class represents a single unit test.
   `Test.mexpr: ExprFactory`\
   An expression factory. `expr` uses only the first return value, while `mexpr`
   packs all return values into a [`List`](#mlualist).
+
+- `Test:path() -> string`\
+  Return a path representing the full name of the test. It is composed of the
+  names of the tests in the hierarchy, separated by `/`.
 
 - `Test:cleanup(fn)`\
   Registers the function `fn` to be called after the test completes. Cleanup

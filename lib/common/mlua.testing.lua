@@ -29,7 +29,7 @@ function Recorder:__init(t) self.t = t end
 
 function Recorder:write(...)
     io.Recorder.write(self, ...)
-    if not self:is_empty() and self.t:_root()._opts.output then
+    if not self:is_empty() and self.t._root._opts.output then
         self.t:enable_output()
     end
 end
@@ -281,9 +281,21 @@ Test.mexpr = setmetatable({[ekey] = {m = true}}, ExprFactory)
 
 function Test:__init(name, parent)
     self.name, self._parent = name, parent
+    self._root, self._level = self:_up(function(t)
+        if not t._parent then return t end
+    end)
     if not parent then
         self.npass, self.nskip, self.nfail, self.nerror = 0, 0, 0, 0
     end
+end
+
+function Test:path()
+    local path = self.name
+    self:_up(function(t)
+        if t == self or not t._parent then return end
+        path = ('%s/%s'):format(t.name, path)
+    end)
+    return path
 end
 
 function Test:cleanup(fn) self._cleanups = list.append(self._cleanups, fn) end
@@ -400,7 +412,7 @@ end
 function Test:failed() return self._error or self._fail end
 
 function Test:_result()
-    return self._error and ERROR or self:failed() and FAIL
+    return self._error and ERROR or self._fail and FAIL
            or self._skip and SKIP or PASS
 end
 
@@ -449,10 +461,8 @@ function Test:_print_stats(out)
 end
 
 function Test:_run(fn)
-    local root, level = self:_root()
-    self:_progress_tick()
-    self:_pre_run()
     self:_capture_output()
+    self:_pre_run()
     local start = time.ticks()
     self:_pcall(fn, self)
     local duration = time.ticks() - start
@@ -463,17 +473,17 @@ function Test:_run(fn)
     self._cleanups, self._ctx = nil
 
     -- Compute stats.
-    self:_restore_output()
     self:_post_run()
+    self:_restore_output()
+    local root = self._root
     if self._error then root.nerror = root.nerror + 1
-    elseif self:failed() then root.nfail = root.nfail + 1
+    elseif self._fail then root.nfail = root.nfail + 1
     elseif self._skip then root.nskip = root.nskip + 1
     else root.npass = root.npass + 1 end
 
     -- Output results and stats.
-    local opts = root._opts
+    local level, opts = self._level, root._opts
     if level >= 0 and level < opts.results then
-        self:_progress_end('\n')
         local out = root._stdout
         local indent = (' '):rep(2 * level)
         local left = ('%s%s: %s'):format(indent, self:_result(), self.name)
@@ -509,26 +519,24 @@ function Test:_pcall(fn, ...)
     end, ...)
 end
 
-function Test:_progress_start(out) self._progress = out end
-
-function Test:_progress_tick()
-    -- TODO: Show progress on first line as "Running: %s", updated through
-    --       cursor positioning.
-    local progress = self:_root()._progress
-    if progress then return progress:write('.') end
+function Test:_progress_show()
+    local root, path = self._root, self:path()
+    if not path then return end
+    root._pline = 11 + #path
+    return io.afprintf(root._stdout,
+                       '@{SAVE}  Running: @{CYAN}%s@{NORM}@{RESTORE}', path)
 end
 
-function Test:_progress_end(nl)
-    local root = self:_root()
-    if root._progress then
-        root._progress:write('\n' .. nl)
-        root._progress = nil
-    end
+function Test:_progress_clear()
+    local root = self._root
+    local pline = root._pline
+    if not pline then return end
+    root._pline = nil
+    return io.afprintf(root._stdout, '@{SAVE}%s@{RESTORE}', (' '):rep(pline))
 end
 
 function Test:enable_output()
     if not self._out then return end
-    self:_progress_end('\n')
     local out = self._out
     self._out = nil
     self:_restore_output()
@@ -543,13 +551,15 @@ function Test:enable_output()
 end
 
 function Test:_capture_output()
+    self:_progress_show()
     self._out = Recorder(self)
     self._old_out, _G.stdout = _G.stdout, self._out
 end
 
 function Test:_restore_output()
     if not self._old_out then return end
-    _G.stdout = self._old_out
+    self:_progress_clear()
+    _G.stdout, self._old_out = self._old_out
 end
 
 function Test:_up(fn)
@@ -562,15 +572,11 @@ function Test:_up(fn)
     return nil, level
 end
 
-function Test:_root()
-    return self:_up(function(t) if not t._parent then return t end end)
-end
-
 local fn_comp = util.table_comp{1, 2}
 
 function Test:run_module(name, pat)
     pat = pat or def_func_pat
-    local root = self:_root()
+    local root = self._root
     if not root._loaded then
         local loaded = {}
         for n in pairs(package.loaded) do loaded[n] = true end
@@ -619,9 +625,8 @@ function Test:run_modules(mod_pat, func_pat)
 end
 
 function Test:_main(runs)
-    io.aprintf("@{CLR}Running tests\n")
+    io.aprintf("@{CLR}")
     self._stdout = stdout
-    self:_progress_start(stdout)
     local start = time.ticks()
     self:_run(function(t)
         if runs == 1 then return t:run_modules() end
@@ -630,7 +635,6 @@ function Test:_main(runs)
         end
     end)
     local dt = time.ticks() - start
-    self:_progress_end('')
     io.printf("\nTests: %d passed, %d skipped, %d failed, %d errored, %d total in %.3f s\n",
               self.npass, self.nskip, self.nfail, self.nerror,
               self.npass + self.nskip + self.nfail + self.nerror, dt / time.sec)
