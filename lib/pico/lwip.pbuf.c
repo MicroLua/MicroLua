@@ -11,8 +11,6 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-// TODO: Add unit tests
-
 char const mlua_PBUF_name[] = "lwip.PBUF";
 
 struct pbuf** mlua_new_PBUF(lua_State* ls) {
@@ -113,11 +111,11 @@ MLUA_SYMBOLS_NOHASH(PBUF_syms_nh) = {
 
 static int mod_alloc(lua_State* ls) {
     pbuf_layer layer = luaL_checkinteger(ls, 1);
-    u16_t length = luaL_checkinteger(ls, 2);
+    u16_t size = luaL_checkinteger(ls, 2);
     pbuf_type type = luaL_optinteger(ls, 3, PBUF_RAM);
     struct pbuf** pb = mlua_new_PBUF(ls);
     mlua_lwip_lock();
-    *pb = pbuf_alloc(layer, length, type);
+    *pb = pbuf_alloc(layer, size, type);
     mlua_lwip_unlock();
     if (*pb == NULL) return mlua_lwip_push_err(ls, ERR_MEM);
     return 1;

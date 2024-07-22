@@ -597,6 +597,12 @@ target_link_libraries(mlua_mod_lwip.pbuf INTERFACE
     mlua_mod_lwip
 )
 
+mlua_add_lua_modules(mlua_test-net_lwip.pbuf lwip.pbuf.test.lua)
+target_link_libraries(mlua_test-net_lwip.pbuf INTERFACE
+    mlua_mod_lwip.pbuf
+    mlua_mod_mlua.mem
+)
+
 mlua_add_c_module(mlua_mod_lwip.stats lwip.stats.c)
 target_compile_definitions(mlua_mod_lwip.stats_headers INTERFACE
     LWIP_STATS=1
