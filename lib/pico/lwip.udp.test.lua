@@ -13,7 +13,7 @@ local time = require 'mlua.time'
 local table = require 'table'
 
 function test_accessors(t)
-    local sock<close> = lwip.assert(udp.new())
+    local sock<close> = lwip.assert(udp.new(nil, 0))
     t:expect(t.expr(sock):options(lwip.SOF_REUSEADDR | lwip.SOF_BROADCAST))
         :eq(0)
     t:expect(t.expr(sock):options(nil, lwip.SOF_REUSEADDR))

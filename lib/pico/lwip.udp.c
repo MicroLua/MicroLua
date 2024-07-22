@@ -130,8 +130,19 @@ static int UDP_sendto(lua_State* ls) {
     struct pbuf* pb = mlua_check_PBUF(ls, 2);
     ip_addr_t* addr = mlua_check_IPAddr(ls, 3);
     u16_t port = luaL_checkinteger(ls, 4);
+    struct netif* netif = luaL_opt(ls, mlua_check_NETIF, 5, NULL);
+    ip_addr_t* src = luaL_opt(ls, mlua_check_IPAddr, 6, NULL);
+    luaL_argcheck(ls, netif != NULL || src == NULL, 5,
+                  "required if src is specified");
     mlua_lwip_lock();
-    err_t err = udp_sendto(udp->pcb, pb, addr, port);
+    err_t err;
+    if (netif == NULL) {
+        err = udp_sendto(udp->pcb, pb, addr, port);
+    } else if (src == NULL) {
+        err = udp_sendto_if(udp->pcb, pb, addr, port, netif);
+    } else {
+        err = udp_sendto_if_src(udp->pcb, pb, addr, port, netif, src);
+    }
     mlua_lwip_unlock();
     return mlua_lwip_push_result(ls, err);
 }
@@ -275,7 +286,7 @@ MLUA_SYMBOLS_NOHASH(UDP_syms_nh) = {
 
 static int mod_new(lua_State* ls) {
     u8_t type = luaL_optinteger(ls, 1, IPADDR_TYPE_ANY);
-    lua_Integer cap = luaL_optinteger(ls, 2, 0);
+    lua_Integer cap = luaL_optinteger(ls, 2, 4);
     if (cap < 0) cap = 0;
     luaL_argcheck(
         ls, (lua_Unsigned)cap < (1u << MLUA_SIZEOF_FIELD(UDP, cap) * 8),
