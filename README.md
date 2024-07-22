@@ -62,7 +62,7 @@ easy to interface to C code.
 
 ### Roadmap
 
-- **Add more bindings for the Pico SDK.** Next on the list are USB, Wifi and
+- **Add more bindings for the Pico SDK.** Next on the list are USB and
   Bluetooth. Eventually, most SDK libraries will have a binding.
 - **Improve cross-core communication.** Each core runs its own Lua interpreter,
   so they cannot communicate directly through shared Lua state. Currently, the
@@ -110,6 +110,7 @@ end
 - [`hardware.*`](docs/hardware.md): Bindings for the `hardware_*` libraries of
   the Pico SDK.
 - [`pico.*`](docs/pico.md): Bindings for the `pico_*` libraries of the Pico SDK.
+- [`lwip.*`](docs/lwip.md): Bindings for the lwIP library.
 
 ## Test suite
 

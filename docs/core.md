@@ -126,8 +126,8 @@ metatable has the following items:
   Return the result of the respective comparison operation on the pointers.
 
 - `__buffer(ptr) -> ptr`\
-  Implements the [buffer protocol](#buffer-protocol). No size is
-  returned, so the buffer is considered infinite.
+  Implement the [buffer protocol](#buffer-protocol). No size is returned, so the
+  buffer is considered infinite.
 
 ## Function metatable
 
@@ -151,9 +151,9 @@ recognized as a buffer, an object must implement the `__buffer` metamethod.
 - `Object:__buffer() -> (ptr, [size], [vtable])`\
   Return a pointer to the buffer, its size, and a `MLuaBufferVt*`. `ptr` and
   `vtable` are light userdata, and `size` is an unsigned integer. If `size` is
-  missing or nil, the buffer is considered infinite, which disables bounds
-  checks. If `vtable` is missing or nil, the buffer is raw and `ptr` points at a
-  contiguous block of memory.
+  missing or `nil`, the buffer is considered infinite, which disables bounds
+  checks. If `vtable` is missing or `nil`, the buffer is raw and `ptr` points at
+  a contiguous block of memory.
 
 ## Read-only tables
 

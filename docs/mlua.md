@@ -551,7 +551,7 @@ the functions as methods.
   `__eq(lhs, rhs) -> boolean`\
   Return true iff the elements of `lhs` and `rhs` compare pairwise equal.
 
-- `ipairs(list) -> function, list, 0`\
+- `ipairs(list) -> iterator`\
   Return an iterator over the elements of `list`.
 
 - `append(list, value, ...) -> List`\
@@ -639,7 +639,7 @@ The `Buffer` type (`mlua.mem.Buffer`) holds a fixed-size memory buffer.
   Return a pointer to the start of the buffer.
 
 - `Buffer:__buffer() -> (ptr, size)`\
-  Implements the [buffer protocol](core.md#buffer-protocol).
+  Implement the [buffer protocol](core.md#buffer-protocol).
 
 ## `mlua.oo`
 
@@ -1110,7 +1110,7 @@ userdata. This makes many operations on 64-bit integers expensive, because they
 cause memory allocations. To reduce the number of allocations, most functions
 taking an absolute time accept both 64-bit times and integer times. The latter
 are interpreted as the low-order bits of the absolute time, while the high-order
-bits are taken from the current time. This allows specifying absolute times
+bits are computed from the current time. This allows specifying absolute times
 within 35.79 minutes of the current time (`[now + math.mininteger; now +
 math.maxinteger]`) as Lua integers,
 
@@ -1191,7 +1191,7 @@ This module provides various utilities.
 - `table_copy(tab) -> table`\
   Return a shallow copy of `tab`.
 
-- `table_comp(keys) -> function(a, b)`\
+- `table_comp(keys) -> function`\
   Return a comparison function comparing table pairs by the elements at the
   given keys.
 
