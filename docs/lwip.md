@@ -59,9 +59,6 @@ This module provides common functionality for the other lwIP modules.
 - `ipaddr_aton(s) -> IPAddr | (fail, err)`\
   Parse the string representation of an IP address to an `IPAddr` object.
 
-- `ipaddr_ntoa(addr) -> string`\
-  Convert an `IPAddr` to string.
-
 ### `IPAddr`
 
 The `IPAddr` type (`lwip.IPAddr`) represents an IP address.
@@ -110,7 +107,7 @@ This module provides DNS resolution functionality.
 
 - `gethostbyname(host, addrtype = ADDRTYPE_DEFAULT, deadline = nil) -> IPAddr | false | (fail, err)` *[yields]*\
   Resolve a hostname to an IP address. Returns `false` if the hostname cannot be
-  found.
+  found. The deadline is an [absolute time](mlua.md#absolute-time).
 
 ## `lwip.ip4`
 
@@ -212,7 +209,7 @@ The `NETIF` type (`lwip.NETIF`) represents a network interface.
   Return the IPv6 address, state (a bit field of `ip6.ADDR_*` values), valid and
   preferred lifetime of the network interface at the given zero-based index. If
   `index` isn't provided, return an iterator over the IPv6 addresses of the
-  interface.
+  interface, which returns `(index, addr, state, valid, pref)` values.
 
 - `NETIF:set_ip6(index, addr = nil, state = nil, valid = nil, pref = nil) -> true | (fail, err)`\
   Set the IPv6 address, state, valid and / or preferred lifetime of the network
@@ -239,7 +236,7 @@ The `NETIF` type (`lwip.NETIF`) represents a network interface.
 build target: `mlua_mod_lwip.pbuf`,
 tests: [`lwip.pbuf.test`](../lib/pico/lwip.pbuf.test.lua)
 
-This module exposes functionality related to packet buffers (`PBUF`s).
+This module exposes functionality related to packet buffers (`PBUF`).
 
 - `TRANSPORT: integer`\
   `IP: integer`\
@@ -327,9 +324,8 @@ corresponding accessor function is set to `false`.
   Reset the fields in heap memory allocation statistics that track a maximum.
 
 - `memp(index) -> (table, string | nil)`\
-  Return statistics about memory allocation in a memory pol (the index is in the
-  range `0 .. MEMP_COUNT - 1`). The returned table contains keys for each of
-  the fields in
+  Return statistics about memory allocation in the memory pool with the given
+  zero-based index. The returned table contains keys for each of the fields in
   [`struct stats_mem`](https://github.com/lwip-tcpip/lwip/blob/master/src/include/lwip/stats.h).
 
 - `memp_reset(index)`\

@@ -168,8 +168,6 @@ static int mod_ipaddr_aton(lua_State* ls) {
     return 1;
 }
 
-#define mod_ipaddr_ntoa IPAddr___tostring
-
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(VERSION, integer, LWIP_VERSION),
     MLUA_SYM_V(VERSION_STRING, string, LWIP_VERSION_STRING),
@@ -205,7 +203,6 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(err_str, mod_),
     MLUA_SYM_F(assert, mod_),
     MLUA_SYM_F(ipaddr_aton, mod_),
-    MLUA_SYM_F(ipaddr_ntoa, mod_),
 };
 
 MLUA_OPEN_MODULE(lwip) {
