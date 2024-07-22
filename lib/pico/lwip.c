@@ -69,7 +69,7 @@ static int IPAddr_is_any(lua_State* ls) {
 
 static int IPAddr_is_broadcast(lua_State* ls) {
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 1);
-    struct netif* netif = mlua_check_NetIf(ls, 2);
+    struct netif* netif = mlua_check_NETIF(ls, 2);
     return lua_pushboolean(ls, ip_addr_isbroadcast(addr, netif)), 1;
 }
 
@@ -162,8 +162,10 @@ static int mod_assert(lua_State* ls) {
 
 static int mod_ipaddr_aton(lua_State* ls) {
     char const* addr = luaL_checkstring(ls, 1);
-    ip_addr_t* ia = mlua_new_IPAddr(ls);
-    return ipaddr_aton(addr, ia) != 0 ? 1 : 0;
+    ip_addr_t ia;
+    if (!ipaddr_aton(addr, &ia)) return mlua_lwip_push_err(ls, ERR_ARG);
+    *mlua_new_IPAddr(ls) = ia;
+    return 1;
 }
 
 #define mod_ipaddr_ntoa IPAddr___tostring

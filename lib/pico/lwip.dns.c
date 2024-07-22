@@ -2,14 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 #include <stdbool.h>
-#include <string.h>
 
 #include "lwip/dns.h"
 #include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"
-#include "mlua/int64.h"
 #include "mlua/lwip.h"
 #include "mlua/module.h"
 #include "mlua/thread.h"
@@ -35,10 +33,9 @@ static int mod_getserver(lua_State* ls) {
 
 static int mod_setserver(lua_State* ls) {
     u8_t index = luaL_checkinteger(ls, 1);
-    ip_addr_t const* server = !lua_isnoneornil(ls, 2) ? mlua_check_IPAddr(ls, 2)
-                              : NULL;
+    ip_addr_t const* addr = luaL_opt(ls, mlua_check_IPAddr, 2, NULL);
     mlua_lwip_lock();
-    dns_setserver(index, server);
+    dns_setserver(index, addr);
     mlua_lwip_unlock();
     return 0;
 }
@@ -62,7 +59,7 @@ static void handle_dns_found(char const* name, ip_addr_t const* addr,
     GHBNState* state = arg;
     if (mlua_event_disable_abandoned(&state->event)) return;
     if (addr != NULL) {
-        memcpy(&state->addr, addr, sizeof(state->addr));
+        state->addr = *addr;
         state->status = STATUS_FOUND;
     } else {
         state->status = STATUS_NOT_FOUND;
@@ -71,7 +68,7 @@ static void handle_dns_found(char const* name, ip_addr_t const* addr,
 }
 
 static int push_addr(lua_State* ls, ip_addr_t* addr) {
-    memcpy(mlua_new_IPAddr(ls), addr, sizeof(*addr));
+    *mlua_new_IPAddr(ls) = *addr;
     return 1;
 }
 
@@ -152,7 +149,6 @@ MLUA_SYMBOLS(module_syms) = {
 MLUA_OPEN_MODULE(lwip.dns) {
     mlua_thread_require(ls);
     mlua_require(ls, "lwip", false);
-    mlua_require(ls, "mlua.int64", false);
 
     // Create the module.
     mlua_new_module(ls, 0, module_syms);

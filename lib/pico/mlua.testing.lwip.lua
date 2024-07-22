@@ -66,7 +66,6 @@ function Control:__init(t, atype)
         dns.gethostbyname(config.SERVER_ADDR, atype or IPV4, dl))
     self.sock = lwip.assert(tcp.new())
     t:cleanup(function() self.sock:close() end)
-    -- TODO: For IPv6, wait for a non link-local address
     lwip.assert(self.sock:connect(self.addr, config.SERVER_PORT, dl))
     local line = self:recv(dl)
     local port = line:match('^PORT ([0-9]+)\n$')

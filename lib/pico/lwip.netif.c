@@ -12,18 +12,18 @@
 #include "mlua/module.h"
 #include "mlua/util.h"
 
-char const mlua_NetIf_name[] = "lwip.NetIf";
+char const mlua_NETIF_name[] = "lwip.NETIF";
 
-struct netif** new_NetIf(lua_State* ls) {
+struct netif** new_NETIF(lua_State* ls) {
     struct netif** netif = lua_newuserdatauv(ls, sizeof(struct netif*), 0);
     *netif = NULL;
-    luaL_getmetatable(ls, mlua_NetIf_name);
+    luaL_getmetatable(ls, mlua_NETIF_name);
     lua_setmetatable(ls, -2);
     return netif;
 }
 
-static int NetIf_index(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_index(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     mlua_lwip_lock();
     u8_t index = netif_get_index(netif);
     mlua_lwip_unlock();
@@ -31,8 +31,8 @@ static int NetIf_index(lua_State* ls) {
     return lua_pushinteger(ls, index), 1;
 }
 
-static int NetIf_name(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_name(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     char name[NETIF_NAMESIZE];
     mlua_lwip_lock();
     char const* res = netif_index_to_name(netif_get_index(netif), name);
@@ -41,16 +41,16 @@ static int NetIf_name(lua_State* ls) {
     return lua_pushstring(ls, res), 1;
 }
 
-static int NetIf_flags(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_flags(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     mlua_lwip_lock();
     u8_t flags = netif->flags;
     mlua_lwip_unlock();
     return lua_pushinteger(ls, flags), 1;
 }
 
-static int NetIf_hwaddr(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_hwaddr(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     size_t addr_len = 0;
     char const* addr = luaL_optlstring(ls, 2, NULL, &addr_len);
     luaL_argcheck(ls, addr_len <= NETIF_MAX_HWADDR_LEN, 2, "address too long");
@@ -66,9 +66,9 @@ static int NetIf_hwaddr(lua_State* ls) {
     return lua_pushlstring(ls, (char const*)hwaddr, len), 1;
 }
 
-static int NetIf_ip4(lua_State* ls) {
+static int NETIF_ip4(lua_State* ls) {
 #if LWIP_IPV4
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     mlua_lwip_lock();
     ip_addr_t ip = *netif_ip_addr4(netif);
     ip_addr_t mask = *netif_ip_netmask4(netif);
@@ -93,9 +93,9 @@ static ip4_addr_t const* opt_ip4(lua_State* ls, int arg,
 
 #endif  // LWIP_IPV4
 
-static int NetIf_set_ip4(lua_State* ls) {
+static int NETIF_set_ip4(lua_State* ls) {
 #if LWIP_IPV4
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     ip4_addr_t const* ip = opt_ip4(ls, 2, netif_ip4_addr(netif));
     ip4_addr_t const* mask = opt_ip4(ls, 3, netif_ip4_netmask(netif));
     ip4_addr_t const* gw = opt_ip4(ls, 4, netif_ip4_gw(netif));
@@ -129,9 +129,9 @@ static void get_ip6_item(lua_State* ls, struct netif* netif, u8_t idx) {
 
 #endif  // LWIP_IPV6
 
-static int NetIf_ip6_next(lua_State* ls) {
+static int NETIF_ip6_next(lua_State* ls) {
 #if LWIP_IPV6
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     u8_t idx = lua_isnoneornil(ls, 2) ? 0 : luaL_checkinteger(ls, 2) + 1;
     if (idx >= LWIP_IPV6_NUM_ADDRESSES) return 0;
     lua_pushinteger(ls, idx);
@@ -142,10 +142,10 @@ static int NetIf_ip6_next(lua_State* ls) {
 #endif
 }
 
-static int NetIf_ip6(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_ip6(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     if (lua_isnoneornil(ls, 2)) {
-        lua_pushcfunction(ls, &NetIf_ip6_next);
+        lua_pushcfunction(ls, &NETIF_ip6_next);
         lua_rotate(ls, 1, -1);
         return 2;
     }
@@ -159,9 +159,9 @@ static int NetIf_ip6(lua_State* ls) {
 #endif
 }
 
-static int NetIf_set_ip6(lua_State* ls) {
+static int NETIF_set_ip6(lua_State* ls) {
 #if LWIP_IPV6
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     lua_Unsigned idx = luaL_checkinteger(ls, 2);
     if (idx >= LWIP_IPV6_NUM_ADDRESSES) return mlua_lwip_push_err(ls, ERR_ARG);
     ip6_addr_t const* ip = NULL;
@@ -187,9 +187,9 @@ static int NetIf_set_ip6(lua_State* ls) {
 #endif
 }
 
-static int NetIf_add_ip6(lua_State* ls) {
+static int NETIF_add_ip6(lua_State* ls) {
 #if LWIP_IPV6
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     ip_addr_t const* addr = mlua_check_IPAddr(ls, 2);
     luaL_argexpected(ls, IP_IS_V6(addr), 2, "IPv6 address");
     ip6_addr_t const* ip = ip_2_ip6(addr);
@@ -204,8 +204,8 @@ static int NetIf_add_ip6(lua_State* ls) {
 #endif
 }
 
-static int NetIf_mtu(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_mtu(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     mlua_lwip_lock();
     u16_t mtu = netif->mtu;
 #if LWIP_IPV6
@@ -219,8 +219,8 @@ static int NetIf_mtu(lua_State* ls) {
     return LWIP_IPV6 ? 2 : 1;
 }
 
-static int NetIf_up(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_up(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     bool set = !lua_isnone(ls, 1);
     bool value;
     if (set) value = mlua_to_cbool(ls, 1);
@@ -233,8 +233,8 @@ static int NetIf_up(lua_State* ls) {
     return lua_pushboolean(ls, res), 1;
 }
 
-static int NetIf_link_up(lua_State* ls) {
-    struct netif* netif = mlua_check_NetIf(ls, 1);
+static int NETIF_link_up(lua_State* ls) {
+    struct netif* netif = mlua_check_NETIF(ls, 1);
     bool set = !lua_isnone(ls, 1);
     bool value;
     if (set) value = mlua_to_cbool(ls, 1);
@@ -247,31 +247,31 @@ static int NetIf_link_up(lua_State* ls) {
     return lua_pushboolean(ls, res), 1;
 }
 
-MLUA_SYMBOLS(NetIf_syms) = {
-    MLUA_SYM_F(index, NetIf_),
-    MLUA_SYM_F(name, NetIf_),
-    MLUA_SYM_F(flags, NetIf_),
-    MLUA_SYM_F(hwaddr, NetIf_),
-    MLUA_SYM_F(ip4, NetIf_),
-    MLUA_SYM_F(set_ip4, NetIf_),
-    MLUA_SYM_F(ip6, NetIf_),
-    MLUA_SYM_F(set_ip6, NetIf_),
-    MLUA_SYM_F(add_ip6, NetIf_),
-    MLUA_SYM_F(mtu, NetIf_),
-    MLUA_SYM_F(up, NetIf_),
-    MLUA_SYM_F(link_up, NetIf_),
+MLUA_SYMBOLS(NETIF_syms) = {
+    MLUA_SYM_F(index, NETIF_),
+    MLUA_SYM_F(name, NETIF_),
+    MLUA_SYM_F(flags, NETIF_),
+    MLUA_SYM_F(hwaddr, NETIF_),
+    MLUA_SYM_F(ip4, NETIF_),
+    MLUA_SYM_F(set_ip4, NETIF_),
+    MLUA_SYM_F(ip6, NETIF_),
+    MLUA_SYM_F(set_ip6, NETIF_),
+    MLUA_SYM_F(add_ip6, NETIF_),
+    MLUA_SYM_F(mtu, NETIF_),
+    MLUA_SYM_F(up, NETIF_),
+    MLUA_SYM_F(link_up, NETIF_),
 };
 
 static int mod__default(lua_State* ls) {
     bool update = !lua_isnone(ls, 1);
     struct netif* new_def = NULL;
-    if (!lua_isnoneornil(ls, 1)) new_def = mlua_check_NetIf(ls, 1);
+    if (!lua_isnoneornil(ls, 1)) new_def = mlua_check_NETIF(ls, 1);
     mlua_lwip_lock();
     struct netif* netif = netif_default;
     if (update) netif_set_default(new_def);
     mlua_lwip_unlock();
     if (netif == NULL) return 0;
-    *new_NetIf(ls) = netif;
+    *new_NETIF(ls) = netif;
     return 1;
 }
 
@@ -287,18 +287,18 @@ static int mod_find(lua_State* ls) {
     else netif = netif_get_by_index(index);
     mlua_lwip_unlock();
     if (netif == NULL) return mlua_lwip_push_err(ls, ERR_ARG);
-    *new_NetIf(ls) = netif;
+    *new_NETIF(ls) = netif;
     return 1;
 }
 
 static int iter_next(lua_State* ls) {
     u8_t index = lua_isnoneornil(ls, 2) ? 1
-                 : netif_get_index(mlua_check_NetIf(ls, 2)) + 1;
+                 : netif_get_index(mlua_check_NETIF(ls, 2)) + 1;
     mlua_lwip_lock();
     struct netif* netif = netif_get_by_index(index);
     mlua_lwip_unlock();
     if (netif == NULL) return 0;
-    *new_NetIf(ls) = netif;
+    *new_NETIF(ls) = netif;
     return 1;
 }
 
@@ -327,8 +327,8 @@ MLUA_OPEN_MODULE(lwip.netif) {
     // Create the module.
     mlua_new_module(ls, 0, module_syms);
 
-    // Create the NetIf class.
-    mlua_new_class(ls, mlua_NetIf_name, NetIf_syms, mlua_nosyms);
+    // Create the NETIF class.
+    mlua_new_class(ls, mlua_NETIF_name, NETIF_syms, mlua_nosyms);
     lua_pop(ls, 1);
     return 1;
 }

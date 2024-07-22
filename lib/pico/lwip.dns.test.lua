@@ -9,10 +9,12 @@ local time = require 'mlua.time'
 local table = require 'table'
 
 function set_up(t)
+    local servers = {}
     for i = 0, dns.MAX_SERVERS - 1 do
         local addr = dns.getserver(i)
-        if addr then t:printf("DNS server: %s\n", addr) end
+        if addr then table.insert(servers, tostring(addr)) end
     end
+    t:printf("DNS servers: %s\n", table.concat(servers, ' '))
 end
 
 function test_gethostbyname(t)

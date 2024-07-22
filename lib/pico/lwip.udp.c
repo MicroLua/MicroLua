@@ -87,7 +87,7 @@ static int UDP_bind(lua_State* ls) {
 static int UDP_bind_netif(lua_State* ls) {
     UDP* udp = check_UDP(ls, 1);
     if (udp->pcb == NULL) return mlua_lwip_push_err(ls, ERR_CLSD);
-    struct netif* netif = luaL_opt(ls, mlua_check_NetIf, 2, NULL);
+    struct netif* netif = luaL_opt(ls, mlua_check_NETIF, 2, NULL);
     mlua_lwip_lock();
     udp_bind_netif(udp->pcb, netif);
     mlua_lwip_unlock();
