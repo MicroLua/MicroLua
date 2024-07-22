@@ -65,12 +65,11 @@ int mod_ ## subsys(lua_State* ls) { \
     mlua_lwip_unlock()
 
 #define SET_SUBSYSTEM(name) \
-    lua_pushliteral(ls, #name); \
-    lua_seti(ls, -2, i++)
+    lua_pushboolean(ls, true); \
+    lua_setfield(ls, -2, #name);
 
 void mod_SUBSYSTEMS(lua_State* ls, MLuaSymVal const* value) {
-    lua_createtable(ls, 16, 0);
-    lua_Integer i = 1;
+    lua_createtable(ls, 0, 16);
     SET_SUBSYSTEM(link);
     SET_SUBSYSTEM(etharp);
     SET_SUBSYSTEM(ip_frag);
@@ -126,14 +125,16 @@ int mod_mem(lua_State* ls) {
     TBL_MEM_STATS(mem.);
     return 1;
 }
+#endif
 
 int mod_mem_reset(lua_State* ls) {
+#if MEM_STATS
     mlua_lwip_lock();
     lwip_stats.mem.max = lwip_stats.mem.used;
     mlua_lwip_unlock();
+#endif
     return 0;
 }
-#endif
 
 #if MEMP_STATS
 int mod_memp(lua_State* ls) {
@@ -149,17 +150,19 @@ int mod_memp(lua_State* ls) {
     mlua_lwip_unlock();
     return 2;
 }
+#endif
 
 int mod_memp_reset(lua_State* ls) {
+#if MEMP_STATS
     lua_Unsigned index = luaL_checkinteger(ls, 1);
     if (index < MEMP_MAX) {
         mlua_lwip_lock();
         lwip_stats.memp[index]->max = lwip_stats.memp[index]->used;
         mlua_lwip_unlock();
     }
+#endif
     return 0;
 }
-#endif
 
 #if IP6_STATS
 MOD_PROTO_STATS(ip6)
@@ -182,7 +185,7 @@ MOD_PROTO_STATS(nd6)
 #endif
 
 #if MIB2_STATS
-int mod_mem(lua_State* ls) {
+int mod_mib2(lua_State* ls) {
     lua_createtable(ls, 0, 48);
     mlua_lwip_lock();
     SET_FIELD(mib2., ipinhdrerrors);
@@ -285,18 +288,16 @@ MLUA_SYMBOLS(module_syms) = {
 #endif
 #if MEM_STATS
     MLUA_SYM_F(mem, mod_),
-    MLUA_SYM_F(mem_reset, mod_),
 #else
     MLUA_SYM_V(mem, boolean, false),
-    MLUA_SYM_V(mem_reset, boolean, false),
 #endif
+    MLUA_SYM_F(mem_reset, mod_),
 #if MEMP_STATS
     MLUA_SYM_F(memp, mod_),
-    MLUA_SYM_F(memp_reset, mod_),
 #else
     MLUA_SYM_V(memp, boolean, false),
-    MLUA_SYM_V(memp_reset, boolean, false),
 #endif
+    MLUA_SYM_F(memp_reset, mod_),
 #if IP6_STATS
     MLUA_SYM_F(ip6, mod_),
 #else

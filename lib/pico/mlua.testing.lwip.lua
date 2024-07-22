@@ -89,10 +89,8 @@ if not testing.overrides[...] then
     function Test:_pre_run()
         pre_run(self)
         if self._parent then return end
-        if stats.mem then stats.mem_reset() end
-        if stats.memp then
-            for i = 0, stats.MEMP_COUNT - 1 do stats.memp_reset(i) end
-        end
+        stats.mem_reset()
+        for i = 0, stats.MEMP_COUNT - 1 do stats.memp_reset(i) end
     end
 
     local print_stats = Test._print_stats

@@ -54,20 +54,20 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
         LWIP_HAVE_LOOPIF=1
         LWIP_ICMP_STATS=0
         LWIP_ICMP6_STATS=0
-        LWIP_IGMP_STATS=0
+        LWIP_IGMP_STATS=1
         LWIP_IP_STATS=0
         LWIP_IP6_FRAG_STATS=0
         LWIP_IP6_STATS=0
         LWIP_IPFRAG_STATS=0
         LWIP_IPV4=1
         LWIP_IPV6=1
-        LWIP_LINK_STATS=0
+        LWIP_LINK_STATS=1
         LWIP_LOOPIF_MULTICAST=1
-        LWIP_MEM_SIZE=20000
+        LWIP_MEM_SIZE=10000
         LWIP_MEM_STATS=1
         LWIP_MEMP_NUM_TCP_PCB=10
         LWIP_MEMP_STATS=1
-        LWIP_MIB2_STATS=0
+        LWIP_MIB2_STATS=1
         LWIP_MLD6_STATS=0
         LWIP_ND6_STATS=0
         LWIP_NETIF_LOOPBACK=1
@@ -609,6 +609,11 @@ target_compile_definitions(mlua_mod_lwip.stats_headers INTERFACE
 )
 target_link_libraries(mlua_mod_lwip.stats INTERFACE
     mlua_mod_lwip
+)
+
+mlua_add_lua_modules(mlua_test-net_lwip.stats lwip.stats.test.lua)
+target_link_libraries(mlua_test-net_lwip.stats INTERFACE
+    mlua_mod_lwip.stats
 )
 
 mlua_add_c_module(mlua_mod_lwip.tcp lwip.tcp.c)
