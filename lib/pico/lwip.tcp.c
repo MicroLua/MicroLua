@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "lwip/netif.h"
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
 
@@ -155,6 +156,15 @@ static int TCP_bind(lua_State* ls) {
     err_t err = tcp_bind(tcp->pcb, addr, port);
     mlua_lwip_unlock();
     return mlua_lwip_push_result(ls, err);
+}
+
+static int TCP_bind_netif(lua_State* ls) {
+    TCP* tcp = check_TCP(ls, 1);
+    struct netif* netif = luaL_opt(ls, mlua_check_NETIF, 2, NULL);
+    lock_and_check_error(ls, tcp);
+    tcp_bind_netif(tcp->pcb, netif);
+    mlua_lwip_unlock();
+    return lua_pushboolean(ls, true), 1;
 }
 
 static err_t handle_accept(void* arg, struct tcp_pcb* pcb, err_t err) {
@@ -507,6 +517,7 @@ MLUA_SYMBOLS(TCP_syms) = {
     MLUA_SYM_F(close, TCP_),
     MLUA_SYM_F(shutdown, TCP_),
     MLUA_SYM_F(bind, TCP_),
+    MLUA_SYM_F(bind_netif, TCP_),
     MLUA_SYM_F(listen, TCP_),
     MLUA_SYM_F(accept, TCP_),
     MLUA_SYM_F(connect, TCP_),
@@ -547,6 +558,7 @@ static int mod_new(lua_State* ls) {
 }
 
 MLUA_SYMBOLS(module_syms) = {
+    MLUA_SYM_V(DEFAULT_LISTEN_BACKLOG, integer, TCP_DEFAULT_LISTEN_BACKLOG),
     MLUA_SYM_V(WRITE_FLAG_COPY, integer, TCP_WRITE_FLAG_COPY),
     MLUA_SYM_V(WRITE_FLAG_MORE, integer, TCP_WRITE_FLAG_MORE),
     MLUA_SYM_V(PRIO_MIN, integer, TCP_PRIO_MIN),
