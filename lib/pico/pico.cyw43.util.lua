@@ -18,7 +18,7 @@ function wifi_connect(ssid, password, auth, deadline)
         status = cyw43.tcpip_link_status(cyw43.ITF_STA)
         if status == cyw43.LINK_UP then return true
         elseif status < 0 then return nil, cyw43.link_status_str(status)
-        elseif time.compare(time.ticks(), deadline) >= 0 then
+        elseif deadline and time.compare(time.ticks(), deadline) >= 0 then
             return nil, "connection timed out"
         end
         time.sleep_for(200 * time.msec)

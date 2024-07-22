@@ -177,10 +177,10 @@ build target: `mlua_mod_pico.cyw43.util`
 
 This module provides helper functions to work with the CYW43.
 
-- `wifi_connect(ssid, password, auth, timeout) -> true | (nil, msg)`\
+- `wifi_connect(ssid, password, auth, deadline = nil) -> true | (nil, msg)`\
   Connect to a Wi-Fi network on the `ITF_STA` interface, and wait for the link
   status to become `LINK_UP` or the connection to fail with a permanent error.
-  The timeout is specified in ticks.
+  The deadline is an [absolute time](mlua.md#absolute-time).
 
 ## `pico.cyw43.wifi`
 
