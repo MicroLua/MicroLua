@@ -9,7 +9,7 @@ in [Lua](https://www.lua.org/)**. It packages the latest Lua interpreter with
 bindings for the [Pico SDK](https://github.com/raspberrypi/pico-sdk) and a
 cooperative threading library.
 
-MicroLua is licensed under the [MIT](LICENSE.md) license.
+MicroLua is licensed under the [MIT](LICENSE.txt) license.
 
 - Mailing list:
   [microlua@freelists.org](https://www.freelists.org/list/microlua)
