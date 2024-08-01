@@ -25,7 +25,7 @@ Here's how to get started with a new project based on MicroLua:
 
     ```cmake
     # Define the project and initialize MicroLua.
-    cmake_minimum_required(VERSION 3.20)
+    cmake_minimum_required(VERSION 3.24)
 
     include(mlua_import.cmake)
 
