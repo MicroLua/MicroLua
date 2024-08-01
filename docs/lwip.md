@@ -1,7 +1,7 @@
-# `lwip.*` modules
-
 <!-- Copyright 2024 Remy Blank <remy@c-space.org> -->
 <!-- SPDX-License-Identifier: MIT -->
+
+# `lwip.*` modules
 
 This page describes the modules that wrap the "raw" API of the
 [lwIP](https://savannah.nongnu.org/projects/lwip/) library. In general,

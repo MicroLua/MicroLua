@@ -1,7 +1,7 @@
-# MicroLua - Lua for the RP2040 microcontroller
-
 <!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
 <!-- SPDX-License-Identifier: MIT -->
+
+# MicroLua - Lua for the RP2040 microcontroller
 
 MicroLua allows **programming the
 [RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/rp2040.html)

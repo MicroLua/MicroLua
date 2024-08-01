@@ -1,7 +1,7 @@
-# Core functionality
-
 <!-- Copyright 2023 Remy Blank <remy@c-space.org> -->
 <!-- SPDX-License-Identifier: MIT -->
+
+# Core functionality
 
 <!-- TODO: Document config knobs -->
 <!-- TODO: Document how to embed MicroLua into a C application -->
