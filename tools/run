@@ -86,9 +86,10 @@ run-pico() {
     # TODO: Provide args to test binary through USB endpoint
     # TODO: Extract test result from USB endpoint
     local bin="${BUILD}/${TARGET}.elf" usb_stdio
-    picotool info -a "${bin}" | grep -Fq 'USB stdin / stdout' \
+    picotool info --all "${bin}" | grep -Fq 'USB stdin / stdout' \
         && usb_stdio=1 || usb_stdio=0
-    picotool load -u -x "${bin}" -F && res=$? || res=$?
+    picotool load --update --execute "${bin}" --force-no-reboot \
+        && res=$? || res=$?
     on-failure-exit "${res}" || return 1
     if [[ "${usb_stdio}" -ne 0 ]]; then
         "${MLUA_PATH}/tools/term" "$(find-tty-dev)"
