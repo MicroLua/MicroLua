@@ -121,8 +121,10 @@ Here's how to build and run the test suite.
 $ export PICO_SDK_PATH="${HOME}/pico-sdk"
 
 # Clone the repository and initialize submodules.
-$ git clone --recurse-submodules https://github.com/MicroLua/MicroLua.git
+$ git clone https://github.com/MicroLua/MicroLua.git
 $ cd MicroLua
+$ git submodule update --init
+$ git -C ext/pico-sdk submodule update --init
 
 # Build the test suite for the host and run it.
 $ tools/run -l -t bin/mlua_tests -p host
