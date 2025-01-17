@@ -1,12 +1,20 @@
-# Copyright 2024 Remy Blank <remy@c-space.org>
-# SPDX-License-Identifier: MIT
-
 [submodule "littlefs"]
-    path = ext/littlefs
-    url = https://github.com/littlefs-project/littlefs.git
+	path = ext/littlefs
+	url = https://github.com/littlefs-project/littlefs.git
+	path = ext/littlefs
+	url = https://github.com/littlefs-project/littlefs.git
 [submodule "lua"]
-    path = ext/lua
-    url = https://github.com/lua/lua.git
+	path = ext/lua
+	url = https://github.com/lua/lua.git
+	path = ext/lua
+	url = https://github.com/lua/lua.git
 [submodule "lwip"]
-    path = ext/lwip
-    url = https://github.com/lwip-tcpip/lwip.git
+	path = ext/lwip
+	url = https://github.com/lwip-tcpip/lwip.git
+	path = ext/lwip
+	url = https://github.com/lwip-tcpip/lwip.git
+[submodule "pico-sdk"]
+	path = ext/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
+	path = ext/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
