@@ -103,12 +103,12 @@ while true; do
         "${CMAKE_ARGS[@]}" && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
-    # Build tests.
+    # Build the target.
     cmake --build "${BUILD}" --parallel="${JOBS}" \
         --target="$(basename "${TARGET}")" && res=$? || res=$?
     on-failure-exit "${res}" || continue
 
-    # Run tests.
+    # Run the target.
     "run-${PLATFORM}" "$@" && res=$? || res=$?
     [[ "${res}" -ge 128 ]] && exit "${res}"
     [[ "${LOOP}" -ne 0 ]] || exit "${res}"
