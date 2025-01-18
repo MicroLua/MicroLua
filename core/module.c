@@ -296,9 +296,9 @@ static int hash___index(lua_State* ls) {
     lua_pop(ls, 1);
 
     // Try the lookup in the hash table.
-    if (lua_isstring(ls, 2)) {
+    MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
+    if (h->nkeys > 0 && lua_isstring(ls, 2)) {
         char const* key = lua_tostring(ls, 2);
-        MLuaSymHash const* h = lua_touserdata(ls, lua_upvalueindex(2));
         MLuaSymH const* field = h->fields;
         uint32_t kh = perfect_hash(key, h);
         field += kh;
