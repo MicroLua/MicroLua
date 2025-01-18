@@ -63,7 +63,7 @@ function set_up(t)
             t:printf("    inet @{+MAGENTA}%s@{NORM}/%s gw %s\n", ip, mask, gw)
         end
         for _, ip, state, valid, pref in nif:ip6() do
-            if state ~= lwip.IP6_ADDR_INVALID then
+            if state ~= ip6.ADDR_INVALID then
                 local scope = ip6.multicast_scope(ip)
                 t:printf("    inet6 @{+BLUE}%s@{NORM} scope %s %s\n", ip,
                          addr_scope(ip), addr_state(state))
