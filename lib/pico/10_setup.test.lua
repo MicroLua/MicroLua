@@ -32,6 +32,8 @@ local function wait_non_linklocal_addr(nif, deadline)
 end
 
 function set_up(t)
+    t:printf("cyw43: %s.%s.%s\n", cyw43.VERSION >> 16,
+             (cyw43.VERSION >> 8) & 0xff, cyw43.VERSION & 0xff)
     t:printf("SSID: %s, PASSWORD: %s, SERVER: %s:%s\n", config.WIFI_SSID,
              config.WIFI_PASSWORD, config.SERVER_ADDR, config.SERVER_PORT)
     t:once(module_name .. '|cyw43', function()
