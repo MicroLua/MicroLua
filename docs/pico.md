@@ -543,8 +543,6 @@ tests: [`pico.stdlib.test`](../lib/pico/pico.stdlib.test.lua)
   `DEFAULT_WS2812_PIN: integer | boolean`\
   `DEFAULT_WS2812_POWER_PIN: integer | boolean`
 
-- `check_sys_clock_khz(freq_khz) -> (integer, integer, integer) | nil`
-
 ## `pico.time`
 
 **Library:** [`pico_time`](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#pico_time),

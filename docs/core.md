@@ -57,7 +57,6 @@ Here's how to get started with a new project based on MicroLua:
 
     ```shell
     # Adjust the paths for your setup.
-    $ export PICO_SDK_PATH="${HOME}/pico-sdk"
     $ export MLUA_PATH="${HOME}/MicroLua"
 
     # Build the executable.

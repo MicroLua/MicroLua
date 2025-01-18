@@ -74,6 +74,8 @@ tests: [`hardware.clocks.test`](../lib/pico/hardware.clocks.test.lua)
 > [!NOTE]
 > Resus functionality isn't implemented yet.
 
+- `check_sys_clock_khz(freq_khz) -> (integer, integer, integer) | nil`
+
 ## `hardware.dma`
 
 **Library:** [`hardware_dma`](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#hardware_dma),

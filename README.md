@@ -117,9 +117,6 @@ end
 Here's how to build and run the test suite.
 
 ```shell
-# Configure the location of the Pico SDK. Adjust for your setup.
-$ export PICO_SDK_PATH="${HOME}/pico-sdk"
-
 # Clone the repository and initialize submodules.
 $ git clone https://github.com/MicroLua/MicroLua.git
 $ cd MicroLua
