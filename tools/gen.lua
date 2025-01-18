@@ -362,11 +362,22 @@ local function typemap(types)
     return map
 end
 
--- Parse preprocessor symbols that define values.
-local function parse_defines(text, excludes, strip, types)
+-- Parse preprocessor symbols that define values and enum values.
+local function parse_symbols(text, excludes, strip, types)
     local syms = {}
     for line in lines(text) do
-        local csym, val = line:match('^#define ([a-zA-Z][a-zA-Z0-9_]*) (.+)\n$')
+        local pp = true
+        local csym, val = line:match(
+            '^#define%s+([a-zA-Z][a-zA-Z0-9_]*)%s+(.+)\n$')
+        if not csym then
+            pp = false
+            csym, val = line:match(
+                '^%s*([a-zA-Z][a-zA-Z0-9_]*)%s*=%s*(.+)%s*,%s*\n$')
+        end
+        if not csym then
+            pp = false
+            csym, val = line:match('^%s*([a-zA-Z][a-zA-Z0-9_]*)%s*,?%s*\n$'), ''
+        end
         if not csym then goto continue end
         local sv = ('%s:%s'):format(csym, val)
         for _, exclude in ipairs(excludes) do
@@ -384,7 +395,7 @@ local function parse_defines(text, excludes, strip, types)
         for _, it in ipairs(types) do
             local pat, typ, cast = table.unpack(it)
             if sv:match(pat) then
-                syms[sym] = {typ, cast, csym}
+                syms[sym] = {typ, cast, csym, pp}
                 break
             end
         end
@@ -393,26 +404,28 @@ local function parse_defines(text, excludes, strip, types)
     return syms
 end
 
--- Generate a C module providing the preprocessor symbols defined by a header
--- file.
+-- Generate a C module providing the preprocessor and enum symbols defined by a
+-- header file.
 function cmd_headermod(args)
     local mod, include, defines, template, output = table.unpack(args, 1, 5)
     local kwargs = parse_kwargs({'EXCLUDE', 'STRIP', 'TYPES'}, slice(args, 6))
-    local syms = parse_defines(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP,
+    local syms = parse_symbols(read_file(defines), kwargs.EXCLUDE, kwargs.STRIP,
                                typemap(kwargs.TYPES))
     local names = {}
     for sym in pairs(syms) do table.insert(names, sym) end
     table.sort(names)
     local symdefs = {}
     for _, name in ipairs(names) do
-        local typ, cast, csym = table.unpack(syms[name])
-        table.insert(symdefs, ('#ifdef %s'):format(csym))
+        local typ, cast, csym, pp = table.unpack(syms[name])
+        if pp then table.insert(symdefs, ('#ifdef %s'):format(csym)) end
         table.insert(symdefs,
             ('    MLUA_SYM_V_H(%s, %s, %s%s),'):format(name, typ, cast, csym))
-        table.insert(symdefs, '#else')
-        table.insert(symdefs,
-            ('    MLUA_SYM_V_H(%s, boolean, false),'):format(name))
-        table.insert(symdefs, '#endif')
+        if pp then
+            table.insert(symdefs, '#else')
+            table.insert(symdefs,
+                ('    MLUA_SYM_V_H(%s, boolean, false),'):format(name))
+            table.insert(symdefs, '#endif')
+        end
     end
     local tmpl = read_file(template)
     local sub = {
