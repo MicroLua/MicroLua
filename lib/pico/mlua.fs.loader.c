@@ -5,8 +5,8 @@
 #include <string.h>
 
 #include "hardware/flash.h"
+#include "pico.h"
 #include "pico/binary_info.h"
-#include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"

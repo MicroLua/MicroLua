@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include "hardware/structs/sio.h"
+#include "pico.h"
 #include "pico/multicore.h"
-#include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"

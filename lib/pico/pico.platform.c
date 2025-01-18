@@ -1,7 +1,7 @@
 // Copyright 2023 Remy Blank <remy@c-space.org>
 // SPDX-License-Identifier: MIT
 
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -16,20 +16,27 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(NUM_CORES, integer, NUM_CORES),
     MLUA_SYM_V(NUM_DMA_CHANNELS, integer, NUM_DMA_CHANNELS),
     MLUA_SYM_V(NUM_DMA_TIMERS, integer, NUM_DMA_TIMERS),
+    MLUA_SYM_V(NUM_DMA_IRQS, integer, NUM_DMA_IRQS),
     MLUA_SYM_V(NUM_IRQS, integer, NUM_IRQS),
     MLUA_SYM_V(NUM_USER_IRQS, integer, NUM_USER_IRQS),
     MLUA_SYM_V(NUM_PIOS, integer, NUM_PIOS),
     MLUA_SYM_V(NUM_PIO_STATE_MACHINES, integer, NUM_PIO_STATE_MACHINES),
+    MLUA_SYM_V(NUM_PIO_IRQS, integer, NUM_PIO_IRQS),
     MLUA_SYM_V(NUM_PWM_SLICES, integer, NUM_PWM_SLICES),
+    MLUA_SYM_V(NUM_PWM_IRQS, integer, NUM_PWM_IRQS),
     MLUA_SYM_V(NUM_SPIN_LOCKS, integer, NUM_SPIN_LOCKS),
     MLUA_SYM_V(NUM_UARTS, integer, NUM_UARTS),
     MLUA_SYM_V(NUM_I2CS, integer, NUM_I2CS),
     MLUA_SYM_V(NUM_SPIS, integer, NUM_SPIS),
-    MLUA_SYM_V(NUM_TIMERS, integer, NUM_TIMERS),
+    MLUA_SYM_V(NUM_GENERIC_TIMERS, integer, NUM_GENERIC_TIMERS),
+    MLUA_SYM_V(NUM_ALARMS, integer, NUM_ALARMS),
+    MLUA_SYM_V(ADC_BASE_PIN, integer, ADC_BASE_PIN),
     MLUA_SYM_V(NUM_ADC_CHANNELS, integer, NUM_ADC_CHANNELS),
+    MLUA_SYM_V(NUM_RESETS, integer, NUM_RESETS),
     MLUA_SYM_V(NUM_BANK0_GPIOS, integer, NUM_BANK0_GPIOS),
     MLUA_SYM_V(NUM_QSPI_GPIOS, integer, NUM_QSPI_GPIOS),
     MLUA_SYM_V(PIO_INSTRUCTION_COUNT, integer, PIO_INSTRUCTION_COUNT),
+    MLUA_SYM_V(USBCTRL_DPRAM_SIZE, integer, USBCTRL_DPRAM_SIZE),
     MLUA_SYM_V(XOSC_KHZ, integer, XOSC_KHZ),
     MLUA_SYM_V(SYS_CLK_KHZ, integer, SYS_CLK_KHZ),
     MLUA_SYM_V(USB_CLK_KHZ, integer, USB_CLK_KHZ),

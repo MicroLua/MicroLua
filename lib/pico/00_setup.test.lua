@@ -3,11 +3,11 @@
 
 _ENV = module(...)
 
+local clocks = require 'hardware.clocks'
 local gpio = require 'hardware.gpio'
 local uart = require 'hardware.uart'
 local testing_uart = require 'mlua.testing.uart'
 local stdio = require 'pico.stdio'
-local stdlib = require 'pico.stdlib'
 
 function set_up(t)
     -- Pull up the default UART Tx & Rx pins, to avoid spurious input if they
@@ -24,6 +24,6 @@ function set_up(t)
     end
 
     -- Set a faster clock speed.
-    stdlib.set_sys_clock_khz(250000, true)
+    clocks.set_sys_clock_khz(250000, true)
     if u then u:set_baudrate(uart.DEFAULT_BAUD_RATE) end
 end

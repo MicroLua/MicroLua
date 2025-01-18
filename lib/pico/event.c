@@ -5,7 +5,7 @@
 
 #include <assert.h>
 
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lstate.h"
 #include "mlua/module.h"

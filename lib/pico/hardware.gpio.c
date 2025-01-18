@@ -8,7 +8,6 @@
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
 #include "hardware/structs/iobank0.h"
-#include "pico/platform.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -39,7 +38,7 @@ static IRQState irq_state[NUM_CORES];
     | (EDGE_MASK << 12) | (EDGE_MASK << 16) | (EDGE_MASK << 20) \
     | (EDGE_MASK << 24) | (EDGE_MASK << 28))
 
-io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
+io_bank0_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
     return core == 1 ? &iobank0_hw->proc1_irq_ctrl
         : &iobank0_hw->proc0_irq_ctrl;
 }
@@ -47,7 +46,7 @@ io_irq_ctrl_hw_t* core_irq_ctrl_base(uint core) {
 static void __time_critical_func(handle_gpio_irq)(void) {
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
-    io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
+    io_bank0_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
     bool notify = false;
     for (uint block = 0; block < MLUA_SIZE(state->pending); ++block) {
         uint32_t pending = irq_ctrl_base->ints[block] & state->mask[block];
@@ -73,7 +72,7 @@ static int handle_irq_event(lua_State* ls) {
 static int handle_irq_event_1(lua_State* ls, int status, lua_KContext ctx) {
     uint core = get_core_num();
     IRQState* state = &irq_state[core];
-    io_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
+    io_bank0_irq_ctrl_hw_t* irq_ctrl_base = core_irq_ctrl_base(core);
     uint block = lua_tointeger(ls, ctx);
     uint32_t pending = lua_tointeger(ls, ctx + 1);
     for (;;) {

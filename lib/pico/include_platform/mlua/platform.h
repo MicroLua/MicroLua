@@ -11,7 +11,6 @@
 #include "hardware/timer.h"
 #include "pico.h"
 #include "pico/binary_info.h"
-#include "pico/platform.h"
 #include "pico/time.h"
 
 #include "lua.h"

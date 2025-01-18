@@ -6,8 +6,8 @@
 
 #include "hardware/structs/sio.h"
 #include "hardware/sync.h"
+#include "pico.h"
 #include "pico/multicore.h"
-#include "pico/platform.h"
 #include "pico/time.h"
 
 #include "lua.h"

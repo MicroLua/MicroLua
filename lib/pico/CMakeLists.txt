@@ -109,11 +109,11 @@ endfunction()
 
 mlua_add_lua_modules(mlua_test-ALL_00_setup 00_setup.test.lua)
 target_link_libraries(mlua_test-ALL_00_setup INTERFACE
+    mlua_mod_hardware.clocks
     mlua_mod_hardware.gpio
     mlua_mod_hardware.uart
     mlua_mod_mlua.testing.uart
     mlua_mod_pico.stdio
-    mlua_mod_pico.stdlib
 )
 
 mlua_add_lua_modules(mlua_test-net_10_setup 10_setup.test.lua)
@@ -164,6 +164,7 @@ mlua_add_lua_modules(mlua_test_hardware.clocks hardware.clocks.test.lua)
 target_link_libraries(mlua_test_hardware.clocks INTERFACE
     mlua_mod_hardware.clocks
     mlua_mod_hardware.regs.clocks
+    mlua_mod_mlua.testing.clocks
     mlua_mod_table
 )
 
@@ -317,7 +318,6 @@ target_link_libraries(mlua_test_hardware.pll INTERFACE
     mlua_mod_hardware.regs.clocks
     mlua_mod_hardware.pll
     mlua_mod_mlua.testing.clocks
-    mlua_mod_pico.stdlib
 )
 
 mlua_add_c_module(mlua_mod_hardware.pwm hardware.pwm.c)
@@ -350,7 +350,8 @@ foreach(path IN LISTS paths)
     set(target "mlua_mod_hardware.regs.${name}")
     if("${name}" STREQUAL addressmap)
         mlua_add_header_module("${target}" "hardware.regs.${name}" "${path}"
-            EXCLUDE "^NUM_" "^PIO_INSTRUCTION_" "_[KM]HZ:" "_IRQ:"
+            EXCLUDE "^NUM_" "^PIO_INSTRUCTION_" "^USBCTRL_" "^HAS_"
+                    "_HZ:" "_[KM]HZ:" "_IRQ:"
             TYPES "_BITS:=integer" "=lightuserdata:(void*)(uintptr_t)"
         )
     else()
@@ -714,7 +715,6 @@ target_link_libraries(mlua_mod_mlua.testing.clocks INTERFACE
     mlua_mod_hardware.clocks
     mlua_mod_hardware.uart
     mlua_mod_pico.stdio
-    mlua_mod_pico.stdlib
 )
 
 mlua_add_lua_modules(mlua_mod_mlua.testing.i2c mlua.testing.i2c.lua)
@@ -931,6 +931,7 @@ target_link_libraries(mlua_test_pico.stdio INTERFACE
     mlua_mod_mlua.repr
     mlua_mod_mlua.testing.stdio
     mlua_mod_mlua.thread
+    mlua_mod_pico
     mlua_mod_pico.stdio
     mlua_mod_string
 )
@@ -981,13 +982,6 @@ target_link_libraries(mlua_test_pico.stdio.usb INTERFACE
 mlua_add_c_module(mlua_mod_pico.stdlib pico.stdlib.c)
 target_link_libraries(mlua_mod_pico.stdlib INTERFACE
     pico_stdlib
-)
-
-mlua_add_lua_modules(mlua_test_pico.stdlib pico.stdlib.test.lua)
-target_link_libraries(mlua_test_pico.stdlib INTERFACE
-    mlua_mod_hardware.clocks
-    mlua_mod_mlua.testing.clocks
-    mlua_mod_pico.stdlib
 )
 
 mlua_add_c_module(mlua_mod_pico.time pico.time.c)

@@ -7,6 +7,16 @@
 #include "lauxlib.h"
 #include "mlua/module.h"
 
+static int mod_check_sys_clock_khz(lua_State* ls) {
+    lua_Integer freq = luaL_checkinteger(ls, 1);
+    uint vco_freq, post_div1, post_div2;
+    if (!check_sys_clock_khz(freq, &vco_freq, &post_div1, &post_div2)) return 0;
+    lua_pushinteger(ls, vco_freq);
+    lua_pushinteger(ls, post_div1);
+    lua_pushinteger(ls, post_div2);
+    return 3;
+}
+
 MLUA_FUNC_R5(mod_, clock_, configure, lua_pushboolean, luaL_checkinteger,
              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger,
              luaL_checkinteger)
@@ -21,6 +31,11 @@ MLUA_FUNC_V3(mod_, clock_, gpio_init, luaL_checkinteger, luaL_checkinteger,
              luaL_checknumber)
 MLUA_FUNC_R4(mod_, clock_, configure_gpin, lua_pushboolean, luaL_checkinteger,
              luaL_checkinteger, luaL_checkinteger, luaL_checkinteger)
+MLUA_FUNC_V0(mod_,, set_sys_clock_48mhz)
+MLUA_FUNC_V3(mod_,, set_sys_clock_pll, luaL_checkinteger, luaL_checkinteger,
+             luaL_checkinteger)
+MLUA_FUNC_R2(mod_,, set_sys_clock_khz, lua_pushboolean, luaL_checkinteger,
+             mlua_to_cbool)
 
 MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(KHZ, integer, KHZ),
@@ -47,6 +62,10 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_F(gpio_init_int_frac, mod_),
     MLUA_SYM_F(gpio_init, mod_),
     MLUA_SYM_F(configure_gpin, mod_),
+    MLUA_SYM_F(set_sys_clock_48mhz, mod_),
+    MLUA_SYM_F(set_sys_clock_pll, mod_),
+    MLUA_SYM_F(check_sys_clock_khz, mod_),
+    MLUA_SYM_F(set_sys_clock_khz, mod_),
 };
 
 MLUA_OPEN_MODULE(hardware.clocks) {

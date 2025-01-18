@@ -3,7 +3,7 @@
 
 #include "hardware/address_mapped.h"
 #include "hardware/dma.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"

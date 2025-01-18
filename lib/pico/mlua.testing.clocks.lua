@@ -6,7 +6,6 @@ _ENV = module(...)
 local clocks = require 'hardware.clocks'
 local uart = require 'hardware.uart'
 local stdio = require 'pico.stdio'
-local stdlib = require 'pico.stdlib'
 
 function fix_uart_baudrate()
     if uart.default then uart.default:set_baudrate(uart.DEFAULT_BAUD_RATE) end
@@ -21,7 +20,7 @@ function restore_sys_clock(t)
     t:cleanup(function()
         stdio.flush()
         wait_uart_idle()
-        stdlib.set_sys_clock_khz(sys_khz, true)
+        clocks.set_sys_clock_khz(sys_khz, true)
         fix_uart_baudrate()
     end)
     stdio.flush()

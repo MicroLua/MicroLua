@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 #include "hardware/timer.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -16,7 +16,7 @@
 
 static uint check_alarm(lua_State* ls, int index) {
     lua_Unsigned alarm = luaL_checkinteger(ls, index);
-    luaL_argcheck(ls, alarm < NUM_TIMERS, index, "invalid alarm");
+    luaL_argcheck(ls, alarm < NUM_ALARMS, index, "invalid alarm");
     return alarm;
 }
 
@@ -35,11 +35,11 @@ static int mod_time_us(lua_State* ls) {
 #if LIB_MLUA_MOD_MLUA_THREAD
 
 typedef struct AlarmState {
-    MLuaEvent events[NUM_TIMERS];
+    MLuaEvent events[NUM_ALARMS];
     uint8_t pending;
 } AlarmState;
 
-static_assert(NUM_TIMERS <= 8 * sizeof(uint8_t), "pending bitmask too small");
+static_assert(NUM_ALARMS <= 8 * sizeof(uint8_t), "pending bitmask too small");
 
 static AlarmState alarm_state;
 

@@ -4,7 +4,7 @@
 #ifndef _MLUA_LIB_PICO_HARDWARE_GPIO_H
 #define _MLUA_LIB_PICO_HARDWARE_GPIO_H
 
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"

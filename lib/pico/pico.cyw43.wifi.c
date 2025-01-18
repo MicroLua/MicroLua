@@ -73,6 +73,10 @@ static void mod_DEFAULT_PM(lua_State* ls, MLuaSymVal const* value) {
     lua_pushinteger(ls, CYW43_DEFAULT_PM);
 }
 
+static void mod_NONE_PM(lua_State* ls, MLuaSymVal const* value) {
+    lua_pushinteger(ls, CYW43_NONE_PM);
+}
+
 static void mod_AGGRESSIVE_PM(lua_State* ls, MLuaSymVal const* value) {
     lua_pushinteger(ls, CYW43_AGGRESSIVE_PM);
 }
@@ -285,6 +289,7 @@ MLUA_SYMBOLS(module_syms) = {
     MLUA_SYM_V(SCAN_ACTIVE, integer, 0),
     MLUA_SYM_V(SCAN_PASSIVE, integer, 1),
     MLUA_SYM_P(DEFAULT_PM, mod_),
+    MLUA_SYM_P(NONE_PM, mod_),
     MLUA_SYM_P(AGGRESSIVE_PM, mod_),
     MLUA_SYM_P(PERFORMANCE_PM, mod_),
 

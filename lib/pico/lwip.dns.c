@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "lwip/dns.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"

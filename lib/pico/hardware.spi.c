@@ -8,7 +8,7 @@
 #include "hardware/irq.h"
 #include "hardware/regs/intctrl.h"
 #include "hardware/spi.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "mlua/module.h"
 #include "mlua/thread.h"

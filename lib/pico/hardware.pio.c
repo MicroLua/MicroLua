@@ -7,7 +7,7 @@
 #include "hardware/irq.h"
 #include "hardware/pio.h"
 #include "hardware/sync.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -357,6 +357,7 @@ static void to_program(lua_State* ls, pio_program_t* prog) {
     if (lua_getfield(ls, 2, "origin") != LUA_TNIL) {
         prog->origin = luaL_checkinteger(ls, -1);
     }
+    prog->pio_version = PICO_PIO_VERSION;
     lua_pop(ls, 1);
 }
 
@@ -553,6 +554,8 @@ MLUA_FUNC_R(PIO_, pio_, claim_unused_sm, lua_pushinteger, check_PIO(ls, 1),
              mlua_opt_cbool(ls, 2, true))
 
 MLUA_SYMBOLS(PIO_syms) = {
+    MLUA_SYM_V(VERSION, integer, PICO_PIO_VERSION),
+
     MLUA_SYM_F(sm, PIO_),
     MLUA_SYM_F(get_index, PIO_),
     MLUA_SYM_F(regs, PIO_),

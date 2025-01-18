@@ -9,7 +9,7 @@
 #include "hardware/address_mapped.h"
 #include "hardware/irq.h"
 #include "hardware/regs/intctrl.h"
-#include "pico/platform.h"
+#include "pico.h"
 #include "pico/time.h"
 
 #include "mlua/int64.h"

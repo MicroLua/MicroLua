@@ -7,6 +7,7 @@ local list = require 'mlua.list'
 local repr = require 'mlua.repr'
 local testing_stdio = require 'mlua.testing.stdio'
 local thread = require 'mlua.thread'
+local pico = require 'pico'
 local stdio = require 'pico.stdio'
 local string = require 'string'
 
@@ -17,9 +18,11 @@ local string = require 'string'
 function test_putchar_getchar_BNB(t)
     for _, test in ipairs{
         {false, {65, 10, 66, 13, 10, 67},
-                {65, 10, 66, 13, 10, 67, 65, 10, 66, 13, 10, 67, -1}},
+                {65, 10, 66, 13, 10, 67, 65, 10, 66, 13, 10, 67,
+                 pico.ERROR_TIMEOUT}},
         {true, {65, 10, 66, 13, 10, 67},
-               {65, 10, 66, 13, 10, 67, 65, 13, 10, 66, 13, 10, 67, -1}},
+               {65, 10, 66, 13, 10, 67, 65, 13, 10, 66, 13, 10, 67,
+                pico.ERROR_TIMEOUT}},
     } do
         local crlf, chars, want = list.unpack(test)
         local got = list()

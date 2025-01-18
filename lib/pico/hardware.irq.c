@@ -7,7 +7,7 @@
 #include "hardware/irq.h"
 #include "hardware/structs/nvic.h"
 #include "hardware/sync.h"
-#include "pico/platform.h"
+#include "pico.h"
 
 #include "lua.h"
 #include "lauxlib.h"
