@@ -139,7 +139,11 @@ lua_State* mlua_new_interpreter(void) {
     MLuaGlobal* g = realloc(NULL, sizeof(MLuaGlobal));
     if (g == NULL) return NULL;
     memset(g, 0, sizeof(*g));
+#if LUA_VERSION_NUM <= 504
     lua_State* ls = lua_newstate(allocate, g);
+#else
+    lua_State* ls = lua_newstate(allocate, g, luaL_makeseed(NULL));
+#endif
     if (ls == NULL) {
         free(g);
         return NULL;

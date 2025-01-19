@@ -35,11 +35,11 @@ extern "C" {
 
 // Call lua_callk(), then the continuation.
 #define mlua_callk(ls, nargs, nres, k, ctx) \
-    lua_callk((ls), (nargs), (nres), (ctx), &k), k((ls), LUA_OK, (ctx))
+    (lua_callk((ls), (nargs), (nres), (ctx), &k), k((ls), LUA_OK, (ctx)))
 
 // Call lua_pcallk(), then the continuation.
 #define mlua_pcallk(ls, nargs, nres, msgh, k, ctx) \
-    k((ls), lua_pcallk((ls), (nargs), (nres), (msgh), (ctx), &k), (ctx))
+    (k((ls), lua_pcallk((ls), (nargs), (nres), (msgh), (ctx), &k), (ctx)))
 
 // A continuation that returns its ctx argument.
 static inline int mlua_cont_return(lua_State* ls, int status,
