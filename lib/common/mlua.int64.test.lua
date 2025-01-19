@@ -180,7 +180,7 @@ local variants = {
 local function run_binary_ops_tests(t, ops, as, bs)
     for op, f in pairs(ops) do
         for fmt, v in pairs(variants) do
-            fmt = fmt .. " = %s, want %s"
+            local fmt = fmt .. " = %s, want %s"
             local vf = v(f)
             for _, a in ipairs(as) do
                 for _, b in ipairs(bs) do
