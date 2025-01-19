@@ -26,7 +26,7 @@ function test_try(t)
     t:expect(t.mexpr(_G).try(function(a, b, c) return c, b, a end, 1, 2, 3))
         :label("success"):eq{3, 2, 1}
     t:expect(t.mexpr(_G).try(function() error("boom", 0) end))
-        :label("failure"):eq{nil, "boom"}
+        :label("failure"):eq{[0] = 2, nil, "boom"}
     t:expect(t.mexpr(_G).try(function() thread.yield() return 1, 2 end))
         :label("yielding"):eq{1, 2}
 end
@@ -53,7 +53,7 @@ function test_with_traceback(t)
         {function(a, b, c) return c, b, a end, {1, 2, 3}, {3, 2, 1}, nil},
         {function() error("boom", 0) end, {}, nil, "^boom\nstack traceback:\n"},
     } do
-        local fn, args, res, err = table.unpack(test)
+        local fn, args, res, err = table.unpack(test, 1, 4)
         local wfn = with_traceback(fn)
         local exp = t:expect(t.mexpr.wfn(table.unpack(args)))
         if not err then exp:eq(res) else exp:raises(err) end

@@ -13,7 +13,7 @@ function test_keys(t)
         {{a = 4, b = 5, c = 6}, function(k, v) return k ~= 'b' and v ~= 4 end,
          {[0] = 1, 'c'}},
     } do
-        local tab, filter, want = table.unpack(test)
+        local tab, filter, want = table.unpack(test, 1, 3)
         t:expect(t.expr(util).keys(tab, filter):sort()):eq(want, util.table_eq)
     end
 end
@@ -25,7 +25,7 @@ function test_values(t)
         {{a = 4, b = 5, c = 6}, function(k, v) return k ~= 'b' and v ~= 4 end,
          {[0] = 1, 6}},
     } do
-        local tab, filter, want = table.unpack(test)
+        local tab, filter, want = table.unpack(test, 1, 3)
         t:expect(t.expr(util).values(tab, filter):sort())
             :eq(want, util.table_eq)
     end
@@ -43,7 +43,7 @@ function test_table_eq(t)
         {{a = 1, b = 2}, {a = 1, c = 2}, false},
         {{a = 1, b = 2}, {a = 1, b = 3}, false},
     } do
-        local a, b, want = table.unpack(test)
+        local a, b, want = table.unpack(test, 1, 3)
         t:expect(t.expr(util).table_eq(a, b)):eq(want)
         t:expect(t.expr(util).table_eq(b, a)):eq(want)
     end

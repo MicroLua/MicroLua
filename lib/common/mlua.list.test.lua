@@ -32,7 +32,7 @@ function test_len(t)
         {{1, 2, 3, 4, 5}, 3, 5, {[0] = 3, 1, 2, 3}},
         {{[0] = 7}, 4, 7, {[0] = 4}},
     } do
-        local arg, new, want, want_list = table.unpack(test)
+        local arg, new, want, want_list = table.unpack(test, 1, 4)
         t:expect(t.expr(list).len(arg, new)):eq(want)
         t:expect(arg):label("list"):eq(want_list, util.table_eq)
     end
@@ -49,7 +49,7 @@ function test_eq(t)
         {{[0] = 3, 1, nil, 3}, {[0] = 3, 1, nil, 4}, false},
         {{1, 2, 3, a = 4}, {1, 2, 3, b = 5}, true},
     } do
-        local a, b, want = table.unpack(test)
+        local a, b, want = table.unpack(test, 1, 3)
         t:expect(t.expr(list).eq(a, b)):eq(want)
         t:expect(t.expr(list).eq(b, a)):eq(want)
     end
@@ -81,7 +81,7 @@ end
 
 function test_append(t)
     for _, test in ipairs{
-        {{nil, 1, 2}, {[0] = 2, 1, 2}},
+        {{[0] = 3, nil, 1, 2}, {[0] = 2, 1, 2}},
         {{{}, 3, 4, 5}, {[0] = 3, 3, 4, 5}},
         {{{1, 2}, 3, 4}, {[0] = 4, 1, 2, 3, 4}},
         {{{[0] = 2, 1, 2}, 3}, {[0] = 3, 1, 2, 3}},
@@ -98,7 +98,7 @@ end
 
 function test_insert(t)
     for _, test in ipairs{
-        {{nil, 1}, {[0] = 1, 1}},
+        {{[0] = 2, nil, 1}, {[0] = 1, 1}},
         {{{}, 2}, {[0] = 1, 2}},
         {{{1, 2, 3}, 4}, {[0] = 4, 1, 2, 3, 4}},
         {{{1, 2, 3}, 2, 42}, {[0] = 4, 1, 42, 2, 3}},
@@ -112,12 +112,12 @@ end
 
 function test_remove(t)
     for _, test in ipairs{
-        {{nil, 0}, nil, nil},
+        {{[0] = 2, nil, 0}, nil, nil},
         {{{}, 0}, nil, {}},
         {{{1, 2, 3, 4}, nil}, 4, {[0] = 3, 1, 2, 3}},
         {{{1, 2, 3, 4}, 2}, 2, {[0] = 3, 1, 3, 4}},
     } do
-        local args, want_res, want = table.unpack(test)
+        local args, want_res, want = table.unpack(test, 1, 3)
         local argsc = copy_args(args)
         t:expect(list.remove(list.unpack(args)))
             :func("remove", list.unpack(args)):eq(want_res)
@@ -142,24 +142,24 @@ end
 
 function test_unpack(t)
     for _, test in ipairs{
-        {{nil}, {}},
-        {{{}}, {}},
-        {{{1, 2, 3}}, {1, 2, 3}},
-        {{{nil, 2, 3}}, {nil, 2, 3}},
-        {{{1, 2, 3, 4, 5}, 3}, {3, 4, 5}},
-        {{{1, 2, 3, 4, 5}, nil, 4}, {1, 2, 3, 4}},
-        {{{1, 2, 3, 4, 5}, 2, 3}, {2, 3}},
-        {{{1, 2, 3, 4, 5}, 4, 3}, {}},
+        {1, {nil}, {}},
+        {1, {{}}, {}},
+        {1, {{1, 2, 3}}, {1, 2, 3}},
+        {1, {{nil, 2, 3}}, {nil, 2, 3}},
+        {2, {{1, 2, 3, 4, 5}, 3}, {3, 4, 5}},
+        {3, {{1, 2, 3, 4, 5}, nil, 4}, {1, 2, 3, 4}},
+        {3, {{1, 2, 3, 4, 5}, 2, 3}, {2, 3}},
+        {3, {{1, 2, 3, 4, 5}, 4, 3}, {}},
     } do
-        local args, want = table.unpack(test)
-        local got = list.pack(list.unpack(table.unpack(args)))
+        local nargs, args, want = table.unpack(test)
+        local got = list.pack(list.unpack(table.unpack(args, 1, nargs)))
         t:expect(got):func("unpack", table.unpack(args)):eq(want, list.eq)
     end
 end
 
 function test_sort(t)
     for _, test in ipairs{
-        {{nil}, nil},
+        {{[0] = 1, nil}, nil},
         {{{}}, {}},
         {{{1, 4, 2, 8, 5, 7}}, {1, 2, 4, 5, 7, 8}},
         {{{1, 4, 2, 8, 5}, function(a, b) return a > b end}, {8, 5, 4, 2, 1}},
@@ -172,11 +172,11 @@ function test_sort(t)
                     return a < b
                 end,
             },
-            {nil, nil, nil, 1, 2, 4, 8},
+            {[0] = 7, nil, nil, nil, 1, 2, 4, 8},
         },
     } do
-        local args, want = table.unpack(test)
-        t:expect(t.expr(list).sort(table.unpack(args))):eq(want, list.eq)
+        local args, want = table.unpack(test, 1, 2)
+        t:expect(t.expr(list).sort(list.unpack(args))):eq(want, list.eq)
     end
 end
 

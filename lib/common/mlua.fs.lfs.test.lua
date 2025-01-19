@@ -30,7 +30,8 @@ function set_up(t)
     local size = dev:size()
     dfs = lfs.new(dev)
     t:expect(t.mexpr(dfs):mkdir('/dir'))
-        :eq{nil, "transport endpoint is not connected", errors.ENOTCONN}
+        :eq{[0] = 3, nil, "transport endpoint is not connected",
+            errors.ENOTCONN}
     t:assert(dfs:format(size - 1024))  -- Allow growing
     t:expect(t.expr(dfs):is_mounted()):eq(false)
     t:assert(dfs:mount())
@@ -49,7 +50,7 @@ function test_stat(t)
     t:expect(t.mexpr(dfs):stat('/dir/file1')):eq{'file1', fs.TYPE_REG, 5}
     t:expect(t.mexpr(dfs):stat('/dir/file2')):eq{'file2', fs.TYPE_REG, 8}
     t:expect(t.mexpr(dfs):stat('/not-exists'))
-        :eq{nil, "no such file or directory", errors.ENOENT}
+        :eq{[0] = 3, nil, "no such file or directory", errors.ENOENT}
 end
 
 function test_attrs(t)
@@ -147,7 +148,7 @@ function test_file(t)
             :eq("The quick brown fox flies over the fence")
     end
     t:expect(t.mexpr(dfs):open('/not-found', fs.O_RDONLY))
-        :eq{nil, "no such file or directory", errors.ENOENT}
+        :eq{[0] = 3, nil, "no such file or directory", errors.ENOENT}
 end
 
 local function read_dir(path)

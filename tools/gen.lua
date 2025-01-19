@@ -124,7 +124,7 @@ function Graph:assign()
         -- a stack of vertices to visit and their parent.
         local stack = {{nil, root}}
         while stack[1] do
-            local parent, vertex = table.unpack(table.remove(stack))
+            local parent, vertex = table.unpack(table.remove(stack), 1, 2)
             visited[vertex] = true
 
             -- Compute the values of adjacent vertices, and push them onto the

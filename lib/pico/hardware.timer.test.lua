@@ -48,7 +48,7 @@ function test_busy_wait(t)
             {'busy_wait_us_32', nil, 5000, 5000},
             {'busy_wait_ms', nil, 6, 6000},
         } do
-            local fn, orig, delta, delay = table.unpack(test)
+            local fn, orig, delta, delay = table.unpack(test, 1, 4)
             local t1 = time_us()
             timer[fn]((orig and orig * t1 or 0) + delta)
             local t2 = time_us()

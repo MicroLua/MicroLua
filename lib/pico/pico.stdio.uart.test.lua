@@ -34,7 +34,7 @@ function test_init(t)
         {'init_stdout', pico.DEFAULT_UART_TX_PIN, nil},
         {'init_stdin', nil, pico.DEFAULT_UART_RX_PIN},
     } do
-        local fn, want_tx, want_rx = list.unpack(test)
+        local fn, want_tx, want_rx = list.unpack(test, 1, 3)
         uart.default:tx_wait_blocking()
         local got_tx, got_rx
         do  -- No output in this block

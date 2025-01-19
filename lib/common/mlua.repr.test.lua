@@ -35,7 +35,7 @@ function test_repr(t)
         {{a = {1, 2}, b = {c = 3, d = 4}}, '{a = {1, 2}, b = {c = 3, d = 4}}'},
         {rec, '{a = {b = 2, c = ..., d = 4}, e = ...}'},
     } do
-        local v, want = table.unpack(test)
+        local v, want = table.unpack(test, 1, 2)
         t:expect(t.expr.repr(v)):eq(want)
     end
 end

@@ -3,6 +3,7 @@
 
 _ENV = module(...)
 
+local list = require 'mlua.list'
 local mem = require 'mlua.mem'
 local string = require 'string'
 local table = require 'table'
@@ -26,7 +27,7 @@ function test_read(t)
         {{3}, 'defghij'},
         {{10}, ''},
         {{11}, raise},
-        {{nil, 5}, 'abcde'},
+        {{[0] = 2, nil, 5}, 'abcde'},
         {{3, 5}, 'defgh'},
         {{7, 0}, ''},
         {{7, 3}, 'hij'},
@@ -35,7 +36,7 @@ function test_read(t)
         {{11, 0}, raise},
     } do
         local args, want = table.unpack(test)
-        local exp = t:expect(t.expr(mem).read(buf, table.unpack(args)))
+        local exp = t:expect(t.expr(mem).read(buf, list.unpack(args)))
         if want ~= raise then
             exp:eq(want)
             local off = args[1]
@@ -54,7 +55,7 @@ function test_read_cstr(t)
         {{8}, 'gh'},
         {{10}, ''},
         {{11}, raise},
-        {{nil, 2}, 'ab'},
+        {{[0] = 2, nil, 2}, 'ab'},
         {{4, 0}, ''},
         {{4, 2}, 'de'},
         {{8, 2}, 'gh'},
@@ -63,7 +64,7 @@ function test_read_cstr(t)
         {{11, 0}, raise},
     } do
         local args, want = table.unpack(test)
-        local exp = t:expect(t.expr(mem).read_cstr(buf, table.unpack(args)))
+        local exp = t:expect(t.expr(mem).read_cstr(buf, list.unpack(args)))
         if want ~= raise then
             exp:eq(want)
             local off = args[1]
@@ -134,7 +135,7 @@ function test_find(t)
         {{'ab'}, 0},
         {{'bc'}, 1},
         {{'def'}, 3},
-        {{'def', nil, 5}, nil},
+        {{[0] = 3, 'def', nil, 5}, nil},
         {{'bc', 5}, 7},
         {{'bc', 5, 3}, nil},
         {{'xyz'}, nil},
@@ -146,8 +147,8 @@ function test_find(t)
         {{'', 10}, 10},
         {{'', 11}, raise},
     } do
-        local args, want = table.unpack(test)
-        local exp = t:expect(t.expr(mem).find(buf, table.unpack(args)))
+        local args, want = table.unpack(test, 1, 2)
+        local exp = t:expect(t.expr(mem).find(buf, list.unpack(args)))
         if want ~= raise then
             exp:eq(want)
             local off = args[2]
