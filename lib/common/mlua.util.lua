@@ -44,7 +44,7 @@ function keys(tab, filter)
             res[len] = key
         end
     end
-    res[0] = len
+    res.n = len
     return res
 end
 
@@ -57,7 +57,7 @@ function values(tab, filter)
             res[len] = value
         end
     end
-    res[0] = len
+    res.n = len
     return res
 end
 

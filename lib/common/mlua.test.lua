@@ -26,7 +26,7 @@ function test_try(t)
     t:expect(t.mexpr(_G).try(function(a, b, c) return c, b, a end, 1, 2, 3))
         :label("success"):eq{3, 2, 1}
     t:expect(t.mexpr(_G).try(function() error("boom", 0) end))
-        :label("failure"):eq{[0] = 2, nil, "boom"}
+        :label("failure"):eq{nil, "boom", n = 2}
     t:expect(t.mexpr(_G).try(function() thread.yield() return 1, 2 end))
         :label("yielding"):eq{1, 2}
 end

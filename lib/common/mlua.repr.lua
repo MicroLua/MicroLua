@@ -28,8 +28,12 @@ local function is_list(v)
     if math.type(len) ~= 'integer' or len < 0 then return false end
     local cnt = 0
     for k in pairs(v) do
-        if math.type(k) ~= 'integer' or k < 0 or k > len then return false end
-        cnt = cnt + 1
+        if k ~= 'n' then
+            if math.type(k) ~= 'integer' or k <= 0 or k > len then
+                return false
+            end
+            cnt = cnt + 1
+        end
     end
     if len > 10 and cnt < len // 2 then return false end
     return true, len
@@ -37,9 +41,9 @@ end
 
 local function repr_list(v, len, seen)
     local parts = list()
-    local v0 = v[0]
-    if v0 then parts:append(('[0] = %s'):format(repr(v0, seen))) end
     for i = 1, len do parts:append(repr(v[i], seen)) end
+    local vn = v.n
+    if vn then parts:append(('n = %s'):format(repr(vn, seen))) end
     return ('{%s}'):format(parts:concat(', '))
 end
 

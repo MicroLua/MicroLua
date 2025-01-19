@@ -94,11 +94,11 @@ end
 Recorder = oo.class('Recorder')
 
 -- Return true iff the buffer is empty.
-function Recorder:is_empty() return (self[0] or 0) == 0 end
+function Recorder:is_empty() return (self.n or 0) == 0 end
 
 -- Write data to the writer.
 function Recorder:write(...)
-    local len = self[0] or 0
+    local len = self.n or 0
     for i = 1, select('#', ...) do
         local data = select(i, ...)
         if #data > 0 then
@@ -106,7 +106,7 @@ function Recorder:write(...)
             self[len] = data
         end
     end
-    if len > 0 then self[0] = len end
+    if len > 0 then self.n = len end
 end
 
 -- Replay the written data to the given writer.

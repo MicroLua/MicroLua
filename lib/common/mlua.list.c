@@ -8,7 +8,7 @@
 
 static char const list_name[] = "mlua.List";
 
-#define LEN_IDX 0
+#define LEN_IDX "n"
 
 static void new_list(lua_State* ls, int cap) {
     lua_createtable(ls, cap, 1);
@@ -18,7 +18,7 @@ static void new_list(lua_State* ls, int cap) {
 
 static lua_Integer length(lua_State* ls, int index) {
     if (lua_isnoneornil(ls, index)) return 0;
-    if (lua_rawgeti(ls, index, LEN_IDX) == LUA_TNIL) {
+    if (lua_getfield(ls, index, LEN_IDX) == LUA_TNIL) {
         lua_pop(ls, 1);
         return lua_rawlen(ls, index);
     }
@@ -38,7 +38,7 @@ static int list_len(lua_State* ls) {
                 lua_seti(ls, 1, i);
             }
             lua_pushinteger(ls, new_len);
-            lua_rawseti(ls, 1, LEN_IDX);
+            lua_setfield(ls, 1, LEN_IDX);
         }
     }
     return lua_pushinteger(ls, len), 1;
@@ -49,14 +49,14 @@ static int list___new(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) {
         new_list(ls, 0);
         lua_pushinteger(ls, 0);
-        lua_rawseti(ls, -2, LEN_IDX);
+        lua_setfield(ls, -2, LEN_IDX);
         return 1;
     }
     luaL_checktype(ls, 1, LUA_TTABLE);
     lua_settop(ls, 1);
-    if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
+    if (lua_getfield(ls, 1, LEN_IDX) == LUA_TNIL) {
         lua_pushinteger(ls, lua_rawlen(ls, 1));
-        lua_rawseti(ls, 1, LEN_IDX);
+        lua_setfield(ls, 1, LEN_IDX);
     }
     lua_pop(ls, 1);
     luaL_getmetatable(ls, list_name);
@@ -66,7 +66,7 @@ static int list___new(lua_State* ls) {
 
 static int list___len(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) return lua_pushinteger(ls, 0), 1;
-    if (lua_rawgeti(ls, 1, LEN_IDX) == LUA_TNIL) {
+    if (lua_getfield(ls, 1, LEN_IDX) == LUA_TNIL) {
         lua_pop(ls, 1);
         lua_pushinteger(ls, lua_rawlen(ls, 1));
     }
@@ -134,7 +134,7 @@ static int list_append(lua_State* ls) {
     lua_settop(ls, 1);
 #endif
     lua_pushinteger(ls, luaL_intop(+, len, cnt));
-    lua_rawseti(ls, 1, LEN_IDX);
+    lua_setfield(ls, 1, LEN_IDX);
     return 1;
 }
 
@@ -166,7 +166,7 @@ static int list_insert(lua_State* ls) {
     }
     lua_seti(ls, 1, pos);
     lua_pushinteger(ls, len);
-    lua_rawseti(ls, 1, LEN_IDX);
+    lua_setfield(ls, 1, LEN_IDX);
     return lua_settop(ls, 1), 1;
 }
 
@@ -186,7 +186,7 @@ static int list_remove(lua_State* ls) {
     lua_pushnil(ls);
     lua_seti(ls, 1, pos);
     lua_pushinteger(ls, len - 1);
-    lua_rawseti(ls, 1, LEN_IDX);
+    lua_setfield(ls, 1, LEN_IDX);
     return 1;
 }
 
@@ -196,7 +196,7 @@ static int list_pack(lua_State* ls) {
     lua_insert(ls, 1);
     for (lua_Integer i = len; i >= 1; --i) lua_rawseti(ls, 1, i);
     lua_pushinteger(ls, len);
-    lua_rawseti(ls, 1, LEN_IDX);
+    lua_setfield(ls, 1, LEN_IDX);
     return 1;
 }
 
@@ -221,7 +221,7 @@ static int restore_mt(lua_State* ls) {
 static int list_sort(lua_State* ls) {
     if (lua_isnoneornil(ls, 1)) return lua_settop(ls, 1), 1;
     lua_settop(ls, 2);
-    if (lua_rawgeti(ls, 1, LEN_IDX) != LUA_TNIL) {
+    if (lua_getfield(ls, 1, LEN_IDX) != LUA_TNIL) {
         if (luaL_checkinteger(ls, -1) == 0) return lua_settop(ls, 1), 1;
         lua_pop(ls, 1);
         // The list has an explicit length but no metatable. Temporarily set

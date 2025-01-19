@@ -533,19 +533,19 @@ build target: `mlua_mod_mlua.list`,
 tests: [`mlua.list.test`](../lib/common/mlua.list.test.lua)
 
 This module provides functions to operate on lists that can contain `nil`
-values. Such lists track the length of the list explicitly at index `[0]`. The
-module itself is a metatable (`mlua.List`) that can be set on tables to expose
-the functions as methods.
+values. Such lists track the length of the list explicitly in the attribute `n`.
+The module itself is a metatable (`mlua.List`) that can be set on tables to
+expose the functions as methods.
 
 - `list(list) -> List`\
-  Convert `list` to a `List` by setting its length at index `[0]` and its
+  Convert `list` to a `List` by setting its length in the attribute `n` and its
   metatable. If `list` is nil or missing, return an empty `List`.
 
 - `len(list, [new]) -> integer`\
   `__len(list) -> integer`\
   Return the number of elements in `list`. If `new` is provided, set the length
-  of `list` at index `[0]`, and remove all elements at indexes `>new`. The old
-  length of the list is returned.
+  of `list` in the attribute `n`, and remove all elements at indexes `>new`. The
+  old length of the list is returned.
 
 - `eq(lhs, rhs) -> boolean`\
   `__eq(lhs, rhs) -> boolean`\

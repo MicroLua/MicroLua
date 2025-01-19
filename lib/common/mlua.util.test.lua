@@ -8,10 +8,10 @@ local table = require 'table'
 
 function test_keys(t)
     for _, test in ipairs{
-        {{}, nil, {[0] = 0}},
-        {{a = 1, b = 2, c = 3}, nil, {[0] = 3, 'a', 'b', 'c'}},
+        {{}, nil, {n = 0}},
+        {{a = 1, b = 2, c = 3}, nil, {'a', 'b', 'c', n = 3}},
         {{a = 4, b = 5, c = 6}, function(k, v) return k ~= 'b' and v ~= 4 end,
-         {[0] = 1, 'c'}},
+         {'c', n = 1}},
     } do
         local tab, filter, want = table.unpack(test, 1, 3)
         t:expect(t.expr(util).keys(tab, filter):sort()):eq(want, util.table_eq)
@@ -20,10 +20,10 @@ end
 
 function test_values(t)
     for _, test in ipairs{
-        {{}, nil, {[0] = 0}},
-        {{a = 1, b = 2, c = 3}, nil, {[0] = 3, 1, 2, 3}},
+        {{}, nil, {n = 0}},
+        {{a = 1, b = 2, c = 3}, nil, {1, 2, 3, n = 3}},
         {{a = 4, b = 5, c = 6}, function(k, v) return k ~= 'b' and v ~= 4 end,
-         {[0] = 1, 6}},
+         {6, n = 1}},
     } do
         local tab, filter, want = table.unpack(test, 1, 3)
         t:expect(t.expr(util).values(tab, filter):sort())
@@ -56,7 +56,7 @@ function test_table_copy(t)
         {{1, 2, a = 3, b = 4}},
         {setmetatable({1, 2, a = 3, b = 4}, {5, 6})},
     } do
-        local tab = table.unpack(test)
+        local tab = table.unpack(test, 1, 1)
         t:expect(t.expr(util).table_copy(tab)):eq(tab, util.table_eq)
             :apply(getmetatable):op("metatable is"):eq(getmetatable(tab))
     end
