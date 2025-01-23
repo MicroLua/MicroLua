@@ -439,7 +439,8 @@ static int array_get(lua_State* ls) {
     lua_Integer len = luaL_optinteger(ls, 3, 1);
     if (len <= 0) return 0;
     lua_settop(ls, 1);
-    if (luai_unlikely(!lua_checkstack(ls, len))) {
+    // Add a bit of margin: mlua_push_int64() requires 2 stack slots.
+    if (luai_unlikely(!lua_checkstack(ls, len + 1))) {
         return luaL_error(ls, "too many results");
     }
     size_t s = arr->size;
