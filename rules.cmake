@@ -62,9 +62,11 @@ function(mlua_add_compile_options)
     add_compile_options(
         -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
         -Wno-unused-function -Wno-unused-parameter -Wno-type-limits
-        # For Debug builds:
-        # -Wno-maybe-uninitialized
     )
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        # Lua triggers maybe-uninitialized in debug builds.
+        add_compile_options(-Wno-maybe-uninitialized)
+    endif()
 endfunction()
 
 function(mlua_list_targets VAR)
