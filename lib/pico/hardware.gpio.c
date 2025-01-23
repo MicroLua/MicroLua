@@ -144,6 +144,22 @@ static int mod_set_irq_callback(lua_State* ls) {
     return mlua_event_handle(ls, event, &mlua_cont_return, 1);
 }
 
+static void _gpio_set_irq_enabled(uint gpio, uint32_t events, bool enabled) {
+    // BUG(pico-sdk): We can't use gpio_set_irq_enabled() because it asserts
+    // conditions that aren't fulfilled in certain use cases.
+    gpio_acknowledge_irq(gpio, events);
+    io_bank0_irq_ctrl_hw_t* hw = get_core_num() ?
+                                 &io_bank0_hw->proc1_irq_ctrl :
+                                 &io_bank0_hw->proc0_irq_ctrl;
+    io_rw_32* inte = &hw->inte[gpio / 8];
+    events <<= 4 * (gpio % 8);
+    if (enabled) {
+        hw_set_bits(inte, events);
+    } else {
+        hw_clear_bits(inte, events);
+    }
+}
+
 static int mod_set_irq_enabled(lua_State* ls);
 static int mod_set_irq_enabled_with_callback_1(lua_State* ls, int status,
                                                lua_KContext ctx);
@@ -199,7 +215,7 @@ static int set_irq_enabled(lua_State* ls, IRQEnabler set_enabled) {
 }
 
 static int mod_set_irq_enabled(lua_State* ls) {
-    return set_irq_enabled(ls, &gpio_set_irq_enabled);
+    return set_irq_enabled(ls, &_gpio_set_irq_enabled);
 }
 
 static int mod_set_dormant_irq_enabled(lua_State* ls) {
