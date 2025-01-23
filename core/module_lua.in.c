@@ -28,8 +28,14 @@ static char const data[] = {@DATA@};
 
 #endif
 
+#if LUA_VERSION_NUM >= 505
+static char const mode[] = "Bt";
+#else
+static char const mode[] = "bt";
+#endif
+
 MLUA_OPEN_MODULE(@MOD@) {
-    if (luaL_loadbufferx(ls, data, data_size, "@MOD@", "bt") != LUA_OK) {
+    if (luaL_loadbufferx(ls, data, data_size, "@MOD@", mode) != LUA_OK) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
     }
