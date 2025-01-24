@@ -4,7 +4,7 @@
 # MicroLua - Lua for the RP2040 microcontroller
 
 MicroLua allows **programming the
-[RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/rp2040.html)
+[RP2040 microcontroller](https://www.raspberrypi.com/documentation/microcontrollers/silicon.html#rp2040)
 in [Lua](https://www.lua.org/)**. It packages the latest Lua interpreter with
 bindings for the [Pico SDK](https://github.com/raspberrypi/pico-sdk) and a
 cooperative threading library.
