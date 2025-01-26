@@ -5,6 +5,5 @@
 set -o errexit -o pipefail -o nounset
 
 gdb --eval-command="target extended-remote localhost:3333" \
-    --eval-command="layout asm" \
-    --eval-command="layout regs" \
+    --eval-command="layout split" \
     "$@"
