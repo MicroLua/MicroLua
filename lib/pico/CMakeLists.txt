@@ -102,6 +102,7 @@ function(mlua_platform_bin_tests TARGET SUFFIX)
     )
     target_link_libraries("${TARGET}" PRIVATE
         mlua_mod_pico.stdio
+        mlua_mod_pico.stdio.uart
         mlua_mod_pico.stdio.usb
         pico_stdlib
     )
