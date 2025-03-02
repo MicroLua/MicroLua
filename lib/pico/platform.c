@@ -65,7 +65,14 @@ void mlua_platform_setup_interpreter(lua_State* ls) {
 #endif
 
     // Tune the GC for an embedded system.
+#if LUA_VERSION_NUM <= 504
     lua_gc(ls, LUA_GCINC, 120, 100, 12);
+#else
+    lua_gc(ls, LUA_GCINC);
+    lua_gc(ls, LUA_GCPARAM, LUA_GCPPAUSE, 120);
+    lua_gc(ls, LUA_GCPARAM, LUA_GCPSTEPMUL, 100);
+    lua_gc(ls, LUA_GCPARAM, LUA_GCPSTEPSIZE, 12);
+#endif
 }
 
 char const* mlua_pico_error_str(int err) {
