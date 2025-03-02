@@ -33,8 +33,8 @@ and see how far I can push them.
 ## Features
 
 - **Pristine, unpatched Lua interpreter:** MicroLua runs the latest,
-  unmodified Lua 5.4.x interpreter, imported as a git submodule. All
-  customization is done through [`luaconf.h`](core/luaconf.in.h).
+  unmodified Lua interpreter, imported as a git submodule. All customization is
+  done through [`luaconf.h`](core/luaconf.in.h).
 - **Per-core interpreter instances:** MicroLua runs a separate Lua interpreter
   in each core. They don't share state except through C libraries.
 - **Cooperative multithreading through Lua coroutines:** MicroLua implements
@@ -171,9 +171,9 @@ MicroLua will likely support later RP devices if / when they get released.
   interpreter, and aims to provide a full embedded development environment,
   including a shell and an editor. It exposes a limited subset of Pico-specific functionality.
 
-  MicroLua uses an unpatched Lua interpreter at the latest stable version, and
-  aims to expose most of the functionality provided by the Pico SDK through a
-  thin binding layer.
+  MicroLua uses an unpatched Lua interpreter at the latest version, and aims to
+  expose most of the functionality provided by the Pico SDK through a thin
+  binding layer.
 
 ### What's the relationship with MicroLua DS?
 
