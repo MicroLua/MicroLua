@@ -71,13 +71,7 @@ function test_timer(t)
     local parent, got, time_us = thread.running()
     timer.set_callback(alarm, function(a)
         got = time_us()
-        -- BUG(Lua): https://groups.google.com/g/lua-l/c/KRorVkjR8wY/m/2pZDadLvCwAJ
-        if _VERSION_NUM < 505 then
-            t:expect(a):label("alarm"):eq(alarm)
-            -- pcall(function() error("boom") end)
-        else
-            t:expect(a == alarm, "a = %s, want %s", a, alarm)
-        end
+        t:expect(a):label("alarm"):eq(alarm)
         parent:resume()
     end)
     t:cleanup(function() timer.set_callback(alarm, nil) end)
