@@ -522,17 +522,13 @@ end
 function Test:_progress_show()
     local root, path = self._root, self:path()
     if not path then return end
-    root._pline = 11 + #path
     return io.afprintf(root._stdout,
-                       '@{SAVE}  Running: @{CYAN}%s@{NORM}@{RESTORE}', path)
+                       '@{SAVE}Running: @{CYAN}%s@{NORM}@{RESTORE}', path)
 end
 
 function Test:_progress_clear()
     local root = self._root
-    local pline = root._pline
-    if not pline then return end
-    root._pline = nil
-    return io.afprintf(root._stdout, '@{SAVE}%s@{RESTORE}', (' '):rep(pline))
+    return io.afprintf(root._stdout, '@{CLREOS}')
 end
 
 function Test:enable_output()
@@ -625,7 +621,8 @@ function Test:run_modules(mod_pat, func_pat)
 end
 
 function Test:_main(runs)
-    io.aprintf("@{CLR}")
+    io.aprintf("@{CLR}@{HIDE}")
+    local done<close> = function() return io.aprintf("@{SHOW}") end
     self._stdout = stdout
     local start = time.ticks()
     self:_run(function(t)

@@ -42,8 +42,11 @@ ansi_tags = {
     ['+WHITE'] = '\x1b[97m',
 
     CLR = '\x1b[3J\x1b[H\x1b[2J',
+    CLREOS = '\x1b[J',
     SAVE = '\x1b[s',
     RESTORE = '\x1b[u',
+    SHOW = '\x1b[?25h',
+    HIDE = '\x1b[?25l',
 }
 
 function empty_tags() return '' end
