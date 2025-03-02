@@ -5,6 +5,8 @@
 set -o errexit -o pipefail -o nounset
 shopt -s nullglob
 
+trap "echo -ne $'\e[?25h'" EXIT  # Show the cursor on termination
+
 die() {
     echo "ERROR: $@" >&2
     exit 1
@@ -111,6 +113,7 @@ while true; do
 
     # Run the target.
     "run-${PLATFORM}" "$@" && res=$? || res=$?
+    echo -ne $'\e[?25h'  # Show the cursor
     [[ "${res}" -ge 128 ]] && exit "${res}"
     [[ "${LOOP}" -ne 0 ]] || exit "${res}"
 done
