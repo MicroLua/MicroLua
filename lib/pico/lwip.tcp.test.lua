@@ -74,13 +74,14 @@ function test_listen(t)
         {"IPv4", testing_lwip.IPV4, {1234}, 1, 64, 10, 10 * time.msec},
         {"IPv6", testing_lwip.IPV6, {1234}, 1, 64, 10, 10 * time.msec},
     } do
-        local desc, atype, ports = table.unpack(test, 1, 3)
+        local desc, atype, ports, conns, size, count, interval =
+            table.unpack(test, 1, 7)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
                 tg:start(log_error(function()
-                    return run_listen_test(t, atype, lport,
-                                           table.unpack(test, 4))
+                    return run_listen_test(t, atype, lport, conns, size, count,
+                                           interval)
                 end))
             end
         end)
@@ -126,13 +127,14 @@ function test_connect(t)
         {"IPv4", testing_lwip.IPV4, {1234}, 64, 10, 10 * time.msec},
         {"IPv6", testing_lwip.IPV6, {1234}, 64, 10, 10 * time.msec},
     } do
-        local desc, atype, ports = table.unpack(test, 1, 3)
+        local desc, atype, ports, size, count, interval =
+            table.unpack(test, 1, 6)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
                 tg:start(log_error(function()
-                    return run_connect_test(t, atype, lport,
-                                            table.unpack(test, 4))
+                    return run_connect_test(t, atype, lport, size, count,
+                                            interval)
                 end))
             end
         end)

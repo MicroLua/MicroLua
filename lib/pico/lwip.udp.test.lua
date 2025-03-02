@@ -39,13 +39,14 @@ function test_send(t)
         {"IPv4", 'sendto', testing_lwip.IPV4, {1234}, 64, 10, 10 * time.msec},
         {"IPv6", 'sendto', testing_lwip.IPV6, {1234}, 64, 10, 10 * time.msec},
     } do
-        local desc, fname, atype, ports = table.unpack(test, 1, 4)
+        local desc, fname, atype, ports, size, count, interval =
+            table.unpack(test, 1, 7)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
                 tg:start(log_error(function()
-                    return run_send_test(t, fname, atype, lport,
-                                         table.unpack(test, 5))
+                    return run_send_test(t, fname, atype, lport, size, count,
+                                         interval)
                 end))
             end
         end)
@@ -107,13 +108,14 @@ function test_recv(t)
         {"IPv4", 'recvfrom', testing_lwip.IPV4, {1234}, 64, 10, 10 * time.msec},
         {"IPv6", 'recvfrom', testing_lwip.IPV6, {1234}, 64, 10, 10 * time.msec},
     } do
-        local desc, fname, atype, ports = table.unpack(test, 1, 4)
+        local desc, fname, atype, ports, size, count, interval =
+            table.unpack(test, 1, 7)
         t:run(desc, function(t)
             local tg<close> = thread.Group()
             for _, lport in ipairs(ports) do
                 tg:start(log_error(function()
-                    return run_recv_test(t, fname, atype, lport,
-                                         table.unpack(test, 5))
+                    return run_recv_test(t, fname, atype, lport, size, count,
+                                         interval)
                 end))
             end
         end)

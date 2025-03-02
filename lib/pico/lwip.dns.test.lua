@@ -24,7 +24,7 @@ function test_gethostbyname(t)
          {'2001:4860:4860::8888', '2001:4860:4860::8844'}},
         {'this.is.invalid', nil, {false}},
     } do
-        local host, typ, want = table.unpack(test)
+        local host, typ, want = table.unpack(test, 1, 3)
         local addr, err = dns.gethostbyname(host, typ,
                                             time.deadline(5 * time.sec))
         t:expect(err == nil, "DNS request failed: %s",
