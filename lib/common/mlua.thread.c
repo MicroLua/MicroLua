@@ -60,7 +60,11 @@ typedef enum MainUpvalueIndex {
 
 // Return a reference to the main thread.
 static inline lua_State* main_thread(lua_State* ls) {
+#ifdef mainthread  // Defined in lstate.h in Lua >=5.5
+    return mainthread(G(ls));
+#else
     return G(ls)->mainthread;
+#endif
 }
 
 // Push a thread value.
@@ -82,7 +86,7 @@ static inline void push_thread_or_nil(lua_State* ls, lua_State* thread) {
 
 // Push a value from the main() function to a potentially different stack.
 static inline void push_main_value(lua_State* ls, int arg) {
-    lua_State* main = G(ls)->mainthread;
+    lua_State* main = main_thread(ls);
     lua_pushvalue(main, arg);
     lua_xmove(main, ls, 1);
 }

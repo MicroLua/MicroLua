@@ -45,7 +45,12 @@ static inline MLuaEvent* next_pending(MLuaEvent const* ev) {
 }
 
 static inline EventQueue* get_queue(lua_State* ls) {
-    return (EventQueue*)lua_getextraspace(G(ls)->mainthread);
+#ifdef mainthread  // Defined in lstate.h in Lua >=5.5
+    lua_State* main = mainthread(G(ls));
+#else
+    lua_State* main = G(ls)->mainthread;
+#endif
+    return (EventQueue*)lua_getextraspace(main);
 }
 
 static void remove_pending_nolock(EventQueue* q, MLuaEvent const* ev) {
