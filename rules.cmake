@@ -63,6 +63,9 @@ function(mlua_add_compile_options)
         -Wall -Werror -Wextra -Wsign-compare -Wdouble-promotion
         -Wno-unused-function -Wno-unused-parameter -Wno-type-limits
     )
+    # Lua >=5.5 triggers maybe-uninitialized in lstrlib.c.
+    # https://groups.google.com/g/lua-l/c/BzpLl-8BvPk/m/cObYjVz7BwAJ
+    add_compile_options(-Wno-maybe-uninitialized)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         # Lua triggers maybe-uninitialized in debug builds.
         add_compile_options(-Wno-maybe-uninitialized)
