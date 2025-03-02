@@ -28,6 +28,7 @@ end
 local function wait_non_linklocal_addr(nif, deadline)
     while time.compare(time.ticks(), deadline) < 0 do
         if has_non_linklocal_addr(nif) then return true end
+        time.sleep_for(100 * time.msec)
     end
 end
 
