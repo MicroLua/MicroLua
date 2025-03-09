@@ -1,60 +1,52 @@
 # Copyright 2023 Remy Blank <remy@c-space.org>
 # SPDX-License-Identifier: MIT
 
-cmake_minimum_required(VERSION 3.24)
+include(ExternalProject)
 
-include("${MLUA_PATH}/mlua_import.cmake")
+function(mlua_add_tool TARGET BIN)
+    if(CMAKE_HOST_WIN32)
+        string(APPEND BIN ".exe")
+    endif()
+    add_executable("${TARGET}" IMPORTED GLOBAL)
+    set_property(TARGET "${TARGET}" PROPERTY IMPORTED_LOCATION "${BIN}")
+endfunction()
 
-project(tools C)
-set(CMAKE_C_STANDARD 11)
+function(mlua_add_tool_project NAME)
+    set(args)
+    if(DEFINED MLUA_GEN)
+        list(APPEND args "-DMLUA_GEN:PATH=${MLUA_GEN}")
+    endif()
+    set(proj "mlua_tools_${NAME}")
+    ExternalProject_Add("${proj}"
+        SOURCE_DIR "${MLUA_PATH}/tools/${NAME}"
+        BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${NAME}"
+        CMAKE_ARGS
+            "-DCMAKE_MAKE_PROGRAM:FILEPATH=${CMAKE_MAKE_PROGRAM}"
+            "-DMLUA_PATH:PATH=${MLUA_PATH}"
+            "-DMLUA_PLATFORM:STRING=host"
+            "-DMLUA_INT:STRING=${MLUA_INT}"
+            "-DMLUA_FLOAT:STRING=${MLUA_FLOAT}"
+            "-DMLUA_FENNEL:STRING=${MLUA_FENNEL}"
+            ${args}
+        BUILD_ALWAYS 1  # Force dependency checking
+        INSTALL_COMMAND ""
+    )
+    if(DEFINED MLUA_GEN)
+        add_dependencies("${proj}" mlua_tool_gen)
+    endif()
+    set(tool "mlua_tool_${NAME}")
+    mlua_add_tool("${tool}" "${CMAKE_CURRENT_BINARY_DIR}/${NAME}/${NAME}")
+    add_dependencies("${tool}" "${proj}")
+endfunction()
 
-set(MLUA_HAS_GEN true)
-mlua_init()
-
-# Module: gen
-mlua_add_lua_modules(gen_main NOCOMPILE gen.lua)
-target_link_libraries(gen_main INTERFACE
-    mlua_mod_io
-    mlua_mod_os
-    mlua_mod_string
-    mlua_mod_table
-)
-
-# Executable: gen
-mlua_add_executable_no_config(gen)
-add_executable(mlua_tool_gen ALIAS gen)
-target_compile_definitions(gen PRIVATE
-    MLUA_MAIN_MODULE=gen
-)
-target_link_libraries(gen PRIVATE
-    gen_main
-)
-
-# Module: mlua_cli
-mlua_add_lua_modules(mlua_cli mlua_cli.lua)
-target_link_libraries(mlua_cli INTERFACE
-    mlua_mod_io
-    mlua_mod_math
-    mlua_mod_mlua.block.mem
-    mlua_mod_mlua.cli
-    mlua_mod_mlua.fs
-    mlua_mod_mlua.fs.lfs
-    mlua_mod_mlua.io
-    mlua_mod_mlua.list
-    mlua_mod_mlua.mem
-    mlua_mod_mlua.shell
-    mlua_mod_mlua.uf2
-    mlua_mod_mlua.util
-    mlua_mod_os
-    mlua_mod_string
-    mlua_mod_table
-)
-
-# Executable: mlua
-mlua_add_executable(mlua)
-target_compile_definitions(mlua PRIVATE
-    MLUA_MAIN_MODULE=mlua_cli
-)
-target_link_libraries(mlua PRIVATE
-    mlua_cli
-)
+if(NOT MLUA_BUILDING_TOOL STREQUAL "gen")
+    if(DEFINED MLUA_GEN)
+        mlua_add_tool(mlua_tool_gen "${MLUA_GEN}")
+    else()
+        mlua_add_tool_project(gen)
+        set(MLUA_GEN "${CMAKE_CURRENT_BINARY_DIR}/gen/gen" CACHE INTERNAL "")
+    endif()
+    if(NOT MLUA_BUILDING_TOOL STREQUAL "mlua")
+        mlua_add_tool_project(mlua)
+    endif()
+endif()
