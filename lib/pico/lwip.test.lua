@@ -1,8 +1,6 @@
 -- Copyright 2024 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local lwip = require 'lwip'
 
 function set_up(t)

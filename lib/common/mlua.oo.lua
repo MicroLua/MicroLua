@@ -11,8 +11,6 @@
 -- copied from the base class to the subclass at class creation time. This is
 -- necessary because Lua gets metamethods using a raw access.
 
-_ENV = module(...)
-
 -- The class of all classes.
 local Metaclass = {}
 

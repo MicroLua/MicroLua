@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local clocks = require 'hardware.clocks'
 local regs = require 'hardware.regs.clocks'
 local pll = require 'hardware.pll'

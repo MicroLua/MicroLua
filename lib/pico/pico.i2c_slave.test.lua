@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local config = require 'mlua.config'
 local testing_i2c = require 'mlua.testing.i2c'
 local i2c_slave = require 'pico.i2c_slave'

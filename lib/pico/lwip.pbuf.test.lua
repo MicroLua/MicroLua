@@ -1,8 +1,6 @@
 -- Copyright 2024 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local pbuf = require 'lwip.pbuf'
 local mem = require 'mlua.mem'
 

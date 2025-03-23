@@ -284,6 +284,9 @@ void mlua_new_class_hash_(lua_State* ls, char const* name, int cnt,
 
 #endif  // !MLUA_HASH_SYMBOL_TABLES
 
+// Create a new environment for a Lua module and register it in package.loaded.
+void mlua_new_lua_module(lua_State* ls, char const* name);
+
 // Set a metaclass on a class. If the class has a __new key, it is copied to the
 // __call key of the metaclass. If the class has an __index key, it is copied to
 // the metaclass, so that the same symbols can be looked up on the class as on

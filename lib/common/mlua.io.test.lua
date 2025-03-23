@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local io = require 'mlua.io'
 local oo = require 'mlua.oo'
 local table = require 'table'

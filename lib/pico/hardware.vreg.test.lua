@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local base = require 'hardware.base'
 local vreg = require 'hardware.vreg'
 local addressmap = require 'hardware.regs.addressmap'

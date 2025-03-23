@@ -11,8 +11,6 @@
 --    by a header file.
 --  - luamod: Generate a C module from a Lua source file.
 
-_ENV = module(...)
-
 local io = require 'io'
 local os = require 'os'
 local string = require 'string'

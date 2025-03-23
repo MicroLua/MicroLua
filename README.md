@@ -84,8 +84,6 @@ example from the [`pico-examples`](https://github.com/raspberrypi/pico-examples)
 repository.
 
 ```lua
-_ENV = module(...)
-
 local gpio = require 'hardware.gpio'
 local pico = require 'pico'
 local time = require 'pico.time'

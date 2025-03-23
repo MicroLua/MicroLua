@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local thread = require 'mlua.thread'
 local multicore = require 'pico.multicore'
 local fifo = require 'pico.multicore.fifo'

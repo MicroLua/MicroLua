@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local clocks = require 'hardware.clocks'
 local uart = require 'hardware.uart'
 local stdio = require 'pico.stdio'

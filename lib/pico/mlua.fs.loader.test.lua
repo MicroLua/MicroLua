@@ -1,10 +1,9 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local fs = require 'mlua.fs'
 local loader = require 'mlua.fs.loader'
+local util = require 'mlua.util'
 local package = require 'package'
 local multicore = require 'pico.multicore'
 local fifo = require 'pico.multicore.fifo'
@@ -34,29 +33,34 @@ end
 
 function test_loading(t)
     local path = package.path
+    local mod_a, mod_b = prefix .. '.a', prefix .. '.b'
     t:cleanup(function()
-        package.loaded[prefix .. '.a'] = nil
-        package.loaded[prefix .. '.b'] = nil
+        package.loaded[mod_a] = nil
+        package.loaded[mod_b] = nil
         package.path = path
     end)
     package.path = '/lua/?.lua;/?.lua'
 
-    write_file(loader.fs, ('/lua/%s.a.lua'):format(prefix), [[
-        _ENV = module(...)
+    local path_a = ('/lua/%s.a.lua'):format(prefix)
+    write_file(loader.fs, path_a, [[
+        args = {...}
         value = 'a'
     ]])
-    write_file(loader.fs, ('/%s.b.lua'):format(prefix), [[
-        _ENV = module(...)
+    local path_b = ('/%s.b.lua'):format(prefix)
+    write_file(loader.fs, path_b, [[
+        args = {...}
         value = 'b'
     ]])
 
-    local m, p = require(prefix .. '.a')
+    local m, p = require(mod_a)
+    t:expect(t.expr(m).args):eq({mod_a, path_a}, util.table_eq)
     t:expect(t.expr(m).value):eq('a')
-    t:expect(p):label("a.path"):eq(('/lua/%s.a.lua'):format(prefix))
+    t:expect(p):label("a.path"):eq(path_a)
 
-    local m, p = require(prefix .. '.b')
+    local m, p = require(mod_b)
+    t:expect(t.expr(m).args):eq({mod_b, path_b}, util.table_eq)
     t:expect(t.expr(m).value):eq('b')
-    t:expect(p):label("b.path"):eq(('/%s.b.lua'):format(prefix))
+    t:expect(p):label("b.path"):eq(path_b)
 
     t:expect(t.expr(_G).require('not_found'))
         :raises("\t/lua/not_found%.lua: no such file or directory\n\t/not_found%.lua: no such file or directory")
@@ -68,8 +72,6 @@ end
 
 function test_loading_multicore(t)
     write_file(loader.fs, ('/lua/%s.c.lua'):format(prefix), [[
-        _ENV = module(...)
-
         local multicore = require 'pico.multicore'
         local fifo = require 'pico.multicore.fifo'
 

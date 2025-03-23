@@ -39,6 +39,8 @@ MLUA_OPEN_MODULE(@MOD@) {
         return luaL_error(ls, "failed to load '@MOD@':\n\t%s",
                           lua_tostring(ls, -1));
     }
+    mlua_new_lua_module(ls, "@MOD@");
+    if (!lua_setupvalue(ls, -2, 1)) lua_pop(ls, 1);  // Set _ENV
     lua_pushliteral(ls, "@MOD@");
     lua_call(ls, 1, 1);
     return 1;

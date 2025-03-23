@@ -14,8 +14,6 @@ Here's how to get started with a new project based on MicroLua:
 1. Create a file `main.lua` containing a `main()` function.
 
     ```lua
-    _ENV = module(...)
-
     function main()
       print("Hello, world!")
     end
@@ -69,22 +67,18 @@ Here's how to get started with a new project based on MicroLua:
 
 ## Lua modules
 
-A Lua module is a `.lua` file with the following line at the very top:
+`.lua` files are imported as modules. That is, they are executed on the first
+`require()` call, with `_ENV` set to a new, empty module table that is
+registered in `package.loaded` with the name given to `require()`.
 
-```lua
-_ENV = module(...)
-```
-
-This creates a new module, registers it with the name given to the `require()`
-call, and assigns it to the block's environment. The block can then define
-the module contents.
+Within `.lua` files:
 
 - Local variables and functions are private to the module.
 - Non-local variables and functions are exported.
 - Lookups of undefined symbols are forwarded to the global environment `_G`.
 - Lookups of undefined symbols in the global environment raise an error.
 
-The `.lua` file must be registered as a library in `CMakeFile.txt`, and its
+`.lua` files must be registered as a libraries in `CMakeFile.txt`, and their
 dependencies must be declared:
 
 ```cmake

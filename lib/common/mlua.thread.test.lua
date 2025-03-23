@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local coroutine = require 'coroutine'
 local math = require 'math'
 local int64 = require 'mlua.int64'

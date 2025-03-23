@@ -1,8 +1,6 @@
 -- Copyright 2024 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local pio = require 'hardware.pio'
 local asm = require 'hardware.pio.asm'
 local list = require 'mlua.list'

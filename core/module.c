@@ -149,19 +149,17 @@ MLUA_SYMBOLS_NOHASH(Strict_syms) = {
 
 static char const Module_name[] = "mlua.Module";
 
-static int global_module(lua_State* ls) {
-    lua_getfield(ls, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
-
+void mlua_new_lua_module(lua_State* ls, char const* name) {
     // Create a new module table.
     lua_createtable(ls, 0, 0);
     luaL_getmetatable(ls, Module_name);
     lua_setmetatable(ls, -2);
 
     // Set it in package.loaded.
-    lua_pushvalue(ls, 1);
+    lua_getfield(ls, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
     lua_pushvalue(ls, -2);
-    lua_settable(ls, -4);
-    return 1;
+    lua_setfield(ls, -2, name);
+    lua_pop(ls, 1);
 }
 
 static int global_try_1(lua_State* ls, int status, lua_KContext ctx);
@@ -532,8 +530,6 @@ void mlua_register_modules(lua_State* ls) {
     lua_setglobal(ls, "_VERSION_NUM");
     lua_pushinteger(ls, LUA_VERSION_RELEASE_NUM);
     lua_setglobal(ls, "_RELEASE_NUM");
-    lua_pushcfunction(ls, &global_module);
-    lua_setglobal(ls, "module");
     lua_pushcfunction(ls, &global_try);
     lua_setglobal(ls, "try");
     lua_pushcfunction(ls, &global_equal);

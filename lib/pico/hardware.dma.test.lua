@@ -1,8 +1,6 @@
 -- Copyright 2024 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local dma = require 'hardware.dma'
 local addressmap = require 'hardware.regs.addressmap'
 local regs = require 'hardware.regs.dma'

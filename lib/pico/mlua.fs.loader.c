@@ -84,12 +84,19 @@ static char const* load_block(lua_State* ls, void* buf, size_t* size) {
     return l->buffer;
 }
 
+static int load_module(lua_State* ls) {
+    lua_pushvalue(ls, lua_upvalueindex(1));
+    lua_rotate(ls, 1, 1);
+    mlua_new_lua_module(ls, lua_tostring(ls, lua_upvalueindex(2)));
+    if (!lua_setupvalue(ls, 1, 1)) lua_pop(ls, 1);  // Set _ENV
+    lua_call(ls, lua_gettop(ls) - 1, 1);
+    return 1;
+}
+
 static int mod_search(lua_State* ls) {
-    size_t len;
-    char const* mod = luaL_checklstring(ls, 1, &len);
+    char const* mod = luaL_checkstring(ls, 1);
     if (!MLUA_FS_LOADER_FLAT && strchr(mod, '.') != NULL) {
         mod = luaL_gsub(ls, mod, ".", LUA_DIRSEP);
-        lua_replace(ls, 1);
     }
 
     // Get the filesystem.
@@ -135,9 +142,9 @@ static int mod_search(lua_State* ls) {
             lua_pop(ls, 2);
         } else {  // open() succeeded
             lua_pop(ls, 1);
-            lua_replace(ls, fs_index + 1);
+            lua_replace(ls, fs_index + 1);  // File
             lua_pushstring(ls, path);
-            lua_replace(ls, fs_index + 2);
+            lua_replace(ls, fs_index + 2);  // Path
             lua_settop(ls, fs_index + 2);  // Closes buf
             lua_toclose(ls, fs_index + 1);
             break;
@@ -155,6 +162,8 @@ static int mod_search(lua_State* ls) {
         return lua_pushfstring(ls, "%s: %s", lua_tostring(ls, fs_index + 2),
                                mlua_err_msg(l.err)), 1;
     }
+    lua_pushvalue(ls, 1);  // Module name
+    lua_pushcclosure(ls, &load_module, 2);
     lua_pushvalue(ls, fs_index + 2);
     return 2;
 }

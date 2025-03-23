@@ -1,8 +1,6 @@
 -- Copyright 2023 Remy Blank <remy@c-space.org>
 -- SPDX-License-Identifier: MIT
 
-_ENV = module(...)
-
 local list = require 'mlua.list'
 local repr = require 'mlua.repr'
 local testing_stdio = require 'mlua.testing.stdio'

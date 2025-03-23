@@ -698,6 +698,7 @@ mlua_add_lua_modules(mlua_test_mlua.fs.loader mlua.fs.loader.test.lua)
 target_link_libraries(mlua_test_mlua.fs.loader INTERFACE
     mlua_mod_mlua.fs
     mlua_mod_mlua.fs.loader
+    mlua_mod_mlua.util
     mlua_mod_package
     mlua_mod_string
 )

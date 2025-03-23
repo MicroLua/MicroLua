@@ -21,9 +21,6 @@ The test modules can be useful as usage examples.
   arguments. The global isn't set when running on a target that doesn't have
   command-line arguments.
 
-- `module(name)`\
-  Create a new empty module.
-
 - `try(fn, [arg, ...]) -> (results) | (fail, err)`\
   Call `fn` with the given arguments, and return the results of the call. If the
   call raises an error, return `fail` and the error that was raised. This
